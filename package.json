@@ -1,14 +1,16 @@
 {
   "name": "stepsyncai-health-apps",
-  "version": "2.0.0",
-  "description": "Health and wellness tracking apps - Mental health support and medication tracker",
+  "version": "3.0.0",
+  "description": "Health, wellness, and learning apps - Mental health support, medication tracker, and AWS learning",
   "main": "index.js",
   "scripts": {
     "mental": "node mental-health-tracker.js",
     "test-mental": "node test-mental-health-tracker.js",
     "med": "node medication-tracker.js",
     "test-med": "node test-medication-tracker.js",
-    "test": "npm run test-mental && npm run test-med"
+    "aws": "node aws-for-kids.js",
+    "test-aws": "node test-aws-for-kids.js",
+    "test": "npm run test-mental && npm run test-med && npm run test-aws"
   },
   "keywords": [
     "mental-health",
@@ -19,7 +21,13 @@
     "medication",
     "tracker",
     "health",
-    "wellness"
+    "wellness",
+    "aws",
+    "cloud",
+    "learning",
+    "education",
+    "certification",
+    "cloud-practitioner"
   ],
   "author": "",
   "license": "MIT"
