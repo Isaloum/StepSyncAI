@@ -1,18 +1,25 @@
 {
-  "name": "stepsyncai-medication-tracker",
-  "version": "1.0.0",
-  "description": "Medication tracker app to help remember if you've taken your pills",
-  "main": "medication-tracker.js",
+  "name": "stepsyncai-health-apps",
+  "version": "2.0.0",
+  "description": "Health and wellness tracking apps - Mental health support and medication tracker",
+  "main": "index.js",
   "scripts": {
+    "mental": "node mental-health-tracker.js",
+    "test-mental": "node test-mental-health-tracker.js",
     "med": "node medication-tracker.js",
-    "test": "node test-medication-tracker.js"
+    "test-med": "node test-medication-tracker.js",
+    "test": "npm run test-mental && npm run test-med"
   },
   "keywords": [
+    "mental-health",
+    "ptsd",
+    "anxiety",
+    "recovery",
+    "workplace-accident",
     "medication",
     "tracker",
-    "pills",
-    "reminder",
-    "health"
+    "health",
+    "wellness"
   ],
   "author": "",
   "license": "MIT"
