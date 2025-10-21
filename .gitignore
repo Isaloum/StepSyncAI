@@ -3,6 +3,8 @@ medications.json
 medications-test.json
 aws-learning-progress.json
 test-aws-learning-progress.json
+mental-health-data.json
+test-mental-health-data.json
 
 # Node modules
 node_modules/
