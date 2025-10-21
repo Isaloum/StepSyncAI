@@ -1,0 +1,19 @@
+{
+  "name": "stepsyncai-medication-tracker",
+  "version": "1.0.0",
+  "description": "Medication tracker app to help remember if you've taken your pills",
+  "main": "medication-tracker.js",
+  "scripts": {
+    "med": "node medication-tracker.js",
+    "test": "node test-medication-tracker.js"
+  },
+  "keywords": [
+    "medication",
+    "tracker",
+    "pills",
+    "reminder",
+    "health"
+  ],
+  "author": "",
+  "license": "MIT"
+}

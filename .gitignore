@@ -1,0 +1,13 @@
+# Medication data files (for privacy)
+medications.json
+medications-test.json
+
+# Node modules
+node_modules/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
