@@ -1,6 +1,8 @@
-# Medication data files (for privacy)
+# Data files (for privacy)
 medications.json
 medications-test.json
+aws-learning-progress.json
+test-aws-learning-progress.json
 
 # Node modules
 node_modules/
