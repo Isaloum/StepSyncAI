@@ -3,9 +3,24 @@ medications.json
 medications-test.json
 aws-learning-progress.json
 test-aws-learning-progress.json
+mental-health-data.json
+
+# Database files
+backend/mental-health.db
+*.db
+
+# Environment files
+backend/.env
+frontend/.env
 
 # Node modules
 node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Build files
+frontend/dist/
+frontend/build/
 
 # Logs
 *.log
@@ -13,3 +28,7 @@ node_modules/
 # OS files
 .DS_Store
 Thumbs.db
+
+# IDE
+.vscode/
+.idea/
