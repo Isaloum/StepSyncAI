@@ -10,7 +10,32 @@
     "test-med": "node test-medication-tracker.js",
     "aws": "node aws-for-kids.js",
     "test-aws": "node test-aws-for-kids.js",
-    "test": "npm run test-mental && npm run test-med && npm run test-aws"
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch",
+    "test:old": "npm run test-mental && npm run test-med && npm run test-aws"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": [
+      "*.js",
+      "!test-*.js",
+      "!jest.config.js",
+      "!coverage/**"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 45,
+        "functions": 65,
+        "lines": 55,
+        "statements": 55
+      }
+    },
+    "testMatch": [
+      "**/__tests__/**/*.js",
+      "**/?(*.)+(spec|test).js"
+    ]
   },
   "keywords": [
     "mental-health",
@@ -30,5 +55,8 @@
     "cloud-practitioner"
   ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^30.2.0"
+  }
 }

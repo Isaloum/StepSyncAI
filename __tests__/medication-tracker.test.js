@@ -1,0 +1,628 @@
+const fs = require('fs');
+const MedicationTracker = require('../medication-tracker');
+
+// Mock fs module
+jest.mock('fs');
+
+describe('MedicationTracker', () => {
+  let tracker;
+  let consoleLogSpy;
+  let consoleErrorSpy;
+
+  beforeEach(() => {
+    // Reset mocks
+    jest.clearAllMocks();
+
+    // Spy on console methods
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+    // Mock fs methods with default behavior
+    fs.existsSync.mockReturnValue(false);
+    fs.readFileSync.mockReturnValue('{}');
+    fs.writeFileSync.mockImplementation(() => {});
+
+    // Create tracker instance
+    tracker = new MedicationTracker('test-medications.json');
+  });
+
+  afterEach(() => {
+    consoleLogSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
+  });
+
+  describe('Constructor and Data Loading', () => {
+    test('should initialize with default data structure when file does not exist', () => {
+      fs.existsSync.mockReturnValue(false);
+
+      const newTracker = new MedicationTracker('new-test.json');
+
+      expect(newTracker.data).toHaveProperty('medications');
+      expect(newTracker.data).toHaveProperty('history');
+      expect(newTracker.data.medications).toEqual([]);
+      expect(newTracker.data.history).toEqual([]);
+    });
+
+    test('should load existing data from file', () => {
+      const mockData = {
+        medications: [
+          { id: 1, name: 'Aspirin', dosage: '100mg', frequency: 'daily', scheduledTime: '08:00', active: true }
+        ],
+        history: [
+          { medicationId: 1, medicationName: 'Aspirin', dosage: '100mg', takenAt: '2024-01-01T08:00:00Z', notes: '' }
+        ]
+      };
+
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue(JSON.stringify(mockData));
+
+      const newTracker = new MedicationTracker('existing-test.json');
+
+      expect(newTracker.data.medications.length).toBe(1);
+      expect(newTracker.data.history.length).toBe(1);
+      expect(newTracker.data.medications[0].name).toBe('Aspirin');
+    });
+
+    test('should handle corrupted JSON file gracefully', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue('invalid json {{{');
+
+      const newTracker = new MedicationTracker('corrupted-test.json');
+
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      expect(newTracker.data.medications).toEqual([]);
+      expect(newTracker.data.history).toEqual([]);
+    });
+
+    test('should handle file read error gracefully', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockImplementation(() => {
+        throw new Error('Permission denied');
+      });
+
+      const newTracker = new MedicationTracker('error-test.json');
+
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      expect(newTracker.data).toHaveProperty('medications');
+      expect(newTracker.data).toHaveProperty('history');
+    });
+  });
+
+  describe('addMedication', () => {
+    test('should add medication with all required fields', () => {
+      const result = tracker.addMedication('Ibuprofen', '200mg', 'twice-daily', '08:00,20:00');
+
+      expect(result).not.toBeNull();
+      expect(result.name).toBe('Ibuprofen');
+      expect(result.dosage).toBe('200mg');
+      expect(result.frequency).toBe('twice-daily');
+      expect(result.scheduledTime).toBe('08:00,20:00');
+      expect(result.active).toBe(true);
+      expect(result.id).toBeDefined();
+      expect(result.createdAt).toBeDefined();
+    });
+
+    test('should add medication to data array', () => {
+      tracker.addMedication('Aspirin', '100mg', 'daily', '08:00');
+
+      expect(tracker.data.medications.length).toBe(1);
+      expect(tracker.data.medications[0].name).toBe('Aspirin');
+    });
+
+    test('should save data after adding medication', () => {
+      tracker.addMedication('Test Med', '50mg', 'daily', '09:00');
+
+      expect(fs.writeFileSync).toHaveBeenCalled();
+    });
+
+    test('should return null on save failure', () => {
+      fs.writeFileSync.mockImplementation(() => {
+        throw new Error('Write error');
+      });
+
+      const result = tracker.addMedication('Test Med', '50mg', 'daily', '09:00');
+
+      expect(result).toBeNull();
+      expect(consoleErrorSpy).toHaveBeenCalled();
+    });
+
+    test('should generate IDs for medications', () => {
+      const med1 = tracker.addMedication('Med1', '10mg', 'daily', '08:00');
+      const med2 = tracker.addMedication('Med2', '20mg', 'daily', '09:00');
+
+      expect(med1.id).toBeDefined();
+      expect(med2.id).toBeDefined();
+      // IDs should be numbers
+      expect(typeof med1.id).toBe('number');
+      expect(typeof med2.id).toBe('number');
+    });
+
+    test('should handle various frequency types', () => {
+      const frequencies = ['daily', 'twice-daily', 'weekly', 'as-needed'];
+
+      frequencies.forEach(freq => {
+        const med = tracker.addMedication(`Med-${freq}`, '10mg', freq, '08:00');
+        expect(med.frequency).toBe(freq);
+      });
+    });
+
+    test('should handle multiple scheduled times', () => {
+      const med = tracker.addMedication('Multi-dose', '10mg', 'three-times-daily', '08:00,14:00,20:00');
+
+      expect(med.scheduledTime).toBe('08:00,14:00,20:00');
+    });
+  });
+
+  describe('listMedications', () => {
+    test('should list only active medications by default', () => {
+      tracker.addMedication('Active Med', '10mg', 'daily', '08:00');
+      tracker.addMedication('Inactive Med', '20mg', 'daily', '09:00');
+      tracker.data.medications[1].active = false;
+
+      tracker.listMedications();
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Your Medications'));
+    });
+
+    test('should list all medications when activeOnly is false', () => {
+      tracker.addMedication('Active Med', '10mg', 'daily', '08:00');
+      tracker.addMedication('Inactive Med', '20mg', 'daily', '09:00');
+      tracker.data.medications[1].active = false;
+
+      tracker.listMedications(false);
+
+      expect(consoleLogSpy).toHaveBeenCalled();
+    });
+
+    test('should handle empty medication list', () => {
+      tracker.listMedications();
+
+      expect(consoleLogSpy).toHaveBeenCalledWith('No medications found.');
+    });
+
+    test('should display medication details', () => {
+      tracker.addMedication('Test Med', '50mg', 'daily', '08:00');
+      consoleLogSpy.mockClear();
+
+      tracker.listMedications();
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Test Med'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('50mg'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('daily'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('08:00'));
+    });
+  });
+
+  describe('markAsTaken', () => {
+    test('should mark existing medication as taken', () => {
+      const med = tracker.addMedication('Test Med', '10mg', 'daily', '08:00');
+
+      const result = tracker.markAsTaken(med.id);
+
+      expect(result).toBe(true);
+      expect(tracker.data.history.length).toBe(1);
+    });
+
+    test('should create history record with correct data', () => {
+      const med = tracker.addMedication('Aspirin', '100mg', 'daily', '08:00');
+
+      tracker.markAsTaken(med.id, 'Taken with food');
+
+      const record = tracker.data.history[0];
+      expect(record.medicationId).toBe(med.id);
+      expect(record.medicationName).toBe('Aspirin');
+      expect(record.dosage).toBe('100mg');
+      expect(record.notes).toBe('Taken with food');
+      expect(record.takenAt).toBeDefined();
+    });
+
+    test('should handle notes parameter', () => {
+      const med = tracker.addMedication('Test Med', '10mg', 'daily', '08:00');
+
+      tracker.markAsTaken(med.id, 'With breakfast');
+
+      expect(tracker.data.history[0].notes).toBe('With breakfast');
+    });
+
+    test('should work without notes', () => {
+      const med = tracker.addMedication('Test Med', '10mg', 'daily', '08:00');
+
+      tracker.markAsTaken(med.id);
+
+      expect(tracker.data.history[0].notes).toBe('');
+    });
+
+    test('should return false for non-existent medication', () => {
+      const result = tracker.markAsTaken(99999);
+
+      expect(result).toBe(false);
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('not found'));
+    });
+
+    test('should parse medicationId as integer', () => {
+      const med = tracker.addMedication('Test Med', '10mg', 'daily', '08:00');
+
+      const result = tracker.markAsTaken(med.id.toString());
+
+      expect(result).toBe(true);
+    });
+
+    test('should allow marking same medication multiple times', () => {
+      const med = tracker.addMedication('Multi-dose', '10mg', 'three-times-daily', '08:00,14:00,20:00');
+
+      tracker.markAsTaken(med.id, 'Morning dose');
+      tracker.markAsTaken(med.id, 'Afternoon dose');
+      tracker.markAsTaken(med.id, 'Evening dose');
+
+      expect(tracker.data.history.length).toBe(3);
+    });
+
+    test('should record timestamp when marked as taken', () => {
+      const med = tracker.addMedication('Test Med', '10mg', 'daily', '08:00');
+      const beforeTime = new Date().toISOString();
+
+      tracker.markAsTaken(med.id);
+
+      const afterTime = new Date().toISOString();
+      const record = tracker.data.history[0];
+
+      expect(record.takenAt).toBeDefined();
+      expect(record.takenAt >= beforeTime).toBe(true);
+      expect(record.takenAt <= afterTime).toBe(true);
+    });
+  });
+
+  describe('checkTodayStatus', () => {
+    test('should display status for active medications', () => {
+      tracker.addMedication('Test Med', '10mg', 'daily', '08:00');
+
+      tracker.checkTodayStatus();
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Medication Status'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Test Med'));
+    });
+
+    test('should show NOT TAKEN status for medications not taken today', () => {
+      tracker.addMedication('Test Med', '10mg', 'daily', '08:00');
+
+      tracker.checkTodayStatus();
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('NOT TAKEN'));
+    });
+
+    test('should show TAKEN status for medications taken today', () => {
+      const med = tracker.addMedication('Test Med', '10mg', 'daily', '08:00');
+      tracker.markAsTaken(med.id);
+      consoleLogSpy.mockClear();
+
+      tracker.checkTodayStatus();
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('TAKEN'));
+    });
+
+    test('should not show inactive medications', () => {
+      const med = tracker.addMedication('Inactive Med', '10mg', 'daily', '08:00');
+      tracker.removeMedication(med.id);
+      consoleLogSpy.mockClear();
+
+      tracker.checkTodayStatus();
+
+      const statusCalls = consoleLogSpy.mock.calls.flat().join(' ');
+      // Should show "No active medications" since we deactivated the only one
+      expect(statusCalls).toContain('No active medications');
+    });
+
+    test('should handle empty medication list', () => {
+      tracker.checkTodayStatus();
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No active medications'));
+    });
+
+    test('should show all doses taken today', () => {
+      const med = tracker.addMedication('Multi-dose', '10mg', 'twice-daily', '08:00,20:00');
+      tracker.markAsTaken(med.id, 'Morning');
+      tracker.markAsTaken(med.id, 'Evening');
+      consoleLogSpy.mockClear();
+
+      tracker.checkTodayStatus();
+
+      expect(consoleLogSpy).toHaveBeenCalled();
+    });
+
+    test('should not show medications taken on previous days', () => {
+      const med = tracker.addMedication('Test Med', '10mg', 'daily', '08:00');
+
+      // Manually add a history record from yesterday
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      tracker.data.history.push({
+        medicationId: med.id,
+        medicationName: med.name,
+        dosage: med.dosage,
+        takenAt: yesterday.toISOString(),
+        notes: ''
+      });
+
+      consoleLogSpy.mockClear();
+      tracker.checkTodayStatus();
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('NOT TAKEN'));
+    });
+  });
+
+  describe('getHistory', () => {
+    test('should retrieve history for last 7 days by default', () => {
+      const med = tracker.addMedication('Test Med', '10mg', 'daily', '08:00');
+      tracker.markAsTaken(med.id);
+
+      tracker.getHistory();
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Last 7 days'));
+    });
+
+    test('should filter history by medication ID', () => {
+      const med1 = tracker.addMedication('Med1', '10mg', 'daily', '08:00');
+      const med2 = tracker.addMedication('Med2', '20mg', 'daily', '09:00');
+
+      tracker.markAsTaken(med1.id);
+      tracker.markAsTaken(med2.id);
+
+      consoleLogSpy.mockClear();
+      tracker.getHistory(med1.id);
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Med1'));
+    });
+
+    test('should support custom day range', () => {
+      const med = tracker.addMedication('Test Med', '10mg', 'daily', '08:00');
+      tracker.markAsTaken(med.id);
+      consoleLogSpy.mockClear();
+
+      tracker.getHistory(null, 14);
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Last 14 days'));
+    });
+
+    test('should handle empty history', () => {
+      tracker.getHistory();
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No history found'));
+    });
+
+    test('should not show records older than specified days', () => {
+      const med = tracker.addMedication('Test Med', '10mg', 'daily', '08:00');
+
+      // Add a record from 10 days ago
+      const oldDate = new Date();
+      oldDate.setDate(oldDate.getDate() - 10);
+      tracker.data.history.push({
+        medicationId: med.id,
+        medicationName: med.name,
+        dosage: med.dosage,
+        takenAt: oldDate.toISOString(),
+        notes: 'Old record'
+      });
+
+      consoleLogSpy.mockClear();
+      tracker.getHistory(null, 7);
+
+      // Should show "No history found" because record is older than 7 days
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No history found'));
+    });
+
+    test('should display medication details in history', () => {
+      const med = tracker.addMedication('Aspirin', '100mg', 'daily', '08:00');
+      tracker.markAsTaken(med.id, 'With food');
+      consoleLogSpy.mockClear();
+
+      tracker.getHistory();
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Aspirin'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('100mg'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('With food'));
+    });
+  });
+
+  describe('removeMedication', () => {
+    test('should deactivate existing medication', () => {
+      const med = tracker.addMedication('Test Med', '10mg', 'daily', '08:00');
+
+      const result = tracker.removeMedication(med.id);
+
+      expect(result).toBe(true);
+      expect(tracker.data.medications[0].active).toBe(false);
+    });
+
+    test('should return false for non-existent medication', () => {
+      const result = tracker.removeMedication(99999);
+
+      expect(result).toBe(false);
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('not found'));
+    });
+
+    test('should parse medication ID as integer', () => {
+      const med = tracker.addMedication('Test Med', '10mg', 'daily', '08:00');
+
+      const result = tracker.removeMedication(med.id.toString());
+
+      expect(result).toBe(true);
+      expect(tracker.data.medications[0].active).toBe(false);
+    });
+
+    test('should not delete medication, only deactivate', () => {
+      const med = tracker.addMedication('Test Med', '10mg', 'daily', '08:00');
+      tracker.removeMedication(med.id);
+
+      expect(tracker.data.medications.length).toBe(1);
+      expect(tracker.data.medications[0].active).toBe(false);
+    });
+
+    test('should save data after deactivation', () => {
+      const med = tracker.addMedication('Test Med', '10mg', 'daily', '08:00');
+      fs.writeFileSync.mockClear();
+
+      tracker.removeMedication(med.id);
+
+      expect(fs.writeFileSync).toHaveBeenCalled();
+    });
+  });
+
+  describe('Data Persistence', () => {
+    test('saveData should return true on successful save', () => {
+      const result = tracker.saveData();
+
+      expect(result).toBe(true);
+      expect(fs.writeFileSync).toHaveBeenCalled();
+    });
+
+    test('saveData should return false on write error', () => {
+      fs.writeFileSync.mockImplementation(() => {
+        throw new Error('Write error');
+      });
+
+      const result = tracker.saveData();
+
+      expect(result).toBe(false);
+      expect(consoleErrorSpy).toHaveBeenCalled();
+    });
+
+    test('saveData should write formatted JSON', () => {
+      tracker.saveData();
+
+      const writeCall = fs.writeFileSync.mock.calls[0];
+      expect(writeCall[0]).toBe('test-medications.json');
+
+      // Check that JSON is formatted (has indentation)
+      const jsonData = writeCall[1];
+      expect(jsonData).toContain('\n');
+      expect(jsonData).toContain('  ');
+    });
+
+    test('data should persist across save/load cycle', () => {
+      tracker.addMedication('Persistent Med', '50mg', 'daily', '08:00');
+      const savedData = JSON.parse(fs.writeFileSync.mock.calls[0][1]);
+
+      // Simulate loading saved data
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue(JSON.stringify(savedData));
+
+      const newTracker = new MedicationTracker('test.json');
+
+      expect(newTracker.data.medications[0].name).toBe('Persistent Med');
+    });
+  });
+
+  describe('Edge Cases', () => {
+    test('should handle medication names with special characters', () => {
+      const med = tracker.addMedication("Tylenol® Extra Strength", '500mg', 'as-needed', '08:00');
+
+      expect(med.name).toBe("Tylenol® Extra Strength");
+    });
+
+    test('should handle unicode in medication names', () => {
+      const med = tracker.addMedication('阿司匹林 Aspirin', '100mg', 'daily', '08:00');
+
+      expect(med.name).toBe('阿司匹林 Aspirin');
+    });
+
+    test('should handle long notes', () => {
+      const med = tracker.addMedication('Test Med', '10mg', 'daily', '08:00');
+      const longNote = 'a'.repeat(1000);
+
+      tracker.markAsTaken(med.id, longNote);
+
+      expect(tracker.data.history[0].notes.length).toBe(1000);
+    });
+
+    test('should handle dosages with various formats', () => {
+      const dosages = ['100mg', '0.5ml', '2 tablets', '1 capsule', '10mg/ml'];
+
+      dosages.forEach(dosage => {
+        const med = tracker.addMedication('Test', dosage, 'daily', '08:00');
+        expect(med.dosage).toBe(dosage);
+      });
+    });
+
+    test('should handle 24-hour time format', () => {
+      const times = ['00:00', '06:30', '12:00', '18:45', '23:59'];
+
+      times.forEach(time => {
+        const med = tracker.addMedication('Test', '10mg', 'daily', time);
+        expect(med.scheduledTime).toBe(time);
+      });
+    });
+
+    test('should handle concurrent medication entries', () => {
+      const med1 = tracker.addMedication('Med1', '10mg', 'daily', '08:00');
+      const med2 = tracker.addMedication('Med2', '20mg', 'daily', '08:00');
+      const med3 = tracker.addMedication('Med3', '30mg', 'daily', '08:00');
+
+      expect(tracker.data.medications.length).toBe(3);
+
+      // All medications should be saved correctly
+      expect(tracker.data.medications[0].name).toBe('Med1');
+      expect(tracker.data.medications[1].name).toBe('Med2');
+      expect(tracker.data.medications[2].name).toBe('Med3');
+    });
+
+    test('should handle marking multiple medications at same time', () => {
+      const med1 = tracker.addMedication('Morning Med 1', '10mg', 'daily', '08:00');
+      const med2 = tracker.addMedication('Morning Med 2', '20mg', 'daily', '08:00');
+
+      tracker.markAsTaken(med1.id);
+      tracker.markAsTaken(med2.id);
+
+      expect(tracker.data.history.length).toBe(2);
+    });
+
+    test('should preserve history when medication is deactivated', () => {
+      const med = tracker.addMedication('Test Med', '10mg', 'daily', '08:00');
+      tracker.markAsTaken(med.id, 'Before deactivation');
+
+      tracker.removeMedication(med.id);
+
+      expect(tracker.data.history.length).toBe(1);
+      expect(tracker.data.history[0].medicationName).toBe('Test Med');
+    });
+  });
+
+  describe('Integration Scenarios', () => {
+    test('should handle complete daily workflow', () => {
+      // Morning: Add medications
+      const aspirin = tracker.addMedication('Aspirin', '100mg', 'daily', '08:00');
+      const vitamin = tracker.addMedication('Vitamin D', '1000IU', 'daily', '08:00');
+
+      // Take morning medications
+      tracker.markAsTaken(aspirin.id, 'With breakfast');
+      tracker.markAsTaken(vitamin.id, 'With breakfast');
+
+      // Check status
+      tracker.checkTodayStatus();
+
+      // Verify both are marked as taken
+      expect(tracker.data.history.length).toBe(2);
+    });
+
+    test('should handle medication change workflow', () => {
+      // Add medication
+      const med = tracker.addMedication('Old Med', '10mg', 'daily', '08:00');
+
+      // Take it a few times
+      tracker.markAsTaken(med.id);
+
+      // Deactivate old medication
+      tracker.removeMedication(med.id);
+
+      // Add new medication
+      const newMed = tracker.addMedication('New Med', '20mg', 'daily', '08:00');
+
+      // Verify old med is inactive and new med is active
+      expect(tracker.data.medications.length).toBe(2);
+      expect(tracker.data.medications[0].active).toBe(false);
+      expect(tracker.data.medications[1].active).toBe(true);
+
+      // History should still exist
+      expect(tracker.data.history.length).toBe(1);
+    });
+  });
+});
