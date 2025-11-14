@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const ChartUtils = require('./chart-utils');
 
 class MentalHealthTracker {
     constructor(dataFile = 'mental-health-data.json') {
@@ -553,6 +554,335 @@ class MentalHealthTracker {
         }
         console.log('═'.repeat(60));
     }
+
+    // Mood Trends Visualization
+    visualizeMoodTrends(days = 14) {
+        console.log('\n📈 Mood Trends Visualization');
+        console.log('═'.repeat(60));
+
+        if (this.data.moodEntries.length === 0) {
+            console.log('No mood data available yet. Start logging your moods!');
+            return;
+        }
+
+        // Get data for the specified period
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - days);
+
+        const recentMoods = this.data.moodEntries
+            .filter(entry => new Date(entry.timestamp) >= cutoffDate)
+            .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+        if (recentMoods.length === 0) {
+            console.log(`No mood data in the last ${days} days.`);
+            return;
+        }
+
+        // Aggregate by day (average if multiple entries per day)
+        const dailyMoods = new Map();
+        recentMoods.forEach(mood => {
+            const date = new Date(mood.timestamp).toLocaleDateString();
+            if (!dailyMoods.has(date)) {
+                dailyMoods.set(date, []);
+            }
+            dailyMoods.get(date).push(mood.rating);
+        });
+
+        const chartData = Array.from(dailyMoods.entries()).map(([date, ratings]) => {
+            const avg = ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
+            return {
+                label: date,
+                value: avg
+            };
+        });
+
+        // Show line chart
+        console.log(ChartUtils.lineChart(chartData, {
+            title: `Mood Trend (Last ${days} Days)`,
+            height: 10,
+            min: 1,
+            max: 10,
+            showValues: chartData.length <= 7
+        }));
+
+        // Calculate and show statistics
+        const allRatings = recentMoods.map(m => m.rating);
+        const avgMood = (allRatings.reduce((sum, r) => sum + r, 0) / allRatings.length).toFixed(1);
+        const minMood = Math.min(...allRatings);
+        const maxMood = Math.max(...allRatings);
+
+        // Show sparkline for quick view
+        console.log(`\nQuick View: ${ChartUtils.sparkline(chartData.map(d => d.value))}`);
+
+        console.log(ChartUtils.statsBox({
+            'Data Points': allRatings.length,
+            'Average Mood': `${avgMood}/10 ${this.getMoodEmoji(avgMood)}`,
+            'Lowest': `${minMood}/10`,
+            'Highest': `${maxMood}/10`,
+            'Trend': this.calculateTrend(chartData)
+        }, `📊 Mood Statistics (${days} days)`));
+
+        // Calculate streak
+        const streak = this.calculateMoodStreak();
+        if (streak > 0) {
+            console.log(ChartUtils.streakDisplay(streak, this.getLongestMoodStreak()));
+        }
+    }
+
+    // Symptom Patterns Visualization
+    visualizeSymptomPatterns(days = 30) {
+        console.log('\n🩺 Symptom Patterns Visualization');
+        console.log('═'.repeat(60));
+
+        if (this.data.symptoms.length === 0) {
+            console.log('No symptom data available yet.');
+            return;
+        }
+
+        // Get recent symptoms
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - days);
+
+        const recentSymptoms = this.data.symptoms
+            .filter(s => new Date(s.timestamp) >= cutoffDate);
+
+        if (recentSymptoms.length === 0) {
+            console.log(`No symptoms logged in the last ${days} days. That's good! 🎉`);
+            return;
+        }
+
+        // Count by type
+        const symptomCounts = {};
+        const symptomSeverity = {};
+
+        recentSymptoms.forEach(symptom => {
+            const type = symptom.type;
+            symptomCounts[type] = (symptomCounts[type] || 0) + 1;
+
+            if (!symptomSeverity[type]) {
+                symptomSeverity[type] = [];
+            }
+            symptomSeverity[type].push(symptom.severity);
+        });
+
+        // Create bar chart of symptom frequency
+        const chartData = Object.entries(symptomCounts)
+            .map(([type, count]) => ({
+                label: type.charAt(0).toUpperCase() + type.slice(1),
+                value: count
+            }))
+            .sort((a, b) => b.value - a.value);
+
+        console.log(ChartUtils.barChart(chartData, {
+            title: `Symptom Frequency (Last ${days} Days)`,
+            width: 30
+        }));
+
+        // Show average severity for each symptom
+        console.log('\n📊 Average Severity by Symptom:');
+        console.log('═'.repeat(60));
+        Object.entries(symptomSeverity)
+            .sort((a, b) => {
+                const avgA = a[1].reduce((sum, s) => sum + s, 0) / a[1].length;
+                const avgB = b[1].reduce((sum, s) => sum + s, 0) / b[1].length;
+                return avgB - avgA;
+            })
+            .forEach(([type, severities]) => {
+                const avg = (severities.reduce((sum, s) => sum + s, 0) / severities.length).toFixed(1);
+                const bar = ChartUtils.progressBar(avg, 10, { width: 20, showPercentage: false });
+                console.log(`  ${type.padEnd(20)}: ${bar}`);
+            });
+
+        // Calendar heatmap for symptom occurrences
+        const dailySymptomCounts = new Map();
+        recentSymptoms.forEach(symptom => {
+            const date = new Date(symptom.timestamp).toDateString();
+            dailySymptomCounts.set(date, (dailySymptomCounts.get(date) || 0) + 1);
+        });
+
+        const heatmapData = Array.from(dailySymptomCounts.entries()).map(([date, count]) => ({
+            date: date,
+            value: count
+        }));
+
+        console.log(ChartUtils.calendarHeatmap(heatmapData, {
+            title: '\n📅 Symptom Activity Calendar',
+            days: Math.min(days, 28)
+        }));
+
+        // Overall statistics
+        console.log(ChartUtils.statsBox({
+            'Total Symptoms': recentSymptoms.length,
+            'Unique Types': Object.keys(symptomCounts).length,
+            'Most Common': chartData[0].label,
+            'Average per Day': (recentSymptoms.length / days).toFixed(1)
+        }, `📊 Symptom Summary (${days} days)`));
+    }
+
+    // Recovery Progress Visualization
+    visualizeRecoveryProgress() {
+        console.log('\n🎯 Recovery Progress Visualization');
+        console.log('═'.repeat(60));
+
+        // Calculate various metrics
+        const totalDays = this.data.profile.accidentDate
+            ? Math.floor((new Date() - new Date(this.data.profile.accidentDate)) / (1000 * 60 * 60 * 24))
+            : 0;
+
+        if (totalDays === 0) {
+            console.log('Set up your profile first to track recovery progress.');
+            return;
+        }
+
+        console.log(`Days since accident: ${totalDays} days`);
+        console.log('');
+
+        // Goals progress
+        const activeGoals = this.data.goals.filter(g => !g.completed).length;
+        const completedGoals = this.data.goals.filter(g => g.completed).length;
+        const totalGoals = this.data.goals.length;
+
+        if (totalGoals > 0) {
+            const completionRate = (completedGoals / totalGoals) * 100;
+            console.log('📋 Goals Progress:');
+            console.log(ChartUtils.progressBar(completedGoals, totalGoals, {
+                width: 40
+            }));
+            console.log(`   ${ChartUtils.percentageWheel(completionRate, 'Complete')}`);
+            console.log('');
+        }
+
+        // Mood improvement
+        if (this.data.moodEntries.length >= 7) {
+            const recent7 = this.data.moodEntries.slice(-7).map(m => m.rating);
+            const first7 = this.data.moodEntries.slice(0, 7).map(m => m.rating);
+
+            const recentAvg = recent7.reduce((sum, r) => sum + r, 0) / recent7.length;
+            const initialAvg = first7.reduce((sum, r) => sum + r, 0) / first7.length;
+            const improvement = recentAvg - initialAvg;
+
+            console.log('😊 Mood Improvement:');
+            console.log(`   Initial week average: ${initialAvg.toFixed(1)}/10`);
+            console.log(`   Recent week average: ${recentAvg.toFixed(1)}/10`);
+            console.log(`   Change: ${improvement > 0 ? '+' : ''}${improvement.toFixed(1)} ${improvement > 0 ? '📈' : '📉'}`);
+            console.log('');
+        }
+
+        // Coping strategies effectiveness
+        const strategiesWithRatings = this.data.copingStrategies.filter(s => s.effectiveness);
+        if (strategiesWithRatings.length > 0) {
+            const avgEffectiveness = strategiesWithRatings.reduce((sum, s) => sum + s.effectiveness, 0) / strategiesWithRatings.length;
+            console.log('🛠️  Coping Strategies:');
+            console.log(`   Average effectiveness: ${avgEffectiveness.toFixed(1)}/10`);
+            console.log(ChartUtils.progressBar(avgEffectiveness, 10, {
+                width: 40,
+                showPercentage: false
+            }));
+            console.log('');
+        }
+
+        // Journal consistency
+        if (this.data.journalEntries.length > 0) {
+            const last30Days = 30;
+            const recentJournals = this.data.journalEntries.filter(j => {
+                const daysSince = (new Date() - new Date(j.timestamp)) / (1000 * 60 * 60 * 24);
+                return daysSince <= last30Days;
+            }).length;
+
+            const consistency = (recentJournals / last30Days) * 100;
+            console.log('📝 Journaling Consistency (Last 30 days):');
+            console.log(`   ${ChartUtils.percentageWheel(consistency, `(${recentJournals} entries)`)}`);
+            console.log('');
+        }
+
+        console.log('═'.repeat(60));
+        console.log('💪 Keep going! Recovery is a journey, not a destination.');
+    }
+
+    // Helper: Calculate trend from data
+    calculateTrend(data) {
+        if (data.length < 2) return 'Not enough data';
+
+        const recent = data.slice(-3).map(d => d.value);
+        const older = data.slice(0, 3).map(d => d.value);
+
+        const recentAvg = recent.reduce((sum, v) => sum + v, 0) / recent.length;
+        const olderAvg = older.reduce((sum, v) => sum + v, 0) / older.length;
+
+        const diff = recentAvg - olderAvg;
+
+        if (Math.abs(diff) < 0.5) return 'Stable →';
+        return diff > 0 ? 'Improving ↗' : 'Declining ↘';
+    }
+
+    // Helper: Calculate current mood logging streak
+    calculateMoodStreak() {
+        if (this.data.moodEntries.length === 0) return 0;
+
+        const sortedEntries = [...this.data.moodEntries]
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        const uniqueDates = new Set();
+        sortedEntries.forEach(entry => {
+            const date = new Date(entry.timestamp).toDateString();
+            uniqueDates.add(date);
+        });
+
+        const today = new Date().toDateString();
+        if (!uniqueDates.has(today)) {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            if (!uniqueDates.has(yesterday.toDateString())) {
+                return 0;
+            }
+        }
+
+        let streak = 0;
+        const checkDate = new Date();
+
+        while (true) {
+            const dateStr = checkDate.toDateString();
+            if (uniqueDates.has(dateStr)) {
+                streak++;
+                checkDate.setDate(checkDate.getDate() - 1);
+            } else {
+                break;
+            }
+        }
+
+        return streak;
+    }
+
+    // Helper: Get longest mood logging streak
+    getLongestMoodStreak() {
+        if (this.data.moodEntries.length === 0) return 0;
+
+        const uniqueDates = new Set();
+        this.data.moodEntries.forEach(entry => {
+            const date = new Date(entry.timestamp).toDateString();
+            uniqueDates.add(date);
+        });
+
+        const sortedDates = Array.from(uniqueDates)
+            .map(d => new Date(d))
+            .sort((a, b) => a - b);
+
+        let maxStreak = 1;
+        let currentStreak = 1;
+
+        for (let i = 1; i < sortedDates.length; i++) {
+            const dayDiff = (sortedDates[i] - sortedDates[i - 1]) / (1000 * 60 * 60 * 24);
+
+            if (dayDiff === 1) {
+                currentStreak++;
+                maxStreak = Math.max(maxStreak, currentStreak);
+            } else {
+                currentStreak = 1;
+            }
+        }
+
+        return maxStreak;
+    }
 }
 
 // CLI Interface
@@ -639,6 +969,16 @@ QUICK ACTIONS:
 
   help
       Show this help message
+
+VISUALIZATIONS:
+  mood-trends [days]
+      Visualize mood trends with charts (default: 14 days)
+
+  symptom-patterns [days]
+      Visualize symptom patterns with heatmap (default: 30 days)
+
+  recovery-progress
+      View comprehensive recovery progress dashboard
 
 ═══════════════════════════════════════════════════════════
 Remember: This is a personal tracking tool. Always consult with
@@ -823,6 +1163,20 @@ function main() {
 
         case 'checkin':
             tracker.quickCheckIn();
+            break;
+
+        case 'mood-trends':
+            const trendDays = args[1] ? parseInt(args[1]) : 14;
+            tracker.visualizeMoodTrends(trendDays);
+            break;
+
+        case 'symptom-patterns':
+            const patternDays = args[1] ? parseInt(args[1]) : 30;
+            tracker.visualizeSymptomPatterns(patternDays);
+            break;
+
+        case 'recovery-progress':
+            tracker.visualizeRecoveryProgress();
             break;
 
         case 'help':

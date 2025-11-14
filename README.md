@@ -126,6 +126,33 @@ node mental-health-tracker.js contacts
 ```
 </details>
 
+### 📊 Data Visualizations
+
+<details>
+<summary><b>View Your Progress with Charts!</b></summary>
+
+```bash
+# Visualize mood trends over time (default 14 days)
+node mental-health-tracker.js mood-trends [days]
+# Shows: line chart, sparkline, statistics, and streak tracking
+
+# Analyze symptom patterns (default 30 days)
+node mental-health-tracker.js symptom-patterns [days]
+# Shows: frequency bar chart, calendar heatmap, severity analysis
+
+# View comprehensive recovery dashboard
+node mental-health-tracker.js recovery-progress
+# Shows: goals progress, mood improvement, coping effectiveness
+```
+
+**Features:**
+- 📈 Line charts showing mood trends over time
+- 📅 Calendar heatmaps for symptom activity patterns
+- 🔥 Streak tracking for consistent mood logging
+- 📊 Statistics boxes with key metrics
+- ⚡ Sparklines for quick visual summaries
+</details>
+
 ### Important Notes
 
 - This is a **personal tracking tool** to support your recovery
@@ -187,6 +214,31 @@ node medication-tracker.js history
    node medication-tracker.js history        # Last 7 days
    node medication-tracker.js history 1234567890 30  # Specific med, 30 days
    ```
+
+### 📊 Adherence Visualization
+
+<details>
+<summary><b>Track Your Medication Compliance!</b></summary>
+
+```bash
+# View comprehensive adherence dashboard (default 30 days)
+node medication-tracker.js adherence [days]
+```
+
+**Shows:**
+- 🎯 Overall adherence rate with progress bars
+- 💊 Per-medication adherence percentages
+- 📅 Calendar heatmap of daily medication activity
+- 📈 Weekly adherence trend chart
+- 🔥 Perfect adherence streak tracking
+- 📊 Detailed statistics (doses taken/missed)
+
+**Example Output:**
+- Visual progress bars for each medication
+- Sparklines showing adherence trends
+- Streak displays (e.g., "7 days perfect adherence 🔥")
+- Readiness scores and recommendations
+</details>
 
 ---
 
@@ -254,6 +306,36 @@ node aws-for-kids.js guide
    ```bash
    node aws-for-kids.js guide
    ```
+
+### 📊 Learning Progress Dashboard
+
+<details>
+<summary><b>Visualize Your Exam Readiness!</b></summary>
+
+```bash
+# View comprehensive learning dashboard
+node aws-for-kids.js dashboard
+```
+
+**Shows:**
+- 📚 Topic mastery progress by category (Compute, Storage, Database, etc.)
+- 🎯 Quiz performance trends with line charts
+- ⚡ Sparklines for quick performance overview
+- 🏆 Exam readiness assessment (0-100 score)
+- 📈 Score distribution (Excellent/Good/Needs Work)
+- 🔥 Study streak tracking
+- 💡 Personalized recommendations
+
+**Readiness Criteria:**
+- Topic Coverage (40 points): % of topics completed
+- Quiz Performance (40 points): Average quiz scores
+- Practice Consistency (20 points): Number of quizzes taken
+
+**Assessment Levels:**
+- 80%+ Ready: Schedule your exam with confidence! 🎉
+- 60-79% Almost there: A bit more practice needed ⚠️
+- <60% Keep studying: You're making progress! 📚
+</details>
 
 ---
 
