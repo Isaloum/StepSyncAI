@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const ChartUtils = require('./chart-utils');
 
 class MedicationTracker {
     constructor(dataFile = 'medications.json') {
@@ -189,6 +190,274 @@ class MedicationTracker {
         }
         return false;
     }
+
+    // Adherence Visualization
+    visualizeAdherence(days = 30) {
+        console.log('\n📊 Medication Adherence Visualization');
+        console.log('═'.repeat(60));
+
+        if (this.data.medications.length === 0) {
+            console.log('No medications added yet. Add medications to track adherence.');
+            return;
+        }
+
+        if (this.data.history.length === 0) {
+            console.log('No medication history yet. Start taking your medications to track adherence.');
+            return;
+        }
+
+        // Get data for the specified period
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - days);
+
+        const recentHistory = this.data.history
+            .filter(entry => new Date(entry.timestamp) >= cutoffDate)
+            .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+        if (recentHistory.length === 0) {
+            console.log(`No medication history in the last ${days} days.`);
+            return;
+        }
+
+        // Calculate overall adherence
+        const totalDoses = recentHistory.length;
+        const takenDoses = recentHistory.filter(h => !h.missed).length;
+        const missedDoses = recentHistory.filter(h => h.missed).length;
+        const adherenceRate = ((takenDoses / totalDoses) * 100).toFixed(1);
+
+        console.log('\n🎯 Overall Adherence:');
+        console.log(ChartUtils.progressBar(takenDoses, totalDoses, {
+            width: 40
+        }));
+        console.log(`   ${ChartUtils.percentageWheel(adherenceRate, 'Adherence Rate')}`);
+
+        // Adherence by medication
+        console.log('\n💊 Adherence by Medication:');
+        console.log('═'.repeat(60));
+
+        const medStats = {};
+        recentHistory.forEach(entry => {
+            const medId = entry.medicationId;
+            if (!medStats[medId]) {
+                const med = this.data.medications.find(m => m.id === medId);
+                medStats[medId] = {
+                    name: med ? med.name : 'Unknown',
+                    taken: 0,
+                    missed: 0
+                };
+            }
+
+            if (entry.missed) {
+                medStats[medId].missed++;
+            } else {
+                medStats[medId].taken++;
+            }
+        });
+
+        const chartData = Object.entries(medStats)
+            .map(([id, stats]) => ({
+                label: stats.name,
+                value: parseFloat(((stats.taken / (stats.taken + stats.missed)) * 100).toFixed(1))
+            }))
+            .sort((a, b) => b.value - a.value);
+
+        console.log(ChartUtils.barChart(chartData, {
+            title: 'Medication Adherence Rates',
+            width: 30,
+            showPercentage: true
+        }));
+
+        // Calendar heatmap for adherence
+        const dailyAdherence = new Map();
+        recentHistory.forEach(entry => {
+            const date = new Date(entry.timestamp).toDateString();
+            if (!dailyAdherence.has(date)) {
+                dailyAdherence.set(date, { taken: 0, total: 0 });
+            }
+
+            const day = dailyAdherence.get(date);
+            day.total++;
+            if (!entry.missed) {
+                day.taken++;
+            }
+        });
+
+        const heatmapData = Array.from(dailyAdherence.entries()).map(([date, counts]) => ({
+            date: date,
+            value: counts.taken
+        }));
+
+        console.log(ChartUtils.calendarHeatmap(heatmapData, {
+            title: '\n📅 Daily Medication Activity',
+            days: Math.min(days, 28)
+        }));
+
+        // Calculate streak
+        const streak = this.calculateAdherenceStreak();
+
+        // Statistics box
+        console.log(ChartUtils.statsBox({
+            'Total Doses': totalDoses,
+            'Doses Taken': `${takenDoses} ✓`,
+            'Doses Missed': `${missedDoses} ✗`,
+            'Adherence Rate': `${adherenceRate}%`,
+            'Current Streak': `${streak} days`,
+            'Active Medications': this.data.medications.filter(m => m.active).length
+        }, `📊 Adherence Summary (${days} days)`));
+
+        // Show streak
+        if (streak > 0) {
+            console.log(ChartUtils.streakDisplay(streak, this.getLongestAdherenceStreak()));
+        }
+
+        // Adherence trend
+        this.showAdherenceTrend(days);
+    }
+
+    // Show adherence trend over time
+    showAdherenceTrend(days) {
+        console.log('\n📈 Adherence Trend:');
+
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - days);
+
+        const recentHistory = this.data.history
+            .filter(entry => new Date(entry.timestamp) >= cutoffDate)
+            .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+        // Group by week
+        const weeklyData = new Map();
+
+        recentHistory.forEach(entry => {
+            const date = new Date(entry.timestamp);
+            const weekStart = new Date(date);
+            weekStart.setDate(date.getDate() - date.getDay());
+            const weekKey = weekStart.toLocaleDateString();
+
+            if (!weeklyData.has(weekKey)) {
+                weeklyData.set(weekKey, { taken: 0, total: 0 });
+            }
+
+            const week = weeklyData.get(weekKey);
+            week.total++;
+            if (!entry.missed) {
+                week.taken++;
+            }
+        });
+
+        const chartData = Array.from(weeklyData.entries()).map(([week, counts]) => ({
+            label: week,
+            value: parseFloat(((counts.taken / counts.total) * 100).toFixed(1))
+        }));
+
+        if (chartData.length > 1) {
+            console.log(ChartUtils.lineChart(chartData, {
+                title: 'Weekly Adherence Rate (%)',
+                height: 8,
+                min: 0,
+                max: 100,
+                showValues: false
+            }));
+
+            console.log(`Sparkline: ${ChartUtils.sparkline(chartData.map(d => d.value))}`);
+        }
+    }
+
+    // Calculate current adherence streak (consecutive days with all doses taken)
+    calculateAdherenceStreak() {
+        if (this.data.history.length === 0) return 0;
+
+        // Group by day
+        const dailyData = new Map();
+
+        this.data.history.forEach(entry => {
+            const date = new Date(entry.timestamp).toDateString();
+            if (!dailyData.has(date)) {
+                dailyData.set(date, { taken: 0, missed: 0 });
+            }
+
+            const day = dailyData.get(date);
+            if (entry.missed) {
+                day.missed++;
+            } else {
+                day.taken++;
+            }
+        });
+
+        // Sort dates
+        const sortedDates = Array.from(dailyData.keys())
+            .map(d => new Date(d))
+            .sort((a, b) => b - a); // Most recent first
+
+        let streak = 0;
+        const today = new Date().toDateString();
+
+        for (const date of sortedDates) {
+            const dateStr = date.toDateString();
+            const day = dailyData.get(dateStr);
+
+            // Check if this is today or consecutive
+            if (streak === 0 && dateStr !== today) {
+                // Not starting from today, check if we should start from yesterday
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                if (dateStr !== yesterday.toDateString()) {
+                    break; // Streak broken
+                }
+            }
+
+            // Perfect day (no missed doses)
+            if (day.taken > 0 && day.missed === 0) {
+                streak++;
+            } else if (day.missed > 0) {
+                break; // Streak broken
+            }
+        }
+
+        return streak;
+    }
+
+    // Get longest adherence streak
+    getLongestAdherenceStreak() {
+        if (this.data.history.length === 0) return 0;
+
+        const dailyData = new Map();
+
+        this.data.history.forEach(entry => {
+            const date = new Date(entry.timestamp).toDateString();
+            if (!dailyData.has(date)) {
+                dailyData.set(date, { taken: 0, missed: 0 });
+            }
+
+            const day = dailyData.get(date);
+            if (entry.missed) {
+                day.missed++;
+            } else {
+                day.taken++;
+            }
+        });
+
+        const sortedDates = Array.from(dailyData.keys())
+            .map(d => new Date(d))
+            .sort((a, b) => a - b);
+
+        let maxStreak = 0;
+        let currentStreak = 0;
+
+        sortedDates.forEach(date => {
+            const dateStr = date.toDateString();
+            const day = dailyData.get(dateStr);
+
+            if (day.taken > 0 && day.missed === 0) {
+                currentStreak++;
+                maxStreak = Math.max(maxStreak, currentStreak);
+            } else if (day.missed > 0) {
+                currentStreak = 0;
+            }
+        });
+
+        return maxStreak;
+    }
 }
 
 // CLI Interface
@@ -220,6 +489,9 @@ Commands:
 
   remove <id>
       Deactivate a medication
+
+  adherence [days]
+      Visualize medication adherence with charts (default: 30 days)
 
   help
       Show this help message
@@ -273,6 +545,11 @@ function main() {
                 break;
             }
             tracker.removeMedication(args[1]);
+            break;
+
+        case 'adherence':
+            const adherenceDays = args[1] ? parseInt(args[1]) : 30;
+            tracker.visualizeAdherence(adherenceDays);
             break;
 
         case 'help':
