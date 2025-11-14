@@ -24,6 +24,11 @@
       "!jest.config.js",
       "!coverage/**"
     ],
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "json-summary"
+    ],
     "coverageThreshold": {
       "global": {
         "branches": 45,

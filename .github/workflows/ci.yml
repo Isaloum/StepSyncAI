@@ -58,31 +58,37 @@ jobs:
       with:
         script: |
           const fs = require('fs');
-          const coverage = JSON.parse(fs.readFileSync('./coverage/coverage-summary.json', 'utf8'));
-          const total = coverage.total;
 
-          const comment = `## 📊 Test Coverage Report
+          try {
+            const coverage = JSON.parse(fs.readFileSync('./coverage/coverage-summary.json', 'utf8'));
+            const total = coverage.total;
 
-          | Metric | Coverage | Status |
-          |--------|----------|--------|
-          | Statements | ${total.statements.pct}% | ${total.statements.pct >= 55 ? '✅' : '❌'} |
-          | Branches | ${total.branches.pct}% | ${total.branches.pct >= 45 ? '✅' : '❌'} |
-          | Functions | ${total.functions.pct}% | ${total.functions.pct >= 65 ? '✅' : '❌'} |
-          | Lines | ${total.lines.pct}% | ${total.lines.pct >= 55 ? '✅' : '❌'} |
+            const comment = `## 📊 Test Coverage Report
 
-          **Coverage Thresholds:**
-          - Statements: 55%
-          - Branches: 45%
-          - Functions: 65%
-          - Lines: 55%
-          `;
+            | Metric | Coverage | Status |
+            |--------|----------|--------|
+            | Statements | ${total.statements.pct}% | ${total.statements.pct >= 55 ? '✅' : '❌'} |
+            | Branches | ${total.branches.pct}% | ${total.branches.pct >= 45 ? '✅' : '❌'} |
+            | Functions | ${total.functions.pct}% | ${total.functions.pct >= 65 ? '✅' : '❌'} |
+            | Lines | ${total.lines.pct}% | ${total.lines.pct >= 55 ? '✅' : '❌'} |
 
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: comment
-          });
+            **Coverage Thresholds:**
+            - Statements: 55%
+            - Branches: 45%
+            - Functions: 65%
+            - Lines: 55%
+            `;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          } catch (error) {
+            console.log('Coverage summary file not found, skipping PR comment.');
+            console.log('Error:', error.message);
+          }
 
   lint:
     name: Lint Code
