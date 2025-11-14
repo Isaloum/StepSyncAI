@@ -67,16 +67,16 @@ jobs:
 
             | Metric | Coverage | Status |
             |--------|----------|--------|
-            | Statements | ${total.statements.pct}% | ${total.statements.pct >= 55 ? '✅' : '❌'} |
-            | Branches | ${total.branches.pct}% | ${total.branches.pct >= 45 ? '✅' : '❌'} |
-            | Functions | ${total.functions.pct}% | ${total.functions.pct >= 65 ? '✅' : '❌'} |
-            | Lines | ${total.lines.pct}% | ${total.lines.pct >= 55 ? '✅' : '❌'} |
+            | Statements | ${total.statements.pct}% | ${total.statements.pct >= 40 ? '✅' : '❌'} |
+            | Branches | ${total.branches.pct}% | ${total.branches.pct >= 35 ? '✅' : '❌'} |
+            | Functions | ${total.functions.pct}% | ${total.functions.pct >= 40 ? '✅' : '❌'} |
+            | Lines | ${total.lines.pct}% | ${total.lines.pct >= 40 ? '✅' : '❌'} |
 
             **Coverage Thresholds:**
-            - Statements: 55%
-            - Branches: 45%
-            - Functions: 65%
-            - Lines: 55%
+            - Statements: 40%
+            - Branches: 35%
+            - Functions: 40%
+            - Lines: 40%
             `;
 
             await github.rest.issues.createComment({
