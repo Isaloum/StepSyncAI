@@ -1,11 +1,17 @@
 # StepSyncAI - Health & Wellness Apps
 
-A collection of personal health management tools designed to support recovery, wellness, and daily health tracking.
+[![Tests](https://img.shields.io/badge/tests-229%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Coverage](https://img.shields.io/badge/coverage-60%25-yellow)](https://github.com/Isaloum/StepSyncAI)
+[![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## Apps Included
+A comprehensive collection of personal health management and learning tools designed to support recovery, wellness, daily health tracking, and professional development.
 
-1. **Mental Health Tracker** - Support tool for managing mental health after workplace accidents
-2. **Medication Tracker** - Simple pill reminder and tracking system
+## 📦 Apps Included
+
+1. **🧠 Mental Health Tracker** - Comprehensive PTSD/trauma recovery support tool
+2. **💊 Medication Tracker** - Simple pill reminder and adherence tracking system
+3. **☁️ AWS For Kids** - Interactive AWS Cloud Practitioner exam preparation
 
 ---
 
@@ -49,7 +55,9 @@ node mental-health-tracker.js help
 
 ### Common Commands
 
-#### Profile & Overview
+<details>
+<summary><b>Profile & Overview</b></summary>
+
 ```bash
 # Setup profile
 node mental-health-tracker.js profile-setup <date> <description>
@@ -60,8 +68,11 @@ node mental-health-tracker.js profile
 # Daily check-in
 node mental-health-tracker.js checkin
 ```
+</details>
 
-#### Mood & Emotions
+<details>
+<summary><b>Mood & Emotions</b></summary>
+
 ```bash
 # Log mood (1-10)
 node mental-health-tracker.js mood <rating> [note]
@@ -69,8 +80,11 @@ node mental-health-tracker.js mood <rating> [note]
 # View mood history (default 7 days)
 node mental-health-tracker.js mood-history [days]
 ```
+</details>
 
-#### Symptoms
+<details>
+<summary><b>Symptoms</b></summary>
+
 ```bash
 # Log symptom (severity 1-10)
 # Types: anxiety, panic, flashback, nightmare, depression, insomnia,
@@ -80,8 +94,11 @@ node mental-health-tracker.js symptom <type> <severity> [note]
 # View symptoms
 node mental-health-tracker.js view-symptoms [days] [type]
 ```
+</details>
 
-#### Journal
+<details>
+<summary><b>Journal</b></summary>
+
 ```bash
 # Add entry (types: general, incident, therapy, progress)
 node mental-health-tracker.js journal <content> [type]
@@ -89,94 +106,25 @@ node mental-health-tracker.js journal <content> [type]
 # View journal
 node mental-health-tracker.js view-journal [days] [type]
 ```
+</details>
 
-#### Triggers
+<details>
+<summary><b>Triggers, Coping, Goals</b></summary>
+
 ```bash
 # Add new trigger
 node mental-health-tracker.js add-trigger <description> [intensity]
 
-# Log trigger occurrence
-node mental-health-tracker.js log-trigger <trigger-id>
-
-# List all triggers
-node mental-health-tracker.js list-triggers
-```
-
-#### Coping Strategies
-```bash
-# Add strategy
+# Add coping strategy
 node mental-health-tracker.js add-coping <name> <description>
 
-# Use strategy and rate effectiveness
-node mental-health-tracker.js use-coping <strategy-id> [rating]
-
-# List strategies
-node mental-health-tracker.js list-coping
-```
-
-#### Emergency & Support
-```bash
-# Add emergency contact
-node mental-health-tracker.js add-contact <name> <relationship> <phone> [notes]
-
-# View contacts
-node mental-health-tracker.js contacts
-```
-
-#### Goals
-```bash
-# Add goal
+# Add recovery goal
 node mental-health-tracker.js add-goal <description> [target-date]
 
-# Complete goal
-node mental-health-tracker.js complete-goal <goal-id>
-
-# List goals
-node mental-health-tracker.js list-goals [all]
+# View emergency contacts
+node mental-health-tracker.js contacts
 ```
-
-### Example Workflow
-
-1. **Initial Setup:**
-   ```bash
-   node mental-health-tracker.js profile-setup "2024-06-15" "Workplace machinery accident"
-   node mental-health-tracker.js add-contact "Dr. Smith" "Therapist" "555-0123"
-   node mental-health-tracker.js add-contact "Crisis Line" "Support" "988"
-   ```
-
-2. **Daily Routine:**
-   ```bash
-   # Morning check-in
-   node mental-health-tracker.js checkin
-   node mental-health-tracker.js mood 6 "Slept better last night"
-
-   # Throughout the day
-   node mental-health-tracker.js symptom anxiety 7 "Before work meeting"
-
-   # Evening reflection
-   node mental-health-tracker.js journal "Made it through the day. Used breathing exercises twice." progress
-   ```
-
-3. **After Therapy:**
-   ```bash
-   node mental-health-tracker.js journal "Discussed trauma processing. Difficult but helpful." therapy
-   node mental-health-tracker.js add-coping "EMDR Exercises" "Eye movement technique from therapy"
-   ```
-
-4. **Tracking Progress:**
-   ```bash
-   node mental-health-tracker.js add-goal "Sleep 6+ hours for a week" "2024-07-15"
-   node mental-health-tracker.js mood-history 30
-   node mental-health-tracker.js view-symptoms 30
-   ```
-
-### Testing
-
-Run the demonstration to see all features:
-
-```bash
-node test-mental-health-tracker.js
-```
+</details>
 
 ### Important Notes
 
@@ -189,7 +137,7 @@ node test-mental-health-tracker.js
 
 ## 💊 Medication Tracker
 
-A simple, easy-to-use medication tracker app designed for people who have trouble remembering if they've taken their pills.
+A simple, easy-to-use medication tracker app designed for people who need help remembering their medications.
 
 ### Features
 
@@ -197,16 +145,10 @@ A simple, easy-to-use medication tracker app designed for people who have troubl
 - **Mark as Taken**: Quickly log when you take your medication
 - **Daily Status Check**: See at a glance which medications you've taken today
 - **History Tracking**: View your medication history over time
+- **Adherence Tracking**: Monitor your medication compliance
 - **Notes Support**: Add notes when taking medications (e.g., "taken with food")
-- **Simple CLI**: Easy-to-use command-line interface
 
-## Quick Start
-
-### Installation
-
-No installation required! Just make sure you have Node.js installed.
-
-### Basic Usage
+### Quick Start
 
 ```bash
 # Add a medication
@@ -216,13 +158,13 @@ node medication-tracker.js add "Aspirin" "100mg" "daily" "08:00"
 node medication-tracker.js status
 
 # Mark a medication as taken
-node medication-tracker.js take <medication-id>
+node medication-tracker.js take <medication-id> "taken with breakfast"
 
 # List all medications
 node medication-tracker.js list
 
-# View help
-node medication-tracker.js help
+# View medication history
+node medication-tracker.js history
 ```
 
 ### Example Workflow
@@ -234,126 +176,329 @@ node medication-tracker.js help
    node medication-tracker.js add "Blood Pressure Med" "50mg" "twice-daily" "08:00,20:00"
    ```
 
-2. **Check what you need to take today:**
+2. **Morning routine:**
    ```bash
    node medication-tracker.js status
+   node medication-tracker.js take 1234567890 "with breakfast"
    ```
 
-3. **Mark medications as taken:**
+3. **Track adherence:**
    ```bash
-   node medication-tracker.js take 1234567890
-   # Or with notes:
-   node medication-tracker.js take 1234567890 "taken with breakfast"
+   node medication-tracker.js history        # Last 7 days
+   node medication-tracker.js history 1234567890 30  # Specific med, 30 days
    ```
 
-4. **View your medication history:**
+---
+
+## ☁️ AWS For Kids
+
+An interactive learning app designed to help you pass the AWS Cloud Practitioner certification exam, explained in simple terms.
+
+### Features
+
+- **Interactive Learning**: 20+ AWS concepts explained like you're 5 years old
+- **Practice Quizzes**: Test your knowledge with exam-style questions
+- **Progress Tracking**: Track which concepts you've learned
+- **Study Guide**: Comprehensive exam preparation guide
+- **Category Filtering**: Focus on specific AWS service categories
+- **Exam-Ready Content**: Real exam concepts with kid-friendly explanations
+
+### AWS Concepts Covered
+
+- **Compute**: EC2, Lambda, ECS
+- **Storage**: S3, EBS, EFS
+- **Networking**: VPC, Route 53, CloudFront
+- **Security**: IAM, Security Groups, KMS
+- **Databases**: RDS, DynamoDB
+- **And more!**
+
+### Quick Start
+
+```bash
+# List all available topics
+node aws-for-kids.js list
+
+# Learn a concept
+node aws-for-kids.js learn ec2
+
+# Take a practice quiz
+node aws-for-kids.js quiz 10
+
+# Check your progress
+node aws-for-kids.js progress
+
+# View study guide
+node aws-for-kids.js guide
+```
+
+### Example Learning Path
+
+1. **Start with core services:**
    ```bash
-   node medication-tracker.js history
-   # Or view history for a specific medication:
-   node medication-tracker.js history 1234567890 30
+   node aws-for-kids.js learn ec2
+   node aws-for-kids.js learn s3
+   node aws-for-kids.js learn iam
    ```
 
-## Commands
+2. **Take practice quizzes:**
+   ```bash
+   node aws-for-kids.js quiz 5
+   ```
 
-### add
-Add a new medication to track.
+3. **Track your progress:**
+   ```bash
+   node aws-for-kids.js progress
+   ```
+
+4. **Review exam guide:**
+   ```bash
+   node aws-for-kids.js guide
+   ```
+
+---
+
+## 🚀 Installation & Setup
+
+### Prerequisites
+
+- Node.js 18.x or 20.x
+- npm (comes with Node.js)
+
+### Install Dependencies
 
 ```bash
-node medication-tracker.js add <name> <dosage> <frequency> <time>
+npm install
 ```
 
-**Example:**
+### Run Apps
+
 ```bash
-node medication-tracker.js add "Aspirin" "100mg" "daily" "08:00"
+# Mental Health Tracker
+npm run mental
+
+# Medication Tracker
+npm run med
+
+# AWS Learning
+npm run aws
 ```
 
-### list
-Display all active medications.
+---
+
+## 🧪 Testing
+
+This project has comprehensive test coverage with **229 tests** covering all functionality.
+
+### Run Tests
 
 ```bash
-node medication-tracker.js list
-```
-
-### take
-Mark a medication as taken. You can optionally add notes.
-
-```bash
-node medication-tracker.js take <medication-id> [notes]
-```
-
-**Example:**
-```bash
-node medication-tracker.js take 1234567890
-node medication-tracker.js take 1234567890 "taken with food"
-```
-
-### status
-Check which medications have been taken today and which are pending.
-
-```bash
-node medication-tracker.js status
-```
-
-### history
-View medication history. You can filter by medication ID and number of days.
-
-```bash
-node medication-tracker.js history [medication-id] [days]
-```
-
-**Examples:**
-```bash
-node medication-tracker.js history          # Last 7 days, all medications
-node medication-tracker.js history 1234567890 30  # Last 30 days, specific medication
-```
-
-### remove
-Deactivate a medication (it will be hidden from active lists but history is preserved).
-
-```bash
-node medication-tracker.js remove <medication-id>
-```
-
-### help
-Display help information.
-
-```bash
-node medication-tracker.js help
-```
-
-## Testing
-
-Run the test script to see the medication tracker in action:
-
-```bash
+# Run all tests
 npm test
-# or
-node test-medication-tracker.js
+
+# Run with coverage report
+npm run test:coverage
+
+# Watch mode (re-runs on changes)
+npm run test:watch
+
+# Run specific test suite
+npx jest __tests__/mental-health-tracker.test.js
 ```
 
-This will create a test database and demonstrate all the features.
+### Test Coverage
 
-## Data Storage
+| Module | Statements | Functions | Lines |
+|--------|------------|-----------|-------|
+| **Mental Health Tracker** | 55.63% | 63.63% | 55.18% |
+| **Medication Tracker** | 76.22% | 90.9% 🌟 | 75% |
+| **AWS For Kids** | 57.31% | 65% | 57.4% |
+| **Overall** | **59.75%** | **70.1%** | **59.25%** |
 
-Medications and history are stored in `medications.json` in the same directory. This file is created automatically when you add your first medication.
+### Test Documentation
 
-## Future Extensions
+- See [TESTING_README.md](TESTING_README.md) for complete testing guide
+- See [TESTING_REPORT.md](TESTING_REPORT.md) for detailed coverage analysis
 
-This app is designed to be extensible for other tracking needs:
-- Habit tracking
-- Exercise routines
-- Meal planning
-- Daily tasks
-- And more!
+---
 
-## Original Project
+## 🔄 CI/CD
 
-This project also includes a simple step logging tool:
+This project uses GitHub Actions for continuous integration:
 
-```bash
-node index.js "Your step description"
+- ✅ Automated testing on every push
+- ✅ Multi-version testing (Node 18.x & 20.x)
+- ✅ Coverage reports generated automatically
+- ✅ Security audits
+- ✅ Quality gates enforcement
+
+Workflow file: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+
+---
+
+## 📁 Project Structure
+
+```
+StepSyncAI/
+├── mental-health-tracker.js      # Mental health tracking app
+├── medication-tracker.js         # Medication management app
+├── aws-for-kids.js              # AWS learning app
+├── index.js                      # Original step logger
+├── __tests__/                    # Test suites
+│   ├── mental-health-tracker.test.js  # 72 tests
+│   ├── medication-tracker.test.js     # 56 tests
+│   ├── aws-for-kids.test.js          # 50 tests
+│   ├── integration.test.js           # 24 workflow tests
+│   └── error-handling.test.js        # 27 error tests
+├── .github/
+│   └── workflows/
+│       └── ci.yml                # CI/CD pipeline
+├── package.json                  # Dependencies & scripts
+├── TESTING_README.md            # Testing documentation
+├── TESTING_REPORT.md            # Coverage analysis
+└── README.md                     # This file
 ```
 
-## License
+---
 
-MIT
+## 💾 Data Storage
+
+Each app stores its data in JSON files:
+
+- `mental-health-data.json` - Mental health tracking data
+- `medications.json` - Medication records
+- `aws-learning-progress.json` - Learning progress
+
+**Privacy Note**: All data is stored locally on your machine. Nothing is sent to external servers.
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how you can help:
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+3. **Make your changes**
+4. **Run tests**: `npm test` (ensure all pass)
+5. **Check coverage**: `npm run test:coverage`
+6. **Commit changes**: `git commit -m 'Add amazing feature'`
+7. **Push to branch**: `git push origin feature/amazing-feature`
+8. **Open a Pull Request**
+
+### Development Guidelines
+
+- Write tests for new features
+- Maintain test coverage above 55%
+- Follow existing code style
+- Update documentation
+- All tests must pass before merging
+
+---
+
+## 📊 Code Quality
+
+### Testing Standards
+
+- ✅ 229 comprehensive tests
+- ✅ Unit tests for all core functions
+- ✅ Integration tests for complete workflows
+- ✅ Error handling tests
+- ✅ Edge case coverage
+- ✅ Fast execution (~2 seconds)
+
+### Quality Gates
+
+- Minimum 55% statement coverage
+- Minimum 45% branch coverage
+- Minimum 65% function coverage
+- All tests passing
+- No high-severity vulnerabilities
+
+---
+
+## 🛠️ NPM Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm test` | Run all tests |
+| `npm run test:coverage` | Run tests with coverage report |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run test:old` | Run legacy demo scripts |
+| `npm run mental` | Start mental health tracker |
+| `npm run med` | Start medication tracker |
+| `npm run aws` | Start AWS learning app |
+
+---
+
+## 📖 Documentation
+
+- [TESTING_README.md](TESTING_README.md) - Complete testing guide
+- [TESTING_REPORT.md](TESTING_REPORT.md) - Detailed coverage analysis
+- [PR_DESCRIPTION.md](PR_DESCRIPTION.md) - Latest improvements summary
+
+---
+
+## 🔮 Future Enhancements
+
+### Planned Features
+
+- [ ] CLI interface tests (target: 70%+ coverage)
+- [ ] Data export functionality (CSV, PDF)
+- [ ] Reminder notifications
+- [ ] Data visualization (charts, graphs)
+- [ ] Multi-user support
+- [ ] Cloud sync option
+- [ ] Mobile app version
+- [ ] Integration with health devices
+
+### Testing Improvements
+
+- [ ] Increase branch coverage to 60%+
+- [ ] Add performance benchmarks
+- [ ] Snapshot testing for outputs
+- [ ] Mutation testing
+
+---
+
+## 📝 License
+
+MIT License - see [LICENSE](LICENSE) for details
+
+---
+
+## 🆘 Support & Resources
+
+### Mental Health Resources
+
+- **National Suicide Prevention Lifeline**: 988
+- **Crisis Text Line**: Text HOME to 741741
+- **SAMHSA National Helpline**: 1-800-662-4357
+
+### Project Support
+
+- Report bugs: [GitHub Issues](https://github.com/Isaloum/StepSyncAI/issues)
+- Feature requests: [GitHub Discussions](https://github.com/Isaloum/StepSyncAI/discussions)
+
+---
+
+## 📈 Project Status
+
+**Version**: 3.0.0
+**Status**: ✅ Active Development
+**Test Coverage**: 60%
+**Tests**: 229 passing
+**CI/CD**: ✅ Automated
+
+---
+
+## 🙏 Acknowledgments
+
+Built with ❤️ to support personal health, wellness, and professional development.
+
+**Remember**: These tools are meant to support your wellness journey, not replace professional medical care. Always consult healthcare professionals for medical advice.
+
+---
+
+<p align="center">
+  <strong>Stay healthy, stay learning! 🌟</strong>
+</p>
