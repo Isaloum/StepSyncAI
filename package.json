@@ -22,7 +22,8 @@
       "*.js",
       "!test-*.js",
       "!jest.config.js",
-      "!coverage/**"
+      "!coverage/**",
+      "!chart-utils.js"
     ],
     "coverageReporters": [
       "text",
