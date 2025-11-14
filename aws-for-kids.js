@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const ChartUtils = require('./chart-utils');
 
 class AWSForKids {
     constructor(dataFile = 'aws-learning-progress.json') {
@@ -1035,6 +1036,280 @@ Shared: Patch management, configuration management, awareness & training`,
 `);
         console.log('═'.repeat(70));
     }
+
+    // Learning Progress Visualization
+    visualizeLearningProgress() {
+        console.log('\n🎓 AWS Learning Progress Dashboard');
+        console.log('═'.repeat(60));
+
+        const totalTopics = Object.keys(this.concepts).length;
+        const completedTopics = this.data.completedLessons.length;
+        const completionRate = (completedTopics / totalTopics) * 100;
+
+        // Overall progress with progress bar
+        console.log('\n📚 Topic Mastery:');
+        console.log(ChartUtils.progressBar(completedTopics, totalTopics, {
+            width: 40
+        }));
+        console.log(`   ${ChartUtils.percentageWheel(completionRate, 'Complete')}`);
+
+        // Progress by category
+        const categoryProgress = {};
+        Object.entries(this.concepts).forEach(([topic, data]) => {
+            const category = data.category;
+            if (!categoryProgress[category]) {
+                categoryProgress[category] = { completed: 0, total: 0 };
+            }
+            categoryProgress[category].total++;
+            if (this.data.completedLessons.includes(topic)) {
+                categoryProgress[category].completed++;
+            }
+        });
+
+        console.log('\n📊 Progress by Category:');
+        console.log('═'.repeat(60));
+        Object.entries(categoryProgress)
+            .sort((a, b) => b[1].completed - a[1].completed)
+            .forEach(([category, stats]) => {
+                const pct = (stats.completed / stats.total) * 100;
+                const bar = ChartUtils.progressBar(stats.completed, stats.total, {
+                    width: 20,
+                    showPercentage: false
+                });
+                console.log(`  ${category.padEnd(20)}: ${bar}`);
+            });
+
+        // Quiz performance visualization
+        if (this.data.quizScores.length > 0) {
+            console.log('\n🎯 Quiz Performance Trends:');
+
+            const chartData = this.data.quizScores.map((quiz, idx) => ({
+                label: `Q${idx + 1}`,
+                value: parseFloat(quiz.percentage)
+            }));
+
+            console.log(ChartUtils.lineChart(chartData, {
+                title: 'Quiz Score History (%)',
+                height: 8,
+                min: 0,
+                max: 100,
+                showValues: chartData.length <= 10
+            }));
+
+            console.log(`\nQuick View: ${ChartUtils.sparkline(chartData.map(d => d.value))}`);
+
+            // Quiz statistics
+            const scores = this.data.quizScores.map(q => parseFloat(q.percentage));
+            const avgScore = (scores.reduce((sum, s) => sum + s, 0) / scores.length).toFixed(1);
+            const maxScore = Math.max(...scores);
+            const minScore = Math.min(...scores);
+            const lastScore = scores[scores.length - 1];
+
+            console.log(ChartUtils.statsBox({
+                'Total Quizzes': this.data.quizScores.length,
+                'Average Score': `${avgScore}%`,
+                'Highest Score': `${maxScore}%`,
+                'Lowest Score': `${minScore}%`,
+                'Latest Score': `${lastScore}%`,
+                'Trend': this.calculateQuizTrend(scores)
+            }, '📊 Quiz Statistics'));
+
+            // Score distribution
+            const excellent = scores.filter(s => s >= 80).length;
+            const good = scores.filter(s => s >= 70 && s < 80).length;
+            const needsWork = scores.filter(s => s < 70).length;
+
+            console.log('\n📈 Score Distribution:');
+            console.log('═'.repeat(60));
+            console.log(`  Excellent (80%+): ${'█'.repeat(excellent)} ${excellent}`);
+            console.log(`  Good (70-79%):    ${'█'.repeat(good)} ${good}`);
+            console.log(`  Needs Work (<70%): ${'█'.repeat(needsWork)} ${needsWork}`);
+        }
+
+        // Exam readiness assessment
+        this.showExamReadiness(completionRate);
+
+        // Study streak
+        const streak = this.calculateStudyStreak();
+        if (streak > 0) {
+            console.log(ChartUtils.streakDisplay(streak, this.getLongestStudyStreak()));
+        }
+    }
+
+    // Exam readiness meter
+    showExamReadiness(completionRate) {
+        console.log('\n🏆 Exam Readiness Assessment:');
+        console.log('═'.repeat(60));
+
+        let readinessScore = 0;
+        const criteria = [];
+
+        // Topic completion (40 points)
+        const topicPoints = Math.min(completionRate * 0.4, 40);
+        readinessScore += topicPoints;
+        criteria.push({
+            name: 'Topic Coverage',
+            points: topicPoints.toFixed(0),
+            max: 40,
+            status: completionRate >= 80 ? '✅' : completionRate >= 50 ? '⚠️' : '❌'
+        });
+
+        // Quiz performance (40 points)
+        if (this.data.quizScores.length > 0) {
+            const avgScore = this.data.quizScores.reduce((sum, q) => sum + parseFloat(q.percentage), 0) / this.data.quizScores.length;
+            const quizPoints = Math.min(avgScore * 0.4, 40);
+            readinessScore += quizPoints;
+            criteria.push({
+                name: 'Quiz Performance',
+                points: quizPoints.toFixed(0),
+                max: 40,
+                status: avgScore >= 75 ? '✅' : avgScore >= 60 ? '⚠️' : '❌'
+            });
+        } else {
+            criteria.push({
+                name: 'Quiz Performance',
+                points: 0,
+                max: 40,
+                status: '❌'
+            });
+        }
+
+        // Quiz consistency (20 points)
+        if (this.data.quizScores.length >= 5) {
+            const consistencyPoints = 20;
+            readinessScore += consistencyPoints;
+            criteria.push({
+                name: 'Practice Consistency',
+                points: consistencyPoints,
+                max: 20,
+                status: '✅'
+            });
+        } else {
+            const partialPoints = (this.data.quizScores.length / 5) * 20;
+            readinessScore += partialPoints;
+            criteria.push({
+                name: 'Practice Consistency',
+                points: partialPoints.toFixed(0),
+                max: 20,
+                status: this.data.quizScores.length >= 3 ? '⚠️' : '❌'
+            });
+        }
+
+        // Display criteria
+        criteria.forEach(c => {
+            console.log(`  ${c.status} ${c.name.padEnd(25)}: ${c.points}/${c.max} points`);
+        });
+
+        console.log('\n📊 Overall Readiness:');
+        console.log(ChartUtils.progressBar(readinessScore, 100, {
+            width: 40
+        }));
+        console.log(`   ${ChartUtils.percentageWheel(readinessScore, 'Ready')}`);
+
+        // Readiness verdict
+        console.log('\n💡 Assessment:');
+        if (readinessScore >= 80) {
+            console.log('   🎉 You\'re READY! Schedule your exam with confidence!');
+            console.log('   ✓ Strong topic coverage');
+            console.log('   ✓ Consistently high quiz scores');
+            console.log('   ✓ Good practice consistency');
+        } else if (readinessScore >= 60) {
+            console.log('   ⚠️  Almost there! A bit more practice needed.');
+            console.log('   ✓ Solid foundation established');
+            console.log('   • Complete remaining topics');
+            console.log('   • Aim for 75%+ on all quizzes');
+        } else {
+            console.log('   📚 Keep studying! You\'re making progress.');
+            console.log('   • Complete more topics (aim for 80%+)');
+            console.log('   • Take more practice quizzes');
+            console.log('   • Review weak areas');
+        }
+
+        console.log('═'.repeat(60));
+    }
+
+    // Calculate quiz trend
+    calculateQuizTrend(scores) {
+        if (scores.length < 2) return 'Insufficient data';
+
+        const recent = scores.slice(-3);
+        const older = scores.slice(0, Math.min(3, scores.length));
+
+        const recentAvg = recent.reduce((sum, s) => sum + s, 0) / recent.length;
+        const olderAvg = older.reduce((sum, s) => sum + s, 0) / older.length;
+
+        const diff = recentAvg - olderAvg;
+
+        if (Math.abs(diff) < 5) return 'Stable →';
+        return diff > 0 ? 'Improving ↗' : 'Declining ↘';
+    }
+
+    // Calculate study streak (days with completed lessons or quizzes)
+    calculateStudyStreak() {
+        const activities = [
+            ...this.data.quizScores.map(q => new Date(q.date).toDateString()),
+            ...this.data.completedLessons.map(() => new Date().toDateString()) // Simplified
+        ];
+
+        if (activities.length === 0) return 0;
+
+        const uniqueDates = [...new Set(activities)].sort();
+        const today = new Date().toDateString();
+
+        let streak = 0;
+        const checkDate = new Date();
+
+        // Check if active today or yesterday
+        if (!uniqueDates.includes(today)) {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            if (!uniqueDates.includes(yesterday.toDateString())) {
+                return 0;
+            }
+        }
+
+        // Count consecutive days
+        for (let i = 0; i < 30; i++) {
+            const dateStr = checkDate.toDateString();
+            if (uniqueDates.includes(dateStr)) {
+                streak++;
+                checkDate.setDate(checkDate.getDate() - 1);
+            } else {
+                break;
+            }
+        }
+
+        return streak;
+    }
+
+    // Get longest study streak
+    getLongestStudyStreak() {
+        const activities = [
+            ...this.data.quizScores.map(q => new Date(q.date).toDateString())
+        ];
+
+        if (activities.length === 0) return 0;
+
+        const uniqueDates = [...new Set(activities)]
+            .map(d => new Date(d))
+            .sort((a, b) => a - b);
+
+        let maxStreak = 1;
+        let currentStreak = 1;
+
+        for (let i = 1; i < uniqueDates.length; i++) {
+            const dayDiff = (uniqueDates[i] - uniqueDates[i - 1]) / (1000 * 60 * 60 * 24);
+
+            if (dayDiff === 1) {
+                currentStreak++;
+                maxStreak = Math.max(maxStreak, currentStreak);
+            } else {
+                currentStreak = 1;
+            }
+        }
+
+        return maxStreak;
+    }
 }
 
 // CLI Interface
@@ -1065,6 +1340,9 @@ Commands:
 
   progress
       View your learning progress and quiz scores
+
+  dashboard
+      Visualize learning progress with charts and exam readiness
 
   guide
       View the AWS Cloud Practitioner exam study guide
@@ -1109,6 +1387,10 @@ function main() {
 
         case 'progress':
             app.progress();
+            break;
+
+        case 'dashboard':
+            app.visualizeLearningProgress();
             break;
 
         case 'guide':
