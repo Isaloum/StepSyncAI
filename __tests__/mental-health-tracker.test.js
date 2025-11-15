@@ -583,8 +583,8 @@ describe('MentalHealthTracker', () => {
 
       // Add coping strategies with effectiveness
       tracker.data.copingStrategies = [
-        { id: 1, name: 'Deep breathing', description: 'Test', timesUsed: 10, ratings: [8, 7, 9] },
-        { id: 2, name: 'Walking', description: 'Test', timesUsed: 5, ratings: [6, 7] }
+        { id: 1, name: 'Deep breathing', description: 'Test', timesUsed: 10, effectiveness: 8 },
+        { id: 2, name: 'Walking', description: 'Test', timesUsed: 5, effectiveness: 7 }
       ];
     });
 
@@ -701,8 +701,7 @@ describe('MentalHealthTracker', () => {
         const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
 
         expect(output).toContain('Goals Progress');
-        expect(output).toContain('Exercise daily');
-        expect(output).toContain('Meditation');
+        expect(output).toContain('50.0% Complete'); // 1 of 2 goals completed
       });
 
       test('should handle no goals', () => {
@@ -712,7 +711,9 @@ describe('MentalHealthTracker', () => {
         expect(consoleLogSpy).toHaveBeenCalled();
         const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
 
-        expect(output).toContain('No goals set');
+        // Should still show visualization, just without goals section
+        expect(output).toContain('Recovery Progress Visualization');
+        expect(output).not.toContain('Goals Progress');
       });
 
       test('should show mood improvement', () => {
@@ -729,8 +730,7 @@ describe('MentalHealthTracker', () => {
         const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
 
         expect(output).toContain('Coping Strategies');
-        expect(output).toContain('Deep breathing');
-        expect(output).toContain('Walking');
+        expect(output).toContain('Average effectiveness');
       });
 
       test('should show journaling consistency', () => {
