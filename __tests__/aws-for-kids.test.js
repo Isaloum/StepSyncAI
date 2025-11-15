@@ -637,4 +637,227 @@ describe('AWSForKids', () => {
       expect(calls).toContain('100');
     });
   });
+
+  describe('Visualization Methods', () => {
+    beforeEach(() => {
+      // Setup test data for visualizations
+      const allTopics = Object.keys(app.concepts);
+
+      // Complete some lessons
+      app.data.completedLessons = [allTopics[0], allTopics[1], allTopics[2]];
+
+      // Add quiz scores
+      app.data.quizScores = [
+        { topic: allTopics[0], percentage: 80, date: new Date().toISOString() },
+        { topic: allTopics[1], percentage: 90, date: new Date().toISOString() },
+        { topic: allTopics[2], percentage: 75, date: new Date().toISOString() },
+        { topic: allTopics[0], percentage: 85, date: new Date().toISOString() }
+      ];
+    });
+
+    describe('visualizeLearningProgress', () => {
+      test('should display comprehensive learning dashboard', () => {
+        app.visualizeLearningProgress();
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Learning Progress Dashboard');
+      });
+
+      test('should show topic mastery by category', () => {
+        app.visualizeLearningProgress();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Topic Mastery');
+        // Should show at least some categories
+        expect(output).toMatch(/Compute|Storage|Database|Networking/);
+      });
+
+      test('should show quiz performance trends', () => {
+        app.visualizeLearningProgress();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Quiz Performance');
+      });
+
+      test('should show exam readiness assessment', () => {
+        app.visualizeLearningProgress();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Exam Readiness');
+      });
+
+      test('should handle no completed lessons', () => {
+        app.data.completedLessons = [];
+        app.data.quizScores = [];
+
+        app.visualizeLearningProgress();
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Learning Progress Dashboard');
+        expect(output).toContain('0.0%'); // Should show 0% completion
+      });
+
+      test('should handle no quiz scores', () => {
+        app.data.quizScores = [];
+
+        app.visualizeLearningProgress();
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        // Should still show dashboard, just without quiz performance trends section
+        expect(output).toContain('Learning Progress Dashboard');
+        expect(output).not.toContain('Quiz Performance Trends'); // The detailed quiz section should not show
+        expect(output).toContain('Quiz Performance'); // But will still show in exam readiness criteria
+      });
+
+      test('should calculate completion percentage', () => {
+        app.visualizeLearningProgress();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toMatch(/\d+\.\d+%/);
+      });
+
+      test('should show progress bars for categories', () => {
+        app.visualizeLearningProgress();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        // Should contain progress bar characters
+        expect(output).toMatch(/[█░]/);
+      });
+
+      test('should show quiz score chart', () => {
+        app.visualizeLearningProgress();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        // Should have chart elements
+        expect(output).toMatch(/[●│]/);
+      });
+
+      test('should calculate average quiz score', () => {
+        app.visualizeLearningProgress();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Average');
+      });
+
+      test('should handle 100% completion', () => {
+        const allTopics = Object.keys(app.concepts);
+        app.data.completedLessons = [...allTopics];
+        app.data.quizScores = allTopics.map(topic => ({
+          topic,
+          percentage: 100,
+          date: new Date().toISOString()
+        }));
+
+        app.visualizeLearningProgress();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('100');
+      });
+    });
+
+    describe('Helper Methods for Visualizations', () => {
+      test('showExamReadiness should calculate readiness score', () => {
+        const completionRate = 50; // 50% of topics completed
+
+        app.showExamReadiness(completionRate);
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Readiness');
+      });
+
+      test('showExamReadiness should show "Ready" for high scores', () => {
+        const completionRate = 90;
+        app.data.quizScores = [
+          { topic: 'ec2', percentage: 95, date: new Date().toISOString() },
+          { topic: 's3', percentage: 92, date: new Date().toISOString() },
+          { topic: 'lambda', percentage: 88, date: new Date().toISOString() }
+        ];
+
+        app.showExamReadiness(completionRate);
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toMatch(/Ready|Excellent/i);
+      });
+
+      test('showExamReadiness should show "Keep studying" for low scores', () => {
+        const completionRate = 30;
+        app.data.quizScores = [
+          { topic: 'ec2', percentage: 55, date: new Date().toISOString() },
+          { topic: 's3', percentage: 60, date: new Date().toISOString() }
+        ];
+
+        app.showExamReadiness(completionRate);
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toMatch(/Keep studying|Continue learning/i);
+      });
+
+      test('showExamReadiness should handle no quiz scores', () => {
+        app.data.quizScores = [];
+
+        app.showExamReadiness(50);
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        // Should not throw error
+      });
+
+      test('calculateQuizTrend should identify improving trend', () => {
+        const scores = [60, 70, 75, 80, 85];
+
+        const trend = app.calculateQuizTrend(scores);
+
+        expect(trend).toContain('Improving');
+      });
+
+      test('calculateQuizTrend should identify declining trend', () => {
+        const scores = [90, 85, 80, 75, 70];
+
+        const trend = app.calculateQuizTrend(scores);
+
+        expect(trend).toContain('Declining');
+      });
+
+      test('calculateQuizTrend should identify stable trend', () => {
+        const scores = [80, 81, 80, 79, 80];
+
+        const trend = app.calculateQuizTrend(scores);
+
+        expect(trend).toContain('Stable');
+      });
+
+      test('calculateQuizTrend should handle single score', () => {
+        const scores = [75];
+
+        const trend = app.calculateQuizTrend(scores);
+
+        expect(trend).toContain('Insufficient data');
+      });
+
+      test('calculateQuizTrend should handle empty scores', () => {
+        const scores = [];
+
+        const trend = app.calculateQuizTrend(scores);
+
+        expect(trend).toContain('Insufficient data');
+      });
+    });
+  });
 });

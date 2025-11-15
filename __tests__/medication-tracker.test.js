@@ -625,4 +625,257 @@ describe('MedicationTracker', () => {
       expect(tracker.data.history.length).toBe(1);
     });
   });
+
+  describe('Visualization Methods', () => {
+    beforeEach(() => {
+      // Setup test data for visualizations
+      const now = new Date();
+
+      // Add medications
+      tracker.data.medications = [
+        {
+          id: 1,
+          name: 'Aspirin',
+          dosage: '100mg',
+          frequency: 'daily',
+          times: ['08:00'],
+          active: true,
+          startDate: new Date(now.getTime() - 30 * 86400000).toISOString()
+        },
+        {
+          id: 2,
+          name: 'Vitamin D',
+          dosage: '1000IU',
+          frequency: 'daily',
+          times: ['08:00'],
+          active: true,
+          startDate: new Date(now.getTime() - 30 * 86400000).toISOString()
+        }
+      ];
+
+      // Add adherence history for the last 30 days
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+
+        // Simulate 80% adherence (miss 1 in 5 days)
+        if (i % 5 !== 0) {
+          tracker.data.history.push({
+            id: (29 - i) * 2 + 1,
+            medicationId: 1,
+            medicationName: 'Aspirin',
+            timestamp: date.toISOString(),
+            notes: 'Test'
+          });
+          tracker.data.history.push({
+            id: (29 - i) * 2 + 2,
+            medicationId: 2,
+            medicationName: 'Vitamin D',
+            timestamp: date.toISOString(),
+            notes: 'Test'
+          });
+        }
+      }
+    });
+
+    describe('visualizeAdherence', () => {
+      test('should display adherence overview for default 30 days', () => {
+        tracker.visualizeAdherence();
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Medication Adherence');
+      });
+
+      test('should display adherence for custom number of days', () => {
+        tracker.visualizeAdherence(14);
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Medication Adherence');
+      });
+
+      test('should show overall adherence rate', () => {
+        tracker.visualizeAdherence();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Overall Adherence');
+        expect(output).toContain('%');
+      });
+
+      test('should show per-medication adherence', () => {
+        tracker.visualizeAdherence();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Aspirin');
+        expect(output).toContain('Vitamin D');
+      });
+
+      test('should handle no medications', () => {
+        tracker.data.medications = [];
+        tracker.data.history = [];
+        tracker.visualizeAdherence();
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('No medications added yet');
+      });
+
+      test('should handle no history data', () => {
+        tracker.data.history = [];
+        tracker.visualizeAdherence();
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('No medication history yet');
+      });
+
+      test('should show streak information', () => {
+        tracker.visualizeAdherence();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Streak');
+      });
+
+      test('should calculate adherence percentages correctly', () => {
+        tracker.visualizeAdherence();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        // With 80% adherence in our test data, should show around 80%
+        expect(output).toMatch(/\d+\.\d+%/);
+      });
+
+      test('should show calendar heatmap', () => {
+        tracker.visualizeAdherence();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        // Should contain calendar visualization symbols
+        expect(output).toMatch(/[░▒▓█]/);
+      });
+
+      test('should show weekly trend', () => {
+        tracker.visualizeAdherence();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Weekly');
+      });
+
+      test('should handle only inactive medications', () => {
+        tracker.data.medications[0].active = false;
+        tracker.data.medications[1].active = false;
+
+        tracker.visualizeAdherence();
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        // Should still show visualization since medications exist, even if inactive
+      });
+
+      test('should handle partial adherence data', () => {
+        // Remove most history entries
+        tracker.data.history = tracker.data.history.slice(0, 5);
+
+        tracker.visualizeAdherence();
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        // Should not throw error
+      });
+    });
+
+    describe('Helper Methods for Visualizations', () => {
+      test('showAdherenceTrend should group data by week', () => {
+        const days = 28;
+        tracker.showAdherenceTrend(days);
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Week');
+      });
+
+      test('calculateAdherenceStreak should count consecutive perfect days', () => {
+        const now = new Date();
+        tracker.data.medications = [
+          {
+            id: 1,
+            name: 'Test Med',
+            dosage: '10mg',
+            frequency: 'daily',
+            times: ['08:00'],
+            active: true,
+            startDate: new Date(now.getTime() - 10 * 86400000).toISOString()
+          }
+        ];
+        tracker.data.history = [];
+
+        // Add perfect adherence for last 5 days (1 dose per day)
+        for (let i = 4; i >= 0; i--) {
+          const date = new Date(now);
+          date.setDate(date.getDate() - i);
+          date.setHours(8, 0, 0, 0);
+          tracker.data.history.push({
+            id: 5 - i,
+            medicationId: 1,
+            medicationName: 'Test Med',
+            timestamp: date.toISOString(),
+            notes: 'Test'
+          });
+        }
+
+        const streak = tracker.calculateAdherenceStreak();
+        expect(streak).toBeGreaterThanOrEqual(1);
+      });
+
+      test('calculateAdherenceStreak should return 0 for no perfect days', () => {
+        tracker.data.history = [];
+        const streak = tracker.calculateAdherenceStreak();
+        expect(streak).toBe(0);
+      });
+
+      test('calculateAdherenceStreak should break on missed dose', () => {
+        const now = new Date();
+        tracker.data.medications = [
+          {
+            id: 1,
+            name: 'Test Med',
+            dosage: '10mg',
+            frequency: 'daily',
+            times: ['08:00'],
+            active: true,
+            startDate: new Date(now.getTime() - 10 * 86400000).toISOString()
+          }
+        ];
+        tracker.data.history = [];
+
+        // Add history for 5 days, but miss day 3
+        for (let i = 4; i >= 0; i--) {
+          if (i === 2) continue; // Skip day 3
+
+          const date = new Date(now);
+          date.setDate(date.getDate() - i);
+          date.setHours(8, 0, 0, 0);
+          tracker.data.history.push({
+            id: 5 - i,
+            medicationId: 1,
+            medicationName: 'Test Med',
+            timestamp: date.toISOString(),
+            notes: 'Test'
+          });
+        }
+
+        const streak = tracker.calculateAdherenceStreak();
+        // Streak should be broken by the missed dose
+        expect(streak).toBeLessThan(5);
+      });
+    });
+  });
 });

@@ -544,4 +544,279 @@ describe('MentalHealthTracker', () => {
       expect(tracker.data.moodEntries[2].rating).toBe(7);
     });
   });
+
+  describe('Visualization Methods', () => {
+    beforeEach(() => {
+      // Setup test data for visualizations
+      const now = new Date();
+
+      // Set up profile
+      tracker.data.profile = {
+        accidentDate: new Date(now.getTime() - 90 * 86400000).toISOString(), // 90 days ago
+        accidentDescription: 'Test accident'
+      };
+
+      // Add mood entries for last 14 days
+      for (let i = 13; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        tracker.data.moodEntries.push({
+          id: 14 - i,
+          rating: 5 + Math.floor(Math.random() * 3),
+          note: `Test mood ${i}`,
+          timestamp: date.toISOString()
+        });
+      }
+
+      // Add some symptoms
+      tracker.data.symptoms = [
+        { id: 1, type: 'anxiety', severity: 7, note: 'Test', timestamp: now.toISOString() },
+        { id: 2, type: 'anxiety', severity: 6, note: 'Test', timestamp: new Date(now.getTime() - 86400000).toISOString() },
+        { id: 3, type: 'flashback', severity: 8, note: 'Test', timestamp: now.toISOString() }
+      ];
+
+      // Add goals
+      tracker.data.goals = [
+        { id: 1, description: 'Exercise daily', targetDate: '2024-12-31', completed: false, progress: 50 },
+        { id: 2, description: 'Meditation', targetDate: '2024-12-31', completed: true, progress: 100 }
+      ];
+
+      // Add coping strategies with effectiveness
+      tracker.data.copingStrategies = [
+        { id: 1, name: 'Deep breathing', description: 'Test', timesUsed: 10, effectiveness: 8 },
+        { id: 2, name: 'Walking', description: 'Test', timesUsed: 5, effectiveness: 7 }
+      ];
+    });
+
+    describe('visualizeMoodTrends', () => {
+      test('should display mood trends for default 14 days', () => {
+        tracker.visualizeMoodTrends();
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Mood Trend');
+        expect(output).toContain('Average');
+      });
+
+      test('should display mood trends for custom number of days', () => {
+        tracker.visualizeMoodTrends(7);
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Mood Trends');
+      });
+
+      test('should handle no mood data', () => {
+        tracker.data.moodEntries = [];
+        tracker.visualizeMoodTrends();
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('No mood data');
+      });
+
+      test('should calculate and display statistics', () => {
+        tracker.visualizeMoodTrends();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Average Mood');
+        expect(output).toContain('Highest');
+        expect(output).toContain('Lowest');
+      });
+
+      test('should show trend direction', () => {
+        tracker.visualizeMoodTrends();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        // Should show some trend indicator
+        expect(output).toMatch(/Improving|Stable|Declining/);
+      });
+    });
+
+    describe('visualizeSymptomPatterns', () => {
+      test('should display symptom patterns for default 30 days', () => {
+        tracker.visualizeSymptomPatterns();
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Symptom Patterns');
+      });
+
+      test('should display symptom patterns for custom number of days', () => {
+        tracker.visualizeSymptomPatterns(14);
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('14 Days');
+      });
+
+      test('should handle no symptom data', () => {
+        tracker.data.symptoms = [];
+        tracker.visualizeSymptomPatterns();
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('No symptom data');
+      });
+
+      test('should show symptom frequency', () => {
+        tracker.visualizeSymptomPatterns();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('anxiety');
+        expect(output).toContain('flashback');
+      });
+
+      test('should show average severity', () => {
+        tracker.visualizeSymptomPatterns();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Average Severity');
+      });
+    });
+
+    describe('visualizeRecoveryProgress', () => {
+      test('should display comprehensive recovery dashboard', () => {
+        tracker.visualizeRecoveryProgress();
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Recovery Progress Visualization');
+      });
+
+      test('should show goals progress', () => {
+        tracker.visualizeRecoveryProgress();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Goals Progress');
+        expect(output).toContain('50.0% Complete'); // 1 of 2 goals completed
+      });
+
+      test('should handle no goals', () => {
+        tracker.data.goals = [];
+        tracker.visualizeRecoveryProgress();
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        // Should still show visualization, just without goals section
+        expect(output).toContain('Recovery Progress Visualization');
+        expect(output).not.toContain('Goals Progress');
+      });
+
+      test('should show mood improvement', () => {
+        tracker.visualizeRecoveryProgress();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Mood Improvement');
+      });
+
+      test('should show coping strategies effectiveness', () => {
+        tracker.visualizeRecoveryProgress();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Coping Strategies');
+        expect(output).toContain('Average effectiveness');
+      });
+
+      test('should show journaling consistency', () => {
+        tracker.data.journalEntries = [
+          { id: 1, content: 'Test', timestamp: new Date().toISOString() },
+          { id: 2, content: 'Test', timestamp: new Date().toISOString() }
+        ];
+
+        tracker.visualizeRecoveryProgress();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+
+        expect(output).toContain('Journal');
+      });
+
+      test('should handle missing mood data gracefully', () => {
+        tracker.data.moodEntries = [];
+        tracker.visualizeRecoveryProgress();
+
+        expect(consoleLogSpy).toHaveBeenCalled();
+        // Should not throw error
+      });
+    });
+
+    describe('Helper Methods for Visualizations', () => {
+      test('calculateTrend should identify improving trend', () => {
+        const data = [
+          { value: 3 },
+          { value: 4 },
+          { value: 5 },
+          { value: 6 }
+        ];
+
+        const trend = tracker.calculateTrend(data);
+        expect(trend).toContain('Improving');
+      });
+
+      test('calculateTrend should identify declining trend', () => {
+        const data = [
+          { value: 8 },
+          { value: 6 },
+          { value: 5 },
+          { value: 3 }
+        ];
+
+        const trend = tracker.calculateTrend(data);
+        expect(trend).toContain('Declining');
+      });
+
+      test('calculateTrend should identify stable trend', () => {
+        const data = [
+          { value: 5 },
+          { value: 5 },
+          { value: 5 },
+          { value: 5 }
+        ];
+
+        const trend = tracker.calculateTrend(data);
+        expect(trend).toContain('Stable');
+      });
+
+      test('calculateMoodStreak should count consecutive days', () => {
+        const now = new Date();
+        tracker.data.moodEntries = [];
+
+        // Add entries for last 5 consecutive days
+        for (let i = 4; i >= 0; i--) {
+          const date = new Date(now);
+          date.setDate(date.getDate() - i);
+          tracker.data.moodEntries.push({
+            id: 5 - i,
+            rating: 5,
+            note: 'Test',
+            timestamp: date.toISOString()
+          });
+        }
+
+        const streak = tracker.calculateMoodStreak();
+        expect(streak).toBeGreaterThanOrEqual(1);
+      });
+
+      test('calculateMoodStreak should return 0 for no entries', () => {
+        tracker.data.moodEntries = [];
+        const streak = tracker.calculateMoodStreak();
+        expect(streak).toBe(0);
+      });
+    });
+  });
 });
