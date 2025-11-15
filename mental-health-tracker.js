@@ -2,11 +2,13 @@ const fs = require('fs');
 const path = require('path');
 const ChartUtils = require('./chart-utils');
 const PDFDocument = require('pdfkit');
+const ReminderService = require('./reminder-service');
 
 class MentalHealthTracker {
     constructor(dataFile = 'mental-health-data.json') {
         this.dataFile = dataFile;
         this.data = this.loadData();
+        this.reminderService = new ReminderService();
     }
 
     loadData() {
@@ -1452,6 +1454,21 @@ class MentalHealthTracker {
 
         return maxStreak;
     }
+
+    // Reminder Management
+    enableReminders(journalTime = '20:00', checkInTime = '09:00') {
+        this.reminderService.enableMentalHealthReminders(journalTime, checkInTime);
+        return true;
+    }
+
+    disableReminders() {
+        this.reminderService.disableMentalHealthReminders();
+        return true;
+    }
+
+    showReminderStatus() {
+        this.reminderService.showStatus();
+    }
 }
 
 // CLI Interface
@@ -1573,6 +1590,17 @@ BACKUP & RESTORE:
   restore <backup-filename> [directory]
       Restore data from a backup file
       Current data is automatically backed up before restore
+
+  reminders-on [journal-time] [checkin-time]
+      Enable daily reminders for journaling and check-ins
+      Default times: journal at 20:00 (8 PM), check-in at 09:00 (9 AM)
+      Example: node mental-health-tracker.js reminders-on 21:00 08:00
+
+  reminders-off (or disable-reminders)
+      Disable all mental health reminders
+
+  reminders (or reminders-status)
+      View current reminder status and settings
 
 ═══════════════════════════════════════════════════════════
 Remember: This is a personal tracking tool. Always consult with
@@ -1807,6 +1835,23 @@ function main() {
             }
             const restoreDir = args[2] || './backups';
             tracker.restoreFromBackup(args[1], restoreDir);
+            break;
+
+        case 'reminders-on':
+        case 'enable-reminders':
+            const journalTime = args[1] || '20:00';
+            const checkInTime = args[2] || '09:00';
+            tracker.enableReminders(journalTime, checkInTime);
+            break;
+
+        case 'reminders-off':
+        case 'disable-reminders':
+            tracker.disableReminders();
+            break;
+
+        case 'reminders-status':
+        case 'reminders':
+            tracker.showReminderStatus();
             break;
 
         case 'help':

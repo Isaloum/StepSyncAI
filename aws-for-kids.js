@@ -2,12 +2,14 @@ const fs = require('fs');
 const path = require('path');
 const ChartUtils = require('./chart-utils');
 const PDFDocument = require('pdfkit');
+const ReminderService = require('./reminder-service');
 
 class AWSForKids {
     constructor(dataFile = 'aws-learning-progress.json') {
         this.dataFile = dataFile;
         this.data = this.loadData();
         this.initializeConcepts();
+        this.reminderService = new ReminderService();
     }
 
     loadData() {
@@ -1783,6 +1785,21 @@ Shared: Patch management, configuration management, awareness & training`,
 
         return maxStreak;
     }
+
+    // Reminder Management
+    enableReminders(studyTime = '19:00') {
+        this.reminderService.enableAWSReminders(studyTime);
+        return true;
+    }
+
+    disableReminders() {
+        this.reminderService.disableAWSReminders();
+        return true;
+    }
+
+    showReminderStatus() {
+        this.reminderService.showStatus();
+    }
 }
 
 // CLI Interface
@@ -1842,6 +1859,17 @@ Commands:
   restore <backup-filename> [directory]
       Restore data from a backup file
       Current data is automatically backed up before restore
+
+  reminders-on [study-time]
+      Enable daily study session reminders
+      Default time: 19:00 (7 PM)
+      Example: node aws-for-kids.js reminders-on 18:30
+
+  reminders-off (or disable-reminders)
+      Disable study reminders
+
+  reminders (or reminders-status)
+      View current reminder status and settings
 
   help
       Show this help message
@@ -1927,6 +1955,22 @@ function main() {
             }
             const restoreDir = args[2] || './backups';
             app.restoreFromBackup(args[1], restoreDir);
+            break;
+
+        case 'reminders-on':
+        case 'enable-reminders':
+            const studyTime = args[1] || '19:00';
+            app.enableReminders(studyTime);
+            break;
+
+        case 'reminders-off':
+        case 'disable-reminders':
+            app.disableReminders();
+            break;
+
+        case 'reminders-status':
+        case 'reminders':
+            app.showReminderStatus();
             break;
 
         case 'help':

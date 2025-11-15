@@ -249,6 +249,65 @@ node mental-health-tracker.js stats
 - Understanding your tracking habits
 </details>
 
+### ⏰ Reminder Notifications
+
+<details>
+<parameter name="summary"><b>Never Miss a Medication or Study Session</b></summary>
+
+```bash
+# Medication Tracker - Enable reminders for all active medications
+node medication-tracker.js reminders-on
+
+# Mental Health Tracker - Enable daily reminders
+# Default: Journal at 20:00 (8 PM), Check-in at 09:00 (9 AM)
+node mental-health-tracker.js reminders-on [journal-time] [checkin-time]
+
+# AWS Learning - Enable daily study reminders
+# Default: Study session at 19:00 (7 PM)
+node aws-for-kids.js reminders-on [study-time]
+
+# Check reminder status
+node medication-tracker.js reminders
+node mental-health-tracker.js reminders
+node aws-for-kids.js reminders
+
+# Disable reminders
+node medication-tracker.js reminders-off
+node mental-health-tracker.js reminders-off
+node aws-for-kids.js reminders-off
+```
+
+**Medication Reminders:**
+- 💊 Automatic reminders at each medication's scheduled time
+- 🔔 Desktop notifications when it's time to take your medication
+- ✅ Based on your active medications list
+- 📅 Daily recurring reminders
+
+**Mental Health Reminders:**
+- 📝 Journal prompt reminder (default: 8 PM)
+- 🧠 Daily mood check-in reminder (default: 9 AM)
+- 🎯 Customizable reminder times
+- 💭 Gentle prompts for self-reflection
+
+**AWS Study Reminders:**
+- ☁️ Daily study session reminder (default: 7 PM)
+- 📚 Consistent learning habits
+- 🎓 Exam preparation support
+- ⏰ Customizable study time
+
+**Features:**
+- Cross-platform desktop notifications (Windows, macOS, Linux)
+- Persistent reminders (survive app restarts)
+- Easy enable/disable controls
+- Status checking to see active reminders
+
+**Perfect for:**
+- 💊 Medication adherence improvement
+- 🧠 Building healthy mental health tracking habits
+- 📚 Consistent AWS certification study
+- ⏰ Time management and routine building
+</details>
+
 ### 🔄 Backup & Restore
 
 <details>
@@ -806,7 +865,7 @@ We welcome contributions! Here's how you can help:
 - [x] Data export functionality (CSV) ✓
 - [x] Backup and restore system ✓
 - [x] PDF export with charts and graphs ✓
-- [ ] Reminder notifications
+- [x] Reminder notifications ✓
 - [ ] Multi-user support
 - [ ] Cloud sync option
 - [ ] Mobile app version

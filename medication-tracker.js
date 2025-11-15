@@ -2,11 +2,13 @@ const fs = require('fs');
 const path = require('path');
 const ChartUtils = require('./chart-utils');
 const PDFDocument = require('pdfkit');
+const ReminderService = require('./reminder-service');
 
 class MedicationTracker {
     constructor(dataFile = 'medications.json') {
         this.dataFile = dataFile;
         this.data = this.loadData();
+        this.reminderService = new ReminderService();
     }
 
     loadData() {
@@ -896,6 +898,29 @@ class MedicationTracker {
 
         return maxStreak;
     }
+
+    // Reminder Management
+    enableReminders() {
+        const activeMeds = this.data.medications.filter(m => m.active);
+
+        if (activeMeds.length === 0) {
+            console.log('\n⚠️  No active medications to set reminders for');
+            console.log('   Add medications first using: add <name> <dosage> <frequency> <time>');
+            return false;
+        }
+
+        this.reminderService.enableMedicationReminders(activeMeds);
+        return true;
+    }
+
+    disableReminders() {
+        this.reminderService.disableMedicationReminders();
+        return true;
+    }
+
+    showReminderStatus() {
+        this.reminderService.showStatus();
+    }
 }
 
 // CLI Interface
@@ -953,6 +978,17 @@ Commands:
   restore <backup-filename> [directory]
       Restore data from a backup file
       Current data is automatically backed up before restore
+
+  reminders-on (or enable-reminders)
+      Enable daily medication reminders at scheduled times
+      Sends notifications when it's time to take your medications
+      Reminders will be set for all active medications
+
+  reminders-off (or disable-reminders)
+      Disable medication reminders
+
+  reminders (or reminders-status)
+      View current reminder status and settings
 
   help
       Show this help message
@@ -1047,6 +1083,21 @@ function main() {
             }
             const restoreDir = args[2] || './backups';
             tracker.restoreFromBackup(args[1], restoreDir);
+            break;
+
+        case 'reminders-on':
+        case 'enable-reminders':
+            tracker.enableReminders();
+            break;
+
+        case 'reminders-off':
+        case 'disable-reminders':
+            tracker.disableReminders();
+            break;
+
+        case 'reminders-status':
+        case 'reminders':
+            tracker.showReminderStatus();
             break;
 
         case 'help':
