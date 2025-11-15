@@ -181,6 +181,47 @@ node mental-health-tracker.js export ./my-health-data
 - 📈 Track long-term recovery patterns
 </details>
 
+<details>
+<summary><b>Generate Professional PDF Reports</b></summary>
+
+```bash
+# Generate comprehensive PDF report with charts
+node mental-health-tracker.js export-pdf [directory]
+node medication-tracker.js export-pdf [directory]
+node aws-for-kids.js export-pdf [directory]
+
+# Example: Generate PDF to custom directory
+node mental-health-tracker.js export-pdf ./reports
+```
+
+**Mental Health PDF includes:**
+- 📊 Summary statistics (mood averages, journal entries, goals)
+- 📈 Mood trend chart (last 30 days)
+- 📊 Mood distribution bar chart
+- 📝 Recent journal entries
+- 🎯 Active goals
+- 💪 Top coping strategies
+
+**Medication Tracker PDF includes:**
+- 📊 Adherence statistics and current streak
+- 💊 Active medications list
+- 📈 Adherence pie chart (taken vs missed)
+- 📅 Today's medication schedule
+- 📝 Recent history (last 10 entries)
+
+**AWS Learning Tracker PDF includes:**
+- 🎯 Exam readiness gauge (0-100 score)
+- 📚 Learning progress bar chart
+- 📊 Quiz performance trend
+- 🗺️ Recommended next topics to study
+
+**Perfect for:**
+- 🏥 Professional meetings with healthcare providers
+- 📋 Comprehensive progress reviews
+- 📈 Visual tracking of your wellness journey
+- 🎓 Certification readiness assessment (AWS)
+</details>
+
 ### 📊 Statistics Summary
 
 <details>
@@ -764,7 +805,7 @@ We welcome contributions! Here's how you can help:
 - [ ] CLI interface tests (target: 70%+ coverage)
 - [x] Data export functionality (CSV) ✓
 - [x] Backup and restore system ✓
-- [ ] PDF export with charts and graphs
+- [x] PDF export with charts and graphs ✓
 - [ ] Reminder notifications
 - [ ] Multi-user support
 - [ ] Cloud sync option
