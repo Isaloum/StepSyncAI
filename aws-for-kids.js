@@ -36,6 +36,69 @@ class AWSForKids {
         }
     }
 
+    // Statistics Summary
+    showStats() {
+        const totalTopics = Object.keys(this.concepts).length;
+        const completedTopics = this.data.completedLessons.length;
+        const completionRate = ((completedTopics / totalTopics) * 100).toFixed(1);
+        const totalQuizzes = this.data.quizScores.length;
+
+        // Calculate average quiz score
+        let avgQuizScore = 0;
+        if (totalQuizzes > 0) {
+            const totalCorrect = this.data.quizScores.reduce((sum, q) => sum + q.score, 0);
+            const totalQuestions = this.data.quizScores.reduce((sum, q) => sum + q.total, 0);
+            avgQuizScore = ((totalCorrect / totalQuestions) * 100).toFixed(1);
+        }
+
+        // Calculate exam readiness
+        const topicCoveragePoints = (completedTopics / totalTopics) * 40;
+        const quizPerformancePoints = totalQuizzes > 0 ? (avgQuizScore / 100) * 40 : 0;
+        const practiceConsistencyPoints = Math.min(totalQuizzes * 2, 20);
+        const examReadiness = (topicCoveragePoints + quizPerformancePoints + practiceConsistencyPoints).toFixed(0);
+
+        // Calculate days studying
+        let daysStudying = 0;
+        if (totalQuizzes > 0 || completedTopics > 0) {
+            const allDates = this.data.quizScores.map(q => new Date(q.timestamp));
+            if (allDates.length > 0) {
+                const firstDate = new Date(Math.min(...allDates));
+                daysStudying = Math.ceil((new Date() - firstDate) / (1000 * 60 * 60 * 24));
+            }
+        }
+
+        console.log('\n📊 AWS Cloud Practitioner - Statistics Summary');
+        console.log('═'.repeat(60));
+        console.log(`\n📅 Study Duration: ${daysStudying} days`);
+
+        console.log('\n📚 Topics:');
+        console.log(`   Completed: ${completedTopics}/${totalTopics}`);
+        console.log(`   Completion rate: ${completionRate}%`);
+
+        console.log('\n🎯 Quiz Performance:');
+        console.log(`   Total quizzes taken: ${totalQuizzes}`);
+        if (totalQuizzes > 0) {
+            console.log(`   Average score: ${avgQuizScore}%`);
+        }
+
+        console.log('\n🏆 Exam Readiness:');
+        console.log(`   Overall score: ${examReadiness}/100`);
+        if (examReadiness >= 80) {
+            console.log(`   Status: Ready to schedule exam! 🎉`);
+        } else if (examReadiness >= 60) {
+            console.log(`   Status: Almost there, keep practicing! ⚠️`);
+        } else {
+            console.log(`   Status: Keep studying, you're making progress! 📚`);
+        }
+
+        console.log('\n📊 Breakdown:');
+        console.log(`   Topic Coverage: ${topicCoveragePoints.toFixed(0)}/40`);
+        console.log(`   Quiz Performance: ${quizPerformancePoints.toFixed(0)}/40`);
+        console.log(`   Practice Consistency: ${practiceConsistencyPoints.toFixed(0)}/20`);
+
+        console.log('\n═'.repeat(60));
+    }
+
     // Backup and Restore
     createBackup(backupDir = './backups') {
         try {
@@ -1496,6 +1559,9 @@ Commands:
   progress
       View your learning progress and quiz scores
 
+  stats (or statistics)
+      Display overall statistics and exam readiness summary
+
   dashboard
       Visualize learning progress with charts and exam readiness
 
@@ -1557,6 +1623,11 @@ function main() {
 
         case 'progress':
             app.progress();
+            break;
+
+        case 'stats':
+        case 'statistics':
+            app.showStats();
             break;
 
         case 'dashboard':

@@ -43,6 +43,73 @@ class MentalHealthTracker {
         }
     }
 
+    // Statistics Summary
+    showStats() {
+        const totalMoods = this.data.moodEntries.length;
+        const totalJournal = this.data.journalEntries.length;
+        const totalSymptoms = this.data.symptoms.length;
+        const totalTriggers = this.data.triggers.length;
+        const totalCoping = this.data.copingStrategies.length;
+        const totalGoals = this.data.goals.length;
+        const completedGoals = this.data.goals.filter(g => g.completed).length;
+        const activeGoals = totalGoals - completedGoals;
+
+        // Calculate average mood if entries exist
+        let avgMood = 0;
+        if (totalMoods > 0) {
+            avgMood = (this.data.moodEntries.reduce((sum, e) => sum + e.rating, 0) / totalMoods).toFixed(1);
+        }
+
+        // Calculate days tracking (from first entry to now)
+        let daysTracking = 0;
+        if (totalMoods > 0 || totalJournal > 0 || totalSymptoms > 0) {
+            const allDates = [
+                ...this.data.moodEntries.map(e => new Date(e.timestamp)),
+                ...this.data.journalEntries.map(e => new Date(e.timestamp)),
+                ...this.data.symptoms.map(e => new Date(e.timestamp))
+            ];
+            if (allDates.length > 0) {
+                const firstDate = new Date(Math.min(...allDates));
+                const daysDiff = Math.ceil((new Date() - firstDate) / (1000 * 60 * 60 * 24));
+                daysTracking = daysDiff;
+            }
+        }
+
+        console.log('\n📊 Mental Health Tracker - Statistics Summary');
+        console.log('═'.repeat(60));
+        console.log(`\n📅 Tracking Duration: ${daysTracking} days`);
+        console.log('\n🎭 Mood & Emotions:');
+        console.log(`   Total mood entries: ${totalMoods}`);
+        if (totalMoods > 0) {
+            console.log(`   Average mood: ${avgMood}/10 ${this.getMoodEmoji(Math.round(avgMood))}`);
+        }
+
+        console.log('\n📝 Journal:');
+        console.log(`   Total entries: ${totalJournal}`);
+
+        console.log('\n🩺 Symptoms:');
+        console.log(`   Total logged: ${totalSymptoms}`);
+
+        console.log('\n⚡ Triggers:');
+        console.log(`   Identified: ${totalTriggers}`);
+
+        console.log('\n💪 Coping Strategies:');
+        console.log(`   Available: ${totalCoping}`);
+
+        console.log('\n🎯 Recovery Goals:');
+        console.log(`   Active: ${activeGoals}`);
+        console.log(`   Completed: ${completedGoals}`);
+        console.log(`   Total: ${totalGoals}`);
+
+        if (this.data.profile && this.data.profile.accidentDate) {
+            const accidentDate = new Date(this.data.profile.accidentDate);
+            const daysSinceAccident = Math.ceil((new Date() - accidentDate) / (1000 * 60 * 60 * 24));
+            console.log(`\n🕐 Days since accident: ${daysSinceAccident}`);
+        }
+
+        console.log('\n═'.repeat(60));
+    }
+
     // Backup and Restore
     createBackup(backupDir = './backups') {
         try {
@@ -1193,6 +1260,9 @@ QUICK ACTIONS:
   checkin
       Quick daily check-in summary
 
+  stats (or statistics)
+      Display overall statistics and summary of all tracked data
+
   help
       Show this help message
 
@@ -1406,6 +1476,11 @@ function main() {
 
         case 'checkin':
             tracker.quickCheckIn();
+            break;
+
+        case 'stats':
+        case 'statistics':
+            tracker.showStats();
             break;
 
         case 'mood-trends':

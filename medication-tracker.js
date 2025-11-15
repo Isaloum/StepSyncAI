@@ -33,6 +33,62 @@ class MedicationTracker {
         }
     }
 
+    // Statistics Summary
+    showStats() {
+        const totalMeds = this.data.medications.length;
+        const activeMeds = this.data.medications.filter(m => m.active).length;
+        const inactiveMeds = totalMeds - activeMeds;
+        const totalHistory = this.data.history.length;
+
+        // Calculate overall adherence
+        let adherenceRate = 0;
+        let currentStreak = 0;
+        if (totalHistory > 0) {
+            const takenDoses = totalHistory.filter(h => !h.missed).length;
+            adherenceRate = ((takenDoses / totalHistory) * 100).toFixed(1);
+            currentStreak = this.calculateAdherenceStreak();
+        }
+
+        // Calculate days tracking
+        let daysTracking = 0;
+        if (totalHistory > 0) {
+            const firstEntry = new Date(this.data.history[0].timestamp);
+            daysTracking = Math.ceil((new Date() - firstEntry) / (1000 * 60 * 60 * 24));
+        }
+
+        console.log('\n📊 Medication Tracker - Statistics Summary');
+        console.log('═'.repeat(60));
+        console.log(`\n📅 Tracking Duration: ${daysTracking} days`);
+
+        console.log('\n💊 Medications:');
+        console.log(`   Active: ${activeMeds}`);
+        console.log(`   Inactive: ${inactiveMeds}`);
+        console.log(`   Total: ${totalMeds}`);
+
+        console.log('\n📈 Adherence:');
+        console.log(`   Total doses logged: ${totalHistory}`);
+        if (totalHistory > 0) {
+            console.log(`   Overall adherence rate: ${adherenceRate}%`);
+            console.log(`   Current streak: ${currentStreak} days`);
+        }
+
+        if (activeMeds > 0) {
+            console.log('\n🕐 Today\'s Schedule:');
+            const today = new Date().toDateString();
+            const activeMedsList = this.data.medications.filter(m => m.active);
+            activeMedsList.forEach(med => {
+                const takenToday = this.data.history.some(h =>
+                    h.medicationId === med.id &&
+                    new Date(h.timestamp).toDateString() === today
+                );
+                const status = takenToday ? '✓' : '○';
+                console.log(`   ${status} ${med.name} - ${med.dosage} at ${med.scheduledTime}`);
+            });
+        }
+
+        console.log('\n═'.repeat(60));
+    }
+
     // Backup and Restore
     createBackup(backupDir = './backups') {
         try {
@@ -633,6 +689,9 @@ Commands:
   status
       Check today's medication status
 
+  stats (or statistics)
+      Display overall statistics and summary
+
   history [medicationId] [days]
       View medication history
       Example: node medication-tracker.js history 1234567890 7
@@ -696,6 +755,11 @@ function main() {
 
         case 'status':
             tracker.checkTodayStatus();
+            break;
+
+        case 'stats':
+        case 'statistics':
+            tracker.showStats();
             break;
 
         case 'history':
