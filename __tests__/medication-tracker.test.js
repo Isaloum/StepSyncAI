@@ -878,4 +878,87 @@ describe('MedicationTracker', () => {
       });
     });
   });
+
+  describe('Additional Edge Cases for Coverage', () => {
+    test('removeMedication should return false when saveData fails', () => {
+      const med = tracker.addMedication('Test', '10mg', 'daily', '08:00');
+
+      fs.writeFileSync.mockImplementation(() => {
+        throw new Error('Write error');
+      });
+
+      const result = tracker.removeMedication(med.id);
+
+      expect(result).toBe(false);
+      expect(consoleErrorSpy).toHaveBeenCalled();
+    });
+
+    test('markAsTaken should return false when saveData fails', () => {
+      const med = tracker.addMedication('Test', '10mg', 'daily', '08:00');
+
+      fs.writeFileSync.mockImplementation(() => {
+        throw new Error('Write error');
+      });
+
+      const result = tracker.markAsTaken(med.id);
+
+      expect(result).toBe(false);
+      expect(consoleErrorSpy).toHaveBeenCalled();
+    });
+
+    test('getHistory should handle empty history gracefully', () => {
+      tracker.data.history = [];
+
+      tracker.getHistory(null, 7);
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No history found'));
+    });
+
+    test('getHistory should filter by medicationId when provided', () => {
+      const med1 = tracker.addMedication('Med1', '10mg', 'daily', '08:00');
+      const med2 = tracker.addMedication('Med2', '20mg', 'daily', '08:00');
+
+      tracker.markAsTaken(med1.id, 'Test1');
+      tracker.markAsTaken(med2.id, 'Test2');
+
+      consoleLogSpy.mockClear();
+      tracker.getHistory(med1.id, 7);
+
+      const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+      expect(output).toContain('Med1');
+    });
+
+    test('checkTodayStatus should handle no medications', () => {
+      tracker.data.medications = [];
+
+      tracker.checkTodayStatus();
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No active medications'));
+    });
+
+    test('listMedications should handle no active medications', () => {
+      tracker.data.medications = [];
+
+      tracker.listMedications();
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No medications found'));
+    });
+
+    test('visualizeAdherence should handle medications with no expected doses', () => {
+      tracker.data.medications = [{
+        id: 1,
+        name: 'Test',
+        dosage: '10mg',
+        frequency: 'as-needed',
+        times: [],
+        active: true,
+        startDate: new Date().toISOString()
+      }];
+      tracker.data.history = [];
+
+      tracker.visualizeAdherence(7);
+
+      expect(consoleLogSpy).toHaveBeenCalled();
+    });
+  });
 });
