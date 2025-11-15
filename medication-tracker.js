@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const ChartUtils = require('./chart-utils');
+const PDFDocument = require('pdfkit');
 
 class MedicationTracker {
     constructor(dataFile = 'medications.json') {
@@ -31,6 +32,443 @@ class MedicationTracker {
             console.error('Error saving data:', error.message);
             return false;
         }
+    }
+
+    // Statistics Summary
+    showStats() {
+        const totalMeds = this.data.medications.length;
+        const activeMeds = this.data.medications.filter(m => m.active).length;
+        const inactiveMeds = totalMeds - activeMeds;
+        const totalHistory = this.data.history.length;
+
+        // Calculate overall adherence
+        let adherenceRate = 0;
+        let currentStreak = 0;
+        if (totalHistory > 0) {
+            const takenDoses = this.data.history.filter(h => !h.missed).length;
+            adherenceRate = ((takenDoses / totalHistory) * 100).toFixed(1);
+            currentStreak = this.calculateAdherenceStreak();
+        }
+
+        // Calculate days tracking
+        let daysTracking = 0;
+        if (totalHistory > 0) {
+            const firstEntry = new Date(this.data.history[0].timestamp);
+            daysTracking = Math.ceil((new Date() - firstEntry) / (1000 * 60 * 60 * 24));
+        }
+
+        console.log('\n📊 Medication Tracker - Statistics Summary');
+        console.log('═'.repeat(60));
+        console.log(`\n📅 Tracking Duration: ${daysTracking} days`);
+
+        console.log('\n💊 Medications:');
+        console.log(`   Active: ${activeMeds}`);
+        console.log(`   Inactive: ${inactiveMeds}`);
+        console.log(`   Total: ${totalMeds}`);
+
+        console.log('\n📈 Adherence:');
+        console.log(`   Total doses logged: ${totalHistory}`);
+        if (totalHistory > 0) {
+            console.log(`   Overall adherence rate: ${adherenceRate}%`);
+            console.log(`   Current streak: ${currentStreak} days`);
+        }
+
+        if (activeMeds > 0) {
+            console.log('\n🕐 Today\'s Schedule:');
+            const today = new Date().toDateString();
+            const activeMedsList = this.data.medications.filter(m => m.active);
+            activeMedsList.forEach(med => {
+                const takenToday = this.data.history.some(h =>
+                    h.medicationId === med.id &&
+                    new Date(h.timestamp).toDateString() === today
+                );
+                const status = takenToday ? '✓' : '○';
+                console.log(`   ${status} ${med.name} - ${med.dosage} at ${med.scheduledTime}`);
+            });
+        }
+
+        console.log('\n═'.repeat(60));
+    }
+
+    // Backup and Restore
+    createBackup(backupDir = './backups') {
+        try {
+            if (!fs.existsSync(backupDir)) {
+                fs.mkdirSync(backupDir, { recursive: true });
+            }
+
+            if (!fs.existsSync(this.dataFile)) {
+                console.log('\n⚠️  No data file found to backup.');
+                return false;
+            }
+
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const backupFilename = `medication-backup-${timestamp}.json`;
+            const backupPath = path.join(backupDir, backupFilename);
+
+            const data = fs.readFileSync(this.dataFile);
+            fs.writeFileSync(backupPath, data);
+
+            console.log(`\n✓ Backup created successfully!`);
+            console.log(`  Location: ${backupPath}`);
+            console.log(`  Time: ${new Date().toLocaleString()}`);
+            return true;
+        } catch (error) {
+            console.error('Error creating backup:', error.message);
+            return false;
+        }
+    }
+
+    listBackups(backupDir = './backups') {
+        try {
+            if (!fs.existsSync(backupDir)) {
+                console.log('\n📁 No backups directory found.');
+                return;
+            }
+
+            const files = fs.readdirSync(backupDir)
+                .filter(f => f.startsWith('medication-backup-') && f.endsWith('.json'))
+                .sort()
+                .reverse();
+
+            if (files.length === 0) {
+                console.log('\n📁 No backups found.');
+                return;
+            }
+
+            console.log('\n📁 Available Backups:');
+            console.log('═'.repeat(60));
+            files.forEach((file, index) => {
+                const filePath = path.join(backupDir, file);
+                const stats = fs.statSync(filePath);
+                const size = (stats.size / 1024).toFixed(2);
+                const date = stats.mtime.toLocaleString();
+                console.log(`${index + 1}. ${file}`);
+                console.log(`   Created: ${date}`);
+                console.log(`   Size: ${size} KB`);
+            });
+        } catch (error) {
+            console.error('Error listing backups:', error.message);
+        }
+    }
+
+    restoreFromBackup(backupFile, backupDir = './backups') {
+        try {
+            const backupPath = path.join(backupDir, backupFile);
+
+            if (!fs.existsSync(backupPath)) {
+                console.log('\n❌ Backup file not found.');
+                return false;
+            }
+
+            if (fs.existsSync(this.dataFile)) {
+                const preRestoreBackup = `medication-pre-restore-${Date.now()}.json`;
+                fs.copyFileSync(this.dataFile, path.join(backupDir, preRestoreBackup));
+                console.log(`\n💾 Current data backed up to: ${preRestoreBackup}`);
+            }
+
+            const backupData = fs.readFileSync(backupPath);
+            fs.writeFileSync(this.dataFile, backupData);
+            this.data = this.loadData();
+
+            console.log(`\n✓ Data restored successfully from backup!`);
+            console.log(`  Source: ${backupFile}`);
+            console.log(`  Time: ${new Date().toLocaleString()}`);
+            return true;
+        } catch (error) {
+            console.error('Error restoring backup:', error.message);
+            return false;
+        }
+    }
+
+    // Data Export
+    exportToCSV(outputDir = './exports') {
+        try {
+            // Create exports directory if it doesn't exist
+            if (!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir, { recursive: true });
+            }
+
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const baseFilename = `medication-export-${timestamp}`;
+
+            // Export medications list
+            if (this.data.medications.length > 0) {
+                const medsCSV = this.generateMedicationsCSV();
+                fs.writeFileSync(path.join(outputDir, `${baseFilename}-medications.csv`), medsCSV);
+            }
+
+            // Export history
+            if (this.data.history.length > 0) {
+                const historyCSV = this.generateHistoryCSV();
+                fs.writeFileSync(path.join(outputDir, `${baseFilename}-history.csv`), historyCSV);
+            }
+
+            console.log(`\n✓ Data exported successfully to ${outputDir}/`);
+            console.log(`  Base filename: ${baseFilename}`);
+            return true;
+        } catch (error) {
+            console.error('Error exporting data:', error.message);
+            return false;
+        }
+    }
+
+    generateMedicationsCSV() {
+        const headers = 'ID,Name,Dosage,Frequency,Scheduled Time,Created,Status\n';
+        const rows = this.data.medications.map(med => {
+            const name = (med.name || '').replace(/"/g, '""');
+            const dosage = (med.dosage || '').replace(/"/g, '""');
+            const created = new Date(med.createdAt).toLocaleDateString();
+            const status = med.active ? 'Active' : 'Inactive';
+            return `${med.id},"${name}","${dosage}","${med.frequency}","${med.scheduledTime}","${created}","${status}"`;
+        }).join('\n');
+        return headers + rows;
+    }
+
+    generateHistoryCSV() {
+        const headers = 'Date,Time,Medication ID,Medication Name,Dosage,Notes,Missed\n';
+        const rows = this.data.history.map(entry => {
+            const date = new Date(entry.timestamp);
+            const dateStr = date.toLocaleDateString();
+            const timeStr = date.toLocaleTimeString();
+            const name = (entry.medicationName || '').replace(/"/g, '""');
+            const dosage = (entry.dosage || '').replace(/"/g, '""');
+            const notes = (entry.notes || '').replace(/"/g, '""');
+            const missed = entry.missed ? 'Yes' : 'No';
+            return `"${dateStr}","${timeStr}",${entry.medicationId},"${name}","${dosage}","${notes}","${missed}"`;
+        }).join('\n');
+        return headers + rows;
+    }
+
+    // PDF Export with Charts
+    exportToPDF(outputDir = './exports') {
+        return new Promise((resolve, reject) => {
+            try {
+                // Create exports directory if it doesn't exist
+                if (!fs.existsSync(outputDir)) {
+                    fs.mkdirSync(outputDir, { recursive: true });
+                }
+
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+                const filename = `medication-report-${timestamp}.pdf`;
+                const filepath = path.join(outputDir, filename);
+
+                // Create PDF document
+                const doc = new PDFDocument({ margin: 50 });
+                const stream = fs.createWriteStream(filepath);
+                doc.pipe(stream);
+
+                // Header
+                doc.fontSize(24).fillColor('#2c3e50').text('Medication Tracker Report', { align: 'center' });
+                doc.moveDown(0.5);
+                doc.fontSize(12).fillColor('#7f8c8d').text(new Date().toLocaleDateString('en-US', {
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                }), { align: 'center' });
+                doc.moveDown(2);
+
+                // Summary Statistics
+                this.addMedicationSummary(doc);
+                doc.moveDown(1.5);
+
+                // Active Medications
+                if (this.data.medications.filter(m => m.active).length > 0) {
+                    this.addActiveMedicationsSection(doc);
+                    doc.moveDown(1.5);
+                }
+
+                // Adherence Chart
+                if (this.data.history.length > 0) {
+                    this.addAdherenceChart(doc);
+                    doc.moveDown(1.5);
+                }
+
+                // Today's Schedule
+                this.addTodaySchedule(doc);
+                doc.moveDown(1.5);
+
+                // Recent History
+                if (this.data.history.length > 0) {
+                    this.addRecentHistory(doc);
+                }
+
+                // Footer
+                doc.fontSize(8).fillColor('#95a5a6').text(
+                    'Generated by StepSync Medication Tracker',
+                    50,
+                    doc.page.height - 50,
+                    { align: 'center' }
+                );
+
+                doc.end();
+
+                stream.on('finish', () => {
+                    console.log(`\n✓ PDF report generated successfully!`);
+                    console.log(`  Location: ${filepath}`);
+                    resolve(filepath);
+                });
+
+                stream.on('error', (error) => {
+                    console.error('Error writing PDF:', error.message);
+                    reject(error);
+                });
+
+            } catch (error) {
+                console.error('Error generating PDF:', error.message);
+                reject(error);
+            }
+        });
+    }
+
+    addMedicationSummary(doc) {
+        doc.fontSize(16).fillColor('#34495e').text('📊 Summary');
+        doc.moveDown(0.5);
+
+        const totalMeds = this.data.medications.length;
+        const activeMeds = this.data.medications.filter(m => m.active).length;
+        const totalHistory = this.data.history.length;
+
+        let adherenceRate = 0;
+        let currentStreak = 0;
+        if (totalHistory > 0) {
+            const takenDoses = this.data.history.filter(h => !h.missed).length;
+            adherenceRate = ((takenDoses / totalHistory) * 100).toFixed(1);
+            currentStreak = this.calculateAdherenceStreak();
+        }
+
+        doc.fontSize(11).fillColor('#2c3e50');
+        doc.text(`Total Medications: ${totalMeds}`, { indent: 20 });
+        doc.text(`Active Medications: ${activeMeds}`, { indent: 20 });
+        doc.text(`Total Doses Tracked: ${totalHistory}`, { indent: 20 });
+        doc.text(`Adherence Rate: ${adherenceRate}%`, { indent: 20 });
+        doc.text(`Current Streak: ${currentStreak} days`, { indent: 20 });
+    }
+
+    addActiveMedicationsSection(doc) {
+        doc.fontSize(16).fillColor('#34495e').text('💊 Active Medications');
+        doc.moveDown(0.5);
+
+        const activeMeds = this.data.medications.filter(m => m.active);
+
+        activeMeds.forEach((med, index) => {
+            doc.fontSize(11).fillColor('#2c3e50').text(`${index + 1}. ${med.name}`, { indent: 20 });
+            doc.fontSize(10).fillColor('#7f8c8d').text(`   Dosage: ${med.dosage}`, { indent: 40 });
+            doc.text(`   Frequency: ${med.frequency}`, { indent: 40 });
+            doc.text(`   Scheduled Time: ${med.scheduledTime}`, { indent: 40 });
+            if (index < activeMeds.length - 1) doc.moveDown(0.5);
+        });
+    }
+
+    addAdherenceChart(doc) {
+        doc.fontSize(16).fillColor('#34495e').text('📈 Adherence Overview (Last 30 Days)');
+        doc.moveDown(0.5);
+
+        // Get last 30 days of history
+        const now = new Date();
+        const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+        const recentHistory = this.data.history
+            .filter(h => new Date(h.timestamp) >= thirtyDaysAgo)
+            .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+        if (recentHistory.length === 0) {
+            doc.fontSize(11).fillColor('#7f8c8d').text('No data in the last 30 days', { indent: 20 });
+            return;
+        }
+
+        // Calculate daily adherence
+        const dailyAdherence = {};
+        recentHistory.forEach(entry => {
+            const date = new Date(entry.timestamp).toLocaleDateString();
+            if (!dailyAdherence[date]) {
+                dailyAdherence[date] = { taken: 0, missed: 0 };
+            }
+            if (entry.missed) {
+                dailyAdherence[date].missed++;
+            } else {
+                dailyAdherence[date].taken++;
+            }
+        });
+
+        // Draw pie chart
+        const centerX = 300;
+        const centerY = doc.y + 80;
+        const radius = 60;
+
+        const totalTaken = recentHistory.filter(h => !h.missed).length;
+        const totalMissed = recentHistory.filter(h => h.missed).length;
+        const total = totalTaken + totalMissed;
+
+        // Taken slice (green)
+        if (totalTaken > 0) {
+            const takenAngle = (totalTaken / total) * 360;
+            doc.fillColor('#27ae60').moveTo(centerX, centerY)
+                .arc(centerX, centerY, radius, 0, takenAngle, false)
+                .fill();
+        }
+
+        // Missed slice (red)
+        if (totalMissed > 0) {
+            const takenAngle = (totalTaken / total) * 360;
+            const missedAngle = (totalMissed / total) * 360;
+            doc.fillColor('#e74c3c').moveTo(centerX, centerY)
+                .arc(centerX, centerY, radius, takenAngle, takenAngle + missedAngle, false)
+                .fill();
+        }
+
+        // Legend
+        doc.fontSize(10).fillColor('#27ae60');
+        doc.text(`✓ Taken: ${totalTaken} (${((totalTaken/total)*100).toFixed(1)}%)`, centerX - radius - 100, centerY + radius + 20);
+        doc.fillColor('#e74c3c');
+        doc.text(`✗ Missed: ${totalMissed} (${((totalMissed/total)*100).toFixed(1)}%)`, centerX + 50, centerY + radius + 20);
+
+        doc.y = centerY + radius + 50;
+    }
+
+    addTodaySchedule(doc) {
+        doc.fontSize(16).fillColor('#34495e').text('📅 Today\'s Schedule');
+        doc.moveDown(0.5);
+
+        const activeMeds = this.data.medications.filter(m => m.active);
+
+        if (activeMeds.length === 0) {
+            doc.fontSize(11).fillColor('#7f8c8d').text('No active medications', { indent: 20 });
+            return;
+        }
+
+        // Sort by scheduled time
+        const sorted = activeMeds.sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
+
+        sorted.forEach((med, index) => {
+            doc.fontSize(11).fillColor('#2c3e50').text(
+                `${med.scheduledTime} - ${med.name} (${med.dosage})`,
+                { indent: 20 }
+            );
+            if (index < sorted.length - 1) doc.moveDown(0.3);
+        });
+    }
+
+    addRecentHistory(doc) {
+        doc.fontSize(16).fillColor('#34495e').text('📝 Recent History (Last 10 Entries)');
+        doc.moveDown(0.5);
+
+        const recent = this.data.history
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+            .slice(0, 10);
+
+        recent.forEach((entry, index) => {
+            const date = new Date(entry.timestamp).toLocaleString();
+            const status = entry.missed ? '✗ Missed' : '✓ Taken';
+            const statusColor = entry.missed ? '#e74c3c' : '#27ae60';
+
+            doc.fontSize(10).fillColor('#2c3e50').text(
+                `${date} - ${entry.medicationName}`,
+                { indent: 20 }
+            );
+            doc.fillColor(statusColor).text(status, { indent: 40 });
+            if (entry.notes) {
+                doc.fontSize(9).fillColor('#7f8c8d').text(`   Note: ${entry.notes}`, { indent: 40 });
+            }
+            if (index < recent.length - 1) doc.moveDown(0.3);
+        });
     }
 
     addMedication(name, dosage, frequency, time) {
@@ -483,6 +921,9 @@ Commands:
   status
       Check today's medication status
 
+  stats (or statistics)
+      Display overall statistics and summary
+
   history [medicationId] [days]
       View medication history
       Example: node medication-tracker.js history 1234567890 7
@@ -492,6 +933,26 @@ Commands:
 
   adherence [days]
       Visualize medication adherence with charts (default: 30 days)
+
+  export [directory]
+      Export all data to CSV files (default: ./exports)
+      Creates separate CSV files for medications and history
+      Perfect for sharing with healthcare providers or backup
+
+  export-pdf [directory]
+      Generate comprehensive PDF report with charts and visualizations
+      Includes adherence chart, medication schedule, and statistics
+      Perfect for professional meetings or comprehensive review
+
+  backup [directory]
+      Create a timestamped backup of your data (default: ./backups)
+
+  list-backups [directory]
+      View all available backups with creation dates and sizes
+
+  restore <backup-filename> [directory]
+      Restore data from a backup file
+      Current data is automatically backed up before restore
 
   help
       Show this help message
@@ -533,6 +994,11 @@ function main() {
             tracker.checkTodayStatus();
             break;
 
+        case 'stats':
+        case 'statistics':
+            tracker.showStats();
+            break;
+
         case 'history':
             const medId = args[1] || null;
             const days = args[2] || 7;
@@ -550,6 +1016,37 @@ function main() {
         case 'adherence':
             const adherenceDays = args[1] ? parseInt(args[1]) : 30;
             tracker.visualizeAdherence(adherenceDays);
+            break;
+
+        case 'export':
+            const exportDir = args[1] || './exports';
+            tracker.exportToCSV(exportDir);
+            break;
+
+        case 'export-pdf':
+            const pdfDir = args[1] || './exports';
+            tracker.exportToPDF(pdfDir).catch(err => {
+                console.error('Failed to generate PDF:', err.message);
+            });
+            break;
+
+        case 'backup':
+            const backupDir = args[1] || './backups';
+            tracker.createBackup(backupDir);
+            break;
+
+        case 'list-backups':
+            const listDir = args[1] || './backups';
+            tracker.listBackups(listDir);
+            break;
+
+        case 'restore':
+            if (!args[1]) {
+                console.log('Usage: restore <backup-filename> [backup-directory]');
+                break;
+            }
+            const restoreDir = args[2] || './backups';
+            tracker.restoreFromBackup(args[1], restoreDir);
             break;
 
         case 'help':

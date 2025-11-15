@@ -153,6 +153,131 @@ node mental-health-tracker.js recovery-progress
 - ⚡ Sparklines for quick visual summaries
 </details>
 
+### 📤 Data Export
+
+<details>
+<summary><b>Export Your Data to CSV</b></summary>
+
+```bash
+# Export all mental health data to CSV files
+node mental-health-tracker.js export [directory]
+
+# Example: Export to custom directory
+node mental-health-tracker.js export ./my-health-data
+```
+
+**Exported files include:**
+- `moods.csv` - All mood ratings with dates and notes
+- `journal.csv` - Journal entries by type
+- `symptoms.csv` - Symptom logs with severity ratings
+- `triggers.csv` - Identified triggers and occurrences
+- `coping.csv` - Coping strategies and effectiveness
+- `goals.csv` - Recovery goals and completion status
+
+**Use cases:**
+- 📋 Share with your therapist or healthcare provider
+- 📊 Analyze trends in Excel/Google Sheets
+- 💾 Backup your health data
+- 📈 Track long-term recovery patterns
+</details>
+
+<details>
+<summary><b>Generate Professional PDF Reports</b></summary>
+
+```bash
+# Generate comprehensive PDF report with charts
+node mental-health-tracker.js export-pdf [directory]
+node medication-tracker.js export-pdf [directory]
+node aws-for-kids.js export-pdf [directory]
+
+# Example: Generate PDF to custom directory
+node mental-health-tracker.js export-pdf ./reports
+```
+
+**Mental Health PDF includes:**
+- 📊 Summary statistics (mood averages, journal entries, goals)
+- 📈 Mood trend chart (last 30 days)
+- 📊 Mood distribution bar chart
+- 📝 Recent journal entries
+- 🎯 Active goals
+- 💪 Top coping strategies
+
+**Medication Tracker PDF includes:**
+- 📊 Adherence statistics and current streak
+- 💊 Active medications list
+- 📈 Adherence pie chart (taken vs missed)
+- 📅 Today's medication schedule
+- 📝 Recent history (last 10 entries)
+
+**AWS Learning Tracker PDF includes:**
+- 🎯 Exam readiness gauge (0-100 score)
+- 📚 Learning progress bar chart
+- 📊 Quiz performance trend
+- 🗺️ Recommended next topics to study
+
+**Perfect for:**
+- 🏥 Professional meetings with healthcare providers
+- 📋 Comprehensive progress reviews
+- 📈 Visual tracking of your wellness journey
+- 🎓 Certification readiness assessment (AWS)
+</details>
+
+### 📊 Statistics Summary
+
+<details>
+<summary><b>Quick Overview of Your Progress</b></summary>
+
+```bash
+# Display comprehensive statistics
+node mental-health-tracker.js stats
+```
+
+**What you'll see:**
+- 📅 Total tracking duration
+- 🎭 Mood entries and average rating
+- 📝 Journal entries count
+- 🩺 Symptoms logged
+- ⚡ Identified triggers
+- 💪 Available coping strategies
+- 🎯 Goals (active vs completed)
+- 🕐 Days since accident (if profile set)
+
+**Perfect for:**
+- Quick progress check
+- Motivation boost
+- Sharing overview with healthcare providers
+- Understanding your tracking habits
+</details>
+
+### 🔄 Backup & Restore
+
+<details>
+<summary><b>Protect Your Data with Automatic Backups</b></summary>
+
+```bash
+# Create a timestamped backup
+node mental-health-tracker.js backup [directory]
+
+# List all available backups
+node mental-health-tracker.js list-backups [directory]
+
+# Restore from a backup (current data is auto-backed up first!)
+node mental-health-tracker.js restore <backup-filename> [directory]
+```
+
+**How it works:**
+- Backups are timestamped JSON files (e.g., `mental-health-backup-2025-01-15T10-30-00.json`)
+- Before restoring, your current data is automatically backed up as `pre-restore`
+- All backups include creation date and file size
+- Default backup directory: `./backups`
+
+**When to use:**
+- 🛡️ Before making major changes
+- 📅 Regular scheduled backups (daily/weekly)
+- 🔄 Before sharing device or reinstalling
+- 💻 When switching computers
+</details>
+
 ### Important Notes
 
 - This is a **personal tracking tool** to support your recovery
@@ -238,6 +363,81 @@ node medication-tracker.js adherence [days]
 - Sparklines showing adherence trends
 - Streak displays (e.g., "7 days perfect adherence 🔥")
 - Readiness scores and recommendations
+</details>
+
+### 📤 Data Export
+
+<details>
+<summary><b>Export Your Medication Data to CSV</b></summary>
+
+```bash
+# Export all medication data to CSV files
+node medication-tracker.js export [directory]
+
+# Example: Export to custom directory
+node medication-tracker.js export ./my-med-data
+```
+
+**Exported files include:**
+- `medications.csv` - All medications with dosage and schedule
+- `history.csv` - Complete medication history with timestamps
+
+**Use cases:**
+- 📋 Share with your doctor or pharmacist
+- 📊 Analyze adherence patterns in spreadsheet software
+- 💾 Backup your medication records
+- 🏥 Provide accurate history for medical appointments
+</details>
+
+### 📊 Statistics Summary
+
+<details>
+<summary><b>Quick Overview of Your Adherence</b></summary>
+
+```bash
+# Display comprehensive statistics
+node medication-tracker.js stats
+```
+
+**What you'll see:**
+- 📅 Total tracking duration
+- 💊 Active/inactive medications count
+- 📈 Overall adherence rate percentage
+- 🔥 Current adherence streak
+- 🕐 Today's schedule with status (✓ taken / ○ pending)
+
+**Perfect for:**
+- Daily adherence check
+- Quick status before doctor appointments
+- Motivation to maintain streaks
+- Understanding medication compliance
+</details>
+
+### 🔄 Backup & Restore
+
+<details>
+<summary><b>Protect Your Medication Records</b></summary>
+
+```bash
+# Create a timestamped backup
+node medication-tracker.js backup [directory]
+
+# List all available backups
+node medication-tracker.js list-backups [directory]
+
+# Restore from a backup (current data is auto-backed up first!)
+node medication-tracker.js restore <backup-filename> [directory]
+```
+
+**Safety features:**
+- Automatic pre-restore backup prevents data loss
+- Timestamped backups with creation date and size
+- Quick recovery if something goes wrong
+
+**Critical use cases:**
+- 💊 Before changing medication regimen
+- 🏥 Before doctor appointments (backup then export)
+- 📱 When upgrading or changing devices
 </details>
 
 ---
@@ -335,6 +535,84 @@ node aws-for-kids.js dashboard
 - 80%+ Ready: Schedule your exam with confidence! 🎉
 - 60-79% Almost there: A bit more practice needed ⚠️
 - <60% Keep studying: You're making progress! 📚
+</details>
+
+### 📤 Data Export
+
+<details>
+<summary><b>Export Your Learning Progress to CSV</b></summary>
+
+```bash
+# Export all AWS learning data to CSV files
+node aws-for-kids.js export [directory]
+
+# Example: Export to custom directory
+node aws-for-kids.js export ./my-aws-progress
+```
+
+**Exported files include:**
+- `quiz-scores.csv` - All quiz attempts with scores and percentages
+- `completed-lessons.csv` - Topics you've completed
+- `progress.csv` - Study progress by topic
+
+**Use cases:**
+- 📋 Track your certification study progress
+- 📊 Analyze quiz performance trends
+- 💾 Backup your learning history
+- 📈 Share progress with study partners or mentors
+</details>
+
+### 📊 Statistics Summary
+
+<details>
+<summary><b>Quick Exam Readiness Check</b></summary>
+
+```bash
+# Display comprehensive statistics
+node aws-for-kids.js stats
+```
+
+**What you'll see:**
+- 📅 Study duration
+- 📚 Topics completed (X/21) with completion rate
+- 🎯 Quiz performance (total quizzes and average score)
+- 🏆 Exam readiness score (0-100)
+- 📊 Breakdown by category: Topic coverage, quiz performance, practice consistency
+- ✨ Readiness status (Ready/Almost there/Keep studying)
+
+**Perfect for:**
+- Quick progress check
+- Deciding if you're ready to schedule the exam
+- Identifying weak areas
+- Motivation to keep studying
+</details>
+
+### 🔄 Backup & Restore
+
+<details>
+<summary><b>Safeguard Your Certification Progress</b></summary>
+
+```bash
+# Create a timestamped backup
+node aws-for-kids.js backup [directory]
+
+# List all available backups
+node aws-for-kids.js list-backups [directory]
+
+# Restore from a backup (current data is auto-backed up first!)
+node aws-for-kids.js restore <backup-filename> [directory]
+```
+
+**Why backup your progress:**
+- 🎓 Don't lose quiz scores and study history
+- 📚 Preserve completed lessons and learning path
+- 🔄 Easy recovery if you need to reset or switch devices
+- 📊 Maintain accurate study streak data
+
+**Best practices:**
+- Backup before taking practice exams
+- Create backups weekly during intensive study periods
+- Keep backups when reinstalling or updating Node.js
 </details>
 
 ---
@@ -525,9 +803,10 @@ We welcome contributions! Here's how you can help:
 ### Planned Features
 
 - [ ] CLI interface tests (target: 70%+ coverage)
-- [ ] Data export functionality (CSV, PDF)
+- [x] Data export functionality (CSV) ✓
+- [x] Backup and restore system ✓
+- [x] PDF export with charts and graphs ✓
 - [ ] Reminder notifications
-- [ ] Data visualization (charts, graphs)
 - [ ] Multi-user support
 - [ ] Cloud sync option
 - [ ] Mobile app version
@@ -535,7 +814,8 @@ We welcome contributions! Here's how you can help:
 
 ### Testing Improvements
 
-- [ ] Increase branch coverage to 60%+
+- [x] Increase branch coverage to 60%+ ✓ (Currently at 60.37%)
+- [ ] Increase branch coverage to 70%+
 - [ ] Add performance benchmarks
 - [ ] Snapshot testing for outputs
 - [ ] Mutation testing

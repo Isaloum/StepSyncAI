@@ -817,6 +817,132 @@ describe('MentalHealthTracker', () => {
         const streak = tracker.calculateMoodStreak();
         expect(streak).toBe(0);
       });
+
+      test('calculateMoodStreak should return 0 when today has no entry', () => {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 2);
+
+        tracker.data.moodEntries = [{
+          id: 1,
+          rating: 7,
+          note: 'Test',
+          timestamp: yesterday.toISOString()
+        }];
+
+        const streak = tracker.calculateMoodStreak();
+        expect(streak).toBe(0);
+      });
+    });
+  });
+
+  describe('Empty Data Edge Cases', () => {
+    test('viewSymptoms should handle no symptoms gracefully', () => {
+      tracker.data.symptoms = [];
+
+      tracker.viewSymptoms(7);
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No symptoms'));
+    });
+
+    test('visualizeSymptomPatterns should handle no symptoms', () => {
+      tracker.data.symptoms = [];
+
+      tracker.visualizeSymptomPatterns(30);
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No symptom data'));
+    });
+
+    test('listCopingStrategies should handle empty list', () => {
+      tracker.data.copingStrategies = [];
+
+      tracker.listCopingStrategies();
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No coping strategies'));
+    });
+
+    test('listTriggers should handle empty triggers', () => {
+      tracker.data.triggers = [];
+
+      tracker.listTriggers();
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No triggers'));
+    });
+  });
+
+  describe('SaveData Failure Paths', () => {
+    beforeEach(() => {
+      fs.writeFileSync.mockImplementation(() => {
+        throw new Error('Disk write error');
+      });
+    });
+
+    test('addJournal should return false when saveData fails', () => {
+      const result = tracker.addJournal('Test entry', 'general');
+
+      expect(result).toBe(false);
+      expect(consoleErrorSpy).toHaveBeenCalled();
+    });
+
+    test('logSymptom should return false when saveData fails', () => {
+      const result = tracker.logSymptom('anxiety', 5, 'Test note');
+
+      expect(result).toBe(false);
+      expect(consoleErrorSpy).toHaveBeenCalled();
+    });
+
+    test('addTrigger should return false when saveData fails', () => {
+      const result = tracker.addTrigger('Test trigger', 7);
+
+      expect(result).toBe(false);
+      expect(consoleErrorSpy).toHaveBeenCalled();
+    });
+
+    test('addCopingStrategy should return false when saveData fails', () => {
+      const result = tracker.addCopingStrategy('Deep breathing', 'Breathe slowly');
+
+      expect(result).toBe(false);
+      expect(consoleErrorSpy).toHaveBeenCalled();
+    });
+
+    test('addGoal should return false when saveData fails', () => {
+      const result = tracker.addGoal('Test goal', '2024-12-31');
+
+      expect(result).toBe(false);
+      expect(consoleErrorSpy).toHaveBeenCalled();
+    });
+
+    test('logTriggerOccurrence should return false when saveData fails', () => {
+      // First add a trigger successfully
+      fs.writeFileSync.mockImplementationOnce(() => {});
+      tracker.addTrigger('Test trigger', 5);
+      const triggerId = tracker.data.triggers[0].id;
+
+      // Now make saveData fail
+      fs.writeFileSync.mockImplementation(() => {
+        throw new Error('Write error');
+      });
+
+      const result = tracker.logTriggerOccurrence(triggerId);
+
+      expect(result).toBe(false);
+      expect(consoleErrorSpy).toHaveBeenCalled();
+    });
+
+    test('useCopingStrategy should return false when saveData fails', () => {
+      // First add a strategy successfully
+      fs.writeFileSync.mockImplementationOnce(() => {});
+      tracker.addCopingStrategy('Test', 'Description');
+      const strategyId = tracker.data.copingStrategies[0].id;
+
+      // Now make saveData fail
+      fs.writeFileSync.mockImplementation(() => {
+        throw new Error('Write error');
+      });
+
+      const result = tracker.useCopingStrategy(strategyId, 8);
+
+      expect(result).toBe(false);
+      expect(consoleErrorSpy).toHaveBeenCalled();
     });
   });
 });

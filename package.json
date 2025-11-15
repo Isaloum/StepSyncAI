@@ -64,5 +64,8 @@
   "license": "MIT",
   "devDependencies": {
     "jest": "^30.2.0"
+  },
+  "dependencies": {
+    "pdfkit": "^0.17.2"
   }
 }

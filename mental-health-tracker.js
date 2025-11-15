@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const ChartUtils = require('./chart-utils');
+const PDFDocument = require('pdfkit');
 
 class MentalHealthTracker {
     constructor(dataFile = 'mental-health-data.json') {
@@ -41,6 +42,574 @@ class MentalHealthTracker {
             console.error('Error saving data:', error.message);
             return false;
         }
+    }
+
+    // Statistics Summary
+    showStats() {
+        const totalMoods = this.data.moodEntries.length;
+        const totalJournal = this.data.journalEntries.length;
+        const totalSymptoms = this.data.symptoms.length;
+        const totalTriggers = this.data.triggers.length;
+        const totalCoping = this.data.copingStrategies.length;
+        const totalGoals = this.data.goals.length;
+        const completedGoals = this.data.goals.filter(g => g.completed).length;
+        const activeGoals = totalGoals - completedGoals;
+
+        // Calculate average mood if entries exist
+        let avgMood = 0;
+        if (totalMoods > 0) {
+            avgMood = (this.data.moodEntries.reduce((sum, e) => sum + e.rating, 0) / totalMoods).toFixed(1);
+        }
+
+        // Calculate days tracking (from first entry to now)
+        let daysTracking = 0;
+        if (totalMoods > 0 || totalJournal > 0 || totalSymptoms > 0) {
+            const allDates = [
+                ...this.data.moodEntries.map(e => new Date(e.timestamp)),
+                ...this.data.journalEntries.map(e => new Date(e.timestamp)),
+                ...this.data.symptoms.map(e => new Date(e.timestamp))
+            ];
+            if (allDates.length > 0) {
+                const firstDate = new Date(Math.min(...allDates));
+                const daysDiff = Math.ceil((new Date() - firstDate) / (1000 * 60 * 60 * 24));
+                daysTracking = daysDiff;
+            }
+        }
+
+        console.log('\n📊 Mental Health Tracker - Statistics Summary');
+        console.log('═'.repeat(60));
+        console.log(`\n📅 Tracking Duration: ${daysTracking} days`);
+        console.log('\n🎭 Mood & Emotions:');
+        console.log(`   Total mood entries: ${totalMoods}`);
+        if (totalMoods > 0) {
+            console.log(`   Average mood: ${avgMood}/10 ${this.getMoodEmoji(Math.round(avgMood))}`);
+        }
+
+        console.log('\n📝 Journal:');
+        console.log(`   Total entries: ${totalJournal}`);
+
+        console.log('\n🩺 Symptoms:');
+        console.log(`   Total logged: ${totalSymptoms}`);
+
+        console.log('\n⚡ Triggers:');
+        console.log(`   Identified: ${totalTriggers}`);
+
+        console.log('\n💪 Coping Strategies:');
+        console.log(`   Available: ${totalCoping}`);
+
+        console.log('\n🎯 Recovery Goals:');
+        console.log(`   Active: ${activeGoals}`);
+        console.log(`   Completed: ${completedGoals}`);
+        console.log(`   Total: ${totalGoals}`);
+
+        if (this.data.profile && this.data.profile.accidentDate) {
+            const accidentDate = new Date(this.data.profile.accidentDate);
+            const daysSinceAccident = Math.ceil((new Date() - accidentDate) / (1000 * 60 * 60 * 24));
+            console.log(`\n🕐 Days since accident: ${daysSinceAccident}`);
+        }
+
+        console.log('\n═'.repeat(60));
+    }
+
+    // Backup and Restore
+    createBackup(backupDir = './backups') {
+        try {
+            // Create backups directory if it doesn't exist
+            if (!fs.existsSync(backupDir)) {
+                fs.mkdirSync(backupDir, { recursive: true });
+            }
+
+            // Check if data file exists
+            if (!fs.existsSync(this.dataFile)) {
+                console.log('\n⚠️  No data file found to backup.');
+                return false;
+            }
+
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const backupFilename = `mental-health-backup-${timestamp}.json`;
+            const backupPath = path.join(backupDir, backupFilename);
+
+            // Copy data file to backup
+            const data = fs.readFileSync(this.dataFile);
+            fs.writeFileSync(backupPath, data);
+
+            console.log(`\n✓ Backup created successfully!`);
+            console.log(`  Location: ${backupPath}`);
+            console.log(`  Time: ${new Date().toLocaleString()}`);
+            return true;
+        } catch (error) {
+            console.error('Error creating backup:', error.message);
+            return false;
+        }
+    }
+
+    listBackups(backupDir = './backups') {
+        try {
+            if (!fs.existsSync(backupDir)) {
+                console.log('\n📁 No backups directory found.');
+                return;
+            }
+
+            const files = fs.readdirSync(backupDir)
+                .filter(f => f.startsWith('mental-health-backup-') && f.endsWith('.json'))
+                .sort()
+                .reverse();
+
+            if (files.length === 0) {
+                console.log('\n📁 No backups found.');
+                return;
+            }
+
+            console.log('\n📁 Available Backups:');
+            console.log('═'.repeat(60));
+            files.forEach((file, index) => {
+                const filePath = path.join(backupDir, file);
+                const stats = fs.statSync(filePath);
+                const size = (stats.size / 1024).toFixed(2);
+                const date = stats.mtime.toLocaleString();
+                console.log(`${index + 1}. ${file}`);
+                console.log(`   Created: ${date}`);
+                console.log(`   Size: ${size} KB`);
+            });
+        } catch (error) {
+            console.error('Error listing backups:', error.message);
+        }
+    }
+
+    restoreFromBackup(backupFile, backupDir = './backups') {
+        try {
+            const backupPath = path.join(backupDir, backupFile);
+
+            if (!fs.existsSync(backupPath)) {
+                console.log('\n❌ Backup file not found.');
+                return false;
+            }
+
+            // Create a backup of current data before restoring
+            if (fs.existsSync(this.dataFile)) {
+                const preRestoreBackup = `mental-health-pre-restore-${Date.now()}.json`;
+                fs.copyFileSync(this.dataFile, path.join(backupDir, preRestoreBackup));
+                console.log(`\n💾 Current data backed up to: ${preRestoreBackup}`);
+            }
+
+            // Restore from backup
+            const backupData = fs.readFileSync(backupPath);
+            fs.writeFileSync(this.dataFile, backupData);
+
+            // Reload data
+            this.data = this.loadData();
+
+            console.log(`\n✓ Data restored successfully from backup!`);
+            console.log(`  Source: ${backupFile}`);
+            console.log(`  Time: ${new Date().toLocaleString()}`);
+            return true;
+        } catch (error) {
+            console.error('Error restoring backup:', error.message);
+            return false;
+        }
+    }
+
+    // Data Export
+    exportToCSV(outputDir = './exports') {
+        try {
+            // Create exports directory if it doesn't exist
+            if (!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir, { recursive: true });
+            }
+
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const baseFilename = `mental-health-export-${timestamp}`;
+
+            // Export mood entries
+            if (this.data.moodEntries.length > 0) {
+                const moodCSV = this.generateMoodCSV();
+                fs.writeFileSync(path.join(outputDir, `${baseFilename}-moods.csv`), moodCSV);
+            }
+
+            // Export journal entries
+            if (this.data.journalEntries.length > 0) {
+                const journalCSV = this.generateJournalCSV();
+                fs.writeFileSync(path.join(outputDir, `${baseFilename}-journal.csv`), journalCSV);
+            }
+
+            // Export symptoms
+            if (this.data.symptoms.length > 0) {
+                const symptomsCSV = this.generateSymptomsCSV();
+                fs.writeFileSync(path.join(outputDir, `${baseFilename}-symptoms.csv`), symptomsCSV);
+            }
+
+            // Export triggers
+            if (this.data.triggers.length > 0) {
+                const triggersCSV = this.generateTriggersCSV();
+                fs.writeFileSync(path.join(outputDir, `${baseFilename}-triggers.csv`), triggersCSV);
+            }
+
+            // Export coping strategies
+            if (this.data.copingStrategies.length > 0) {
+                const copingCSV = this.generateCopingCSV();
+                fs.writeFileSync(path.join(outputDir, `${baseFilename}-coping.csv`), copingCSV);
+            }
+
+            // Export goals
+            if (this.data.goals.length > 0) {
+                const goalsCSV = this.generateGoalsCSV();
+                fs.writeFileSync(path.join(outputDir, `${baseFilename}-goals.csv`), goalsCSV);
+            }
+
+            console.log(`\n✓ Data exported successfully to ${outputDir}/`);
+            console.log(`  Base filename: ${baseFilename}`);
+            return true;
+        } catch (error) {
+            console.error('Error exporting data:', error.message);
+            return false;
+        }
+    }
+
+    generateMoodCSV() {
+        const headers = 'Date,Time,Rating,Note\n';
+        const rows = this.data.moodEntries.map(entry => {
+            const date = new Date(entry.timestamp);
+            const dateStr = date.toLocaleDateString();
+            const timeStr = date.toLocaleTimeString();
+            const note = (entry.note || '').replace(/"/g, '""'); // Escape quotes
+            return `"${dateStr}","${timeStr}",${entry.rating},"${note}"`;
+        }).join('\n');
+        return headers + rows;
+    }
+
+    generateJournalCSV() {
+        const headers = 'Date,Time,Type,Content\n';
+        const rows = this.data.journalEntries.map(entry => {
+            const date = new Date(entry.timestamp);
+            const dateStr = date.toLocaleDateString();
+            const timeStr = date.toLocaleTimeString();
+            const content = (entry.content || '').replace(/"/g, '""');
+            return `"${dateStr}","${timeStr}","${entry.type}","${content}"`;
+        }).join('\n');
+        return headers + rows;
+    }
+
+    generateSymptomsCSV() {
+        const headers = 'Date,Time,Type,Severity,Note\n';
+        const rows = this.data.symptoms.map(entry => {
+            const date = new Date(entry.timestamp);
+            const dateStr = date.toLocaleDateString();
+            const timeStr = date.toLocaleTimeString();
+            const note = (entry.note || '').replace(/"/g, '""');
+            return `"${dateStr}","${timeStr}","${entry.type}",${entry.severity},"${note}"`;
+        }).join('\n');
+        return headers + rows;
+    }
+
+    generateTriggersCSV() {
+        const headers = 'Description,Intensity,Occurrences,First Logged,Last Logged\n';
+        const rows = this.data.triggers.map(trigger => {
+            const desc = (trigger.description || '').replace(/"/g, '""');
+            const firstDate = new Date(trigger.firstLogged).toLocaleDateString();
+            const lastDate = trigger.lastLogged ? new Date(trigger.lastLogged).toLocaleDateString() : 'N/A';
+            return `"${desc}",${trigger.intensity},${trigger.occurrences},"${firstDate}","${lastDate}"`;
+        }).join('\n');
+        return headers + rows;
+    }
+
+    generateCopingCSV() {
+        const headers = 'Name,Description,Effectiveness,Times Used\n';
+        const rows = this.data.copingStrategies.map(strategy => {
+            const name = (strategy.name || '').replace(/"/g, '""');
+            const desc = (strategy.description || '').replace(/"/g, '""');
+            const eff = strategy.effectiveness || 'N/A';
+            const used = strategy.timesUsed || 0;
+            return `"${name}","${desc}","${eff}",${used}`;
+        }).join('\n');
+        return headers + rows;
+    }
+
+    generateGoalsCSV() {
+        const headers = 'Description,Target Date,Created,Completed,Status\n';
+        const rows = this.data.goals.map(goal => {
+            const desc = (goal.description || '').replace(/"/g, '""');
+            const target = goal.targetDate || 'N/A';
+            const created = new Date(goal.createdAt).toLocaleDateString();
+            const completed = goal.completedAt ? new Date(goal.completedAt).toLocaleDateString() : 'N/A';
+            const status = goal.completed ? 'Completed' : 'Active';
+            return `"${desc}","${target}","${created}","${completed}","${status}"`;
+        }).join('\n');
+        return headers + rows;
+    }
+
+    // PDF Export with Charts
+    exportToPDF(outputDir = './exports') {
+        return new Promise((resolve, reject) => {
+            try {
+                // Create exports directory if it doesn't exist
+                if (!fs.existsSync(outputDir)) {
+                    fs.mkdirSync(outputDir, { recursive: true });
+                }
+
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+                const filename = `mental-health-report-${timestamp}.pdf`;
+                const filepath = path.join(outputDir, filename);
+
+                // Create PDF document
+                const doc = new PDFDocument({ margin: 50 });
+                const stream = fs.createWriteStream(filepath);
+                doc.pipe(stream);
+
+                // Header
+                doc.fontSize(24).fillColor('#2c3e50').text('Mental Health Report', { align: 'center' });
+                doc.moveDown(0.5);
+                doc.fontSize(12).fillColor('#7f8c8d').text(new Date().toLocaleDateString('en-US', {
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                }), { align: 'center' });
+                doc.moveDown(2);
+
+                // Summary Statistics
+                this.addSummarySection(doc);
+                doc.moveDown(1.5);
+
+                // Mood Trend Chart
+                if (this.data.moodEntries.length > 0) {
+                    this.addMoodTrendChart(doc);
+                    doc.moveDown(1.5);
+                }
+
+                // Mood Distribution
+                if (this.data.moodEntries.length > 0) {
+                    this.addMoodDistribution(doc);
+                    doc.moveDown(1.5);
+                }
+
+                // Recent Journal Entries
+                if (this.data.journalEntries.length > 0) {
+                    this.addJournalSection(doc);
+                    doc.moveDown(1.5);
+                }
+
+                // Active Goals
+                if (this.data.goals.length > 0) {
+                    this.addGoalsSection(doc);
+                    doc.moveDown(1.5);
+                }
+
+                // Top Coping Strategies
+                if (this.data.copingStrategies.length > 0) {
+                    this.addCopingSection(doc);
+                }
+
+                // Footer
+                doc.fontSize(8).fillColor('#95a5a6').text(
+                    'Generated by StepSync Mental Health Tracker',
+                    50,
+                    doc.page.height - 50,
+                    { align: 'center' }
+                );
+
+                doc.end();
+
+                stream.on('finish', () => {
+                    console.log(`\n✓ PDF report generated successfully!`);
+                    console.log(`  Location: ${filepath}`);
+                    resolve(filepath);
+                });
+
+                stream.on('error', (error) => {
+                    console.error('Error writing PDF:', error.message);
+                    reject(error);
+                });
+
+            } catch (error) {
+                console.error('Error generating PDF:', error.message);
+                reject(error);
+            }
+        });
+    }
+
+    addSummarySection(doc) {
+        doc.fontSize(16).fillColor('#34495e').text('📊 Summary Statistics');
+        doc.moveDown(0.5);
+
+        const totalMoods = this.data.moodEntries.length;
+        const totalJournal = this.data.journalEntries.length;
+        const avgMood = totalMoods > 0
+            ? (this.data.moodEntries.reduce((sum, e) => sum + e.rating, 0) / totalMoods).toFixed(1)
+            : 'N/A';
+
+        const activeGoals = this.data.goals.filter(g => !g.completed).length;
+        const completedGoals = this.data.goals.filter(g => g.completed).length;
+
+        doc.fontSize(11).fillColor('#2c3e50');
+        doc.text(`Total Mood Entries: ${totalMoods}`, { indent: 20 });
+        doc.text(`Average Mood Rating: ${avgMood}/10`, { indent: 20 });
+        doc.text(`Journal Entries: ${totalJournal}`, { indent: 20 });
+        doc.text(`Active Goals: ${activeGoals}`, { indent: 20 });
+        doc.text(`Completed Goals: ${completedGoals}`, { indent: 20 });
+        doc.text(`Coping Strategies: ${this.data.copingStrategies.length}`, { indent: 20 });
+    }
+
+    addMoodTrendChart(doc) {
+        doc.fontSize(16).fillColor('#34495e').text('📈 Mood Trend (Last 30 Days)');
+        doc.moveDown(0.5);
+
+        // Get last 30 days of mood entries
+        const now = new Date();
+        const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+        const recentMoods = this.data.moodEntries
+            .filter(e => new Date(e.timestamp) >= thirtyDaysAgo)
+            .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+        if (recentMoods.length === 0) {
+            doc.fontSize(11).fillColor('#7f8c8d').text('No mood data in the last 30 days', { indent: 20 });
+            return;
+        }
+
+        // Chart dimensions
+        const chartX = 70;
+        const chartY = doc.y + 10;
+        const chartWidth = 450;
+        const chartHeight = 150;
+
+        // Draw axes
+        doc.strokeColor('#bdc3c7').lineWidth(1);
+        doc.moveTo(chartX, chartY).lineTo(chartX, chartY + chartHeight).stroke(); // Y-axis
+        doc.moveTo(chartX, chartY + chartHeight).lineTo(chartX + chartWidth, chartY + chartHeight).stroke(); // X-axis
+
+        // Y-axis labels (0-10)
+        doc.fontSize(8).fillColor('#7f8c8d');
+        for (let i = 0; i <= 10; i += 2) {
+            const y = chartY + chartHeight - (i * chartHeight / 10);
+            doc.text(i.toString(), chartX - 20, y - 4);
+            doc.strokeColor('#ecf0f1').moveTo(chartX, y).lineTo(chartX + chartWidth, y).stroke();
+        }
+
+        // Plot mood data
+        if (recentMoods.length > 1) {
+            doc.strokeColor('#3498db').lineWidth(2);
+            for (let i = 0; i < recentMoods.length - 1; i++) {
+                const x1 = chartX + (i * chartWidth / (recentMoods.length - 1));
+                const y1 = chartY + chartHeight - (recentMoods[i].rating * chartHeight / 10);
+                const x2 = chartX + ((i + 1) * chartWidth / (recentMoods.length - 1));
+                const y2 = chartY + chartHeight - (recentMoods[i + 1].rating * chartHeight / 10);
+                doc.moveTo(x1, y1).lineTo(x2, y2).stroke();
+            }
+
+            // Draw data points
+            doc.fillColor('#2980b9');
+            recentMoods.forEach((mood, i) => {
+                const x = chartX + (i * chartWidth / (recentMoods.length - 1));
+                const y = chartY + chartHeight - (mood.rating * chartHeight / 10);
+                doc.circle(x, y, 3).fill();
+            });
+        }
+
+        doc.y = chartY + chartHeight + 20;
+    }
+
+    addMoodDistribution(doc) {
+        doc.fontSize(16).fillColor('#34495e').text('📊 Mood Distribution');
+        doc.moveDown(0.5);
+
+        // Count mood ranges
+        const distribution = { '1-2': 0, '3-4': 0, '5-6': 0, '7-8': 0, '9-10': 0 };
+        this.data.moodEntries.forEach(entry => {
+            if (entry.rating <= 2) distribution['1-2']++;
+            else if (entry.rating <= 4) distribution['3-4']++;
+            else if (entry.rating <= 6) distribution['5-6']++;
+            else if (entry.rating <= 8) distribution['7-8']++;
+            else distribution['9-10']++;
+        });
+
+        const total = this.data.moodEntries.length;
+        const barWidth = 80;
+        const maxBarHeight = 100;
+        const startX = 70;
+        const startY = doc.y + 10;
+
+        Object.entries(distribution).forEach(([range, count], index) => {
+            const x = startX + (index * 100);
+            const percentage = total > 0 ? (count / total) * 100 : 0;
+            const barHeight = (percentage / 100) * maxBarHeight;
+
+            // Draw bar
+            doc.fillColor(this.getMoodColor(range)).rect(x, startY + maxBarHeight - barHeight, barWidth, barHeight).fill();
+
+            // Labels
+            doc.fontSize(9).fillColor('#2c3e50');
+            doc.text(range, x, startY + maxBarHeight + 5, { width: barWidth, align: 'center' });
+            doc.text(`${count} (${percentage.toFixed(0)}%)`, x, startY + maxBarHeight + 20, { width: barWidth, align: 'center' });
+        });
+
+        doc.y = startY + maxBarHeight + 40;
+    }
+
+    getMoodColor(range) {
+        const colors = {
+            '1-2': '#e74c3c',   // Red
+            '3-4': '#e67e22',   // Orange
+            '5-6': '#f39c12',   // Yellow
+            '7-8': '#2ecc71',   // Green
+            '9-10': '#27ae60'   // Dark Green
+        };
+        return colors[range] || '#95a5a6';
+    }
+
+    addJournalSection(doc) {
+        doc.fontSize(16).fillColor('#34495e').text('📝 Recent Journal Entries');
+        doc.moveDown(0.5);
+
+        const recent = this.data.journalEntries
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+            .slice(0, 5);
+
+        recent.forEach((entry, index) => {
+            const date = new Date(entry.timestamp).toLocaleDateString();
+            doc.fontSize(11).fillColor('#2c3e50').text(`${date} - ${entry.type}`, { indent: 20, continued: false });
+            doc.fontSize(10).fillColor('#7f8c8d').text(
+                entry.content.length > 150 ? entry.content.substring(0, 150) + '...' : entry.content,
+                { indent: 40 }
+            );
+            if (index < recent.length - 1) doc.moveDown(0.5);
+        });
+    }
+
+    addGoalsSection(doc) {
+        doc.fontSize(16).fillColor('#34495e').text('🎯 Active Goals');
+        doc.moveDown(0.5);
+
+        const activeGoals = this.data.goals.filter(g => !g.completed).slice(0, 5);
+
+        if (activeGoals.length === 0) {
+            doc.fontSize(11).fillColor('#7f8c8d').text('No active goals', { indent: 20 });
+            return;
+        }
+
+        activeGoals.forEach((goal, index) => {
+            const targetDate = goal.targetDate || 'No deadline';
+            doc.fontSize(11).fillColor('#2c3e50').text(`${index + 1}. ${goal.description}`, { indent: 20 });
+            doc.fontSize(9).fillColor('#7f8c8d').text(`   Target: ${targetDate}`, { indent: 20 });
+            if (index < activeGoals.length - 1) doc.moveDown(0.3);
+        });
+    }
+
+    addCopingSection(doc) {
+        doc.fontSize(16).fillColor('#34495e').text('💪 Top Coping Strategies');
+        doc.moveDown(0.5);
+
+        const topStrategies = this.data.copingStrategies
+            .sort((a, b) => (b.timesUsed || 0) - (a.timesUsed || 0))
+            .slice(0, 5);
+
+        topStrategies.forEach((strategy, index) => {
+            const effectiveness = strategy.effectiveness || 'N/A';
+            const timesUsed = strategy.timesUsed || 0;
+            doc.fontSize(11).fillColor('#2c3e50').text(
+                `${index + 1}. ${strategy.name} (Used: ${timesUsed}x, Effectiveness: ${effectiveness}/10)`,
+                { indent: 20 }
+            );
+            if (strategy.description) {
+                doc.fontSize(9).fillColor('#7f8c8d').text(`   ${strategy.description}`, { indent: 40 });
+            }
+            if (index < topStrategies.length - 1) doc.moveDown(0.3);
+        });
     }
 
     // Profile Management
@@ -967,6 +1536,9 @@ QUICK ACTIONS:
   checkin
       Quick daily check-in summary
 
+  stats (or statistics)
+      Display overall statistics and summary of all tracked data
+
   help
       Show this help message
 
@@ -979,6 +1551,28 @@ VISUALIZATIONS:
 
   recovery-progress
       View comprehensive recovery progress dashboard
+
+DATA EXPORT:
+  export [directory]
+      Export all data to CSV files (default: ./exports)
+      Creates separate CSV files for moods, journal, symptoms, triggers, etc.
+      Perfect for sharing with healthcare providers or backup
+
+  export-pdf [directory]
+      Generate comprehensive PDF report with charts and visualizations
+      Includes mood trends, distribution charts, statistics, and summaries
+      Perfect for professional meetings or comprehensive review
+
+BACKUP & RESTORE:
+  backup [directory]
+      Create a timestamped backup of your data (default: ./backups)
+
+  list-backups [directory]
+      View all available backups with creation dates and sizes
+
+  restore <backup-filename> [directory]
+      Restore data from a backup file
+      Current data is automatically backed up before restore
 
 ═══════════════════════════════════════════════════════════
 Remember: This is a personal tracking tool. Always consult with
@@ -1165,6 +1759,11 @@ function main() {
             tracker.quickCheckIn();
             break;
 
+        case 'stats':
+        case 'statistics':
+            tracker.showStats();
+            break;
+
         case 'mood-trends':
             const trendDays = args[1] ? parseInt(args[1]) : 14;
             tracker.visualizeMoodTrends(trendDays);
@@ -1177,6 +1776,37 @@ function main() {
 
         case 'recovery-progress':
             tracker.visualizeRecoveryProgress();
+            break;
+
+        case 'export':
+            const exportDir = args[1] || './exports';
+            tracker.exportToCSV(exportDir);
+            break;
+
+        case 'export-pdf':
+            const pdfDir = args[1] || './exports';
+            tracker.exportToPDF(pdfDir).catch(err => {
+                console.error('Failed to generate PDF:', err.message);
+            });
+            break;
+
+        case 'backup':
+            const backupDir = args[1] || './backups';
+            tracker.createBackup(backupDir);
+            break;
+
+        case 'list-backups':
+            const listDir = args[1] || './backups';
+            tracker.listBackups(listDir);
+            break;
+
+        case 'restore':
+            if (!args[1]) {
+                console.log('Usage: restore <backup-filename> [backup-directory]');
+                break;
+            }
+            const restoreDir = args[2] || './backups';
+            tracker.restoreFromBackup(args[1], restoreDir);
             break;
 
         case 'help':

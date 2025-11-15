@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const ChartUtils = require('./chart-utils');
+const PDFDocument = require('pdfkit');
 
 class AWSForKids {
     constructor(dataFile = 'aws-learning-progress.json') {
@@ -34,6 +35,478 @@ class AWSForKids {
             console.error('Error saving data:', error.message);
             return false;
         }
+    }
+
+    // Statistics Summary
+    showStats() {
+        const totalTopics = Object.keys(this.concepts).length;
+        const completedTopics = this.data.completedLessons.length;
+        const completionRate = ((completedTopics / totalTopics) * 100).toFixed(1);
+        const totalQuizzes = this.data.quizScores.length;
+
+        // Calculate average quiz score
+        let avgQuizScore = 0;
+        if (totalQuizzes > 0) {
+            const totalCorrect = this.data.quizScores.reduce((sum, q) => sum + q.score, 0);
+            const totalQuestions = this.data.quizScores.reduce((sum, q) => sum + q.total, 0);
+            avgQuizScore = ((totalCorrect / totalQuestions) * 100).toFixed(1);
+        }
+
+        // Calculate exam readiness
+        const topicCoveragePoints = (completedTopics / totalTopics) * 40;
+        const quizPerformancePoints = totalQuizzes > 0 ? (avgQuizScore / 100) * 40 : 0;
+        const practiceConsistencyPoints = Math.min(totalQuizzes * 2, 20);
+        const examReadiness = (topicCoveragePoints + quizPerformancePoints + practiceConsistencyPoints).toFixed(0);
+
+        // Calculate days studying
+        let daysStudying = 0;
+        if (totalQuizzes > 0 || completedTopics > 0) {
+            const allDates = this.data.quizScores.map(q => new Date(q.timestamp));
+            if (allDates.length > 0) {
+                const firstDate = new Date(Math.min(...allDates));
+                daysStudying = Math.ceil((new Date() - firstDate) / (1000 * 60 * 60 * 24));
+            }
+        }
+
+        console.log('\n📊 AWS Cloud Practitioner - Statistics Summary');
+        console.log('═'.repeat(60));
+        console.log(`\n📅 Study Duration: ${daysStudying} days`);
+
+        console.log('\n📚 Topics:');
+        console.log(`   Completed: ${completedTopics}/${totalTopics}`);
+        console.log(`   Completion rate: ${completionRate}%`);
+
+        console.log('\n🎯 Quiz Performance:');
+        console.log(`   Total quizzes taken: ${totalQuizzes}`);
+        if (totalQuizzes > 0) {
+            console.log(`   Average score: ${avgQuizScore}%`);
+        }
+
+        console.log('\n🏆 Exam Readiness:');
+        console.log(`   Overall score: ${examReadiness}/100`);
+        if (examReadiness >= 80) {
+            console.log(`   Status: Ready to schedule exam! 🎉`);
+        } else if (examReadiness >= 60) {
+            console.log(`   Status: Almost there, keep practicing! ⚠️`);
+        } else {
+            console.log(`   Status: Keep studying, you're making progress! 📚`);
+        }
+
+        console.log('\n📊 Breakdown:');
+        console.log(`   Topic Coverage: ${topicCoveragePoints.toFixed(0)}/40`);
+        console.log(`   Quiz Performance: ${quizPerformancePoints.toFixed(0)}/40`);
+        console.log(`   Practice Consistency: ${practiceConsistencyPoints.toFixed(0)}/20`);
+
+        console.log('\n═'.repeat(60));
+    }
+
+    // Backup and Restore
+    createBackup(backupDir = './backups') {
+        try {
+            if (!fs.existsSync(backupDir)) {
+                fs.mkdirSync(backupDir, { recursive: true });
+            }
+
+            if (!fs.existsSync(this.dataFile)) {
+                console.log('\n⚠️  No data file found to backup.');
+                return false;
+            }
+
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const backupFilename = `aws-learning-backup-${timestamp}.json`;
+            const backupPath = path.join(backupDir, backupFilename);
+
+            const data = fs.readFileSync(this.dataFile);
+            fs.writeFileSync(backupPath, data);
+
+            console.log(`\n✓ Backup created successfully!`);
+            console.log(`  Location: ${backupPath}`);
+            console.log(`  Time: ${new Date().toLocaleString()}`);
+            return true;
+        } catch (error) {
+            console.error('Error creating backup:', error.message);
+            return false;
+        }
+    }
+
+    listBackups(backupDir = './backups') {
+        try {
+            if (!fs.existsSync(backupDir)) {
+                console.log('\n📁 No backups directory found.');
+                return;
+            }
+
+            const files = fs.readdirSync(backupDir)
+                .filter(f => f.startsWith('aws-learning-backup-') && f.endsWith('.json'))
+                .sort()
+                .reverse();
+
+            if (files.length === 0) {
+                console.log('\n📁 No backups found.');
+                return;
+            }
+
+            console.log('\n📁 Available Backups:');
+            console.log('═'.repeat(60));
+            files.forEach((file, index) => {
+                const filePath = path.join(backupDir, file);
+                const stats = fs.statSync(filePath);
+                const size = (stats.size / 1024).toFixed(2);
+                const date = stats.mtime.toLocaleString();
+                console.log(`${index + 1}. ${file}`);
+                console.log(`   Created: ${date}`);
+                console.log(`   Size: ${size} KB`);
+            });
+        } catch (error) {
+            console.error('Error listing backups:', error.message);
+        }
+    }
+
+    restoreFromBackup(backupFile, backupDir = './backups') {
+        try {
+            const backupPath = path.join(backupDir, backupFile);
+
+            if (!fs.existsSync(backupPath)) {
+                console.log('\n❌ Backup file not found.');
+                return false;
+            }
+
+            if (fs.existsSync(this.dataFile)) {
+                const preRestoreBackup = `aws-learning-pre-restore-${Date.now()}.json`;
+                fs.copyFileSync(this.dataFile, path.join(backupDir, preRestoreBackup));
+                console.log(`\n💾 Current data backed up to: ${preRestoreBackup}`);
+            }
+
+            const backupData = fs.readFileSync(backupPath);
+            fs.writeFileSync(this.dataFile, backupData);
+            this.data = this.loadData();
+
+            console.log(`\n✓ Data restored successfully from backup!`);
+            console.log(`  Source: ${backupFile}`);
+            console.log(`  Time: ${new Date().toLocaleString()}`);
+            return true;
+        } catch (error) {
+            console.error('Error restoring backup:', error.message);
+            return false;
+        }
+    }
+
+    // Data Export
+    exportToCSV(outputDir = './exports') {
+        try {
+            // Create exports directory if it doesn't exist
+            if (!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir, { recursive: true });
+            }
+
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const baseFilename = `aws-learning-export-${timestamp}`;
+
+            // Export quiz scores
+            if (this.data.quizScores.length > 0) {
+                const quizCSV = this.generateQuizScoresCSV();
+                fs.writeFileSync(path.join(outputDir, `${baseFilename}-quiz-scores.csv`), quizCSV);
+            }
+
+            // Export completed lessons
+            if (this.data.completedLessons.length > 0) {
+                const lessonsCSV = this.generateLessonsCSV();
+                fs.writeFileSync(path.join(outputDir, `${baseFilename}-completed-lessons.csv`), lessonsCSV);
+            }
+
+            // Export progress summary
+            const progressCSV = this.generateProgressCSV();
+            fs.writeFileSync(path.join(outputDir, `${baseFilename}-progress.csv`), progressCSV);
+
+            console.log(`\n✓ Data exported successfully to ${outputDir}/`);
+            console.log(`  Base filename: ${baseFilename}`);
+            return true;
+        } catch (error) {
+            console.error('Error exporting data:', error.message);
+            return false;
+        }
+    }
+
+    generateQuizScoresCSV() {
+        const headers = 'Date,Time,Score,Total Questions,Percentage\n';
+        const rows = this.data.quizScores.map(quiz => {
+            const date = new Date(quiz.timestamp);
+            const dateStr = date.toLocaleDateString();
+            const timeStr = date.toLocaleTimeString();
+            const percentage = ((quiz.score / quiz.total) * 100).toFixed(1);
+            return `"${dateStr}","${timeStr}",${quiz.score},${quiz.total},${percentage}%`;
+        }).join('\n');
+        return headers + rows;
+    }
+
+    generateLessonsCSV() {
+        const headers = 'Topic\n';
+        const rows = this.data.completedLessons.map(topic => {
+            return `"${topic}"`;
+        }).join('\n');
+        return headers + rows;
+    }
+
+    generateProgressCSV() {
+        const headers = 'Topic,Completion Count\n';
+        const rows = Object.entries(this.data.progress).map(([topic, count]) => {
+            return `"${topic}",${count}`;
+        }).join('\n');
+        return headers + rows;
+    }
+
+    // PDF Export with Charts
+    exportToPDF(outputDir = './exports') {
+        return new Promise((resolve, reject) => {
+            try {
+                // Create exports directory if it doesn't exist
+                if (!fs.existsSync(outputDir)) {
+                    fs.mkdirSync(outputDir, { recursive: true });
+                }
+
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+                const filename = `aws-learning-report-${timestamp}.pdf`;
+                const filepath = path.join(outputDir, filename);
+
+                // Create PDF document
+                const doc = new PDFDocument({ margin: 50 });
+                const stream = fs.createWriteStream(filepath);
+                doc.pipe(stream);
+
+                // Header
+                doc.fontSize(24).fillColor('#2c3e50').text('AWS Cloud Practitioner - Learning Report', { align: 'center' });
+                doc.moveDown(0.5);
+                doc.fontSize(12).fillColor('#7f8c8d').text(new Date().toLocaleDateString('en-US', {
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                }), { align: 'center' });
+                doc.moveDown(2);
+
+                // Exam Readiness Summary
+                this.addExamReadinessSummary(doc);
+                doc.moveDown(1.5);
+
+                // Progress Chart
+                this.addProgressChart(doc);
+                doc.moveDown(1.5);
+
+                // Quiz Performance
+                if (this.data.quizScores.length > 0) {
+                    this.addQuizPerformance(doc);
+                    doc.moveDown(1.5);
+                }
+
+                // Learning Path
+                this.addLearningPath(doc);
+
+                // Footer
+                doc.fontSize(8).fillColor('#95a5a6').text(
+                    'Generated by StepSync AWS Learning Tracker',
+                    50,
+                    doc.page.height - 50,
+                    { align: 'center' }
+                );
+
+                doc.end();
+
+                stream.on('finish', () => {
+                    console.log(`\n✓ PDF report generated successfully!`);
+                    console.log(`  Location: ${filepath}`);
+                    resolve(filepath);
+                });
+
+                stream.on('error', (error) => {
+                    console.error('Error writing PDF:', error.message);
+                    reject(error);
+                });
+
+            } catch (error) {
+                console.error('Error generating PDF:', error.message);
+                reject(error);
+            }
+        });
+    }
+
+    addExamReadinessSummary(doc) {
+        doc.fontSize(16).fillColor('#34495e').text('🎯 Exam Readiness');
+        doc.moveDown(0.5);
+
+        const totalTopics = Object.keys(this.concepts).length;
+        const completedTopics = this.data.completedLessons.length;
+        const completionRate = ((completedTopics / totalTopics) * 100).toFixed(1);
+        const totalQuizzes = this.data.quizScores.length;
+
+        // Calculate average quiz score
+        let avgQuizScore = 0;
+        if (totalQuizzes > 0) {
+            const totalCorrect = this.data.quizScores.reduce((sum, q) => sum + q.score, 0);
+            const totalQuestions = this.data.quizScores.reduce((sum, q) => sum + q.total, 0);
+            avgQuizScore = ((totalCorrect / totalQuestions) * 100).toFixed(1);
+        }
+
+        // Calculate exam readiness
+        const topicCoveragePoints = (completedTopics / totalTopics) * 40;
+        const quizPerformancePoints = totalQuizzes > 0 ? (avgQuizScore / 100) * 40 : 0;
+        const practiceConsistencyPoints = Math.min(totalQuizzes * 2, 20);
+        const examReadiness = (topicCoveragePoints + quizPerformancePoints + practiceConsistencyPoints).toFixed(0);
+
+        // Draw exam readiness gauge
+        const centerX = 300;
+        const centerY = doc.y + 60;
+        const radius = 50;
+
+        // Background circle
+        doc.strokeColor('#ecf0f1').lineWidth(10).circle(centerX, centerY, radius).stroke();
+
+        // Progress arc
+        const readinessAngle = (examReadiness / 100) * 360;
+        const color = examReadiness >= 80 ? '#27ae60' : examReadiness >= 60 ? '#f39c12' : '#e74c3c';
+        doc.strokeColor(color).lineWidth(10)
+            .arc(centerX, centerY, radius, -90, -90 + readinessAngle, false)
+            .stroke();
+
+        // Readiness score text
+        doc.fontSize(24).fillColor(color).text(
+            `${examReadiness}%`,
+            centerX - 30,
+            centerY - 12
+        );
+
+        doc.y = centerY + radius + 30;
+
+        // Details
+        doc.fontSize(11).fillColor('#2c3e50');
+        doc.text(`Topics Completed: ${completedTopics}/${totalTopics} (${completionRate}%)`, { indent: 20 });
+        doc.text(`Quizzes Taken: ${totalQuizzes}`, { indent: 20 });
+        doc.text(`Average Quiz Score: ${avgQuizScore}%`, { indent: 20 });
+        doc.moveDown(0.5);
+
+        // Breakdown
+        doc.fontSize(10).fillColor('#7f8c8d');
+        doc.text(`• Topic Coverage: ${topicCoveragePoints.toFixed(0)}/40 points`, { indent: 40 });
+        doc.text(`• Quiz Performance: ${quizPerformancePoints.toFixed(0)}/40 points`, { indent: 40 });
+        doc.text(`• Practice Consistency: ${practiceConsistencyPoints.toFixed(0)}/20 points`, { indent: 40 });
+    }
+
+    addProgressChart(doc) {
+        doc.fontSize(16).fillColor('#34495e').text('📚 Learning Progress');
+        doc.moveDown(0.5);
+
+        const totalTopics = Object.keys(this.concepts).length;
+        const completedTopics = this.data.completedLessons.length;
+        const pendingTopics = totalTopics - completedTopics;
+
+        // Draw horizontal bar chart
+        const barX = 70;
+        const barY = doc.y + 20;
+        const barWidth = 450;
+        const barHeight = 40;
+
+        const completedWidth = (completedTopics / totalTopics) * barWidth;
+
+        // Completed section (green)
+        if (completedTopics > 0) {
+            doc.fillColor('#27ae60').rect(barX, barY, completedWidth, barHeight).fill();
+        }
+
+        // Pending section (gray)
+        if (pendingTopics > 0) {
+            doc.fillColor('#ecf0f1').rect(barX + completedWidth, barY, barWidth - completedWidth, barHeight).fill();
+        }
+
+        // Border
+        doc.strokeColor('#bdc3c7').lineWidth(1).rect(barX, barY, barWidth, barHeight).stroke();
+
+        // Labels
+        doc.fontSize(10).fillColor('#2c3e50');
+        doc.text(`Completed: ${completedTopics}`, barX, barY + barHeight + 10);
+        doc.text(`Remaining: ${pendingTopics}`, barX + barWidth - 100, barY + barHeight + 10);
+
+        doc.y = barY + barHeight + 40;
+    }
+
+    addQuizPerformance(doc) {
+        doc.fontSize(16).fillColor('#34495e').text('📊 Quiz Performance Trend');
+        doc.moveDown(0.5);
+
+        const recentQuizzes = this.data.quizScores.slice(-10); // Last 10 quizzes
+
+        if (recentQuizzes.length === 0) {
+            doc.fontSize(11).fillColor('#7f8c8d').text('No quiz data available', { indent: 20 });
+            return;
+        }
+
+        // Chart dimensions
+        const chartX = 70;
+        const chartY = doc.y + 10;
+        const chartWidth = 450;
+        const chartHeight = 120;
+
+        // Draw axes
+        doc.strokeColor('#bdc3c7').lineWidth(1);
+        doc.moveTo(chartX, chartY).lineTo(chartX, chartY + chartHeight).stroke(); // Y-axis
+        doc.moveTo(chartX, chartY + chartHeight).lineTo(chartX + chartWidth, chartY + chartHeight).stroke(); // X-axis
+
+        // Y-axis labels (0-100%)
+        doc.fontSize(8).fillColor('#7f8c8d');
+        for (let i = 0; i <= 100; i += 25) {
+            const y = chartY + chartHeight - (i * chartHeight / 100);
+            doc.text(`${i}%`, chartX - 30, y - 4);
+            doc.strokeColor('#ecf0f1').moveTo(chartX, y).lineTo(chartX + chartWidth, y).stroke();
+        }
+
+        // Plot quiz scores
+        if (recentQuizzes.length > 1) {
+            doc.strokeColor('#3498db').lineWidth(2);
+            for (let i = 0; i < recentQuizzes.length - 1; i++) {
+                const score1 = (recentQuizzes[i].score / recentQuizzes[i].total) * 100;
+                const score2 = (recentQuizzes[i + 1].score / recentQuizzes[i + 1].total) * 100;
+                const x1 = chartX + (i * chartWidth / (recentQuizzes.length - 1));
+                const y1 = chartY + chartHeight - (score1 * chartHeight / 100);
+                const x2 = chartX + ((i + 1) * chartWidth / (recentQuizzes.length - 1));
+                const y2 = chartY + chartHeight - (score2 * chartHeight / 100);
+                doc.moveTo(x1, y1).lineTo(x2, y2).stroke();
+            }
+
+            // Draw data points
+            doc.fillColor('#2980b9');
+            recentQuizzes.forEach((quiz, i) => {
+                const score = (quiz.score / quiz.total) * 100;
+                const x = chartX + (i * chartWidth / (recentQuizzes.length - 1));
+                const y = chartY + chartHeight - (score * chartHeight / 100);
+                doc.circle(x, y, 3).fill();
+            });
+        }
+
+        doc.y = chartY + chartHeight + 20;
+    }
+
+    addLearningPath(doc) {
+        doc.fontSize(16).fillColor('#34495e').text('🗺️ Next Steps');
+        doc.moveDown(0.5);
+
+        const completedTopics = this.data.completedLessons;
+        const pendingTopics = Object.keys(this.concepts)
+            .filter(key => !completedTopics.includes(key))
+            .slice(0, 5);
+
+        if (pendingTopics.length === 0) {
+            doc.fontSize(11).fillColor('#27ae60').text('🎉 Congratulations! All topics completed!', { indent: 20 });
+            doc.fontSize(10).fillColor('#7f8c8d').text('Continue practicing quizzes to maintain knowledge', { indent: 20 });
+            return;
+        }
+
+        doc.fontSize(11).fillColor('#2c3e50').text('Recommended topics to study next:', { indent: 20 });
+        doc.moveDown(0.5);
+
+        pendingTopics.forEach((topicKey, index) => {
+            const concept = this.concepts[topicKey];
+            doc.fontSize(10).fillColor('#34495e').text(
+                `${index + 1}. ${concept.emoji} ${concept.name}`,
+                { indent: 40 }
+            );
+            doc.fontSize(9).fillColor('#7f8c8d').text(`   ${concept.simple}`, { indent: 60 });
+            if (index < pendingTopics.length - 1) doc.moveDown(0.3);
+        });
     }
 
     initializeConcepts() {
@@ -1341,11 +1814,34 @@ Commands:
   progress
       View your learning progress and quiz scores
 
+  stats (or statistics)
+      Display overall statistics and exam readiness summary
+
   dashboard
       Visualize learning progress with charts and exam readiness
 
   guide
       View the AWS Cloud Practitioner exam study guide
+
+  export [directory]
+      Export all data to CSV files (default: ./exports)
+      Creates CSV files for quiz scores, lessons, and progress
+      Great for tracking your certification journey
+
+  export-pdf [directory]
+      Generate comprehensive PDF report with charts and visualizations
+      Includes exam readiness gauge, progress charts, and study recommendations
+      Perfect for tracking certification readiness
+
+  backup [directory]
+      Create a timestamped backup of your data (default: ./backups)
+
+  list-backups [directory]
+      View all available backups with creation dates and sizes
+
+  restore <backup-filename> [directory]
+      Restore data from a backup file
+      Current data is automatically backed up before restore
 
   help
       Show this help message
@@ -1389,12 +1885,48 @@ function main() {
             app.progress();
             break;
 
+        case 'stats':
+        case 'statistics':
+            app.showStats();
+            break;
+
         case 'dashboard':
             app.visualizeLearningProgress();
             break;
 
         case 'guide':
             app.studyGuide();
+            break;
+
+        case 'export':
+            const exportDir = args[1] || './exports';
+            app.exportToCSV(exportDir);
+            break;
+
+        case 'export-pdf':
+            const pdfDir = args[1] || './exports';
+            app.exportToPDF(pdfDir).catch(err => {
+                console.error('Failed to generate PDF:', err.message);
+            });
+            break;
+
+        case 'backup':
+            const backupDir = args[1] || './backups';
+            app.createBackup(backupDir);
+            break;
+
+        case 'list-backups':
+            const listDir = args[1] || './backups';
+            app.listBackups(listDir);
+            break;
+
+        case 'restore':
+            if (!args[1]) {
+                console.log('Usage: restore <backup-filename> [backup-directory]');
+                break;
+            }
+            const restoreDir = args[2] || './backups';
+            app.restoreFromBackup(args[1], restoreDir);
             break;
 
         case 'help':
