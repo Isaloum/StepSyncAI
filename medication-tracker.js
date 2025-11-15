@@ -44,7 +44,7 @@ class MedicationTracker {
         let adherenceRate = 0;
         let currentStreak = 0;
         if (totalHistory > 0) {
-            const takenDoses = totalHistory.filter(h => !h.missed).length;
+            const takenDoses = this.data.history.filter(h => !h.missed).length;
             adherenceRate = ((takenDoses / totalHistory) * 100).toFixed(1);
             currentStreak = this.calculateAdherenceStreak();
         }

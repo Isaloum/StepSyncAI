@@ -773,7 +773,7 @@ We welcome contributions! Here's how you can help:
 
 ### Testing Improvements
 
-- [x] Increase branch coverage to 60%+ ✓ (Currently at 64%)
+- [x] Increase branch coverage to 60%+ ✓ (Currently at 60.37%)
 - [ ] Increase branch coverage to 70%+
 - [ ] Add performance benchmarks
 - [ ] Snapshot testing for outputs
