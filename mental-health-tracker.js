@@ -43,6 +43,134 @@ class MentalHealthTracker {
         }
     }
 
+    // Data Export
+    exportToCSV(outputDir = './exports') {
+        try {
+            // Create exports directory if it doesn't exist
+            if (!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir, { recursive: true });
+            }
+
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const baseFilename = `mental-health-export-${timestamp}`;
+
+            // Export mood entries
+            if (this.data.moodEntries.length > 0) {
+                const moodCSV = this.generateMoodCSV();
+                fs.writeFileSync(path.join(outputDir, `${baseFilename}-moods.csv`), moodCSV);
+            }
+
+            // Export journal entries
+            if (this.data.journalEntries.length > 0) {
+                const journalCSV = this.generateJournalCSV();
+                fs.writeFileSync(path.join(outputDir, `${baseFilename}-journal.csv`), journalCSV);
+            }
+
+            // Export symptoms
+            if (this.data.symptoms.length > 0) {
+                const symptomsCSV = this.generateSymptomsCSV();
+                fs.writeFileSync(path.join(outputDir, `${baseFilename}-symptoms.csv`), symptomsCSV);
+            }
+
+            // Export triggers
+            if (this.data.triggers.length > 0) {
+                const triggersCSV = this.generateTriggersCSV();
+                fs.writeFileSync(path.join(outputDir, `${baseFilename}-triggers.csv`), triggersCSV);
+            }
+
+            // Export coping strategies
+            if (this.data.copingStrategies.length > 0) {
+                const copingCSV = this.generateCopingCSV();
+                fs.writeFileSync(path.join(outputDir, `${baseFilename}-coping.csv`), copingCSV);
+            }
+
+            // Export goals
+            if (this.data.goals.length > 0) {
+                const goalsCSV = this.generateGoalsCSV();
+                fs.writeFileSync(path.join(outputDir, `${baseFilename}-goals.csv`), goalsCSV);
+            }
+
+            console.log(`\n✓ Data exported successfully to ${outputDir}/`);
+            console.log(`  Base filename: ${baseFilename}`);
+            return true;
+        } catch (error) {
+            console.error('Error exporting data:', error.message);
+            return false;
+        }
+    }
+
+    generateMoodCSV() {
+        const headers = 'Date,Time,Rating,Note\n';
+        const rows = this.data.moodEntries.map(entry => {
+            const date = new Date(entry.timestamp);
+            const dateStr = date.toLocaleDateString();
+            const timeStr = date.toLocaleTimeString();
+            const note = (entry.note || '').replace(/"/g, '""'); // Escape quotes
+            return `"${dateStr}","${timeStr}",${entry.rating},"${note}"`;
+        }).join('\n');
+        return headers + rows;
+    }
+
+    generateJournalCSV() {
+        const headers = 'Date,Time,Type,Content\n';
+        const rows = this.data.journalEntries.map(entry => {
+            const date = new Date(entry.timestamp);
+            const dateStr = date.toLocaleDateString();
+            const timeStr = date.toLocaleTimeString();
+            const content = (entry.content || '').replace(/"/g, '""');
+            return `"${dateStr}","${timeStr}","${entry.type}","${content}"`;
+        }).join('\n');
+        return headers + rows;
+    }
+
+    generateSymptomsCSV() {
+        const headers = 'Date,Time,Type,Severity,Note\n';
+        const rows = this.data.symptoms.map(entry => {
+            const date = new Date(entry.timestamp);
+            const dateStr = date.toLocaleDateString();
+            const timeStr = date.toLocaleTimeString();
+            const note = (entry.note || '').replace(/"/g, '""');
+            return `"${dateStr}","${timeStr}","${entry.type}",${entry.severity},"${note}"`;
+        }).join('\n');
+        return headers + rows;
+    }
+
+    generateTriggersCSV() {
+        const headers = 'Description,Intensity,Occurrences,First Logged,Last Logged\n';
+        const rows = this.data.triggers.map(trigger => {
+            const desc = (trigger.description || '').replace(/"/g, '""');
+            const firstDate = new Date(trigger.firstLogged).toLocaleDateString();
+            const lastDate = trigger.lastLogged ? new Date(trigger.lastLogged).toLocaleDateString() : 'N/A';
+            return `"${desc}",${trigger.intensity},${trigger.occurrences},"${firstDate}","${lastDate}"`;
+        }).join('\n');
+        return headers + rows;
+    }
+
+    generateCopingCSV() {
+        const headers = 'Name,Description,Effectiveness,Times Used\n';
+        const rows = this.data.copingStrategies.map(strategy => {
+            const name = (strategy.name || '').replace(/"/g, '""');
+            const desc = (strategy.description || '').replace(/"/g, '""');
+            const eff = strategy.effectiveness || 'N/A';
+            const used = strategy.timesUsed || 0;
+            return `"${name}","${desc}","${eff}",${used}`;
+        }).join('\n');
+        return headers + rows;
+    }
+
+    generateGoalsCSV() {
+        const headers = 'Description,Target Date,Created,Completed,Status\n';
+        const rows = this.data.goals.map(goal => {
+            const desc = (goal.description || '').replace(/"/g, '""');
+            const target = goal.targetDate || 'N/A';
+            const created = new Date(goal.createdAt).toLocaleDateString();
+            const completed = goal.completedAt ? new Date(goal.completedAt).toLocaleDateString() : 'N/A';
+            const status = goal.completed ? 'Completed' : 'Active';
+            return `"${desc}","${target}","${created}","${completed}","${status}"`;
+        }).join('\n');
+        return headers + rows;
+    }
+
     // Profile Management
     setupProfile(accidentDate, description) {
         this.data.profile.accidentDate = accidentDate;
@@ -980,6 +1108,12 @@ VISUALIZATIONS:
   recovery-progress
       View comprehensive recovery progress dashboard
 
+DATA EXPORT:
+  export [directory]
+      Export all data to CSV files (default: ./exports)
+      Creates separate CSV files for moods, journal, symptoms, triggers, etc.
+      Perfect for sharing with healthcare providers or backup
+
 ═══════════════════════════════════════════════════════════
 Remember: This is a personal tracking tool. Always consult with
 mental health professionals for proper care and treatment.
@@ -1177,6 +1311,11 @@ function main() {
 
         case 'recovery-progress':
             tracker.visualizeRecoveryProgress();
+            break;
+
+        case 'export':
+            const exportDir = args[1] || './exports';
+            tracker.exportToCSV(exportDir);
             break;
 
         case 'help':

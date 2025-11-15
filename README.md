@@ -153,6 +153,34 @@ node mental-health-tracker.js recovery-progress
 - ⚡ Sparklines for quick visual summaries
 </details>
 
+### 📤 Data Export
+
+<details>
+<summary><b>Export Your Data to CSV</b></summary>
+
+```bash
+# Export all mental health data to CSV files
+node mental-health-tracker.js export [directory]
+
+# Example: Export to custom directory
+node mental-health-tracker.js export ./my-health-data
+```
+
+**Exported files include:**
+- `moods.csv` - All mood ratings with dates and notes
+- `journal.csv` - Journal entries by type
+- `symptoms.csv` - Symptom logs with severity ratings
+- `triggers.csv` - Identified triggers and occurrences
+- `coping.csv` - Coping strategies and effectiveness
+- `goals.csv` - Recovery goals and completion status
+
+**Use cases:**
+- 📋 Share with your therapist or healthcare provider
+- 📊 Analyze trends in Excel/Google Sheets
+- 💾 Backup your health data
+- 📈 Track long-term recovery patterns
+</details>
+
 ### Important Notes
 
 - This is a **personal tracking tool** to support your recovery
@@ -238,6 +266,30 @@ node medication-tracker.js adherence [days]
 - Sparklines showing adherence trends
 - Streak displays (e.g., "7 days perfect adherence 🔥")
 - Readiness scores and recommendations
+</details>
+
+### 📤 Data Export
+
+<details>
+<summary><b>Export Your Medication Data to CSV</b></summary>
+
+```bash
+# Export all medication data to CSV files
+node medication-tracker.js export [directory]
+
+# Example: Export to custom directory
+node medication-tracker.js export ./my-med-data
+```
+
+**Exported files include:**
+- `medications.csv` - All medications with dosage and schedule
+- `history.csv` - Complete medication history with timestamps
+
+**Use cases:**
+- 📋 Share with your doctor or pharmacist
+- 📊 Analyze adherence patterns in spreadsheet software
+- 💾 Backup your medication records
+- 🏥 Provide accurate history for medical appointments
 </details>
 
 ---
@@ -335,6 +387,31 @@ node aws-for-kids.js dashboard
 - 80%+ Ready: Schedule your exam with confidence! 🎉
 - 60-79% Almost there: A bit more practice needed ⚠️
 - <60% Keep studying: You're making progress! 📚
+</details>
+
+### 📤 Data Export
+
+<details>
+<summary><b>Export Your Learning Progress to CSV</b></summary>
+
+```bash
+# Export all AWS learning data to CSV files
+node aws-for-kids.js export [directory]
+
+# Example: Export to custom directory
+node aws-for-kids.js export ./my-aws-progress
+```
+
+**Exported files include:**
+- `quiz-scores.csv` - All quiz attempts with scores and percentages
+- `completed-lessons.csv` - Topics you've completed
+- `progress.csv` - Study progress by topic
+
+**Use cases:**
+- 📋 Track your certification study progress
+- 📊 Analyze quiz performance trends
+- 💾 Backup your learning history
+- 📈 Share progress with study partners or mentors
 </details>
 
 ---
@@ -525,7 +602,8 @@ We welcome contributions! Here's how you can help:
 ### Planned Features
 
 - [ ] CLI interface tests (target: 70%+ coverage)
-- [ ] Data export functionality (CSV, PDF)
+- [x] Data export functionality (CSV) ✓
+- [ ] PDF export with charts and graphs
 - [ ] Reminder notifications
 - [ ] Data visualization (charts, graphs)
 - [ ] Multi-user support

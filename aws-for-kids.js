@@ -36,6 +36,70 @@ class AWSForKids {
         }
     }
 
+    // Data Export
+    exportToCSV(outputDir = './exports') {
+        try {
+            // Create exports directory if it doesn't exist
+            if (!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir, { recursive: true });
+            }
+
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const baseFilename = `aws-learning-export-${timestamp}`;
+
+            // Export quiz scores
+            if (this.data.quizScores.length > 0) {
+                const quizCSV = this.generateQuizScoresCSV();
+                fs.writeFileSync(path.join(outputDir, `${baseFilename}-quiz-scores.csv`), quizCSV);
+            }
+
+            // Export completed lessons
+            if (this.data.completedLessons.length > 0) {
+                const lessonsCSV = this.generateLessonsCSV();
+                fs.writeFileSync(path.join(outputDir, `${baseFilename}-completed-lessons.csv`), lessonsCSV);
+            }
+
+            // Export progress summary
+            const progressCSV = this.generateProgressCSV();
+            fs.writeFileSync(path.join(outputDir, `${baseFilename}-progress.csv`), progressCSV);
+
+            console.log(`\n✓ Data exported successfully to ${outputDir}/`);
+            console.log(`  Base filename: ${baseFilename}`);
+            return true;
+        } catch (error) {
+            console.error('Error exporting data:', error.message);
+            return false;
+        }
+    }
+
+    generateQuizScoresCSV() {
+        const headers = 'Date,Time,Score,Total Questions,Percentage\n';
+        const rows = this.data.quizScores.map(quiz => {
+            const date = new Date(quiz.timestamp);
+            const dateStr = date.toLocaleDateString();
+            const timeStr = date.toLocaleTimeString();
+            const percentage = ((quiz.score / quiz.total) * 100).toFixed(1);
+            return `"${dateStr}","${timeStr}",${quiz.score},${quiz.total},${percentage}%`;
+        }).join('\n');
+        return headers + rows;
+    }
+
+    generateLessonsCSV() {
+        const headers = 'Topic\n';
+        const rows = this.data.completedLessons.map(topic => {
+            return `"${topic}"`;
+        }).join('\n');
+        return headers + rows;
+    }
+
+    generateProgressCSV() {
+        const headers = 'Topic,Completion Count\n';
+        const rows = Object.entries(this.data.progress).map(([topic, count]) => {
+            return `"${topic}",${count}`;
+        }).join('\n');
+        return headers + rows;
+    }
+
     initializeConcepts() {
         this.concepts = {
             'ec2': {
@@ -1347,6 +1411,11 @@ Commands:
   guide
       View the AWS Cloud Practitioner exam study guide
 
+  export [directory]
+      Export all data to CSV files (default: ./exports)
+      Creates CSV files for quiz scores, lessons, and progress
+      Great for tracking your certification journey
+
   help
       Show this help message
 
@@ -1395,6 +1464,11 @@ function main() {
 
         case 'guide':
             app.studyGuide();
+            break;
+
+        case 'export':
+            const exportDir = args[1] || './exports';
+            app.exportToCSV(exportDir);
             break;
 
         case 'help':

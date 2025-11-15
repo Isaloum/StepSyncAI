@@ -33,6 +33,65 @@ class MedicationTracker {
         }
     }
 
+    // Data Export
+    exportToCSV(outputDir = './exports') {
+        try {
+            // Create exports directory if it doesn't exist
+            if (!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir, { recursive: true });
+            }
+
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const baseFilename = `medication-export-${timestamp}`;
+
+            // Export medications list
+            if (this.data.medications.length > 0) {
+                const medsCSV = this.generateMedicationsCSV();
+                fs.writeFileSync(path.join(outputDir, `${baseFilename}-medications.csv`), medsCSV);
+            }
+
+            // Export history
+            if (this.data.history.length > 0) {
+                const historyCSV = this.generateHistoryCSV();
+                fs.writeFileSync(path.join(outputDir, `${baseFilename}-history.csv`), historyCSV);
+            }
+
+            console.log(`\n✓ Data exported successfully to ${outputDir}/`);
+            console.log(`  Base filename: ${baseFilename}`);
+            return true;
+        } catch (error) {
+            console.error('Error exporting data:', error.message);
+            return false;
+        }
+    }
+
+    generateMedicationsCSV() {
+        const headers = 'ID,Name,Dosage,Frequency,Scheduled Time,Created,Status\n';
+        const rows = this.data.medications.map(med => {
+            const name = (med.name || '').replace(/"/g, '""');
+            const dosage = (med.dosage || '').replace(/"/g, '""');
+            const created = new Date(med.createdAt).toLocaleDateString();
+            const status = med.active ? 'Active' : 'Inactive';
+            return `${med.id},"${name}","${dosage}","${med.frequency}","${med.scheduledTime}","${created}","${status}"`;
+        }).join('\n');
+        return headers + rows;
+    }
+
+    generateHistoryCSV() {
+        const headers = 'Date,Time,Medication ID,Medication Name,Dosage,Notes,Missed\n';
+        const rows = this.data.history.map(entry => {
+            const date = new Date(entry.timestamp);
+            const dateStr = date.toLocaleDateString();
+            const timeStr = date.toLocaleTimeString();
+            const name = (entry.medicationName || '').replace(/"/g, '""');
+            const dosage = (entry.dosage || '').replace(/"/g, '""');
+            const notes = (entry.notes || '').replace(/"/g, '""');
+            const missed = entry.missed ? 'Yes' : 'No';
+            return `"${dateStr}","${timeStr}",${entry.medicationId},"${name}","${dosage}","${notes}","${missed}"`;
+        }).join('\n');
+        return headers + rows;
+    }
+
     addMedication(name, dosage, frequency, time) {
         const medication = {
             id: Date.now(),
@@ -493,6 +552,11 @@ Commands:
   adherence [days]
       Visualize medication adherence with charts (default: 30 days)
 
+  export [directory]
+      Export all data to CSV files (default: ./exports)
+      Creates separate CSV files for medications and history
+      Perfect for sharing with healthcare providers or backup
+
   help
       Show this help message
 
@@ -550,6 +614,11 @@ function main() {
         case 'adherence':
             const adherenceDays = args[1] ? parseInt(args[1]) : 30;
             tracker.visualizeAdherence(adherenceDays);
+            break;
+
+        case 'export':
+            const exportDir = args[1] || './exports';
+            tracker.exportToCSV(exportDir);
             break;
 
         case 'help':
