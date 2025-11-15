@@ -181,6 +181,33 @@ node mental-health-tracker.js export ./my-health-data
 - 📈 Track long-term recovery patterns
 </details>
 
+### 📊 Statistics Summary
+
+<details>
+<summary><b>Quick Overview of Your Progress</b></summary>
+
+```bash
+# Display comprehensive statistics
+node mental-health-tracker.js stats
+```
+
+**What you'll see:**
+- 📅 Total tracking duration
+- 🎭 Mood entries and average rating
+- 📝 Journal entries count
+- 🩺 Symptoms logged
+- ⚡ Identified triggers
+- 💪 Available coping strategies
+- 🎯 Goals (active vs completed)
+- 🕐 Days since accident (if profile set)
+
+**Perfect for:**
+- Quick progress check
+- Motivation boost
+- Sharing overview with healthcare providers
+- Understanding your tracking habits
+</details>
+
 ### 🔄 Backup & Restore
 
 <details>
@@ -319,6 +346,30 @@ node medication-tracker.js export ./my-med-data
 - 📊 Analyze adherence patterns in spreadsheet software
 - 💾 Backup your medication records
 - 🏥 Provide accurate history for medical appointments
+</details>
+
+### 📊 Statistics Summary
+
+<details>
+<summary><b>Quick Overview of Your Adherence</b></summary>
+
+```bash
+# Display comprehensive statistics
+node medication-tracker.js stats
+```
+
+**What you'll see:**
+- 📅 Total tracking duration
+- 💊 Active/inactive medications count
+- 📈 Overall adherence rate percentage
+- 🔥 Current adherence streak
+- 🕐 Today's schedule with status (✓ taken / ○ pending)
+
+**Perfect for:**
+- Daily adherence check
+- Quick status before doctor appointments
+- Motivation to maintain streaks
+- Understanding medication compliance
 </details>
 
 ### 🔄 Backup & Restore
@@ -468,6 +519,31 @@ node aws-for-kids.js export ./my-aws-progress
 - 📊 Analyze quiz performance trends
 - 💾 Backup your learning history
 - 📈 Share progress with study partners or mentors
+</details>
+
+### 📊 Statistics Summary
+
+<details>
+<summary><b>Quick Exam Readiness Check</b></summary>
+
+```bash
+# Display comprehensive statistics
+node aws-for-kids.js stats
+```
+
+**What you'll see:**
+- 📅 Study duration
+- 📚 Topics completed (X/21) with completion rate
+- 🎯 Quiz performance (total quizzes and average score)
+- 🏆 Exam readiness score (0-100)
+- 📊 Breakdown by category: Topic coverage, quiz performance, practice consistency
+- ✨ Readiness status (Ready/Almost there/Keep studying)
+
+**Perfect for:**
+- Quick progress check
+- Deciding if you're ready to schedule the exam
+- Identifying weak areas
+- Motivation to keep studying
 </details>
 
 ### 🔄 Backup & Restore
