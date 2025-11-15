@@ -43,6 +43,104 @@ class MentalHealthTracker {
         }
     }
 
+    // Backup and Restore
+    createBackup(backupDir = './backups') {
+        try {
+            // Create backups directory if it doesn't exist
+            if (!fs.existsSync(backupDir)) {
+                fs.mkdirSync(backupDir, { recursive: true });
+            }
+
+            // Check if data file exists
+            if (!fs.existsSync(this.dataFile)) {
+                console.log('\n⚠️  No data file found to backup.');
+                return false;
+            }
+
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const backupFilename = `mental-health-backup-${timestamp}.json`;
+            const backupPath = path.join(backupDir, backupFilename);
+
+            // Copy data file to backup
+            const data = fs.readFileSync(this.dataFile);
+            fs.writeFileSync(backupPath, data);
+
+            console.log(`\n✓ Backup created successfully!`);
+            console.log(`  Location: ${backupPath}`);
+            console.log(`  Time: ${new Date().toLocaleString()}`);
+            return true;
+        } catch (error) {
+            console.error('Error creating backup:', error.message);
+            return false;
+        }
+    }
+
+    listBackups(backupDir = './backups') {
+        try {
+            if (!fs.existsSync(backupDir)) {
+                console.log('\n📁 No backups directory found.');
+                return;
+            }
+
+            const files = fs.readdirSync(backupDir)
+                .filter(f => f.startsWith('mental-health-backup-') && f.endsWith('.json'))
+                .sort()
+                .reverse();
+
+            if (files.length === 0) {
+                console.log('\n📁 No backups found.');
+                return;
+            }
+
+            console.log('\n📁 Available Backups:');
+            console.log('═'.repeat(60));
+            files.forEach((file, index) => {
+                const filePath = path.join(backupDir, file);
+                const stats = fs.statSync(filePath);
+                const size = (stats.size / 1024).toFixed(2);
+                const date = stats.mtime.toLocaleString();
+                console.log(`${index + 1}. ${file}`);
+                console.log(`   Created: ${date}`);
+                console.log(`   Size: ${size} KB`);
+            });
+        } catch (error) {
+            console.error('Error listing backups:', error.message);
+        }
+    }
+
+    restoreFromBackup(backupFile, backupDir = './backups') {
+        try {
+            const backupPath = path.join(backupDir, backupFile);
+
+            if (!fs.existsSync(backupPath)) {
+                console.log('\n❌ Backup file not found.');
+                return false;
+            }
+
+            // Create a backup of current data before restoring
+            if (fs.existsSync(this.dataFile)) {
+                const preRestoreBackup = `mental-health-pre-restore-${Date.now()}.json`;
+                fs.copyFileSync(this.dataFile, path.join(backupDir, preRestoreBackup));
+                console.log(`\n💾 Current data backed up to: ${preRestoreBackup}`);
+            }
+
+            // Restore from backup
+            const backupData = fs.readFileSync(backupPath);
+            fs.writeFileSync(this.dataFile, backupData);
+
+            // Reload data
+            this.data = this.loadData();
+
+            console.log(`\n✓ Data restored successfully from backup!`);
+            console.log(`  Source: ${backupFile}`);
+            console.log(`  Time: ${new Date().toLocaleString()}`);
+            return true;
+        } catch (error) {
+            console.error('Error restoring backup:', error.message);
+            return false;
+        }
+    }
+
     // Data Export
     exportToCSV(outputDir = './exports') {
         try {
@@ -1114,6 +1212,17 @@ DATA EXPORT:
       Creates separate CSV files for moods, journal, symptoms, triggers, etc.
       Perfect for sharing with healthcare providers or backup
 
+BACKUP & RESTORE:
+  backup [directory]
+      Create a timestamped backup of your data (default: ./backups)
+
+  list-backups [directory]
+      View all available backups with creation dates and sizes
+
+  restore <backup-filename> [directory]
+      Restore data from a backup file
+      Current data is automatically backed up before restore
+
 ═══════════════════════════════════════════════════════════
 Remember: This is a personal tracking tool. Always consult with
 mental health professionals for proper care and treatment.
@@ -1316,6 +1425,25 @@ function main() {
         case 'export':
             const exportDir = args[1] || './exports';
             tracker.exportToCSV(exportDir);
+            break;
+
+        case 'backup':
+            const backupDir = args[1] || './backups';
+            tracker.createBackup(backupDir);
+            break;
+
+        case 'list-backups':
+            const listDir = args[1] || './backups';
+            tracker.listBackups(listDir);
+            break;
+
+        case 'restore':
+            if (!args[1]) {
+                console.log('Usage: restore <backup-filename> [backup-directory]');
+                break;
+            }
+            const restoreDir = args[2] || './backups';
+            tracker.restoreFromBackup(args[1], restoreDir);
             break;
 
         case 'help':

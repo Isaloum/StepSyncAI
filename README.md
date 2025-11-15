@@ -181,6 +181,35 @@ node mental-health-tracker.js export ./my-health-data
 - 📈 Track long-term recovery patterns
 </details>
 
+### 🔄 Backup & Restore
+
+<details>
+<summary><b>Protect Your Data with Automatic Backups</b></summary>
+
+```bash
+# Create a timestamped backup
+node mental-health-tracker.js backup [directory]
+
+# List all available backups
+node mental-health-tracker.js list-backups [directory]
+
+# Restore from a backup (current data is auto-backed up first!)
+node mental-health-tracker.js restore <backup-filename> [directory]
+```
+
+**How it works:**
+- Backups are timestamped JSON files (e.g., `mental-health-backup-2025-01-15T10-30-00.json`)
+- Before restoring, your current data is automatically backed up as `pre-restore`
+- All backups include creation date and file size
+- Default backup directory: `./backups`
+
+**When to use:**
+- 🛡️ Before making major changes
+- 📅 Regular scheduled backups (daily/weekly)
+- 🔄 Before sharing device or reinstalling
+- 💻 When switching computers
+</details>
+
 ### Important Notes
 
 - This is a **personal tracking tool** to support your recovery
@@ -290,6 +319,33 @@ node medication-tracker.js export ./my-med-data
 - 📊 Analyze adherence patterns in spreadsheet software
 - 💾 Backup your medication records
 - 🏥 Provide accurate history for medical appointments
+</details>
+
+### 🔄 Backup & Restore
+
+<details>
+<summary><b>Protect Your Medication Records</b></summary>
+
+```bash
+# Create a timestamped backup
+node medication-tracker.js backup [directory]
+
+# List all available backups
+node medication-tracker.js list-backups [directory]
+
+# Restore from a backup (current data is auto-backed up first!)
+node medication-tracker.js restore <backup-filename> [directory]
+```
+
+**Safety features:**
+- Automatic pre-restore backup prevents data loss
+- Timestamped backups with creation date and size
+- Quick recovery if something goes wrong
+
+**Critical use cases:**
+- 💊 Before changing medication regimen
+- 🏥 Before doctor appointments (backup then export)
+- 📱 When upgrading or changing devices
 </details>
 
 ---
@@ -412,6 +468,34 @@ node aws-for-kids.js export ./my-aws-progress
 - 📊 Analyze quiz performance trends
 - 💾 Backup your learning history
 - 📈 Share progress with study partners or mentors
+</details>
+
+### 🔄 Backup & Restore
+
+<details>
+<summary><b>Safeguard Your Certification Progress</b></summary>
+
+```bash
+# Create a timestamped backup
+node aws-for-kids.js backup [directory]
+
+# List all available backups
+node aws-for-kids.js list-backups [directory]
+
+# Restore from a backup (current data is auto-backed up first!)
+node aws-for-kids.js restore <backup-filename> [directory]
+```
+
+**Why backup your progress:**
+- 🎓 Don't lose quiz scores and study history
+- 📚 Preserve completed lessons and learning path
+- 🔄 Easy recovery if you need to reset or switch devices
+- 📊 Maintain accurate study streak data
+
+**Best practices:**
+- Backup before taking practice exams
+- Create backups weekly during intensive study periods
+- Keep backups when reinstalling or updating Node.js
 </details>
 
 ---
@@ -603,9 +687,9 @@ We welcome contributions! Here's how you can help:
 
 - [ ] CLI interface tests (target: 70%+ coverage)
 - [x] Data export functionality (CSV) ✓
+- [x] Backup and restore system ✓
 - [ ] PDF export with charts and graphs
 - [ ] Reminder notifications
-- [ ] Data visualization (charts, graphs)
 - [ ] Multi-user support
 - [ ] Cloud sync option
 - [ ] Mobile app version
