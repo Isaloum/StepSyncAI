@@ -9,6 +9,29 @@ class MedicationTracker {
         this.dataFile = dataFile;
         this.data = this.loadData();
         this.reminderService = new ReminderService();
+        this.interactions = this.loadInteractions();
+    }
+
+    loadInteractions() {
+        try {
+            const interactionsFile = path.join(__dirname, 'medication-interactions.json');
+            if (fs.existsSync(interactionsFile)) {
+                const rawData = fs.readFileSync(interactionsFile, 'utf8');
+                return JSON.parse(rawData).interactions;
+            }
+        } catch (error) {
+            console.error('Warning: Could not load medication interactions database:', error.message);
+        }
+        return [];
+    }
+
+    normalizeDrugName(name) {
+        // Normalize drug name for matching (remove common form suffixes, convert to lowercase)
+        return name.toLowerCase()
+            .replace(/\s*\d+\s*(mg|mcg|g|ml|iu|units?)\s*/gi, ' ') // Remove dosages
+            .replace(/\s+(tablet|capsule|pill|cream|ointment|syrup|solution)s?$/i, '') // Remove forms
+            .replace(/\s+/g, ' ') // Normalize spaces
+            .trim();
     }
 
     loadData() {
@@ -90,6 +113,65 @@ class MedicationTracker {
         }
 
         console.log('\n═'.repeat(60));
+    }
+
+    // Medication Interaction Checking
+    checkInteractions(newMedName = null, displayWarnings = true) {
+        const activeMeds = this.data.medications.filter(m => m.active);
+        const foundInteractions = [];
+
+        // If checking for a new medication, include it in the check
+        const medsToCheck = newMedName
+            ? [...activeMeds.map(m => m.name), newMedName]
+            : activeMeds.map(m => m.name);
+
+        // Check all pairs of medications
+        for (let i = 0; i < medsToCheck.length; i++) {
+            for (let j = i + 1; j < medsToCheck.length; j++) {
+                const med1 = this.normalizeDrugName(medsToCheck[i]);
+                const med2 = this.normalizeDrugName(medsToCheck[j]);
+
+                // Check both directions (drug1-drug2 and drug2-drug1)
+                const interaction = this.interactions.find(inter => {
+                    const interDrug1 = this.normalizeDrugName(inter.drug1);
+                    const interDrug2 = this.normalizeDrugName(inter.drug2);
+                    return (
+                        (med1 === interDrug1 && med2 === interDrug2) ||
+                        (med1 === interDrug2 && med2 === interDrug1)
+                    );
+                });
+
+                if (interaction) {
+                    foundInteractions.push({
+                        med1: medsToCheck[i],
+                        med2: medsToCheck[j],
+                        interaction: interaction
+                    });
+                }
+            }
+        }
+
+        if (displayWarnings && foundInteractions.length > 0) {
+            console.log('\n⚠️  MEDICATION INTERACTION WARNINGS');
+            console.log('═'.repeat(70));
+            foundInteractions.forEach((found, index) => {
+                const { med1, med2, interaction } = found;
+                const severityIcon = {
+                    'SEVERE': '🔴',
+                    'MODERATE': '🟡',
+                    'MINOR': '🟢'
+                };
+
+                console.log(`\n${index + 1}. ${severityIcon[interaction.severity]} ${interaction.severity} - ${med1} + ${med2}`);
+                console.log(`   ${interaction.description}`);
+                console.log(`   💡 ${interaction.recommendation}`);
+            });
+            console.log('\n' + '═'.repeat(70));
+            console.log('⚕️  Always consult your doctor or pharmacist about drug interactions.');
+            console.log('═'.repeat(70));
+        }
+
+        return foundInteractions;
     }
 
     // Backup and Restore
@@ -474,6 +556,9 @@ class MedicationTracker {
     }
 
     addMedication(name, dosage, frequency, time) {
+        // Check for interactions with current medications BEFORE adding
+        const interactions = this.checkInteractions(name, false); // Don't display yet
+
         const medication = {
             id: Date.now(),
             name: name,
@@ -492,6 +577,27 @@ class MedicationTracker {
             console.log(`  Dosage: ${dosage}`);
             console.log(`  Frequency: ${frequency}`);
             console.log(`  Time: ${time}`);
+
+            // Now display interaction warnings if any were found
+            if (interactions.length > 0) {
+                console.log('');
+                interactions.forEach((found, index) => {
+                    const { med1, med2, interaction } = found;
+                    const severityIcon = {
+                        'SEVERE': '🔴',
+                        'MODERATE': '🟡',
+                        'MINOR': '🟢'
+                    };
+
+                    console.log(`${severityIcon[interaction.severity]} ${interaction.severity} INTERACTION WARNING:`);
+                    console.log(`   ${med1} + ${med2}`);
+                    console.log(`   ${interaction.description}`);
+                    console.log(`   💡 ${interaction.recommendation}`);
+                    if (index < interactions.length - 1) console.log('');
+                });
+                console.log('\n⚕️  Please consult your doctor or pharmacist about these interactions.');
+            }
+
             return medication;
         }
         return null;
@@ -949,6 +1055,13 @@ Commands:
   stats (or statistics)
       Display overall statistics and summary
 
+  check-interactions (or interactions)
+      Check for potential drug interactions between your medications
+      Displays severity level, description, and recommendations
+      🔴 SEVERE: Dangerous combinations - consult doctor immediately
+      🟡 MODERATE: May cause problems - discuss with doctor
+      🟢 MINOR: Low risk - be aware of potential effects
+
   history [medicationId] [days]
       View medication history
       Example: node medication-tracker.js history 1234567890 7
@@ -1033,6 +1146,11 @@ function main() {
         case 'stats':
         case 'statistics':
             tracker.showStats();
+            break;
+
+        case 'check-interactions':
+        case 'interactions':
+            tracker.checkInteractions();
             break;
 
         case 'history':
