@@ -66,13 +66,21 @@ npm install
 ### Verify Setup
 
 ```bash
-# Run all tests
+# Run all tests (579 tests should pass)
 npm test
 
-# Run with coverage
+# Run with coverage (should show 85%+)
 npm run test:coverage
 
-# All tests should pass
+# Watch mode for development
+npm run test:watch
+```
+
+**Expected output:**
+```
+Test Suites: 10 passed, 10 total
+Tests:       579 passed, 579 total
+Coverage:    85%+
 ```
 
 ### Project Apps
@@ -168,17 +176,22 @@ npm test
 
 ### Coverage Requirements
 
-Maintain or improve coverage:
+**All contributions must meet or exceed these thresholds:**
 
 ```bash
 npm run test:coverage
 ```
 
-Minimum thresholds:
-- Statements: 55%
-- Branches: 45%
-- Functions: 65%
-- Lines: 55%
+**Minimum thresholds (enforced by CI/CD):**
+
+| Metric | Required | Current |
+|--------|----------|---------|
+| **Statements** | ≥82% | 85.54% ✅ |
+| **Lines** | ≥82% | 85.11% ✅ |
+| **Functions** | ≥90% | 92.57% ✅ |
+| **Branches** | ≥65% | 68.44% ✅ |
+
+**These thresholds are automatically enforced by CI/CD and will cause builds to fail if not met.**
 
 ### Test Types to Include
 
@@ -417,23 +430,28 @@ module.exports = ModuleName;
 
 ```
 StepSyncAI/
-├── mental-health-tracker.js       # Mental health app
-├── medication-tracker.js          # Medication app
-├── aws-for-kids.js               # AWS learning app
-├── __tests__/                     # Test files
+├── mental-health-tracker.js       # Mental health app (83.65% coverage)
+├── medication-tracker.js          # Medication app (87.61% coverage)
+├── aws-for-kids.js               # AWS learning app (82.24% coverage)
+├── reminder-service.js           # Notification service (100% coverage)
+├── chart-utils.js                # Data visualization utilities
+├── __tests__/                     # Test suite (579 tests, 85%+ coverage)
 │   ├── mental-health-tracker.test.js
 │   ├── medication-tracker.test.js
 │   ├── aws-for-kids.test.js
+│   ├── reminder-service.test.js
 │   ├── integration.test.js
-│   └── error-handling.test.js
+│   ├── error-handling.test.js
+│   ├── error-edge-cases.test.js
+│   ├── pdf-export.test.js
+│   ├── data-operations.test.js
+│   └── cli-interface.test.js
 ├── .github/
 │   └── workflows/
-│       └── ci.yml                # CI/CD pipeline
-├── package.json                  # Dependencies
+│       └── ci.yml                # CI/CD pipeline (82%+ thresholds)
+├── package.json                  # Dependencies & scripts
 ├── README.md                     # Main documentation
-├── CONTRIBUTING.md               # This file
-├── TESTING_README.md            # Testing guide
-└── TESTING_REPORT.md            # Coverage report
+└── CONTRIBUTING.md               # This file
 ```
 
 ### Where to Add Code
