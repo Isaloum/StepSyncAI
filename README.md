@@ -862,8 +862,8 @@ We welcome contributions! Here's how you can help:
 ## 📖 Documentation
 
 - [TESTING_README.md](TESTING_README.md) - Complete testing guide
-- [TESTING_REPORT.md](TESTING_REPORT.md) - Detailed coverage analysis
-- [PR_DESCRIPTION.md](PR_DESCRIPTION.md) - Latest improvements summary
+- [TESTING_REPORT.md](TESTING_REPORT.md) - Detailed coverage analysis and testing journey
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines and quality standards
 
 ---
 
