@@ -1,8 +1,8 @@
 # StepSyncAI - Health & Wellness Apps
 
-[![Tests](https://img.shields.io/badge/tests-663%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
-[![Coverage](https://img.shields.io/badge/coverage-86.35%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
-[![Branch Coverage](https://img.shields.io/badge/branch%20coverage-70.14%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Tests](https://img.shields.io/badge/tests-693%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Coverage](https://img.shields.io/badge/coverage-86.58%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Branch Coverage](https://img.shields.io/badge/branch%20coverage-70.65%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -354,6 +354,11 @@ A simple, easy-to-use medication tracker app designed for people who need help r
 ### Features
 
 - **Add Medications**: Track multiple medications with dosage, frequency, and scheduled times
+- **Drug Interaction Warnings**: Automatic detection of 36+ dangerous drug interactions ⚠️
+  - **Severity levels**: SEVERE 🔴, MODERATE 🟡, MINOR 🟢
+  - **Auto-check** when adding new medications
+  - **Manual check** anytime with `check-interactions` command
+  - Includes detailed descriptions and recommendations
 - **Mark as Taken**: Quickly log when you take your medication
 - **Daily Status Check**: See at a glance which medications you've taken today
 - **History Tracking**: View your medication history over time
@@ -363,8 +368,11 @@ A simple, easy-to-use medication tracker app designed for people who need help r
 ### Quick Start
 
 ```bash
-# Add a medication
+# Add a medication (auto-checks for interactions)
 node medication-tracker.js add "Aspirin" "100mg" "daily" "08:00"
+
+# Check for drug interactions
+node medication-tracker.js check-interactions
 
 # Check today's status
 node medication-tracker.js status
@@ -730,10 +738,10 @@ npx jest __tests__/mental-health-tracker.test.js
 | Module | Statements | Branch | Functions | Lines |
 |--------|------------|--------|-----------|-------|
 | **Mental Health Tracker** | 84.96% ⭐ | 68.48% | 98.01% ⭐ | 84.19% ⭐ |
-| **Medication Tracker** | 88.92% ⭐ | **71.24%** ⭐ | 95.74% ⭐ | 88.50% ⭐ |
+| **Medication Tracker** | 89.56% ⭐ | **72.94%** ⭐ | 96.11% ⭐ | 89.14% ⭐ |
 | **AWS For Kids** | 83.62% ⭐ | 67.89% | 88.31% ⭐ | 83.08% ⭐ |
 | **Reminder Service** | **100%** 🎯 | **94.44%** 🎯 | **100%** 🎯 | **100%** 🎯 |
-| **Overall** | **86.35%** ⭐ | **70.14%** ⭐ | **95.42%** ⭐ | **85.79%** ⭐ |
+| **Overall** | **86.58%** ⭐ | **70.65%** ⭐ | **95.54%** ⭐ | **86.02%** ⭐ |
 
 ### Test Documentation
 
@@ -828,21 +836,22 @@ We welcome contributions! Here's how you can help:
 
 ### Testing Standards
 
-- ✅ 663 comprehensive tests
+- ✅ 693 comprehensive tests (+30 for drug interactions)
 - ✅ Unit tests for all core functions
 - ✅ Integration tests for complete workflows
 - ✅ Error handling tests
 - ✅ Edge case coverage
-- ✅ Branch coverage achieved 70%+ milestone! (70.14%)
+- ✅ Branch coverage achieved 70%+ milestone! (70.65%)
 - ✅ PDF export testing with visual components
-- ✅ Fast execution (~4 seconds)
+- ✅ Drug interaction safety testing (30 tests)
+- ✅ Fast execution (~5 seconds)
 
 ### Quality Gates
 
-- Minimum 82% statement coverage (currently: 86.35%)
-- Minimum 65% branch coverage (currently: 70.14%)
-- Minimum 90% function coverage (currently: 95.42%)
-- All tests passing (663/663)
+- Minimum 82% statement coverage (currently: 86.58%)
+- Minimum 65% branch coverage (currently: 70.65%)
+- Minimum 90% function coverage (currently: 95.54%)
+- All tests passing (693/693)
 - No high-severity vulnerabilities
 - CI/CD enforced quality standards
 
@@ -852,8 +861,8 @@ We welcome contributions! Here's how you can help:
 
 | Command | Description |
 |---------|-------------|
-| `npm test` | Run all tests (663 tests) |
-| `npm run test:coverage` | Run tests with coverage report (86%+) |
+| `npm test` | Run all tests (693 tests) |
+| `npm run test:coverage` | Run tests with coverage report (86.5%+) |
 | `npm run test:watch` | Run tests in watch mode |
 | `npm run mental` | Start mental health tracker |
 | `npm run med` | Start medication tracker |
@@ -878,17 +887,20 @@ We welcome contributions! Here's how you can help:
 - [x] Backup and restore system ✓
 - [x] PDF export with charts and graphs ✓
 - [x] Reminder notifications ✓
+- [x] **Drug interaction warnings** ✓ **NEW!** (36+ interactions, 3 severity levels)
 - [ ] Multi-user support
 - [ ] Cloud sync option
 - [ ] Mobile app version
 - [ ] Integration with health devices
+- [ ] Symptom correlation analysis (Mental Health Tracker)
+- [ ] More drug interactions (expand database)
 
 ### Testing Improvements
 
-- [x] Increase branch coverage to 60%+ ✓ (Currently at 70.14%)
-- [x] Medication Tracker: 70%+ branch coverage ✓ (Currently at 71.24%)
+- [x] Increase branch coverage to 60%+ ✓ (Currently at 70.65%)
+- [x] Medication Tracker: 70%+ branch coverage ✓ (Currently at 72.94%)
 - [x] Reminder Service: 70%+ branch coverage ✓ (Currently at 94.44%)
-- [x] Increase overall branch coverage to 70%+ ✓ **MILESTONE ACHIEVED!** (Currently at 70.14%)
+- [x] Increase overall branch coverage to 70%+ ✓ **MILESTONE ACHIEVED!** (Currently at 70.65%)
 - [ ] Add performance benchmarks
 - [ ] Snapshot testing for outputs
 - [ ] Mutation testing
@@ -919,11 +931,12 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## 📈 Project Status
 
-**Version**: 3.0.0
+**Version**: 3.1.0
 **Status**: ✅ Active Development
-**Test Coverage**: 86.35%+ ⭐
-**Branch Coverage**: 70.14% ⭐ **MILESTONE ACHIEVED!** (2 modules at 70%+: Medication Tracker 71.24%, Reminder Service 94.44% 🎯)
-**Tests**: 663 passing
+**Test Coverage**: 86.58%+ ⭐
+**Branch Coverage**: 70.65% ⭐ **MILESTONE ACHIEVED!** (2 modules at 70%+: Medication Tracker 72.94%, Reminder Service 94.44% 🎯)
+**Tests**: 693 passing
+**Latest Feature**: ⚠️ Drug Interaction Warnings (36+ interactions detected)
 **CI/CD**: ✅ Automated with quality gates
 
 ---
