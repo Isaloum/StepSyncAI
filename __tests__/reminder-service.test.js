@@ -249,6 +249,26 @@ describe('ReminderService', () => {
                 message: expect.stringContaining('feeling')
             }));
         });
+
+        test('stops and replaces existing jobs when rescheduling', () => {
+            // First enable with initial times
+            reminderService.enableMentalHealthReminders('20:00', '09:00');
+
+            // Get the initial jobs
+            const initialJournalJob = reminderService.scheduledJobs.get('mh-journal');
+            const initialCheckinJob = reminderService.scheduledJobs.get('mh-checkin');
+
+            // Enable again with different times (should stop old jobs)
+            reminderService.enableMentalHealthReminders('21:00', '10:00');
+
+            // Verify old jobs were stopped
+            expect(initialJournalJob.stop).toHaveBeenCalled();
+            expect(initialCheckinJob.stop).toHaveBeenCalled();
+
+            // Verify new jobs were created with new times
+            expect(cron.schedule).toHaveBeenCalledWith('00 21 * * *', expect.any(Function));
+            expect(cron.schedule).toHaveBeenCalledWith('00 10 * * *', expect.any(Function));
+        });
     });
 
     describe('AWS Study Reminders', () => {
@@ -294,6 +314,23 @@ describe('ReminderService', () => {
                 title: 'AWS Study Time',
                 message: expect.stringContaining('study session')
             }));
+        });
+
+        test('stops and replaces existing job when rescheduling', () => {
+            // First enable with initial time
+            reminderService.enableAWSReminders('19:00');
+
+            // Get the initial job
+            const initialStudyJob = reminderService.scheduledJobs.get('aws-study');
+
+            // Enable again with different time (should stop old job)
+            reminderService.enableAWSReminders('20:00');
+
+            // Verify old job was stopped
+            expect(initialStudyJob.stop).toHaveBeenCalled();
+
+            // Verify new job was created with new time
+            expect(cron.schedule).toHaveBeenCalledWith('00 20 * * *', expect.any(Function));
         });
     });
 

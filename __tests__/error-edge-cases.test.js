@@ -406,6 +406,17 @@ describe('Error Handling - Backup/Restore/Export', () => {
                 expect(result).toBe(true);
                 expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Data restored successfully'));
             });
+
+            test('handles error during backup listing', () => {
+                fs.existsSync.mockReturnValue(true);
+                fs.readdirSync.mockImplementation(() => {
+                    throw new Error('Permission denied reading directory');
+                });
+
+                tracker.listBackups();
+
+                expect(consoleErrorSpy).toHaveBeenCalledWith('Error listing backups:', 'Permission denied reading directory');
+            });
         });
 
         describe('export errors', () => {
@@ -536,6 +547,17 @@ describe('Error Handling - Backup/Restore/Export', () => {
                 tracker.listBackups();
 
                 expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No backups found'));
+            });
+
+            test('handles error during backup listing', () => {
+                fs.existsSync.mockReturnValue(true);
+                fs.readdirSync.mockImplementation(() => {
+                    throw new Error('Permission denied reading directory');
+                });
+
+                tracker.listBackups();
+
+                expect(consoleErrorSpy).toHaveBeenCalledWith('Error listing backups:', 'Permission denied reading directory');
             });
         });
 
