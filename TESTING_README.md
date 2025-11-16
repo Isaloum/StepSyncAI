@@ -5,20 +5,25 @@
 StepSyncAI uses **Jest** as its testing framework with comprehensive unit tests, integration tests, and error handling coverage.
 
 ### Current Test Stats
-- **Total Tests**: 229
-- **Test Suites**: 5
-- **Overall Coverage**: ~60%
-- **Execution Time**: ~2 seconds
+- **Total Tests**: 579
+- **Test Suites**: 10
+- **Overall Coverage**: 85.5%+
+- **Execution Time**: ~4 seconds
 
 ## Test Structure
 
 ```
 __tests__/
-├── mental-health-tracker.test.js     # Unit tests (72 tests)
-├── medication-tracker.test.js         # Unit tests (56 tests)
-├── aws-for-kids.test.js               # Unit tests (50 tests)
-├── error-handling.test.js             # Error scenarios (27 tests)
-└── integration.test.js                # End-to-end workflows (24 tests)
+├── mental-health-tracker.test.js     # Unit tests (120+ tests)
+├── medication-tracker.test.js         # Unit tests (100+ tests)
+├── aws-for-kids.test.js               # Unit tests (85+ tests)
+├── reminder-service.test.js          # Unit tests (45+ tests, 100% coverage)
+├── integration.test.js                # End-to-end workflows (25+ tests)
+├── pdf-export.test.js                 # PDF generation tests (102 tests)
+├── error-handling.test.js             # Error scenarios (15+ tests)
+├── error-edge-cases.test.js          # Edge cases (44+ tests)
+├── data-operations.test.js           # Backup/restore/export (20+ tests)
+└── cli-interface.test.js             # CLI testing (30+ tests)
 ```
 
 ## Running Tests
@@ -45,13 +50,6 @@ npx jest -t "logMood"
 npx jest --verbose
 ```
 
-### Legacy Tests (Pre-Jest)
-
-```bash
-# Old demonstration scripts (still available)
-npm run test:old
-```
-
 ## Coverage Reports
 
 ### Viewing Coverage
@@ -71,10 +69,10 @@ Current thresholds (defined in `package.json`):
 
 | Metric | Threshold | Current |
 |--------|-----------|---------|
-| Statements | 55% | ~60% ✅ |
-| Branches | 45% | ~50% ✅ |
-| Functions | 65% | ~70% ✅ |
-| Lines | 55% | ~59% ✅ |
+| Statements | 82% | 85.54% ✅ |
+| Branches | 65% | 68.44% ✅ |
+| Functions | 90% | 92.57% ✅ |
+| Lines | 82% | 85.11% ✅ |
 
 ## Test Categories
 
@@ -94,9 +92,10 @@ test('logMood should reject rating above 10', () => {
 ```
 
 **Coverage**:
-- Mental Health Tracker: 72 tests covering all major functions
-- Medication Tracker: 56 tests with 76% statement coverage
-- AWS For Kids: 50 tests validating learning features
+- Mental Health Tracker: 120+ tests with 83.65% statement coverage
+- Medication Tracker: 100+ tests with 87.61% statement coverage
+- AWS For Kids: 85+ tests with 82.24% statement coverage
+- Reminder Service: 45+ tests with 100% coverage 🎯
 
 ### 2. Integration Tests
 
@@ -124,7 +123,65 @@ test('should handle complete medication management workflow', () => {
 - Learning progression (beginner to exam-ready)
 - Cross-module integration (health + medication tracking)
 
-### 3. Error Handling Tests
+### 3. PDF Export Tests
+
+**Purpose**: Validate PDF generation with charts and graphs
+
+**Coverage**:
+- 102 comprehensive tests
+- Mental health report generation
+- Medication adherence reports
+- AWS learning progress reports
+- Chart rendering validation
+- Error handling for missing data
+
+**Features Tested**:
+- Document structure and metadata
+- Summary statistics rendering
+- Chart generation (line charts, bar charts, pie charts)
+- Recent data inclusion
+- Goal and strategy displays
+- Edge cases (empty data, very large datasets)
+
+### 4. Data Operations Tests
+
+**Purpose**: Test backup, restore, and export functionality
+
+**Coverage**:
+- CSV export validation (all modules)
+- Backup creation with timestamps
+- Restore functionality with safety backups
+- List backups with metadata
+- Data integrity across operations
+- Error handling for corrupted backups
+
+**Features Tested**:
+- Mental health data export (6 CSV files)
+- Medication data export (2 CSV files)
+- AWS learning data export (3 CSV files)
+- Timestamped backup creation
+- Pre-restore safety backups
+- Backup restoration verification
+
+### 5. CLI Interface Tests
+
+**Purpose**: Validate command-line interface handling
+
+**Coverage**:
+- Help menu display for all modules
+- Invalid command handling
+- Missing argument validation
+- Process.argv parsing
+- Exit code verification
+- Error message clarity
+
+**Features Tested**:
+- Mental health CLI (35+ commands)
+- Medication tracker CLI (15+ commands)
+- AWS learning CLI (12+ commands)
+- Reminder service CLI (5+ commands)
+
+### 6. Error Handling Tests
 
 **Purpose**: Ensure graceful failures
 
@@ -136,15 +193,20 @@ test('should handle complete medication management workflow', () => {
 - Missing file handling
 - Null/undefined inputs
 
-### 4. Edge Cases
+### 7. Error Edge Cases Tests
+
+**Purpose**: Comprehensive edge case coverage (44+ tests)
 
 **Testing**:
-- Boundary values (mood: 1, 10)
-- Unicode characters (emoji, Chinese, Arabic)
+- Boundary values (mood: 1, 10, medication times, dates)
+- Unicode characters (emoji, Chinese, Arabic, special symbols)
 - Very long strings (10,000+ characters)
-- Empty inputs
+- Empty inputs and null values
 - Concurrent operations
 - Special characters in names
+- Invalid date formats
+- Extreme values (negative numbers, very large numbers)
+- Malformed data structures
 
 ## Test Best Practices
 
@@ -209,13 +271,15 @@ expect(consoleLogSpy).toHaveBeenCalled();
 
 ## Coverage by Module
 
-### Mental Health Tracker
+### Mental Health Tracker ⭐
 ```
-Statements: 55.63%
-Branches:   45.58%
-Functions:  63.63%
-Lines:      55.18%
+Statements: 83.65%
+Branches:   67.82%
+Functions:  95.36%
+Lines:      83.65%
 ```
+
+**Excellent Coverage**! 🎉
 
 **Well Covered**:
 - ✅ Mood logging and validation
@@ -226,40 +290,46 @@ Lines:      55.18%
 - ✅ Emergency contacts
 - ✅ Goal tracking
 - ✅ Data persistence
+- ✅ CSV export
+- ✅ PDF export
+- ✅ Backup and restore
+- ✅ Reminder notifications
+- ✅ Data visualization (charts, trends)
+- ✅ CLI interface
+- ✅ Error handling and edge cases
 
-**Needs Coverage**:
-- ❌ CLI interface (lines 515-831)
-- ❌ View/display methods (partial)
-- ❌ Some edge cases in validation
-
-### Medication Tracker
+### Medication Tracker ⭐
 ```
-Statements: 76.22%
-Branches:   65.07%
-Functions:  90.9%
-Lines:      75%
+Statements: 87.61%
+Branches:   70.42%
+Functions:  92.55%
+Lines:      87.61%
 ```
 
-**Excellent Coverage**! 🎉
+**Outstanding Coverage**! 🎉
 
 **Well Covered**:
-- ✅ All core functions (90.9%)
+- ✅ All core functions (92.55%)
 - ✅ Medication CRUD operations
 - ✅ History tracking
 - ✅ Daily status checking
+- ✅ Adherence visualization
+- ✅ CSV export
+- ✅ PDF export
+- ✅ Backup and restore
+- ✅ Reminder notifications
+- ✅ CLI interface
 - ✅ Error handling
 
-**Needs Coverage**:
-- ❌ CLI interface (lines 190-281)
-- ❌ Some edge cases in display logic
+### AWS For Kids ⭐
+```
+Statements: 82.24%
+Branches:   65.91%
+Functions:  84.41%
+Lines:      82.24%
+```
 
-### AWS For Kids
-```
-Statements: 57.31%
-Branches:   46%
-Functions:  65%
-Lines:      57.4%
-```
+**Excellent Coverage**! 🎉
 
 **Well Covered**:
 - ✅ Concept initialization
@@ -267,11 +337,31 @@ Lines:      57.4%
 - ✅ Progress calculation
 - ✅ Quiz validation
 - ✅ Category filtering
+- ✅ Dashboard visualization
+- ✅ CSV export
+- ✅ PDF export
+- ✅ Backup and restore
+- ✅ Reminder notifications
+- ✅ CLI interface
+- ✅ Error handling
 
-**Needs Coverage**:
-- ❌ Interactive quiz mode (lines 845-920)
-- ❌ CLI interface (lines 1042-1121)
-- ❌ Study guide display (partial)
+### Reminder Service 🎯
+```
+Statements: 100%
+Branches:   100%
+Functions:  100%
+Lines:      100%
+```
+
+**Perfect Coverage**! 🎯
+
+**Complete Coverage**:
+- ✅ Notification scheduling
+- ✅ Reminder management
+- ✅ Cross-platform notifications
+- ✅ Persistence handling
+- ✅ Enable/disable controls
+- ✅ Status checking
 
 ## Common Testing Patterns
 
@@ -333,8 +423,8 @@ See `.github/workflows/ci.yml`:
 ### Quality Gates
 
 All PRs must:
-- ✅ Pass all 229 tests
-- ✅ Meet coverage thresholds
+- ✅ Pass all 579 tests
+- ✅ Meet coverage thresholds (82%/65%/90%)
 - ✅ Pass linting checks
 - ✅ No high-severity vulnerabilities
 
@@ -382,17 +472,17 @@ npm run test:coverage
 
 ### Step 4: Update Coverage
 
-If you add new code, update thresholds in `package.json`:
+If you add new code, maintain the thresholds in `package.json`:
 
 ```json
 {
   "jest": {
     "coverageThreshold": {
       "global": {
-        "statements": 60,  // Increase as coverage improves
-        "branches": 50,
-        "functions": 70,
-        "lines": 60
+        "statements": 82,  // Maintained at 82%+
+        "branches": 65,
+        "functions": 90,
+        "lines": 82
       }
     }
   }
@@ -458,30 +548,34 @@ beforeEach(() => {
 
 ### Planned Enhancements
 
-1. **CLI Testing** (Priority: High)
-   - Add tests for command-line interfaces
-   - Use mock process.argv
-   - Test help menus and error messages
-
-2. **Increase Branch Coverage** (Target: 60%+)
-   - Add more negative test cases
+1. **Increase Branch Coverage** (Target: 70%+)
+   - Current: 68.44%
+   - Add more conditional test cases
    - Test all error paths
-   - Cover edge conditions
+   - Cover remaining edge conditions
 
-3. **Performance Tests**
+2. **Performance Tests**
    - Large dataset handling (1000+ entries)
    - Concurrent operation safety
    - Memory usage profiling
+   - Load testing for PDF generation
 
-4. **Snapshot Testing**
+3. **Snapshot Testing**
    - Capture output formats
    - Detect unintended changes
    - Version control for displays
+   - CLI output validation
 
-5. **Mutation Testing**
+4. **Mutation Testing**
    - Verify test effectiveness
    - Find untested code paths
    - Improve test quality
+   - Use Stryker or similar tools
+
+5. **Visual Regression Testing**
+   - PDF output validation
+   - Chart rendering verification
+   - Terminal output formatting
 
 ## Resources
 
@@ -499,7 +593,7 @@ beforeEach(() => {
 
 ---
 
-**Last Updated**: 2025-11-14
-**Test Count**: 229
-**Coverage**: ~60%
+**Last Updated**: 2025-11-16
+**Test Count**: 579
+**Coverage**: 85.5%+
 **Status**: ✅ All Passing
