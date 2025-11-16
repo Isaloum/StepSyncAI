@@ -1476,6 +1476,7 @@ class MentalHealthTracker {
         this.analyzeTemporalPatterns();
         this.analyzeCopingEffectiveness();
         this.analyzeSymptomClusters();
+        this.analyzeSleepMoodCorrelation();
 
         console.log('\n💡 Remember: These are patterns, not certainties. Use them as conversation');
         console.log('   starters with your therapist or healthcare provider.');
@@ -1706,6 +1707,105 @@ class MentalHealthTracker {
             });
         } else {
             console.log('   No significant symptom clustering detected yet.');
+        }
+    }
+
+    analyzeSleepMoodCorrelation() {
+        // Try to load sleep data from sleep tracker
+        const SleepTracker = require('./sleep-tracker');
+        let sleepData = [];
+
+        try {
+            const sleepTracker = new SleepTracker();
+            sleepData = sleepTracker.getSleepDataForCorrelation();
+        } catch (error) {
+            // Sleep tracker not available or no data
+            return;
+        }
+
+        if (sleepData.length < 3 || this.data.moodEntries.length < 3) {
+            return;
+        }
+
+        console.log('\n😴 Sleep → Mood Correlation:');
+        console.log('─'.repeat(70));
+
+        // Match sleep entries with mood entries by date
+        const correlationData = [];
+        sleepData.forEach(sleep => {
+            // Find mood entries on the same day as wake time
+            const moodsOnDay = this.data.moodEntries.filter(mood => {
+                const moodDate = new Date(mood.timestamp).toISOString().split('T')[0];
+                return moodDate === sleep.date;
+            });
+
+            if (moodsOnDay.length > 0) {
+                const avgMood = moodsOnDay.reduce((sum, m) => sum + m.rating, 0) / moodsOnDay.length;
+                correlationData.push({
+                    date: sleep.date,
+                    duration: sleep.duration,
+                    quality: sleep.quality,
+                    mood: avgMood
+                });
+            }
+        });
+
+        if (correlationData.length < 3) {
+            console.log('   Not enough matching sleep and mood data yet.');
+            console.log('   💡 Continue tracking both sleep and mood to see correlations!');
+            return;
+        }
+
+        // Analyze duration -> mood correlation
+        const avgDuration = correlationData.reduce((sum, d) => sum + d.duration, 0) / correlationData.length;
+        const avgMood = correlationData.reduce((sum, d) => sum + d.mood, 0) / correlationData.length;
+
+        const wellRestedDays = correlationData.filter(d => d.duration >= 7 && d.duration <= 9);
+        const sleepDeprivedDays = correlationData.filter(d => d.duration < 6);
+
+        if (wellRestedDays.length >= 2) {
+            const avgMoodWellRested = wellRestedDays.reduce((sum, d) => sum + d.mood, 0) / wellRestedDays.length;
+            console.log(`   ✓ When well-rested (7-9h): Average mood ${avgMoodWellRested.toFixed(1)}/10`);
+            console.log(`     (${wellRestedDays.length} days tracked)`);
+        }
+
+        if (sleepDeprivedDays.length >= 2) {
+            const avgMoodSleepDeprived = sleepDeprivedDays.reduce((sum, d) => sum + d.mood, 0) / sleepDeprivedDays.length;
+            console.log(`   ⚠️  When sleep-deprived (<6h): Average mood ${avgMoodSleepDeprived.toFixed(1)}/10`);
+            console.log(`     (${sleepDeprivedDays.length} days tracked)`);
+
+            if (wellRestedDays.length >= 2) {
+                const moodDiff = (wellRestedDays.reduce((sum, d) => sum + d.mood, 0) / wellRestedDays.length) - avgMoodSleepDeprived;
+                if (moodDiff > 1) {
+                    console.log(`   📊 Impact: Good sleep improves your mood by ${moodDiff.toFixed(1)} points!`);
+                }
+            }
+        }
+
+        // Analyze sleep quality -> mood correlation
+        const goodQualitySleep = correlationData.filter(d => d.quality >= 7);
+        const poorQualitySleep = correlationData.filter(d => d.quality < 5);
+
+        if (goodQualitySleep.length >= 2 && poorQualitySleep.length >= 2) {
+            const avgMoodGoodSleep = goodQualitySleep.reduce((sum, d) => sum + d.mood, 0) / goodQualitySleep.length;
+            const avgMoodPoorSleep = poorQualitySleep.reduce((sum, d) => sum + d.mood, 0) / poorQualitySleep.length;
+            const qualityImpact = avgMoodGoodSleep - avgMoodPoorSleep;
+
+            if (qualityImpact > 0.5) {
+                console.log(`   💤 Sleep quality matters: High quality sleep → ${qualityImpact.toFixed(1)} points better mood`);
+            }
+        }
+
+        // Find best sleep pattern for this individual
+        const topMoodDays = correlationData
+            .sort((a, b) => b.mood - a.mood)
+            .slice(0, Math.min(3, Math.floor(correlationData.length / 3)));
+
+        if (topMoodDays.length >= 2) {
+            const avgBestDuration = topMoodDays.reduce((sum, d) => sum + d.duration, 0) / topMoodDays.length;
+            const avgBestQuality = topMoodDays.reduce((sum, d) => sum + d.quality, 0) / topMoodDays.length;
+            console.log(`   🎯 Your optimal sleep pattern:`);
+            console.log(`      Duration: ${avgBestDuration.toFixed(1)}h, Quality: ${avgBestQuality.toFixed(1)}/10`);
         }
     }
 

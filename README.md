@@ -1,6 +1,6 @@
 # StepSyncAI - Health & Wellness Apps
 
-[![Tests](https://img.shields.io/badge/tests-712%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Tests](https://img.shields.io/badge/tests-772%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Coverage](https://img.shields.io/badge/coverage-87.21%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Branch Coverage](https://img.shields.io/badge/branch%20coverage-71.64%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
@@ -12,7 +12,8 @@ A comprehensive collection of personal health management and learning tools desi
 
 1. **🧠 Mental Health Tracker** - Comprehensive PTSD/trauma recovery support tool
 2. **💊 Medication Tracker** - Simple pill reminder and adherence tracking system
-3. **☁️ AWS For Kids** - Interactive AWS Cloud Practitioner exam preparation
+3. **😴 Sleep Tracker** - 🆕 Monitor sleep quality and discover sleep-mood correlations
+4. **☁️ AWS For Kids** - Interactive AWS Cloud Practitioner exam preparation
 
 ---
 
@@ -34,6 +35,7 @@ A comprehensive support tool designed specifically for managing mental health ch
   - **Temporal insights**: Best/worst days of the week
   - **Coping effectiveness**: Which strategies work best for you
   - **Symptom clustering**: Which symptoms tend to occur together
+  - **Sleep-mood correlation**: 🆕 How sleep quality impacts your mental health
 - **Emergency Contacts**: Quick access to therapist, crisis hotlines, and support network
 - **Recovery Goals**: Set and track recovery milestones
 - **Daily Check-ins**: Quick summary of your progress
@@ -519,6 +521,124 @@ node medication-tracker.js restore <backup-filename> [directory]
 
 ---
 
+## 😴 Sleep Tracker
+
+Track your sleep patterns, quality, and discover how sleep affects your mental health and mood. Sleep is crucial for recovery, especially after trauma or during mental health challenges.
+
+### Features
+
+- **Sleep Logging**: Track bedtime, wake time, duration, and quality (1-10 scale)
+- **Automatic Duration Calculation**: Handles overnight sleep automatically
+- **Sleep Statistics**: Average duration, quality, sleep debt tracking
+- **Schedule Consistency Analysis**: Monitor bedtime regularity
+- **Sleep Insights**: Discover patterns in your sleep data
+  - **Duration patterns**: How often you get optimal sleep (7-9h)
+  - **Quality correlations**: Relationship between duration and quality
+  - **Weekday patterns**: Best and worst sleep days
+  - **Personalized recommendations**: Your optimal sleep pattern
+- **Sleep-Mood Correlation**: 🔗 Integrates with Mental Health Tracker
+  - See how sleep quality affects your mood
+  - Quantify the impact of good vs. poor sleep
+  - Identify your optimal sleep sweet spot
+- **Sleep History**: View recent sleep entries with visual quality indicators
+- **Sleep Debt Tracking**: Monitor accumulated sleep deficit
+
+### Quick Start
+
+```bash
+# Log a sleep entry
+node sleep-tracker.js log 22:30 06:30 8 "Felt refreshed"
+# Format: bedtime wake-time quality(1-10) [notes]
+
+# View statistics
+node sleep-tracker.js stats
+
+# View sleep history (default: last 7 days)
+node sleep-tracker.js history
+node sleep-tracker.js history 14  # Last 14 days
+
+# Discover sleep insights and patterns
+node sleep-tracker.js insights
+
+# Get help
+node sleep-tracker.js help
+```
+
+### Example Output
+
+```
+✓ Sleep entry logged successfully!
+  Date: 2025-11-16
+  Bedtime: 22:30 → Wake: 06:30
+  Duration: 8.0 hours
+  Quality: 8/10
+
+✓ Great sleep duration! You're in the recommended 7-9 hour range.
+😊 Excellent sleep quality!
+```
+
+### Sleep-Mood Integration
+
+When you track both sleep and mood, the Mental Health Tracker's insights will automatically include sleep-mood correlations:
+
+```bash
+# Run mental health insights to see sleep correlations
+node mental-health-tracker.js insights
+```
+
+**Example Sleep-Mood Insights:**
+```
+😴 Sleep → Mood Correlation:
+   ✓ When well-rested (7-9h): Average mood 8.2/10
+   ⚠️  When sleep-deprived (<6h): Average mood 5.1/10
+   📊 Impact: Good sleep improves your mood by 3.1 points!
+   🎯 Your optimal sleep pattern:
+      Duration: 7.8h, Quality: 8.5/10
+```
+
+### Why Sleep Tracking Matters
+
+- **Mental Health**: Sleep deprivation worsens anxiety, depression, and PTSD symptoms
+- **Recovery**: Quality sleep is essential for trauma recovery and healing
+- **Pattern Recognition**: Identify what affects your sleep quality
+- **Data-Driven Decisions**: Use objective data to improve sleep habits
+- **Healthcare Conversations**: Share sleep data with doctors and therapists
+
+### Tips for Better Sleep
+
+- 🕐 **Consistency**: Go to bed and wake up at the same time daily
+- 📱 **Screen Time**: Avoid screens 1 hour before bed
+- ☕ **Caffeine**: No caffeine after 2 PM
+- 🏃 **Exercise**: Regular physical activity improves sleep
+- 🌡️ **Environment**: Cool, dark, quiet bedroom
+- 📝 **Track Regularly**: Use this tracker to monitor what works for you
+
+<details>
+<summary>💾 <b>Data Management</b></summary>
+
+**Data Location:**
+- Default: `sleep-data.json` in project directory
+- JSON format for easy backup/export
+- Fully portable between devices
+
+**Backup Your Data:**
+```bash
+# Simple backup
+cp sleep-data.json sleep-data-backup-$(date +%Y%m%d).json
+
+# Or use git
+git add sleep-data.json
+git commit -m "Backup sleep data"
+```
+
+**Integration with Mental Health Tracker:**
+- Sleep data is automatically read by mental health insights
+- No manual synchronization needed
+- Both trackers work independently or together
+</details>
+
+---
+
 ## ☁️ AWS For Kids
 
 An interactive learning app designed to help you pass the AWS Cloud Practitioner certification exam, explained in simple terms.
@@ -948,12 +1068,13 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## 📈 Project Status
 
-**Version**: 3.2.0
+**Version**: 3.3.0
 **Status**: ✅ Active Development
 **Test Coverage**: 87.21%+ ⭐
 **Branch Coverage**: 71.64% ⭐ **MILESTONE ACHIEVED!** (3 modules at 70%+: Mental Health 70.75%, Medication 72.94%, Reminder 94.44% 🎯)
-**Tests**: 712 passing
+**Tests**: 772 passing
 **Latest Features**:
+- 😴 **Sleep Tracking** 🆕 (Quality monitoring + Sleep-Mood correlation)
 - ⚠️ Drug Interaction Warnings (65+ interactions)
 - 🔍 **Insights & Correlations** (pattern detection in mental health data)
 **CI/CD**: ✅ Automated with quality gates
