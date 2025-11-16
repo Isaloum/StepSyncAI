@@ -958,3 +958,444 @@ describe('PDF Export - Medication Tracker', () => {
         });
     });
 });
+
+describe('PDF Export - AWS Learning Tracker', () => {
+    let tracker;
+    let mockDoc;
+    let mockStream;
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+
+        // Mock PDFDocument
+        mockDoc = {
+            fontSize: jest.fn().mockReturnThis(),
+            fillColor: jest.fn().mockReturnThis(),
+            text: jest.fn().mockReturnThis(),
+            moveDown: jest.fn().mockReturnThis(),
+            strokeColor: jest.fn().mockReturnThis(),
+            lineWidth: jest.fn().mockReturnThis(),
+            moveTo: jest.fn().mockReturnThis(),
+            lineTo: jest.fn().mockReturnThis(),
+            stroke: jest.fn().mockReturnThis(),
+            circle: jest.fn().mockReturnThis(),
+            fill: jest.fn().mockReturnThis(),
+            rect: jest.fn().mockReturnThis(),
+            arc: jest.fn().mockReturnThis(),
+            pipe: jest.fn(),
+            end: jest.fn(),
+            y: 100,
+            page: { height: 800 }
+        };
+
+        PDFDocument.mockImplementation(() => mockDoc);
+
+        // Mock write stream
+        mockStream = {
+            on: jest.fn((event, callback) => {
+                if (event === 'finish') {
+                    mockStream.finishCallback = callback;
+                }
+                return mockStream;
+            }),
+            finishCallback: null
+        };
+
+        fs.createWriteStream = jest.fn(() => mockStream);
+        fs.existsSync = jest.fn(() => false);
+        fs.mkdirSync = jest.fn();
+        fs.readFileSync = jest.fn(() => JSON.stringify({
+            completedLessons: [],
+            quizScores: []
+        }));
+        fs.writeFileSync = jest.fn();
+
+        jest.spyOn(console, 'log').mockImplementation(() => {});
+        jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        tracker = new AWSForKids('test-aws-learning.json');
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    describe('exportToPDF', () => {
+        test('generates PDF with correct filename format', async () => {
+            const exportPromise = tracker.exportToPDF('./exports');
+            mockStream.finishCallback();
+            const filepath = await exportPromise;
+
+            expect(filepath).toMatch(/exports\/aws-learning-report-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.pdf/);
+        });
+
+        test('creates directory if it does not exist', async () => {
+            fs.existsSync.mockReturnValue(false);
+
+            const exportPromise = tracker.exportToPDF('./new-dir');
+            mockStream.finishCallback();
+            await exportPromise;
+
+            expect(fs.mkdirSync).toHaveBeenCalledWith('./new-dir', { recursive: true });
+        });
+
+        test('adds header to PDF', async () => {
+            const exportPromise = tracker.exportToPDF();
+            mockStream.finishCallback();
+            await exportPromise;
+
+            expect(mockDoc.text).toHaveBeenCalledWith('AWS Cloud Practitioner - Learning Report', expect.any(Object));
+        });
+
+        test('adds exam readiness summary', async () => {
+            const exportPromise = tracker.exportToPDF();
+            mockStream.finishCallback();
+            await exportPromise;
+
+            expect(mockDoc.text).toHaveBeenCalledWith('🎯 Exam Readiness');
+        });
+
+        test('adds progress chart', async () => {
+            const exportPromise = tracker.exportToPDF();
+            mockStream.finishCallback();
+            await exportPromise;
+
+            expect(mockDoc.text).toHaveBeenCalledWith('📚 Learning Progress');
+        });
+
+        test('adds quiz performance when quiz data exists', async () => {
+            tracker.data.quizScores = [
+                { score: 8, total: 10, timestamp: new Date().toISOString() }
+            ];
+
+            const exportPromise = tracker.exportToPDF();
+            mockStream.finishCallback();
+            await exportPromise;
+
+            expect(mockDoc.text).toHaveBeenCalledWith('📊 Quiz Performance Trend');
+        });
+
+        test('skips quiz performance when no quiz data', async () => {
+            tracker.data.quizScores = [];
+
+            const exportPromise = tracker.exportToPDF();
+            mockStream.finishCallback();
+            await exportPromise;
+
+            const calls = mockDoc.text.mock.calls.map(call => call[0]);
+            expect(calls).not.toContain('📊 Quiz Performance Trend');
+        });
+
+        test('adds learning path section', async () => {
+            const exportPromise = tracker.exportToPDF();
+            mockStream.finishCallback();
+            await exportPromise;
+
+            expect(mockDoc.text).toHaveBeenCalledWith('🗺️ Next Steps');
+        });
+
+        test('adds footer', async () => {
+            const exportPromise = tracker.exportToPDF();
+            mockStream.finishCallback();
+            await exportPromise;
+
+            expect(mockDoc.text).toHaveBeenCalledWith(
+                'Generated by StepSync AWS Learning Tracker',
+                50,
+                750,
+                { align: 'center' }
+            );
+        });
+
+        test('handles errors during PDF generation', async () => {
+            PDFDocument.mockImplementation(() => {
+                throw new Error('PDF generation failed');
+            });
+
+            await expect(tracker.exportToPDF()).rejects.toThrow('PDF generation failed');
+        });
+
+        test('logs success message on completion', async () => {
+            const exportPromise = tracker.exportToPDF();
+            mockStream.finishCallback();
+            await exportPromise;
+
+            expect(console.log).toHaveBeenCalledWith(expect.stringContaining('PDF report generated successfully'));
+        });
+    });
+
+    describe('addExamReadinessSummary', () => {
+        test('displays exam readiness score', () => {
+            tracker.data.completedLessons = ['ec2', 's3'];
+            tracker.data.quizScores = [
+                { score: 8, total: 10 },
+                { score: 9, total: 10 }
+            ];
+
+            tracker.addExamReadinessSummary(mockDoc);
+
+            // Should display a percentage score
+            expect(mockDoc.text).toHaveBeenCalledWith(expect.stringMatching(/\d+%/), expect.any(Number), expect.any(Number));
+        });
+
+        test('draws circular gauge', () => {
+            tracker.data.completedLessons = ['ec2'];
+            tracker.data.quizScores = [];
+
+            tracker.addExamReadinessSummary(mockDoc);
+
+            // Should draw circle for gauge background and arc for progress
+            expect(mockDoc.circle).toHaveBeenCalled();
+            expect(mockDoc.arc).toHaveBeenCalled();
+        });
+
+        test('uses green color for high readiness (80%+)', () => {
+            // Complete all topics and have perfect quiz scores
+            tracker.data.completedLessons = Object.keys(tracker.concepts);
+            tracker.data.quizScores = Array(10).fill({ score: 10, total: 10 });
+
+            tracker.addExamReadinessSummary(mockDoc);
+
+            expect(mockDoc.strokeColor).toHaveBeenCalledWith('#27ae60');
+        });
+
+        test('uses orange color for medium readiness (60-79%)', () => {
+            // Setup for 60-79% readiness:
+            // - 50% topic coverage = 20 points (50% of 40)
+            // - 80% quiz performance = 32 points (80% of 40)
+            // - 5 quizzes = 10 points (min of 5*2 or 20)
+            // Total = 62 points (62%)
+            const allTopics = Object.keys(tracker.concepts);
+            tracker.data.completedLessons = allTopics.slice(0, Math.ceil(allTopics.length * 0.5));
+            tracker.data.quizScores = Array(5).fill({ score: 8, total: 10 });
+
+            tracker.addExamReadinessSummary(mockDoc);
+
+            expect(mockDoc.strokeColor).toHaveBeenCalledWith('#f39c12');
+        });
+
+        test('displays topic completion statistics', () => {
+            tracker.data.completedLessons = ['ec2', 's3', 'iam'];
+            tracker.data.quizScores = [];
+
+            tracker.addExamReadinessSummary(mockDoc);
+
+            expect(mockDoc.text).toHaveBeenCalledWith(expect.stringContaining('Topics Completed: 3'), expect.any(Object));
+        });
+
+        test('displays quiz statistics', () => {
+            tracker.data.completedLessons = [];
+            tracker.data.quizScores = [
+                { score: 8, total: 10 },
+                { score: 7, total: 10 }
+            ];
+
+            tracker.addExamReadinessSummary(mockDoc);
+
+            expect(mockDoc.text).toHaveBeenCalledWith(expect.stringContaining('Quizzes Taken: 2'), expect.any(Object));
+        });
+
+        test('displays score breakdown', () => {
+            tracker.data.completedLessons = ['ec2'];
+            tracker.data.quizScores = [];
+
+            tracker.addExamReadinessSummary(mockDoc);
+
+            expect(mockDoc.text).toHaveBeenCalledWith(expect.stringContaining('Topic Coverage:'), expect.any(Object));
+            expect(mockDoc.text).toHaveBeenCalledWith(expect.stringContaining('Quiz Performance:'), expect.any(Object));
+            expect(mockDoc.text).toHaveBeenCalledWith(expect.stringContaining('Practice Consistency:'), expect.any(Object));
+        });
+
+        test('handles zero quizzes correctly', () => {
+            tracker.data.completedLessons = ['ec2'];
+            tracker.data.quizScores = [];
+
+            tracker.addExamReadinessSummary(mockDoc);
+
+            expect(mockDoc.text).toHaveBeenCalledWith(expect.stringContaining('Average Quiz Score: 0%'), expect.any(Object));
+        });
+    });
+
+    describe('addProgressChart', () => {
+        test('draws horizontal bar chart', () => {
+            tracker.data.completedLessons = ['ec2', 's3'];
+
+            tracker.addProgressChart(mockDoc);
+
+            // Should draw rectangles for completed and pending sections
+            expect(mockDoc.rect).toHaveBeenCalled();
+        });
+
+        test('shows completed topics in green', () => {
+            tracker.data.completedLessons = ['ec2'];
+
+            tracker.addProgressChart(mockDoc);
+
+            expect(mockDoc.fillColor).toHaveBeenCalledWith('#27ae60');
+        });
+
+        test('shows pending topics in gray', () => {
+            tracker.data.completedLessons = ['ec2'];
+
+            tracker.addProgressChart(mockDoc);
+
+            expect(mockDoc.fillColor).toHaveBeenCalledWith('#ecf0f1');
+        });
+
+        test('displays completed and remaining counts', () => {
+            tracker.data.completedLessons = ['ec2', 's3'];
+            const totalTopics = Object.keys(tracker.concepts).length;
+            const remaining = totalTopics - 2;
+
+            tracker.addProgressChart(mockDoc);
+
+            expect(mockDoc.text).toHaveBeenCalledWith('Completed: 2', expect.any(Number), expect.any(Number));
+            expect(mockDoc.text).toHaveBeenCalledWith(`Remaining: ${remaining}`, expect.any(Number), expect.any(Number));
+        });
+
+        test('handles zero completed topics', () => {
+            tracker.data.completedLessons = [];
+
+            tracker.addProgressChart(mockDoc);
+
+            // Should still draw the chart
+            expect(mockDoc.rect).toHaveBeenCalled();
+        });
+
+        test('handles all topics completed', () => {
+            tracker.data.completedLessons = Object.keys(tracker.concepts);
+
+            tracker.addProgressChart(mockDoc);
+
+            expect(mockDoc.text).toHaveBeenCalledWith('Remaining: 0', expect.any(Number), expect.any(Number));
+        });
+    });
+
+    describe('addQuizPerformance', () => {
+        test('shows last 10 quizzes only', () => {
+            tracker.data.quizScores = Array(15).fill(null).map((_, i) => ({
+                score: 8,
+                total: 10,
+                timestamp: new Date().toISOString()
+            }));
+
+            tracker.addQuizPerformance(mockDoc);
+
+            // Should plot 10 data points
+            expect(mockDoc.circle).toHaveBeenCalledTimes(10);
+        });
+
+        test('draws line chart for quiz trends', () => {
+            tracker.data.quizScores = [
+                { score: 6, total: 10 },
+                { score: 8, total: 10 },
+                { score: 9, total: 10 }
+            ];
+
+            tracker.addQuizPerformance(mockDoc);
+
+            // Should draw lines and data points
+            expect(mockDoc.moveTo).toHaveBeenCalled();
+            expect(mockDoc.lineTo).toHaveBeenCalled();
+            expect(mockDoc.circle).toHaveBeenCalled();
+        });
+
+        test('draws Y-axis labels from 0 to 100%', () => {
+            tracker.data.quizScores = [{ score: 5, total: 10 }];
+
+            tracker.addQuizPerformance(mockDoc);
+
+            expect(mockDoc.text).toHaveBeenCalledWith('0%', expect.any(Number), expect.any(Number));
+            expect(mockDoc.text).toHaveBeenCalledWith('25%', expect.any(Number), expect.any(Number));
+            expect(mockDoc.text).toHaveBeenCalledWith('50%', expect.any(Number), expect.any(Number));
+            expect(mockDoc.text).toHaveBeenCalledWith('75%', expect.any(Number), expect.any(Number));
+            expect(mockDoc.text).toHaveBeenCalledWith('100%', expect.any(Number), expect.any(Number));
+        });
+
+        test('shows message when no quiz data', () => {
+            tracker.data.quizScores = [];
+
+            tracker.addQuizPerformance(mockDoc);
+
+            expect(mockDoc.text).toHaveBeenCalledWith('No quiz data available', expect.any(Object));
+        });
+
+        test('calculates percentage scores correctly', () => {
+            tracker.data.quizScores = [
+                { score: 7, total: 10 }, // 70%
+                { score: 9, total: 10 }  // 90%
+            ];
+
+            tracker.addQuizPerformance(mockDoc);
+
+            // Should plot points and draw lines (exact calculations tested in integration)
+            expect(mockDoc.circle).toHaveBeenCalledTimes(2);
+        });
+    });
+
+    describe('addLearningPath', () => {
+        test('recommends next topics to study', () => {
+            tracker.data.completedLessons = ['ec2'];
+
+            tracker.addLearningPath(mockDoc);
+
+            expect(mockDoc.text).toHaveBeenCalledWith('Recommended topics to study next:', expect.any(Object));
+        });
+
+        test('limits recommendations to 5 topics', () => {
+            tracker.data.completedLessons = [];
+
+            tracker.addLearningPath(mockDoc);
+
+            // Count topic calls (should be 5 topics with name and description each)
+            const topicCalls = mockDoc.text.mock.calls.filter(call =>
+                call[0] && typeof call[0] === 'string' && /^\d+\.\s+/.test(call[0])
+            );
+            expect(topicCalls.length).toBeLessThanOrEqual(5);
+        });
+
+        test('excludes already completed topics', () => {
+            tracker.data.completedLessons = ['ec2'];
+
+            tracker.addLearningPath(mockDoc);
+
+            const calls = mockDoc.text.mock.calls.map(call => call[0]);
+            const hasEC2 = calls.some(c => c && c.includes('EC2'));
+
+            // EC2 should not be in recommendations (already completed)
+            expect(hasEC2).toBe(false);
+        });
+
+        test('shows congratulations when all topics completed', () => {
+            tracker.data.completedLessons = Object.keys(tracker.concepts);
+
+            tracker.addLearningPath(mockDoc);
+
+            expect(mockDoc.text).toHaveBeenCalledWith(expect.stringContaining('Congratulations'), expect.any(Object));
+        });
+
+        test('includes topic emoji and name', () => {
+            tracker.data.completedLessons = [];
+
+            tracker.addLearningPath(mockDoc);
+
+            // Should include emoji markers (checked by seeing if any text contains emoji)
+            const hasEmoji = mockDoc.text.mock.calls.some(call =>
+                call[0] && /[\u{1F300}-\u{1F9FF}]/u.test(call[0])
+            );
+            expect(hasEmoji).toBe(true);
+        });
+
+        test('includes topic descriptions', () => {
+            tracker.data.completedLessons = [];
+
+            tracker.addLearningPath(mockDoc);
+
+            // Should have description text with proper indentation
+            const hasIndentedText = mockDoc.text.mock.calls.some(call =>
+                call[1] && call[1].indent === 60
+            );
+            expect(hasIndentedText).toBe(true);
+        });
+    });
+});
