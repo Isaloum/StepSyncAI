@@ -1,8 +1,8 @@
 # StepSyncAI - Health & Wellness Apps
 
-[![Tests](https://img.shields.io/badge/tests-693%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
-[![Coverage](https://img.shields.io/badge/coverage-86.58%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
-[![Branch Coverage](https://img.shields.io/badge/branch%20coverage-70.65%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Tests](https://img.shields.io/badge/tests-712%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Coverage](https://img.shields.io/badge/coverage-87.21%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Branch Coverage](https://img.shields.io/badge/branch%20coverage-71.64%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -28,6 +28,12 @@ A comprehensive support tool designed specifically for managing mental health ch
 - **Journaling**: Write entries categorized by type (general, incident, therapy, progress)
 - **Trigger Identification**: Record and monitor triggers with occurrence tracking
 - **Coping Strategies**: Save strategies and rate their effectiveness
+- **Insights & Correlations**: 🔍 **NEW!** Discover patterns in your data
+  - **Trigger impact analysis**: How triggers affect your mood
+  - **Symptom patterns**: Which symptoms correlate with mood changes
+  - **Temporal insights**: Best/worst days of the week
+  - **Coping effectiveness**: Which strategies work best for you
+  - **Symptom clustering**: Which symptoms tend to occur together
 - **Emergency Contacts**: Quick access to therapist, crisis hotlines, and support network
 - **Recovery Goals**: Set and track recovery milestones
 - **Daily Check-ins**: Quick summary of your progress
@@ -49,6 +55,9 @@ node mental-health-tracker.js journal "Today was challenging but I made progress
 
 # Quick daily check-in
 node mental-health-tracker.js checkin
+
+# Discover insights & patterns (requires 5+ mood entries)
+node mental-health-tracker.js insights
 
 # View help
 node mental-health-tracker.js help
@@ -354,7 +363,7 @@ A simple, easy-to-use medication tracker app designed for people who need help r
 ### Features
 
 - **Add Medications**: Track multiple medications with dosage, frequency, and scheduled times
-- **Drug Interaction Warnings**: Automatic detection of 36+ dangerous drug interactions ⚠️
+- **Drug Interaction Warnings**: Automatic detection of 65+ dangerous drug interactions ⚠️
   - **Severity levels**: SEVERE 🔴, MODERATE 🟡, MINOR 🟢
   - **Auto-check** when adding new medications
   - **Manual check** anytime with `check-interactions` command
@@ -737,11 +746,11 @@ npx jest __tests__/mental-health-tracker.test.js
 
 | Module | Statements | Branch | Functions | Lines |
 |--------|------------|--------|-----------|-------|
-| **Mental Health Tracker** | 84.96% ⭐ | 68.48% | 98.01% ⭐ | 84.19% ⭐ |
+| **Mental Health Tracker** | 86.59% ⭐ | **70.75%** ⭐ | 97.82% ⭐ | 85.83% ⭐ |
 | **Medication Tracker** | 89.56% ⭐ | **72.94%** ⭐ | 96.11% ⭐ | 89.14% ⭐ |
 | **AWS For Kids** | 83.62% ⭐ | 67.89% | 88.31% ⭐ | 83.08% ⭐ |
 | **Reminder Service** | **100%** 🎯 | **94.44%** 🎯 | **100%** 🎯 | **100%** 🎯 |
-| **Overall** | **86.58%** ⭐ | **70.65%** ⭐ | **95.54%** ⭐ | **86.02%** ⭐ |
+| **Overall** | **87.21%** ⭐ | **71.64%** ⭐ | **95.66%** ⭐ | **86.64%** ⭐ |
 
 ### Test Documentation
 
@@ -836,22 +845,23 @@ We welcome contributions! Here's how you can help:
 
 ### Testing Standards
 
-- ✅ 693 comprehensive tests (+30 for drug interactions)
+- ✅ 712 comprehensive tests (+19 for insights/correlations)
 - ✅ Unit tests for all core functions
 - ✅ Integration tests for complete workflows
 - ✅ Error handling tests
 - ✅ Edge case coverage
-- ✅ Branch coverage achieved 70%+ milestone! (70.65%)
+- ✅ Branch coverage achieved 71%+ (71.64%)
 - ✅ PDF export testing with visual components
 - ✅ Drug interaction safety testing (30 tests)
-- ✅ Fast execution (~5 seconds)
+- ✅ Mental health insights testing (19 tests)
+- ✅ Fast execution (~5.7 seconds)
 
 ### Quality Gates
 
-- Minimum 82% statement coverage (currently: 86.58%)
-- Minimum 65% branch coverage (currently: 70.65%)
-- Minimum 90% function coverage (currently: 95.54%)
-- All tests passing (693/693)
+- Minimum 82% statement coverage (currently: 87.21%)
+- Minimum 65% branch coverage (currently: 71.64%)
+- Minimum 90% function coverage (currently: 95.66%)
+- All tests passing (712/712)
 - No high-severity vulnerabilities
 - CI/CD enforced quality standards
 
@@ -861,8 +871,8 @@ We welcome contributions! Here's how you can help:
 
 | Command | Description |
 |---------|-------------|
-| `npm test` | Run all tests (693 tests) |
-| `npm run test:coverage` | Run tests with coverage report (86.5%+) |
+| `npm test` | Run all tests (712 tests) |
+| `npm run test:coverage` | Run tests with coverage report (87%+) |
 | `npm run test:watch` | Run tests in watch mode |
 | `npm run mental` | Start mental health tracker |
 | `npm run med` | Start medication tracker |
@@ -887,20 +897,27 @@ We welcome contributions! Here's how you can help:
 - [x] Backup and restore system ✓
 - [x] PDF export with charts and graphs ✓
 - [x] Reminder notifications ✓
-- [x] **Drug interaction warnings** ✓ **NEW!** (36+ interactions, 3 severity levels)
+- [x] **Drug interaction warnings** ✓ (65+ interactions, 3 severity levels)
+- [x] **Insights & correlation analysis** ✓ **NEW!** (Mental Health Tracker)
+  - Trigger-mood impact analysis
+  - Symptom pattern detection
+  - Temporal insights (best/worst days)
+  - Coping strategy effectiveness
+  - Symptom clustering
 - [ ] Multi-user support
 - [ ] Cloud sync option
 - [ ] Mobile app version
 - [ ] Integration with health devices
-- [ ] Symptom correlation analysis (Mental Health Tracker)
 - [ ] More drug interactions (expand database)
+- [ ] Predictive insights (ML-based mood forecasting)
 
 ### Testing Improvements
 
-- [x] Increase branch coverage to 60%+ ✓ (Currently at 70.65%)
+- [x] Increase branch coverage to 60%+ ✓ (Currently at 71.64%)
+- [x] Mental Health Tracker: 70%+ branch coverage ✓ **ACHIEVED!** (Currently at 70.75%)
 - [x] Medication Tracker: 70%+ branch coverage ✓ (Currently at 72.94%)
 - [x] Reminder Service: 70%+ branch coverage ✓ (Currently at 94.44%)
-- [x] Increase overall branch coverage to 70%+ ✓ **MILESTONE ACHIEVED!** (Currently at 70.65%)
+- [x] Increase overall branch coverage to 70%+ ✓ **MILESTONE ACHIEVED!** (Currently at 71.64%)
 - [ ] Add performance benchmarks
 - [ ] Snapshot testing for outputs
 - [ ] Mutation testing
@@ -931,12 +948,14 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## 📈 Project Status
 
-**Version**: 3.1.0
+**Version**: 3.2.0
 **Status**: ✅ Active Development
-**Test Coverage**: 86.58%+ ⭐
-**Branch Coverage**: 70.65% ⭐ **MILESTONE ACHIEVED!** (2 modules at 70%+: Medication Tracker 72.94%, Reminder Service 94.44% 🎯)
-**Tests**: 693 passing
-**Latest Feature**: ⚠️ Drug Interaction Warnings (36+ interactions detected)
+**Test Coverage**: 87.21%+ ⭐
+**Branch Coverage**: 71.64% ⭐ **MILESTONE ACHIEVED!** (3 modules at 70%+: Mental Health 70.75%, Medication 72.94%, Reminder 94.44% 🎯)
+**Tests**: 712 passing
+**Latest Features**:
+- ⚠️ Drug Interaction Warnings (65+ interactions)
+- 🔍 **Insights & Correlations** (pattern detection in mental health data)
 **CI/CD**: ✅ Automated with quality gates
 
 ---

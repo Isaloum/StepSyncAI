@@ -1455,6 +1455,260 @@ class MentalHealthTracker {
         return maxStreak;
     }
 
+    // Correlation & Insights Analysis
+    analyzeInsights() {
+        console.log('\n🔍 Mental Health Insights & Correlations');
+        console.log('═'.repeat(70));
+
+        const hasEnoughData = this.data.moodEntries.length >= 5;
+
+        if (!hasEnoughData) {
+            console.log('\n📊 Not enough data yet for meaningful insights.');
+            console.log('   Keep tracking your moods, symptoms, and triggers!');
+            console.log('   Come back after at least 5 mood entries for personalized insights.');
+            console.log('\n═'.repeat(70));
+            return;
+        }
+
+        // Analyze each type of correlation
+        this.analyzeTriggerMoodCorrelation();
+        this.analyzeSymptomMoodCorrelation();
+        this.analyzeTemporalPatterns();
+        this.analyzeCopingEffectiveness();
+        this.analyzeSymptomClusters();
+
+        console.log('\n💡 Remember: These are patterns, not certainties. Use them as conversation');
+        console.log('   starters with your therapist or healthcare provider.');
+        console.log('═'.repeat(70));
+    }
+
+    analyzeTriggerMoodCorrelation() {
+        if (this.data.triggers.length === 0 || this.data.moodEntries.length < 5) return;
+
+        console.log('\n⚡ Trigger → Mood Impact:');
+        console.log('─'.repeat(70));
+
+        const triggerImpacts = [];
+
+        this.data.triggers.forEach(trigger => {
+            // Find mood entries within 24 hours after trigger occurrence
+            const triggerDate = new Date(trigger.lastOccurred);
+            const dayAfterTrigger = new Date(triggerDate.getTime() + 24 * 60 * 60 * 1000);
+
+            const moodsAfterTrigger = this.data.moodEntries.filter(mood => {
+                const moodDate = new Date(mood.timestamp);
+                return moodDate >= triggerDate && moodDate <= dayAfterTrigger;
+            });
+
+            if (moodsAfterTrigger.length > 0) {
+                const avgMoodAfter = moodsAfterTrigger.reduce((sum, m) => sum + m.rating, 0) / moodsAfterTrigger.length;
+                const overallAvgMood = this.data.moodEntries.reduce((sum, m) => sum + m.rating, 0) / this.data.moodEntries.length;
+                const impact = avgMoodAfter - overallAvgMood;
+
+                triggerImpacts.push({
+                    trigger: trigger.description,
+                    avgMoodAfter: avgMoodAfter.toFixed(1),
+                    impact: impact.toFixed(1),
+                    occurrences: trigger.occurrences
+                });
+            }
+        });
+
+        if (triggerImpacts.length === 0) {
+            console.log('   No clear trigger-mood correlations detected yet.');
+            return;
+        }
+
+        // Sort by negative impact (most harmful first)
+        triggerImpacts.sort((a, b) => parseFloat(a.impact) - parseFloat(b.impact));
+
+        triggerImpacts.slice(0, 3).forEach((item, index) => {
+            const impactNum = parseFloat(item.impact);
+            const icon = impactNum < -1.5 ? '🔴' : impactNum < -0.5 ? '🟡' : '🟢';
+            const direction = impactNum < 0 ? 'lower' : 'higher';
+
+            console.log(`   ${icon} "${item.trigger}"`);
+            console.log(`      Mood after trigger: ${item.avgMoodAfter}/10 (${Math.abs(impactNum).toFixed(1)} points ${direction})`);
+            console.log(`      Occurrences: ${item.occurrences}`);
+            if (index < 2) console.log('');
+        });
+    }
+
+    analyzeSymptomMoodCorrelation() {
+        if (this.data.symptoms.length === 0 || this.data.moodEntries.length < 5) return;
+
+        console.log('\n🩺 Symptom → Mood Impact:');
+        console.log('─'.repeat(70));
+
+        // Group symptoms by type
+        const symptomTypes = {};
+        this.data.symptoms.forEach(symptom => {
+            if (!symptomTypes[symptom.symptomType]) {
+                symptomTypes[symptom.symptomType] = [];
+            }
+            symptomTypes[symptom.symptomType].push(symptom);
+        });
+
+        const symptomImpacts = [];
+
+        Object.keys(symptomTypes).forEach(type => {
+            const symptoms = symptomTypes[type];
+
+            // Find mood entries on same day as symptoms
+            const moodsOnSymptomDays = [];
+            symptoms.forEach(symptom => {
+                const symptomDate = new Date(symptom.timestamp).toDateString();
+                const matchingMoods = this.data.moodEntries.filter(mood =>
+                    new Date(mood.timestamp).toDateString() === symptomDate
+                );
+                moodsOnSymptomDays.push(...matchingMoods);
+            });
+
+            if (moodsOnSymptomDays.length > 0) {
+                const avgMoodOnSymptomDays = moodsOnSymptomDays.reduce((sum, m) => sum + m.rating, 0) / moodsOnSymptomDays.length;
+                const overallAvgMood = this.data.moodEntries.reduce((sum, m) => sum + m.rating, 0) / this.data.moodEntries.length;
+                const impact = avgMoodOnSymptomDays - overallAvgMood;
+                const avgSeverity = symptoms.reduce((sum, s) => sum + s.severity, 0) / symptoms.length;
+
+                symptomImpacts.push({
+                    type: type,
+                    avgMood: avgMoodOnSymptomDays.toFixed(1),
+                    impact: impact.toFixed(1),
+                    avgSeverity: avgSeverity.toFixed(1),
+                    count: symptoms.length
+                });
+            }
+        });
+
+        if (symptomImpacts.length === 0) {
+            console.log('   No clear symptom-mood correlations detected yet.');
+            return;
+        }
+
+        // Sort by negative impact
+        symptomImpacts.sort((a, b) => parseFloat(a.impact) - parseFloat(b.impact));
+
+        symptomImpacts.slice(0, 3).forEach((item, index) => {
+            const impactNum = parseFloat(item.impact);
+            const icon = impactNum < -1.5 ? '🔴' : impactNum < -0.5 ? '🟡' : '🟢';
+
+            console.log(`   ${icon} ${item.type.charAt(0).toUpperCase() + item.type.slice(1)}`);
+            console.log(`      Mood on symptom days: ${item.avgMood}/10 (${Math.abs(impactNum).toFixed(1)} points ${impactNum < 0 ? 'lower' : 'higher'})`);
+            console.log(`      Logged ${item.count} times, avg severity: ${item.avgSeverity}/10`);
+            if (index < 2) console.log('');
+        });
+    }
+
+    analyzeTemporalPatterns() {
+        if (this.data.moodEntries.length < 7) return;
+
+        console.log('\n📅 Temporal Patterns:');
+        console.log('─'.repeat(70));
+
+        // Analyze by day of week
+        const dayMoods = {
+            0: [], // Sunday
+            1: [], // Monday
+            2: [], // Tuesday
+            3: [], // Wednesday
+            4: [], // Thursday
+            5: [], // Friday
+            6: []  // Saturday
+        };
+
+        this.data.moodEntries.forEach(entry => {
+            const day = new Date(entry.timestamp).getDay();
+            dayMoods[day].push(entry.rating);
+        });
+
+        const dayAverages = Object.keys(dayMoods).map(day => {
+            const moods = dayMoods[day];
+            if (moods.length === 0) return { day: parseInt(day), avg: null, count: 0 };
+            const avg = moods.reduce((sum, m) => sum + m, 0) / moods.length;
+            return { day: parseInt(day), avg: avg, count: moods.length };
+        }).filter(d => d.avg !== null);
+
+        if (dayAverages.length >= 3) {
+            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            dayAverages.sort((a, b) => b.avg - a.avg);
+
+            const bestDay = dayAverages[0];
+            const worstDay = dayAverages[dayAverages.length - 1];
+
+            console.log(`   📈 Best day: ${dayNames[bestDay.day]} (avg mood: ${bestDay.avg.toFixed(1)}/10)`);
+            console.log(`   📉 Challenging day: ${dayNames[worstDay.day]} (avg mood: ${worstDay.avg.toFixed(1)}/10)`);
+        }
+    }
+
+    analyzeCopingEffectiveness() {
+        if (this.data.copingStrategies.length === 0) return;
+
+        const ratedStrategies = this.data.copingStrategies.filter(s => s.effectiveness);
+
+        if (ratedStrategies.length === 0) return;
+
+        console.log('\n💪 Most Effective Coping Strategies:');
+        console.log('─'.repeat(70));
+
+        // Sort by effectiveness
+        const sorted = [...ratedStrategies].sort((a, b) =>
+            parseFloat(b.effectiveness) - parseFloat(a.effectiveness)
+        );
+
+        sorted.slice(0, 3).forEach((strategy, index) => {
+            const effectiveness = parseFloat(strategy.effectiveness);
+            const icon = effectiveness >= 8 ? '⭐' : effectiveness >= 6 ? '✓' : '○';
+
+            console.log(`   ${icon} ${strategy.name} - ${strategy.effectiveness}/10 effectiveness`);
+            console.log(`      Used ${strategy.timesUsed} times, ${strategy.ratings.length} ratings`);
+            if (index < 2) console.log('');
+        });
+    }
+
+    analyzeSymptomClusters() {
+        if (this.data.symptoms.length < 10) return;
+
+        console.log('\n🔗 Symptom Co-occurrence Patterns:');
+        console.log('─'.repeat(70));
+
+        // Group symptoms by day
+        const symptomsByDay = {};
+        this.data.symptoms.forEach(symptom => {
+            const day = new Date(symptom.timestamp).toDateString();
+            if (!symptomsByDay[day]) {
+                symptomsByDay[day] = [];
+            }
+            symptomsByDay[day].push(symptom.symptomType);
+        });
+
+        // Find days with multiple symptoms
+        const coOccurrences = {};
+        Object.values(symptomsByDay).forEach(symptoms => {
+            if (symptoms.length >= 2) {
+                // Count unique symptom pairs
+                const uniqueSymptoms = [...new Set(symptoms)];
+                for (let i = 0; i < uniqueSymptoms.length; i++) {
+                    for (let j = i + 1; j < uniqueSymptoms.length; j++) {
+                        const pair = [uniqueSymptoms[i], uniqueSymptoms[j]].sort().join(' + ');
+                        coOccurrences[pair] = (coOccurrences[pair] || 0) + 1;
+                    }
+                }
+            }
+        });
+
+        const pairs = Object.entries(coOccurrences)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3);
+
+        if (pairs.length > 0) {
+            pairs.forEach(([ pair, count ], index) => {
+                console.log(`   🔗 ${pair} - occurred together ${count} times`);
+            });
+        } else {
+            console.log('   No significant symptom clustering detected yet.');
+        }
+    }
+
     // Reminder Management
     enableReminders(journalTime = '20:00', checkInTime = '09:00') {
         this.reminderService.enableMentalHealthReminders(journalTime, checkInTime);
@@ -1555,6 +1809,12 @@ QUICK ACTIONS:
 
   stats (or statistics)
       Display overall statistics and summary of all tracked data
+
+  insights (or correlations, analyze)
+      Analyze patterns and correlations in your data
+      🔍 Discover trigger-mood impacts, symptom patterns, best/worst days
+      💡 Find most effective coping strategies, symptom clusters
+      Requires at least 5 mood entries for meaningful insights
 
   help
       Show this help message
@@ -1790,6 +2050,12 @@ function main() {
         case 'stats':
         case 'statistics':
             tracker.showStats();
+            break;
+
+        case 'insights':
+        case 'correlations':
+        case 'analyze':
+            tracker.analyzeInsights();
             break;
 
         case 'mood-trends':
