@@ -5,22 +5,17 @@
   "main": "index.js",
   "scripts": {
     "mental": "node mental-health-tracker.js",
-    "test-mental": "node test-mental-health-tracker.js",
     "med": "node medication-tracker.js",
-    "test-med": "node test-medication-tracker.js",
     "aws": "node aws-for-kids.js",
-    "test-aws": "node test-aws-for-kids.js",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "test:watch": "jest --watch",
-    "test:old": "npm run test-mental && npm run test-med && npm run test-aws"
+    "test:watch": "jest --watch"
   },
   "jest": {
     "testEnvironment": "node",
     "coverageDirectory": "coverage",
     "collectCoverageFrom": [
       "*.js",
-      "!test-*.js",
       "!jest.config.js",
       "!coverage/**",
       "!chart-utils.js"
