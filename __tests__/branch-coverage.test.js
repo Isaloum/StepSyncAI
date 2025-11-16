@@ -828,4 +828,166 @@ describe('Branch Coverage Improvements', () => {
             expect(consoleLogSpy).toHaveBeenCalled();
         });
     });
+
+    // Additional ReminderService branch coverage
+    describe('ReminderService Guard Clauses', () => {
+        const ReminderService = require('../reminder-service');
+        const cron = require('node-cron');
+
+        beforeEach(() => {
+            // Mock cron.schedule to prevent actual timers
+            jest.spyOn(cron, 'schedule').mockReturnValue({
+                stop: jest.fn()
+            });
+        });
+
+        test('scheduleMentalHealthReminders skips scheduling when disabled', () => {
+            const reminderService = new ReminderService('test-mh-reminders.json');
+            reminderService.config.mentalHealth.enabled = false;
+
+            // Directly call the schedule method when disabled
+            reminderService.scheduleMentalHealthReminders();
+
+            // Should return early without scheduling
+            expect(reminderService.scheduledJobs.has('mh-journal')).toBe(false);
+            expect(reminderService.scheduledJobs.has('mh-checkin')).toBe(false);
+        });
+
+        test('scheduleAWSReminders skips scheduling when disabled', () => {
+            const reminderService = new ReminderService('test-aws-reminders.json');
+            reminderService.config.aws.enabled = false;
+
+            // Directly call the schedule method when disabled
+            reminderService.scheduleAWSReminders();
+
+            // Should return early without scheduling
+            expect(reminderService.scheduledJobs.has('aws-study')).toBe(false);
+        });
+
+        test('startAll handles mixed enabled/disabled states', () => {
+            const reminderService = new ReminderService('test-mixed-reminders.json');
+
+            // Enable only medication
+            reminderService.config.medication.enabled = true;
+            reminderService.config.medication.reminders = [{
+                id: 1,
+                name: 'Test Med',
+                dosage: '100mg',
+                time: '08:00',
+                frequency: 'daily'
+            }];
+            reminderService.config.mentalHealth.enabled = false;
+            reminderService.config.aws.enabled = false;
+
+            reminderService.startAll();
+
+            // Only medication reminders should be scheduled
+            expect(reminderService.scheduledJobs.has('med-1')).toBe(true);
+            expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('All enabled reminders started'));
+        });
+
+        test('startAll handles only mental health enabled', () => {
+            const reminderService = new ReminderService('test-mh-only.json');
+
+            reminderService.config.medication.enabled = false;
+            reminderService.config.mentalHealth.enabled = true;
+            reminderService.config.aws.enabled = false;
+
+            reminderService.startAll();
+
+            expect(reminderService.scheduledJobs.has('mh-journal')).toBe(true);
+            expect(reminderService.scheduledJobs.has('mh-checkin')).toBe(true);
+        });
+
+        test('startAll handles only AWS enabled', () => {
+            const reminderService = new ReminderService('test-aws-only.json');
+
+            reminderService.config.medication.enabled = false;
+            reminderService.config.mentalHealth.enabled = false;
+            reminderService.config.aws.enabled = true;
+
+            reminderService.startAll();
+
+            expect(reminderService.scheduledJobs.has('aws-study')).toBe(true);
+        });
+    });
+
+    // Tracker-level reminder method coverage
+    describe('Tracker Reminder Methods', () => {
+        test('MentalHealthTracker enableReminders calls reminder service', () => {
+            const tracker = new MentalHealthTracker('test-tracker.json');
+
+            const result = tracker.enableReminders('21:00', '08:00');
+
+            expect(result).toBe(true);
+        });
+
+        test('MentalHealthTracker disableReminders calls reminder service', () => {
+            const tracker = new MentalHealthTracker('test-tracker.json');
+
+            const result = tracker.disableReminders();
+
+            expect(result).toBe(true);
+        });
+
+        test('MentalHealthTracker showReminderStatus calls reminder service', () => {
+            const tracker = new MentalHealthTracker('test-tracker.json');
+
+            consoleLogSpy.mockClear();
+            tracker.showReminderStatus();
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+        });
+
+        test('MedicationTracker enableReminders calls reminder service', () => {
+            const medTracker = new MedicationTracker('test-med-tracker.json');
+            medTracker.addMedication('Test Med', '100mg', ['08:00'], 'daily', 'With food');
+
+            const result = medTracker.enableReminders();
+
+            expect(result).toBe(true);
+        });
+
+        test('MedicationTracker disableReminders calls reminder service', () => {
+            const medTracker = new MedicationTracker('test-med-tracker.json');
+
+            const result = medTracker.disableReminders();
+
+            expect(result).toBe(true);
+        });
+
+        test('MedicationTracker showReminderStatus calls reminder service', () => {
+            const medTracker = new MedicationTracker('test-med-tracker.json');
+
+            consoleLogSpy.mockClear();
+            medTracker.showReminderStatus();
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+        });
+
+        test('AWSForKids enableReminders calls reminder service', () => {
+            const aws = new AWSForKids('test-aws.json');
+
+            const result = aws.enableReminders('18:00');
+
+            expect(result).toBe(true);
+        });
+
+        test('AWSForKids disableReminders calls reminder service', () => {
+            const aws = new AWSForKids('test-aws.json');
+
+            const result = aws.disableReminders();
+
+            expect(result).toBe(true);
+        });
+
+        test('AWSForKids showReminderStatus calls reminder service', () => {
+            const aws = new AWSForKids('test-aws.json');
+
+            consoleLogSpy.mockClear();
+            aws.showReminderStatus();
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+        });
+    });
 });
