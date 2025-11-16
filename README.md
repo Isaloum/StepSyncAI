@@ -363,7 +363,7 @@ A simple, easy-to-use medication tracker app designed for people who need help r
 ### Features
 
 - **Add Medications**: Track multiple medications with dosage, frequency, and scheduled times
-- **Drug Interaction Warnings**: Automatic detection of 36+ dangerous drug interactions ⚠️
+- **Drug Interaction Warnings**: Automatic detection of 65+ dangerous drug interactions ⚠️
   - **Severity levels**: SEVERE 🔴, MODERATE 🟡, MINOR 🟢
   - **Auto-check** when adding new medications
   - **Manual check** anytime with `check-interactions` command
@@ -897,7 +897,7 @@ We welcome contributions! Here's how you can help:
 - [x] Backup and restore system ✓
 - [x] PDF export with charts and graphs ✓
 - [x] Reminder notifications ✓
-- [x] **Drug interaction warnings** ✓ (36+ interactions, 3 severity levels)
+- [x] **Drug interaction warnings** ✓ (65+ interactions, 3 severity levels)
 - [x] **Insights & correlation analysis** ✓ **NEW!** (Mental Health Tracker)
   - Trigger-mood impact analysis
   - Symptom pattern detection
@@ -954,7 +954,7 @@ MIT License - see [LICENSE](LICENSE) for details
 **Branch Coverage**: 71.64% ⭐ **MILESTONE ACHIEVED!** (3 modules at 70%+: Mental Health 70.75%, Medication 72.94%, Reminder 94.44% 🎯)
 **Tests**: 712 passing
 **Latest Features**:
-- ⚠️ Drug Interaction Warnings (36+ interactions)
+- ⚠️ Drug Interaction Warnings (65+ interactions)
 - 🔍 **Insights & Correlations** (pattern detection in mental health data)
 **CI/CD**: ✅ Automated with quality gates
 

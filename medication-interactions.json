@@ -251,6 +251,209 @@
       "severity": "MODERATE",
       "description": "Increases lactic acidosis risk, especially with heavy drinking",
       "recommendation": "Avoid excessive alcohol. Limit to moderate consumption."
+    },
+    {
+      "drug1": "Ciprofloxacin",
+      "drug2": "Warfarin",
+      "severity": "MODERATE",
+      "description": "Fluoroquinolone antibiotics can significantly increase warfarin effect",
+      "recommendation": "Monitor INR closely during and after antibiotic course. May need dose adjustment."
+    },
+    {
+      "drug1": "Ciprofloxacin",
+      "drug2": "Tizanidine",
+      "severity": "SEVERE",
+      "description": "Dangerous interaction - severe hypotension and excessive sedation",
+      "recommendation": "Absolutely contraindicated. Do not use together."
+    },
+    {
+      "drug1": "Erythromycin",
+      "drug2": "Simvastatin",
+      "severity": "SEVERE",
+      "description": "Increases statin levels dramatically, risk of rhabdomyolysis (muscle breakdown)",
+      "recommendation": "Avoid combination. Consider alternative antibiotic or temporarily stop statin."
+    },
+    {
+      "drug1": "Clarithromycin",
+      "drug2": "Atorvastatin",
+      "severity": "MODERATE",
+      "description": "Increases statin levels, muscle damage risk",
+      "recommendation": "Use lowest statin dose or alternative antibiotic. Watch for muscle pain."
+    },
+    {
+      "drug1": "Doxycycline",
+      "drug2": "Isotretinoin",
+      "severity": "SEVERE",
+      "description": "Increased risk of intracranial hypertension (pseudotumor cerebri)",
+      "recommendation": "Avoid combination. Both increase pressure in the brain."
+    },
+    {
+      "drug1": "Metronidazole",
+      "drug2": "Alcohol",
+      "severity": "MODERATE",
+      "description": "Disulfiram-like reaction: severe nausea, vomiting, flushing, rapid heart rate",
+      "recommendation": "Avoid alcohol during treatment and for 48 hours after last dose."
+    },
+    {
+      "drug1": "Sildenafil",
+      "drug2": "Nitroglycerin",
+      "severity": "SEVERE",
+      "description": "Dangerous blood pressure drop, potentially fatal",
+      "recommendation": "Absolutely contraindicated. Never combine ED drugs with nitrates."
+    },
+    {
+      "drug1": "Sildenafil",
+      "drug2": "Isosorbide",
+      "severity": "SEVERE",
+      "description": "Severe hypotension risk with any nitrate medication",
+      "recommendation": "Contraindicated. Can cause life-threatening blood pressure drop."
+    },
+    {
+      "drug1": "Potassium",
+      "drug2": "Spironolactone",
+      "severity": "MODERATE",
+      "description": "Both increase potassium - risk of dangerous hyperkalemia",
+      "recommendation": "Avoid potassium supplements. Monitor potassium levels regularly."
+    },
+    {
+      "drug1": "Potassium",
+      "drug2": "Lisinopril",
+      "severity": "MODERATE",
+      "description": "ACE inhibitors increase potassium - supplements can cause hyperkalemia",
+      "recommendation": "Avoid potassium supplements unless prescribed. Regular monitoring needed."
+    },
+    {
+      "drug1": "Atenolol",
+      "drug2": "Verapamil",
+      "severity": "MODERATE",
+      "description": "Both slow heart rate - risk of dangerous bradycardia and heart block",
+      "recommendation": "Requires careful monitoring. Watch for dizziness, fatigue, slow pulse."
+    },
+    {
+      "drug1": "Diltiazem",
+      "drug2": "Metoprolol",
+      "severity": "MODERATE",
+      "description": "Combined effect can excessively slow heart rate and lower blood pressure",
+      "recommendation": "Monitor heart rate and blood pressure. Report dizziness or fatigue."
+    },
+    {
+      "drug1": "Amiodarone",
+      "drug2": "Warfarin",
+      "severity": "SEVERE",
+      "description": "Significantly increases warfarin effect, major bleeding risk",
+      "recommendation": "Reduce warfarin dose by 30-50%. Frequent INR monitoring required."
+    },
+    {
+      "drug1": "Amiodarone",
+      "drug2": "Digoxin",
+      "severity": "MODERATE",
+      "description": "Increases digoxin levels, toxicity risk",
+      "recommendation": "Reduce digoxin dose by 50%. Monitor levels and watch for toxicity signs."
+    },
+    {
+      "drug1": "Losartan",
+      "drug2": "Ibuprofen",
+      "severity": "MODERATE",
+      "description": "NSAIDs reduce effectiveness of blood pressure medications",
+      "recommendation": "Use acetaminophen instead. If NSAIDs needed, monitor blood pressure."
+    },
+    {
+      "drug1": "Hydrochlorothiazide",
+      "drug2": "Lithium",
+      "severity": "MODERATE",
+      "description": "Thiazide diuretics increase lithium levels, toxicity risk",
+      "recommendation": "Avoid combination. If necessary, monitor lithium levels closely."
+    },
+    {
+      "drug1": "Allopurinol",
+      "drug2": "Azathioprine",
+      "severity": "SEVERE",
+      "description": "Allopurinol dramatically increases azathioprine toxicity - bone marrow suppression",
+      "recommendation": "Reduce azathioprine dose by 75%. Requires close monitoring."
+    },
+    {
+      "drug1": "Ketoconazole",
+      "drug2": "Simvastatin",
+      "severity": "SEVERE",
+      "description": "Antifungal greatly increases statin levels, muscle breakdown risk",
+      "recommendation": "Contraindicated. Use alternative antifungal or temporarily stop statin."
+    },
+    {
+      "drug1": "Grapefruit",
+      "drug2": "Simvastatin",
+      "severity": "MODERATE",
+      "description": "Grapefruit juice increases statin levels, muscle damage risk",
+      "recommendation": "Avoid grapefruit juice. One glass can affect drug levels for 24+ hours."
+    },
+    {
+      "drug1": "Grapefruit",
+      "drug2": "Amlodipine",
+      "severity": "MINOR",
+      "description": "May increase amlodipine levels, excessive blood pressure lowering",
+      "recommendation": "Limit grapefruit intake. Monitor for dizziness or low blood pressure."
+    },
+    {
+      "drug1": "Rifampin",
+      "drug2": "Oral Contraceptives",
+      "severity": "MODERATE",
+      "description": "Reduces birth control effectiveness significantly",
+      "recommendation": "Use additional contraceptive method. Effect persists for weeks after rifampin."
+    },
+    {
+      "drug1": "Carbamazepine",
+      "drug2": "Oral Contraceptives",
+      "severity": "MODERATE",
+      "description": "Reduces birth control pill effectiveness",
+      "recommendation": "Use additional or alternative contraception during treatment."
+    },
+    {
+      "drug1": "Phenytoin",
+      "drug2": "Folic Acid",
+      "severity": "MINOR",
+      "description": "High-dose folic acid may reduce phenytoin levels",
+      "recommendation": "Monitor phenytoin levels if taking high-dose folic acid supplements."
+    },
+    {
+      "drug1": "Tetracycline",
+      "drug2": "Calcium",
+      "severity": "MODERATE",
+      "description": "Calcium significantly reduces tetracycline absorption",
+      "recommendation": "Take at least 2-3 hours apart. Avoid dairy products around dose."
+    },
+    {
+      "drug1": "Tetracycline",
+      "drug2": "Iron",
+      "severity": "MODERATE",
+      "description": "Iron dramatically reduces antibiotic absorption",
+      "recommendation": "Separate by at least 3 hours. Take on empty stomach when possible."
+    },
+    {
+      "drug1": "Quinapril",
+      "drug2": "Potassium",
+      "severity": "MODERATE",
+      "description": "ACE inhibitor increases potassium, supplements can cause dangerous levels",
+      "recommendation": "Avoid potassium supplements. Limit high-potassium foods if levels elevated."
+    },
+    {
+      "drug1": "Paroxetine",
+      "drug2": "Tamoxifen",
+      "severity": "MODERATE",
+      "description": "May reduce tamoxifen effectiveness in breast cancer treatment",
+      "recommendation": "Consider alternative antidepressant. Discuss with oncologist."
+    },
+    {
+      "drug1": "Fluconazole",
+      "drug2": "Warfarin",
+      "severity": "MODERATE",
+      "description": "Antifungal increases warfarin effect significantly",
+      "recommendation": "Monitor INR closely. May need temporary warfarin dose reduction."
+    },
+    {
+      "drug1": "Sulfamethoxazole",
+      "drug2": "Warfarin",
+      "severity": "MODERATE",
+      "description": "Antibiotic increases bleeding risk with warfarin",
+      "recommendation": "Increase INR monitoring frequency during and after antibiotic course."
     }
   ]
 }
