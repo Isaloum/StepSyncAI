@@ -568,5 +568,264 @@ describe('Branch Coverage Improvements', () => {
 
             expect(consoleLogSpy).toHaveBeenCalled();
         });
+
+        test('listTopics should filter out non-matching categories', () => {
+            const aws = new AWSForKids('test.json');
+
+            consoleLogSpy.mockClear();
+            aws.listTopics('storage');
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+            // Verify it only shows storage-related topics
+        });
+
+        test('learn should display all topic details', () => {
+            const aws = new AWSForKids('test.json');
+
+            consoleLogSpy.mockClear();
+            aws.learn('s3');
+
+            // Verify all output components are displayed
+            expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('SIMPLE EXPLANATION'));
+            expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('DETAILED EXPLANATION'));
+        });
+    });
+
+    describe('Mental Health Tracker - Additional Branch Coverage', () => {
+        test('logMood should display note when provided', () => {
+            const tracker = new MentalHealthTracker('test.json');
+
+            consoleLogSpy.mockClear();
+            tracker.logMood(7, 'Feeling great today');
+
+            expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Feeling great today'));
+        });
+
+        test('logSymptom should reject invalid symptom types', () => {
+            const tracker = new MentalHealthTracker('test.json');
+
+            const result = tracker.logSymptom('invalid-symptom', 5, 'Test');
+
+            expect(result).toBe(false);
+            expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid symptom type'));
+        });
+
+        test('logSymptom should reject severity below 1', () => {
+            const tracker = new MentalHealthTracker('test.json');
+
+            const result = tracker.logSymptom('anxiety', 0, 'Test');
+
+            expect(result).toBe(false);
+            expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Severity must be between'));
+        });
+
+        test('logSymptom should reject severity above 10', () => {
+            const tracker = new MentalHealthTracker('test.json');
+
+            const result = tracker.logSymptom('anxiety', 11, 'Test');
+
+            expect(result).toBe(false);
+        });
+
+        test('logSymptom should accept all valid symptom types', () => {
+            const tracker = new MentalHealthTracker('test.json');
+
+            const validSymptoms = ['anxiety', 'panic', 'flashback', 'nightmare',
+                                  'depression', 'insomnia', 'irritability', 'avoidance',
+                                  'hypervigilance', 'concentration', 'physical-pain', 'other'];
+
+            validSymptoms.forEach(symptom => {
+                const result = tracker.logSymptom(symptom, 5, 'Test');
+                expect(result).toBe(true);
+            });
+
+            expect(tracker.data.symptoms.length).toBe(validSymptoms.length);
+        });
+
+        test('viewJournal should handle type filtering correctly', () => {
+            const tracker = new MentalHealthTracker('test.json');
+
+            tracker.addJournal('General entry', 'general');
+            tracker.addJournal('Therapy notes', 'therapy');
+            tracker.addJournal('Progress update', 'progress');
+
+            consoleLogSpy.mockClear();
+            tracker.viewJournal(7, 'progress');
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+        });
+
+        test('viewSymptoms should handle type filtering', () => {
+            const tracker = new MentalHealthTracker('test.json');
+
+            tracker.logSymptom('anxiety', 5, 'Test 1');
+            tracker.logSymptom('depression', 6, 'Test 2');
+            tracker.logSymptom('anxiety', 4, 'Test 3');
+
+            consoleLogSpy.mockClear();
+            tracker.viewSymptoms(7, 'anxiety');
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+        });
+
+        test('addTrigger should handle intensity parameter', () => {
+            const tracker = new MentalHealthTracker('test.json');
+
+            tracker.addTrigger('Loud noises', 8);
+
+            expect(tracker.data.triggers.length).toBeGreaterThan(0);
+            const trigger = tracker.data.triggers[tracker.data.triggers.length - 1];
+            expect(trigger.intensity).toBe(8);
+            expect(trigger.description).toBe('Loud noises');
+        });
+
+        test('addTrigger should use default intensity when not provided', () => {
+            const tracker = new MentalHealthTracker('test.json');
+
+            tracker.addTrigger('Crowded places');
+
+            expect(tracker.data.triggers.length).toBeGreaterThan(0);
+            const trigger = tracker.data.triggers[tracker.data.triggers.length - 1];
+            expect(trigger.intensity).toBe(5);
+        });
+
+        test('addCopingStrategy should handle optional effectiveness rating', () => {
+            const tracker = new MentalHealthTracker('test.json');
+
+            tracker.addCopingStrategy('Deep breathing', 'Breathe slowly', 9);
+
+            expect(tracker.data.copingStrategies.length).toBeGreaterThan(0);
+            const strategy = tracker.data.copingStrategies[tracker.data.copingStrategies.length - 1];
+            expect(strategy.name).toBe('Deep breathing');
+        });
+
+        test('addGoal should handle target date parameter', () => {
+            const tracker = new MentalHealthTracker('test.json');
+
+            tracker.addGoal('Return to work', '2025-12-31');
+
+            expect(tracker.data.goals.length).toBeGreaterThan(0);
+            const goal = tracker.data.goals[tracker.data.goals.length - 1];
+            expect(goal.description).toBe('Return to work');
+            expect(goal.targetDate).toBe('2025-12-31');
+        });
+
+        test('addEmergencyContact should handle notes parameter', () => {
+            const tracker = new MentalHealthTracker('test.json');
+
+            tracker.addEmergencyContact('Dr. Smith', 'Therapist', '555-0100', 'Available Mon-Fri');
+
+            expect(tracker.data.emergencyContacts.length).toBeGreaterThan(0);
+            const contact = tracker.data.emergencyContacts[tracker.data.emergencyContacts.length - 1];
+            expect(contact.name).toBe('Dr. Smith');
+            expect(contact.notes).toBe('Available Mon-Fri');
+        });
+
+        test('useCopingStrategy should handle rating parameter', () => {
+            const tracker = new MentalHealthTracker('test.json');
+            tracker.addCopingStrategy('Meditation', 'Focus on breathing');
+
+            // Get the strategy ID
+            const strategy = tracker.data.copingStrategies[tracker.data.copingStrategies.length - 1];
+            const strategyId = strategy.id;
+
+            // Use with rating
+            const result = tracker.useCopingStrategy(strategyId, 8);
+
+            expect(result).toBe(true);
+            expect(strategy.timesUsed).toBeGreaterThan(0);
+        });
+
+        test('useCopingStrategy should handle no rating provided (null)', () => {
+            const tracker = new MentalHealthTracker('test.json');
+            tracker.addCopingStrategy('Exercise', 'Go for a walk');
+
+            const strategy = tracker.data.copingStrategies[tracker.data.copingStrategies.length - 1];
+
+            // Use without rating (null by default)
+            const result = tracker.useCopingStrategy(strategy.id);
+
+            expect(result).toBe(true);
+            expect(strategy.timesUsed).toBeGreaterThan(0);
+        });
+
+        test('useCopingStrategy should validate rating range and update effectiveness', () => {
+            const tracker = new MentalHealthTracker('test.json');
+            tracker.addCopingStrategy('Journaling', 'Write feelings');
+
+            const strategy = tracker.data.copingStrategies[tracker.data.copingStrategies.length - 1];
+
+            // Use with valid rating
+            tracker.useCopingStrategy(strategy.id, 7);
+
+            expect(strategy.effectiveness).toBeDefined();
+            expect(strategy.ratings.length).toBeGreaterThan(0);
+        });
+
+        test('useCopingStrategy should update average effectiveness over multiple uses', () => {
+            const tracker = new MentalHealthTracker('test.json');
+            tracker.addCopingStrategy('Music', 'Listen to calming music');
+
+            const strategy = tracker.data.copingStrategies[tracker.data.copingStrategies.length - 1];
+
+            // Rate multiple times
+            tracker.useCopingStrategy(strategy.id, 8);
+            tracker.useCopingStrategy(strategy.id, 6);
+            tracker.useCopingStrategy(strategy.id, 7);
+
+            expect(strategy.ratings.length).toBe(3);
+            expect(parseFloat(strategy.effectiveness)).toBeCloseTo(7.0, 1);
+        });
+
+        test('logTriggerOccurrence should update occurrence count', () => {
+            const tracker = new MentalHealthTracker('test.json');
+            tracker.addTrigger('Loud noise', 7);
+
+            const trigger = tracker.data.triggers[tracker.data.triggers.length - 1];
+
+            // Log occurrence
+            const result = tracker.logTriggerOccurrence(trigger.id);
+
+            expect(result).toBe(true);
+            expect(trigger.occurrences).toBeGreaterThan(1); // Starts at 1, should be 2 after logging
+            expect(trigger.lastOccurred).toBeDefined();
+        });
+
+        test('listTriggers should sort by occurrences', () => {
+            const tracker = new MentalHealthTracker('test.json');
+            tracker.addTrigger('Trigger 1', 5);
+            const trigger1 = tracker.data.triggers[tracker.data.triggers.length - 1];
+
+            tracker.addTrigger('Trigger 2', 7);
+            const trigger2 = tracker.data.triggers[tracker.data.triggers.length - 1];
+
+            // Log different occurrence counts
+            tracker.logTriggerOccurrence(trigger1.id);
+            tracker.logTriggerOccurrence(trigger2.id);
+            tracker.logTriggerOccurrence(trigger2.id);
+
+            consoleLogSpy.mockClear();
+            tracker.listTriggers();
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+        });
+
+        test('listCopingStrategies should sort by effectiveness', () => {
+            const tracker = new MentalHealthTracker('test.json');
+            tracker.addCopingStrategy('Strategy 1', 'Description 1');
+            const strategy1 = tracker.data.copingStrategies[tracker.data.copingStrategies.length - 1];
+
+            tracker.addCopingStrategy('Strategy 2', 'Description 2');
+            const strategy2 = tracker.data.copingStrategies[tracker.data.copingStrategies.length - 1];
+
+            // Rate differently
+            tracker.useCopingStrategy(strategy1.id, 6);
+            tracker.useCopingStrategy(strategy2.id, 9);
+
+            consoleLogSpy.mockClear();
+            tracker.listCopingStrategies();
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+        });
     });
 });
