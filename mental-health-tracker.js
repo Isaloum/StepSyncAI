@@ -1477,6 +1477,7 @@ class MentalHealthTracker {
         this.analyzeCopingEffectiveness();
         this.analyzeSymptomClusters();
         this.analyzeSleepMoodCorrelation();
+        this.analyzeExerciseMoodCorrelation();
 
         console.log('\n💡 Remember: These are patterns, not certainties. Use them as conversation');
         console.log('   starters with your therapist or healthcare provider.');
@@ -1806,6 +1807,129 @@ class MentalHealthTracker {
             const avgBestQuality = topMoodDays.reduce((sum, d) => sum + d.quality, 0) / topMoodDays.length;
             console.log(`   🎯 Your optimal sleep pattern:`);
             console.log(`      Duration: ${avgBestDuration.toFixed(1)}h, Quality: ${avgBestQuality.toFixed(1)}/10`);
+        }
+    }
+
+    analyzeExerciseMoodCorrelation() {
+        // Try to load exercise data from exercise tracker
+        const ExerciseTracker = require('./exercise-tracker');
+        let exerciseData = [];
+
+        try {
+            const exerciseTracker = new ExerciseTracker();
+            exerciseData = exerciseTracker.getActivityDataForCorrelation();
+        } catch (error) {
+            // Exercise tracker not available or no data
+            return;
+        }
+
+        if (exerciseData.length < 3 || this.data.moodEntries.length < 3) {
+            return;
+        }
+
+        console.log('\n💪 Exercise → Mood Correlation:');
+        console.log('─'.repeat(70));
+
+        // Match exercise activities with mood entries by date
+        const correlationData = [];
+        exerciseData.forEach(exercise => {
+            // Find mood entries on the same day as exercise
+            const moodsOnDay = this.data.moodEntries.filter(mood => {
+                const moodDate = new Date(mood.timestamp).toISOString().split('T')[0];
+                return moodDate === exercise.date;
+            });
+
+            if (moodsOnDay.length > 0) {
+                const avgMood = moodsOnDay.reduce((sum, m) => sum + m.rating, 0) / moodsOnDay.length;
+                correlationData.push({
+                    date: exercise.date,
+                    type: exercise.type,
+                    duration: exercise.duration,
+                    intensity: exercise.intensity,
+                    mood: avgMood
+                });
+            }
+        });
+
+        if (correlationData.length < 3) {
+            console.log('   Not enough matching exercise and mood data yet.');
+            console.log('   💡 Continue tracking both exercise and mood to see correlations!');
+            return;
+        }
+
+        // Group data by exercise days vs non-exercise days
+        const allDates = [...new Set([
+            ...this.data.moodEntries.map(m => new Date(m.timestamp).toISOString().split('T')[0])
+        ])];
+
+        const exerciseDates = new Set(correlationData.map(d => d.date));
+        const nonExerciseMoods = this.data.moodEntries.filter(m => {
+            const date = new Date(m.timestamp).toISOString().split('T')[0];
+            return !exerciseDates.has(date);
+        });
+
+        if (correlationData.length >= 2 && nonExerciseMoods.length >= 2) {
+            const avgMoodWithExercise = correlationData.reduce((sum, d) => sum + d.mood, 0) / correlationData.length;
+            const avgMoodWithoutExercise = nonExerciseMoods.reduce((sum, m) => sum + m.rating, 0) / nonExerciseMoods.length;
+            const moodDifference = avgMoodWithExercise - avgMoodWithoutExercise;
+
+            console.log(`   📊 Days with exercise: Average mood ${avgMoodWithExercise.toFixed(1)}/10`);
+            console.log(`      (${correlationData.length} days)`);
+            console.log(`   📊 Days without exercise: Average mood ${avgMoodWithoutExercise.toFixed(1)}/10`);
+            console.log(`      (${nonExerciseMoods.length} days)`);
+
+            if (moodDifference > 0.5) {
+                console.log(`   ✅ Exercise boosts your mood by ${moodDifference.toFixed(1)} points!`);
+            } else if (moodDifference < -0.5) {
+                console.log(`   💡 Interestingly, your mood is better on rest days by ${Math.abs(moodDifference).toFixed(1)} points.`);
+                console.log(`      You might be overtraining. Consider more recovery time.`);
+            } else {
+                console.log(`   📝 Exercise impact: ${moodDifference > 0 ? '+' : ''}${moodDifference.toFixed(1)} points (not significant yet)`);
+            }
+        }
+
+        // Analyze intensity vs mood
+        const highIntensity = correlationData.filter(d => d.intensity >= 7);
+        const moderateIntensity = correlationData.filter(d => d.intensity >= 4 && d.intensity < 7);
+        const lowIntensity = correlationData.filter(d => d.intensity < 4);
+
+        if (highIntensity.length >= 2 && moderateIntensity.length >= 2) {
+            const avgMoodHigh = highIntensity.reduce((sum, d) => sum + d.mood, 0) / highIntensity.length;
+            const avgMoodModerate = moderateIntensity.reduce((sum, d) => sum + d.mood, 0) / moderateIntensity.length;
+
+            console.log(`\n   🔥 High intensity (7-10): Avg mood ${avgMoodHigh.toFixed(1)}/10`);
+            console.log(`   😊 Moderate intensity (4-6): Avg mood ${avgMoodModerate.toFixed(1)}/10`);
+
+            if (avgMoodModerate > avgMoodHigh + 0.5) {
+                console.log(`   💡 Moderate intensity seems better for your mood!`);
+            } else if (avgMoodHigh > avgMoodModerate + 0.5) {
+                console.log(`   💪 High intensity exercise really boosts your mood!`);
+            }
+        }
+
+        // Find best exercise type for mood
+        const typeStats = {};
+        correlationData.forEach(d => {
+            if (!typeStats[d.type]) {
+                typeStats[d.type] = { moods: [], count: 0 };
+            }
+            typeStats[d.type].moods.push(d.mood);
+            typeStats[d.type].count++;
+        });
+
+        const typeAverages = Object.entries(typeStats)
+            .filter(([_, stats]) => stats.count >= 2)
+            .map(([type, stats]) => ({
+                type,
+                avgMood: stats.moods.reduce((sum, m) => sum + m, 0) / stats.count,
+                count: stats.count
+            }))
+            .sort((a, b) => b.avgMood - a.avgMood);
+
+        if (typeAverages.length > 0) {
+            const best = typeAverages[0];
+            console.log(`\n   ⭐ Best activity for your mood: ${best.type}`);
+            console.log(`      Average mood: ${best.avgMood.toFixed(1)}/10 (${best.count} sessions)`);
         }
     }
 

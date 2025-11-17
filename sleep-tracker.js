@@ -274,6 +274,7 @@ class SleepTracker {
         this.analyzeDurationPatterns();
         this.analyzeQualityPatterns();
         this.analyzeWeekdayPatterns();
+        this.analyzeExerciseSleepCorrelation();
 
         console.log('\n💡 Remember: Quality sleep is essential for mental and physical health.');
         console.log('   If you have persistent sleep issues, consult a healthcare provider.');
@@ -386,6 +387,109 @@ class SleepTracker {
             console.log(`      Avg quality: ${bestDay.avgQuality.toFixed(1)}/10, Duration: ${bestDay.avgDuration.toFixed(1)}h`);
             console.log(`   📉 Most restless: ${worstDay.day}s`);
             console.log(`      Avg quality: ${worstDay.avgQuality.toFixed(1)}/10, Duration: ${worstDay.avgDuration.toFixed(1)}h`);
+        }
+    }
+
+    analyzeExerciseSleepCorrelation() {
+        // Try to load exercise data from exercise tracker
+        const ExerciseTracker = require('./exercise-tracker');
+        let exerciseData = [];
+
+        try {
+            const exerciseTracker = new ExerciseTracker();
+            exerciseData = exerciseTracker.getActivityDataForCorrelation();
+        } catch (error) {
+            // Exercise tracker not available or no data
+            return;
+        }
+
+        if (exerciseData.length < 3 || this.data.sleepEntries.length < 3) {
+            return;
+        }
+
+        console.log('\n💪 Exercise → Sleep Quality:');
+        console.log('─'.repeat(60));
+
+        // Match exercise with next night's sleep
+        const correlationData = [];
+        exerciseData.forEach(exercise => {
+            const exerciseDate = new Date(exercise.date);
+            // Find sleep on the same night (exercise date → next morning)
+            const sleepThatNight = this.data.sleepEntries.find(sleep => {
+                return sleep.date === exercise.date;
+            });
+
+            if (sleepThatNight) {
+                correlationData.push({
+                    exerciseType: exercise.type,
+                    exerciseDuration: exercise.duration,
+                    exerciseIntensity: exercise.intensity,
+                    sleepDuration: sleepThatNight.duration,
+                    sleepQuality: sleepThatNight.quality,
+                    date: exercise.date
+                });
+            }
+        });
+
+        if (correlationData.length < 3) {
+            console.log('   Not enough matching exercise and sleep data yet.');
+            console.log('   💡 Continue tracking both to see how exercise affects your sleep!');
+            return;
+        }
+
+        // Compare sleep on exercise days vs non-exercise days
+        const exerciseDates = new Set(correlationData.map(d => d.date));
+        const sleepWithoutExercise = this.data.sleepEntries.filter(sleep =>
+            !exerciseDates.has(sleep.date)
+        );
+
+        if (correlationData.length >= 2 && sleepWithoutExercise.length >= 2) {
+            const avgQualityWithExercise = correlationData.reduce((sum, d) => sum + d.sleepQuality, 0) / correlationData.length;
+            const avgDurationWithExercise = correlationData.reduce((sum, d) => sum + d.sleepDuration, 0) / correlationData.length;
+
+            const avgQualityWithout = sleepWithoutExercise.reduce((sum, s) => sum + s.quality, 0) / sleepWithoutExercise.length;
+            const avgDurationWithout = sleepWithoutExercise.reduce((sum, s) => sum + s.duration, 0) / sleepWithoutExercise.length;
+
+            console.log(`   📊 After exercise days: Quality ${avgQualityWithExercise.toFixed(1)}/10, Duration ${avgDurationWithExercise.toFixed(1)}h`);
+            console.log(`      (${correlationData.length} nights)`);
+            console.log(`   📊 No exercise days: Quality ${avgQualityWithout.toFixed(1)}/10, Duration ${avgDurationWithout.toFixed(1)}h`);
+            console.log(`      (${sleepWithoutExercise.length} nights)`);
+
+            const qualityDiff = avgQualityWithExercise - avgQualityWithout;
+            const durationDiff = avgDurationWithExercise - avgDurationWithout;
+
+            if (qualityDiff > 0.5) {
+                console.log(`   ✅ Exercise improves sleep quality by ${qualityDiff.toFixed(1)} points!`);
+            } else if (qualityDiff < -0.5) {
+                console.log(`   ⚠️  Sleep quality is better without exercise by ${Math.abs(qualityDiff).toFixed(1)} points.`);
+                console.log(`      You might be exercising too late or too intensely.`);
+            }
+
+            if (Math.abs(durationDiff) > 0.3) {
+                if (durationDiff > 0) {
+                    console.log(`   💤 You sleep ${durationDiff.toFixed(1)}h longer after exercise!`);
+                } else {
+                    console.log(`   ⏰ You sleep ${Math.abs(durationDiff).toFixed(1)}h less after exercise.`);
+                }
+            }
+        }
+
+        // Analyze intensity impact on sleep
+        const highIntensity = correlationData.filter(d => d.exerciseIntensity >= 7);
+        const moderateIntensity = correlationData.filter(d => d.exerciseIntensity >= 4 && d.exerciseIntensity < 7);
+
+        if (highIntensity.length >= 2 && moderateIntensity.length >= 2) {
+            const avgQualityHigh = highIntensity.reduce((sum, d) => sum + d.sleepQuality, 0) / highIntensity.length;
+            const avgQualityModerate = moderateIntensity.reduce((sum, d) => sum + d.sleepQuality, 0) / moderateIntensity.length;
+
+            console.log(`\n   🔥 After high intensity exercise: Sleep quality ${avgQualityHigh.toFixed(1)}/10`);
+            console.log(`   😊 After moderate intensity: Sleep quality ${avgQualityModerate.toFixed(1)}/10`);
+
+            if (avgQualityModerate > avgQualityHigh + 0.5) {
+                console.log(`   💡 Moderate intensity exercise may be better for your sleep!`);
+            } else if (avgQualityHigh > avgQualityModerate + 0.5) {
+                console.log(`   💪 High intensity exercise improves your sleep quality!`);
+            }
         }
     }
 

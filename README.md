@@ -1,6 +1,6 @@
 # StepSyncAI - Health & Wellness Apps
 
-[![Tests](https://img.shields.io/badge/tests-772%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Tests](https://img.shields.io/badge/tests-816%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Coverage](https://img.shields.io/badge/coverage-87.21%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Branch Coverage](https://img.shields.io/badge/branch%20coverage-71.64%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
@@ -12,8 +12,9 @@ A comprehensive collection of personal health management and learning tools desi
 
 1. **🧠 Mental Health Tracker** - Comprehensive PTSD/trauma recovery support tool
 2. **💊 Medication Tracker** - Simple pill reminder and adherence tracking system
-3. **😴 Sleep Tracker** - 🆕 Monitor sleep quality and discover sleep-mood correlations
-4. **☁️ AWS For Kids** - Interactive AWS Cloud Practitioner exam preparation
+3. **😴 Sleep Tracker** - Monitor sleep quality and discover sleep-mood correlations
+4. **💪 Exercise Tracker** - 🆕 Track physical activity with mood & sleep correlations
+5. **☁️ AWS For Kids** - Interactive AWS Cloud Practitioner exam preparation
 
 ---
 
@@ -36,6 +37,7 @@ A comprehensive support tool designed specifically for managing mental health ch
   - **Coping effectiveness**: Which strategies work best for you
   - **Symptom clustering**: Which symptoms tend to occur together
   - **Sleep-mood correlation**: 🆕 How sleep quality impacts your mental health
+  - **Exercise-mood correlation**: 🆕 How physical activity affects your mental health
 - **Emergency Contacts**: Quick access to therapist, crisis hotlines, and support network
 - **Recovery Goals**: Set and track recovery milestones
 - **Daily Check-ins**: Quick summary of your progress
@@ -639,6 +641,137 @@ git commit -m "Backup sleep data"
 
 ---
 
+## 💪 Exercise Tracker
+
+Track your physical activity and discover how exercise impacts your mental health and sleep quality. Physical activity is one of the most effective treatments for anxiety, depression, and PTSD.
+
+### Features
+
+- **Activity Logging**: Track type, duration (minutes), intensity (1-10), and notes
+- **Exercise Statistics**: Total time, averages, streaks, goal progress
+- **Weekly Goals**: Set targets (default: 150 min/week WHO recommendation)
+- **Activity Insights**: Discover patterns in your exercise habits
+  - **Intensity distribution**: Light, moderate, vigorous breakdown
+  - **Timing patterns**: Most active days of the week
+  - **Activity preferences**: Which exercises you do most
+- **Streak Tracking**: Monitor consecutive active days to build habits
+- **Mood Correlation**: 🔗 Integrates with Mental Health Tracker
+  - Compare mood on exercise vs. rest days
+  - Identify best activities for your mood
+  - Discover optimal exercise intensity for you
+- **Sleep Correlation**: 🔗 Integrates with Sleep Tracker
+  - How exercise affects sleep quality
+  - Best exercise timing for better sleep
+  - Impact of exercise intensity on sleep
+
+### Quick Start
+
+```bash
+# Log an activity
+node exercise-tracker.js log Running 30 7 "Morning run felt great"
+# Format: type duration-minutes intensity(1-10) [notes]
+
+# View statistics and goal progress
+node exercise-tracker.js stats
+
+# View activity history (default: last 7 days)
+node exercise-tracker.js history
+node exercise-tracker.js history 14  # Last 14 days
+
+# Discover exercise insights and patterns
+node exercise-tracker.js insights
+
+# Set weekly goals
+node exercise-tracker.js goals 180 5  # 180 min/week, 5 days/week
+
+# See common activity types
+node exercise-tracker.js types
+
+# Get help
+node exercise-tracker.js help
+```
+
+### Example Output
+
+```
+✓ Activity logged successfully!
+  Type: Running
+  Duration: 30 minutes
+  Intensity: 7/10
+
+✓ Great! You met the 30-minute activity recommendation.
+🔥 High intensity! Great for cardiovascular health.
+💚 Exercise boosts mood and reduces anxiety/depression symptoms!
+```
+
+### Integrated Insights
+
+When you track exercise along with mood and sleep, you'll get powerful correlations in your mental health and sleep insights:
+
+**Exercise-Mood Correlation** (in mental health insights):
+```
+💪 Exercise → Mood Correlation:
+   📊 Days with exercise: Average mood 8.1/10 (12 days)
+   📊 Days without exercise: Average mood 6.3/10 (8 days)
+   ✅ Exercise boosts your mood by 1.8 points!
+   ⭐ Best activity for your mood: Yoga
+      Average mood: 8.5/10 (5 sessions)
+```
+
+**Exercise-Sleep Correlation** (in sleep insights):
+```
+💪 Exercise → Sleep Quality:
+   📊 After exercise days: Quality 8.2/10, Duration 7.8h (10 nights)
+   📊 No exercise days: Quality 6.9/10, Duration 7.2h (7 nights)
+   ✅ Exercise improves sleep quality by 1.3 points!
+   💤 You sleep 0.6h longer after exercise!
+```
+
+### Why Exercise Tracking Matters
+
+- **Mental Health**: Regular exercise reduces anxiety, depression, and PTSD symptoms as effectively as medication for many people
+- **Sleep Quality**: Physical activity improves sleep duration and quality
+- **Recovery**: Exercise is essential for trauma recovery and building resilience
+- **Pattern Recognition**: Identify which activities work best for YOUR mental health
+- **Habit Building**: Streak tracking helps build consistent exercise habits
+- **Healthcare Conversations**: Share data-driven insights with doctors and therapists
+
+### Tips for Success
+
+- 💡 **Start Small**: Even 10 minutes counts! Build gradually
+- 🎯 **Set Realistic Goals**: WHO recommends 150 min/week moderate activity
+- 🏃 **Mix It Up**: Combine cardio, strength, and flexibility
+- ⏰ **Find Your Time**: Morning, lunch, or evening - whatever works for you
+- 📊 **Track Honestly**: Log actual intensity, not what you wish it was
+- 🔥 **Build Streaks**: Consistency matters more than intensity
+- 💊 **Medicine Alternative**: Exercise can be as effective as medication for mild-moderate depression
+
+<details>
+<summary>💾 <b>Data Management</b></summary>
+
+**Data Location:**
+- Default: `exercise-data.json` in project directory
+- JSON format for easy backup/export
+- Fully portable between devices
+
+**Backup Your Data:**
+```bash
+# Simple backup
+cp exercise-data.json exercise-data-backup-$(date +%Y%m%d).json
+
+# Or use git
+git add exercise-data.json
+git commit -m "Backup exercise data"
+```
+
+**Integration with Other Trackers:**
+- Exercise data is automatically read by mental health and sleep insights
+- No manual synchronization needed
+- All trackers work independently or together seamlessly
+</details>
+
+---
+
 ## ☁️ AWS For Kids
 
 An interactive learning app designed to help you pass the AWS Cloud Practitioner certification exam, explained in simple terms.
@@ -1068,15 +1201,16 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## 📈 Project Status
 
-**Version**: 3.3.0
+**Version**: 3.4.0
 **Status**: ✅ Active Development
 **Test Coverage**: 87.21%+ ⭐
 **Branch Coverage**: 71.64% ⭐ **MILESTONE ACHIEVED!** (3 modules at 70%+: Mental Health 70.75%, Medication 72.94%, Reminder 94.44% 🎯)
-**Tests**: 772 passing
+**Tests**: 816 passing
 **Latest Features**:
-- 😴 **Sleep Tracking** 🆕 (Quality monitoring + Sleep-Mood correlation)
+- 💪 **Exercise Tracking** 🆕 (Activity logging + Exercise-Mood & Exercise-Sleep correlations)
+- 😴 **Sleep Tracking** (Quality monitoring + Sleep-Mood correlation)
 - ⚠️ Drug Interaction Warnings (65+ interactions)
-- 🔍 **Insights & Correlations** (pattern detection in mental health data)
+- 🔍 **Insights & Correlations** (comprehensive pattern detection across all health data)
 **CI/CD**: ✅ Automated with quality gates
 
 ---
