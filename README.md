@@ -1,6 +1,6 @@
 # StepSyncAI - Health & Wellness Apps
 
-[![Tests](https://img.shields.io/badge/tests-712%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Tests](https://img.shields.io/badge/tests-823%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Coverage](https://img.shields.io/badge/coverage-87.21%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Branch Coverage](https://img.shields.io/badge/branch%20coverage-71.64%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
@@ -12,7 +12,10 @@ A comprehensive collection of personal health management and learning tools desi
 
 1. **🧠 Mental Health Tracker** - Comprehensive PTSD/trauma recovery support tool
 2. **💊 Medication Tracker** - Simple pill reminder and adherence tracking system
-3. **☁️ AWS For Kids** - Interactive AWS Cloud Practitioner exam preparation
+3. **😴 Sleep Tracker** - Monitor sleep quality and duration patterns
+4. **🏃 Exercise Tracker** - Track physical activity and fitness goals
+5. **📊 Daily Dashboard** - Unified wellness overview aggregating all health data
+6. **☁️ AWS For Kids** - Interactive AWS Cloud Practitioner exam preparation
 
 ---
 
@@ -519,6 +522,246 @@ node medication-tracker.js restore <backup-filename> [directory]
 
 ---
 
+## 😴 Sleep Tracker
+
+Monitor your sleep patterns, quality, and discover correlations between sleep and other health metrics.
+
+### Features
+
+- **Sleep Logging**: Record bedtime, wake time, and sleep quality (1-10 scale)
+- **Duration Calculation**: Automatically calculates sleep duration including overnight sleep
+- **Quality Tracking**: Monitor sleep quality trends over time
+- **Sleep Statistics**: Average duration, quality, best/worst nights, sleep debt
+- **Consistency Analysis**: Identifies sleep schedule consistency patterns
+- **Weekly Insights**: Patterns by day of week, duration analysis
+- **Smart Feedback**: Get personalized suggestions for optimal sleep (7-9 hours)
+- **Correlation Ready**: Export data for mental health correlation analysis
+
+### Quick Start
+
+```bash
+# Log last night's sleep
+node sleep-tracker.js log 23:00 07:00 8 "Slept well"
+
+# View sleep history (last 7 days)
+node sleep-tracker.js history
+
+# View detailed statistics
+node sleep-tracker.js stats
+
+# Get insights and patterns
+node sleep-tracker.js insights
+
+# View help
+node sleep-tracker.js help
+```
+
+### Sleep Quality Guide
+
+- **Excellent (8-10)**: Woke up refreshed, no interruptions
+- **Good (6-7)**: Generally restful, minor disturbances
+- **Moderate (4-5)**: Some restlessness, mediocre rest
+- **Poor (1-3)**: Very restless, feeling unrested
+
+### Understanding Sleep Metrics
+
+- **Optimal Duration**: 7-9 hours for most adults
+- **Sleep Debt**: Accumulated difference from 8-hour baseline
+- **Consistency**: Variation in bedtime/wake time patterns
+- **Quality vs Duration**: Both matter! Track both for complete picture
+
+---
+
+## 🏃 Exercise Tracker
+
+Track your physical activity, workout intensity, and progress toward daily fitness goals.
+
+### Features
+
+- **Activity Logging**: Record exercise type, duration, and intensity
+- **Intensity Levels**: Low, moderate, or high intensity tracking
+- **Daily Goals**: 30-minute daily activity goal with progress tracking
+- **Exercise History**: View recent workouts with duration and notes
+- **Statistics**: Total workouts, minutes, averages, and activity breakdown
+- **Today's Progress**: Quick view of today's exercise minutes
+- **Flexible Activities**: Track any type of physical activity
+
+### Quick Start
+
+```bash
+# Log an exercise session
+node exercise-tracker.js log "Running" 30 high "Morning jog"
+
+# Shorter version (moderate intensity by default)
+node exercise-tracker.js log "Walking" 20
+
+# View exercise history (last 7 days)
+node exercise-tracker.js history
+
+# View detailed statistics
+node exercise-tracker.js stats
+
+# Check today's progress
+node exercise-tracker.js today
+
+# View help
+node exercise-tracker.js help
+```
+
+### Intensity Guidelines
+
+- **🚶 Low**: Walking, stretching, gentle yoga, light household chores
+- **🏃 Moderate**: Brisk walking, cycling, swimming, moderate-intensity sports
+- **💨 High**: Running, HIIT, vigorous sports, intense cardio
+
+### Exercise Types Examples
+
+Track any activity:
+- Cardio: Running, cycling, swimming, rowing
+- Strength: Weight training, resistance exercises
+- Flexibility: Yoga, pilates, stretching
+- Sports: Basketball, tennis, soccer
+- Daily Activity: Walking, gardening, dancing
+
+---
+
+## 📊 Daily Dashboard
+
+Get a unified wellness overview by aggregating data from all your health trackers into one comprehensive dashboard with actionable insights.
+
+### Why Use the Dashboard?
+
+The Daily Dashboard provides:
+- **Holistic View**: See all your wellness metrics in one place
+- **Wellness Score**: 0-100 score showing overall health status
+- **Smart Recommendations**: Personalized suggestions based on your data
+- **Progress Tracking**: Daily and weekly summaries
+- **Missing Data Handling**: Works gracefully even with partial data
+
+### Quick Start
+
+```bash
+# View today's dashboard
+node daily-dashboard.js daily
+
+# View weekly summary
+node daily-dashboard.js weekly
+
+# View help
+node daily-dashboard.js help
+```
+
+### Wellness Score Breakdown (0-100 points)
+
+The dashboard calculates your wellness score from four components:
+
+#### 🧠 Mood Score (0-25 points)
+- Based on your mental health mood ratings
+- **Calculation**: (Average Mood / 10) × 25
+- **Example**: Mood 8/10 = 20 points
+
+#### 😴 Sleep Score (0-25 points)
+- **Quality Component** (15 points): (Average Quality / 10) × 15
+- **Duration Component** (10 points):
+  - 7-9 hours: 10 points (optimal)
+  - 6-7 or 9-10 hours: 7 points (good)
+  - 5-6 or 10-11 hours: 4 points (acceptable)
+  - Other: 0 points
+- **Example**: 8h sleep at 9/10 quality = 13.5 + 10 = 23.5 points
+
+#### 🏃 Exercise Score (0-25 points)
+- Based on daily exercise toward 30-minute goal
+- **Calculation**: (Average Daily Minutes / 30) × 25
+- **Example**: 25 min/day average = 20.8 points
+- **30+ min/day**: Full 25 points
+
+#### 💊 Medication Score (0-25 points)
+- Based on medication adherence rate
+- **Calculation**: (Adherence % / 100) × 25
+- **Example**: 90% adherence = 22.5 points
+
+### Example Dashboard Output
+
+```
+╔════════════════════════════════════════════════════════════╗
+║           📊 DAILY WELLNESS DASHBOARD                      ║
+╚════════════════════════════════════════════════════════════╝
+
+📅 Monday, November 17, 2025
+
+┌─────────────────────────────────────────────────────────┐
+│  😊  OVERALL WELLNESS: 78.5/100 (78.5%) - Good
+└─────────────────────────────────────────────────────────┘
+
+📊 Score Breakdown:
+
+  🧠 Mood:        [████████████████░░░░] 20/25
+     Current: 8/10
+
+  😴 Sleep:       [███████████████████░] 23.5/25
+     Last: 8.0h, Quality: 9/10
+
+  🏃 Exercise:    [████████████████░░░░] 20/25
+     Today: 25 min (Goal: 30 min)
+
+  💊 Medication:  [███████████████░░░░░] 15/25
+     Adherence: 60%
+
+💡 Today's Recommendations:
+
+  ✅ 🌟 Your mood is looking great! Keep up the good work.
+  🟡 🏃 You're averaging 25 min/day. Try to reach 30 minutes.
+  🔴 💊 Medication adherence is at 60%. Consistency is key.
+```
+
+### Smart Recommendations
+
+The dashboard provides context-aware recommendations:
+
+#### High Priority 🔴
+- Mood below 6/10: Suggests journaling, therapy, coping strategies
+- Sleep < 6 hours or quality < 4: Sleep hygiene tips
+- Medication adherence < 80%: Reminder to stay consistent
+
+#### Medium Priority 🟡
+- Exercise < 18 min/day average: Encouragement to increase activity
+- Sleep quality 4-6: Suggestions for better sleep environment
+
+#### Positive Feedback ✅
+- Mood ≥ 8/10: Recognition of good mental health
+- Exercise ≥ 24 min/day: Praise for staying active
+- Medication adherence ≥ 95%: Acknowledgment of consistency
+- Overall score ≥ 85%: Celebration of excellent wellness
+
+### Use Cases
+
+**Daily Check-in**
+```bash
+# Start your day with a wellness overview
+node daily-dashboard.js daily
+```
+
+**Weekly Review**
+```bash
+# Sunday evening: review the week's wellness
+node daily-dashboard.js weekly
+```
+
+**Track Progress**
+- Compare weekly scores to identify trends
+- Use recommendations to focus improvement efforts
+- Celebrate wins when scores improve
+
+### Tips for Best Results
+
+1. **Log Consistently**: The more data you track, the better insights
+2. **Use All Trackers**: Dashboard works best with complete data
+3. **Check Daily**: Morning wellness check sets a positive tone
+4. **Act on Recommendations**: Use insights to guide your day
+5. **Review Weekly**: Weekly summaries show meaningful trends
+
+---
+
 ## ☁️ AWS For Kids
 
 An interactive learning app designed to help you pass the AWS Cloud Practitioner certification exam, explained in simple terms.
@@ -948,14 +1191,17 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## 📈 Project Status
 
-**Version**: 3.2.0
+**Version**: 3.5.0
 **Status**: ✅ Active Development
 **Test Coverage**: 87.21%+ ⭐
 **Branch Coverage**: 71.64% ⭐ **MILESTONE ACHIEVED!** (3 modules at 70%+: Mental Health 70.75%, Medication 72.94%, Reminder 94.44% 🎯)
-**Tests**: 712 passing
+**Tests**: 823 passing 🎉
 **Latest Features**:
+- 📊 **Daily Dashboard** - Unified wellness overview with scoring system
+- 😴 **Sleep Tracker** - Monitor sleep quality and patterns
+- 🏃 **Exercise Tracker** - Track physical activity and fitness goals
 - ⚠️ Drug Interaction Warnings (65+ interactions)
-- 🔍 **Insights & Correlations** (pattern detection in mental health data)
+- 🔍 Insights & Correlations (pattern detection in mental health data)
 **CI/CD**: ✅ Automated with quality gates
 
 ---
