@@ -1,6 +1,6 @@
 # StepSyncAI - Health & Wellness Apps
 
-[![Tests](https://img.shields.io/badge/tests-816%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Tests](https://img.shields.io/badge/tests-833%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Coverage](https://img.shields.io/badge/coverage-87.21%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Branch Coverage](https://img.shields.io/badge/branch%20coverage-71.64%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
@@ -13,8 +13,9 @@ A comprehensive collection of personal health management and learning tools desi
 1. **🧠 Mental Health Tracker** - Comprehensive PTSD/trauma recovery support tool
 2. **💊 Medication Tracker** - Simple pill reminder and adherence tracking system
 3. **😴 Sleep Tracker** - Monitor sleep quality and discover sleep-mood correlations
-4. **💪 Exercise Tracker** - 🆕 Track physical activity with mood & sleep correlations
-5. **☁️ AWS For Kids** - Interactive AWS Cloud Practitioner exam preparation
+4. **💪 Exercise Tracker** - Track physical activity with mood & sleep correlations
+5. **📊 Daily Dashboard** - 🆕 Unified wellness view across all health trackers
+6. **☁️ AWS For Kids** - Interactive AWS Cloud Practitioner exam preparation
 
 ---
 
@@ -772,6 +773,199 @@ git commit -m "Backup exercise data"
 
 ---
 
+## 📊 Daily Dashboard
+
+Get a comprehensive view of your wellness across all health trackers in one beautiful dashboard. See your overall wellness score, today's activities, and personalized recommendations - all in a single command!
+
+### Why Use the Dashboard?
+
+- **Holistic View**: See mental health, sleep, exercise, and medications together
+- **Wellness Score**: Get a quantified 0-100 score based on all your health metrics
+- **Quick Check-In**: Understand your overall health status at a glance
+- **Personalized Recommendations**: Get actionable suggestions based on YOUR data
+- **Weekly Summaries**: Track progress and patterns over time
+
+### Features
+
+#### Daily Dashboard View
+```bash
+node daily-dashboard.js
+# or just: node daily-dashboard.js today
+```
+
+**Shows:**
+- **Wellness Score (0-100)**: Calculated from mood, sleep, exercise, medication adherence
+- **Mental Health Summary**: Today's mood, journal entries, symptoms
+- **Sleep Summary**: Last night's quality, duration, optimal range check
+- **Exercise Summary**: Activities, duration, intensity, goal progress
+- **Medication Summary**: Adherence rate, missed medications
+- **Smart Recommendations**: Personalized tips based on your data
+
+#### Weekly Summary View
+```bash
+node daily-dashboard.js weekly
+```
+
+**Shows:**
+- Average mood for the week
+- Sleep quality & duration averages
+- Total exercise minutes & WHO goal progress (150 min/week)
+- Medication adherence rate
+- Days active vs. total days
+
+### Example Output
+
+```
+╔════════════════════════════════════════════════════════════════════╗
+║                    🌟 DAILY WELLNESS DASHBOARD                     ║
+║                     Monday, November 18, 2025                      ║
+╚════════════════════════════════════════════════════════════════════╝
+
+┌─ WELLNESS SCORE ───────────────────────────────────────────────────┐
+│
+│  🟢 85/100 - Excellent
+│
+│  [████████████████████████████████████░░░░░]
+│
+│  Breakdown:
+│    😊 Mood: 80%
+│    😴 Sleep: 88%
+│    💪 Exercise: 83%
+│    💊 Medications: 100%
+└────────────────────────────────────────────────────────────────────┘
+
+┌─ 🧠 MENTAL HEALTH ────────────────────────────────────────────────┐
+│
+│  Mood: 😊 8.0/10
+│  Journal: ✓ 1 entry
+│  Symptoms: 0 logged
+└────────────────────────────────────────────────────────────────────┘
+
+┌─ 😴 SLEEP ────────────────────────────────────────────────────────┐
+│
+│  Quality: 😊 8/10
+│  Duration: 7.5 hours
+│  ✓ Optimal sleep duration (7-9h)
+└────────────────────────────────────────────────────────────────────┘
+
+┌─ 💪 EXERCISE ─────────────────────────────────────────────────────┐
+│
+│  Activity: ✓ 1 session
+│  Duration: 30 minutes
+│  Intensity: 😊 Moderate (7.0/10)
+│  ✓ Met daily activity goal (30+ min)
+└────────────────────────────────────────────────────────────────────┘
+
+┌─ 💊 MEDICATIONS ──────────────────────────────────────────────────┐
+│
+│  Adherence: 2/2 taken (100%)
+│  ✓ All medications taken!
+└────────────────────────────────────────────────────────────────────┘
+
+┌─ 💡 RECOMMENDATIONS ──────────────────────────────────────────────┐
+│
+│  🎉 Great job meeting your activity goal!
+│  ⭐ Excellent wellness today! Keep it up!
+└────────────────────────────────────────────────────────────────────┘
+
+──────────────────────────────────────────────────────────────────────
+```
+
+### How the Wellness Score Works
+
+The dashboard calculates a 0-100 wellness score based on four components:
+
+**🧠 Mood (25 points max)**
+- Based on your mood rating (1-10 scale)
+- Higher mood → Higher score
+- Example: Mood of 8/10 = 20 points
+
+**😴 Sleep (25 points max)**
+- Quality (15 points): Based on sleep quality rating
+- Duration (10 points): Optimal range is 7-9 hours
+- Example: 8/10 quality + 7.5h duration = 22 points
+
+**💪 Exercise (25 points max)**
+- Based on minutes of activity vs. 30-minute daily goal
+- 30+ minutes = full 25 points
+- Example: 30 min exercise = 25 points
+
+**💊 Medications (25 points max)**
+- Based on adherence rate (taken / total)
+- 100% adherence = full 25 points
+- Example: 2/2 taken = 25 points
+
+**Total Score:**
+- Normalized to 100 if not all categories tracked
+- 85-100: 🟢 Excellent
+- 70-84: 🟢 Good
+- 50-69: 🟡 Fair
+- 0-49: 🔴 Needs Attention
+
+### Smart Recommendations
+
+The dashboard provides personalized recommendations based on your data:
+
+**Mental Health:**
+- Low mood (<5) → Suggests reaching out to support network
+- No journal today → Reminds you to journal
+
+**Sleep:**
+- Poor quality (<5) → Suggests relaxation techniques
+- Sleep deprived (<6h) → Encourages prioritizing 7-9 hours
+
+**Exercise:**
+- No activity → Suggests even 10 minutes helps
+- Goal met → Positive reinforcement
+
+**Medications:**
+- Missed doses → Reminder to take them
+- 100% adherence → Praise and encouragement
+
+### Integration
+
+The dashboard automatically pulls data from:
+- `mental-health-data.json` (mood, journal, symptoms)
+- `sleep-data.json` (sleep quality & duration)
+- `exercise-data.json` (activities, duration, intensity)
+- `medications.json` (active meds, adherence history)
+
+**No setup required** - just use the trackers and check your dashboard!
+
+### Use Cases
+
+**Morning Routine:**
+```bash
+# Start your day by reviewing yesterday and setting intentions
+node daily-dashboard.js
+```
+
+**Weekly Check-In:**
+```bash
+# Every Sunday, review your week's progress
+node daily-dashboard.js weekly
+```
+
+**Healthcare Appointments:**
+- Export your weekly summaries
+- Share quantified wellness data with doctors/therapists
+- Track treatment effectiveness over time
+
+**Recovery Tracking:**
+- See your wellness score trend over weeks/months
+- Identify what combinations work best for YOU
+- Make data-driven decisions about your health
+
+### Tips for Best Results
+
+- 📅 **Check Daily**: Make it part of your morning routine
+- 📊 **Track Consistently**: The more data, the better the insights
+- 🎯 **Set Goals**: Use recommendations to improve your score
+- 📈 **Monitor Trends**: Use weekly view to see progress
+- 💬 **Share with Care Team**: Export data for healthcare providers
+
+---
+
 ## ☁️ AWS For Kids
 
 An interactive learning app designed to help you pass the AWS Cloud Practitioner certification exam, explained in simple terms.
@@ -1201,13 +1395,14 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## 📈 Project Status
 
-**Version**: 3.4.0
+**Version**: 3.5.0
 **Status**: ✅ Active Development
 **Test Coverage**: 87.21%+ ⭐
 **Branch Coverage**: 71.64% ⭐ **MILESTONE ACHIEVED!** (3 modules at 70%+: Mental Health 70.75%, Medication 72.94%, Reminder 94.44% 🎯)
-**Tests**: 816 passing
+**Tests**: 833 passing
 **Latest Features**:
-- 💪 **Exercise Tracking** 🆕 (Activity logging + Exercise-Mood & Exercise-Sleep correlations)
+- 📊 **Daily Dashboard** 🆕 (Unified wellness view with 0-100 scoring across all trackers)
+- 💪 **Exercise Tracking** (Activity logging + Exercise-Mood & Exercise-Sleep correlations)
 - 😴 **Sleep Tracking** (Quality monitoring + Sleep-Mood correlation)
 - ⚠️ Drug Interaction Warnings (65+ interactions)
 - 🔍 **Insights & Correlations** (comprehensive pattern detection across all health data)
