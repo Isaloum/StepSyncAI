@@ -310,4 +310,312 @@ describe('Daily Dashboard', () => {
             consoleSpy.mockRestore();
         });
     });
+
+    describe('Correlation Analysis', () => {
+        describe('calculateCorrelation', () => {
+            test('calculates positive correlation correctly', () => {
+                const dataX = [1, 2, 3, 4, 5];
+                const dataY = [2, 4, 6, 8, 10];
+                const correlation = dashboard.calculateCorrelation(dataX, dataY);
+                expect(correlation).toBeCloseTo(1.0, 2); // Perfect positive correlation
+            });
+
+            test('calculates negative correlation correctly', () => {
+                const dataX = [1, 2, 3, 4, 5];
+                const dataY = [10, 8, 6, 4, 2];
+                const correlation = dashboard.calculateCorrelation(dataX, dataY);
+                expect(correlation).toBeCloseTo(-1.0, 2); // Perfect negative correlation
+            });
+
+            test('returns null for insufficient data', () => {
+                const dataX = [1, 2];
+                const dataY = [2, 4];
+                const correlation = dashboard.calculateCorrelation(dataX, dataY);
+                expect(correlation).toBeNull();
+            });
+
+            test('returns null for mismatched array lengths', () => {
+                const dataX = [1, 2, 3];
+                const dataY = [2, 4];
+                const correlation = dashboard.calculateCorrelation(dataX, dataY);
+                expect(correlation).toBeNull();
+            });
+
+            test('returns null when denominator is zero', () => {
+                const dataX = [5, 5, 5, 5];
+                const dataY = [2, 4, 6, 8];
+                const correlation = dashboard.calculateCorrelation(dataX, dataY);
+                expect(correlation).toBeNull();
+            });
+        });
+
+        describe('analyzeSleepMoodCorrelation', () => {
+            test('returns null when mental health tracker missing', () => {
+                dashboard.mentalHealth = null;
+                const result = dashboard.analyzeSleepMoodCorrelation(30);
+                expect(result).toBeNull();
+            });
+
+            test('returns null when sleep tracker missing', () => {
+                dashboard.sleep = null;
+                const result = dashboard.analyzeSleepMoodCorrelation(30);
+                expect(result).toBeNull();
+            });
+
+            test('returns insufficient when less than 3 matching days', () => {
+                const today = new Date();
+                dashboard.mentalHealth.data.moodLogs = [
+                    { rating: 7, timestamp: today.toISOString() }
+                ];
+                dashboard.sleep.data.sleepEntries = [
+                    { duration: '7.5', quality: 8, timestamp: today.toISOString() }
+                ];
+
+                const result = dashboard.analyzeSleepMoodCorrelation(30);
+                expect(result.insufficient).toBe(true);
+                expect(result.count).toBeLessThan(3);
+            });
+
+            test('analyzes sleep-mood correlation with sufficient data', () => {
+                const today = new Date();
+                const dates = [];
+                for (let i = 0; i < 5; i++) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    dates.push(date);
+                }
+
+                dashboard.mentalHealth.data.moodLogs = dates.map(date => ({
+                    rating: 7 + Math.random(),
+                    timestamp: date.toISOString()
+                }));
+
+                dashboard.sleep.data.sleepEntries = dates.map(date => ({
+                    duration: (7 + Math.random()).toFixed(1),
+                    quality: 7 + Math.floor(Math.random() * 3),
+                    timestamp: date.toISOString()
+                }));
+
+                const result = dashboard.analyzeSleepMoodCorrelation(30);
+                expect(result).not.toBeNull();
+                expect(result.insufficient).toBeUndefined();
+                expect(result.sampleSize).toBeGreaterThanOrEqual(3);
+                expect(result.durationCorrelation).toBeDefined();
+                expect(result.qualityCorrelation).toBeDefined();
+                expect(result.avgSleepDuration).toBeDefined();
+                expect(result.avgSleepQuality).toBeDefined();
+                expect(result.avgMood).toBeDefined();
+            });
+        });
+
+        describe('analyzeExerciseMoodCorrelation', () => {
+            test('returns null when mental health tracker missing', () => {
+                dashboard.mentalHealth = null;
+                const result = dashboard.analyzeExerciseMoodCorrelation(30);
+                expect(result).toBeNull();
+            });
+
+            test('returns null when exercise tracker missing', () => {
+                dashboard.exercise = null;
+                const result = dashboard.analyzeExerciseMoodCorrelation(30);
+                expect(result).toBeNull();
+            });
+
+            test('returns insufficient when less than 3 days', () => {
+                const today = new Date();
+                dashboard.mentalHealth.data.moodLogs = [
+                    { rating: 7, timestamp: today.toISOString() }
+                ];
+
+                const result = dashboard.analyzeExerciseMoodCorrelation(30);
+                expect(result.insufficient).toBe(true);
+            });
+
+            test('analyzes exercise-mood correlation with sufficient data', () => {
+                const today = new Date();
+                const dates = [];
+                for (let i = 0; i < 5; i++) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    dates.push(date);
+                }
+
+                dashboard.mentalHealth.data.moodLogs = dates.map(date => ({
+                    rating: 7 + Math.random(),
+                    timestamp: date.toISOString()
+                }));
+
+                dashboard.exercise.data.exercises = dates.slice(0, 3).map(date => ({
+                    duration: 30,
+                    date: date.toISOString().split('T')[0],
+                    timestamp: date.toISOString(),
+                    intensity: 'moderate',
+                    type: 'Running'
+                }));
+
+                const result = dashboard.analyzeExerciseMoodCorrelation(30);
+                expect(result).not.toBeNull();
+                expect(result.insufficient).toBeUndefined();
+                expect(result.sampleSize).toBeGreaterThanOrEqual(3);
+                expect(result.correlation).toBeDefined();
+                expect(result.daysWithExercise).toBeGreaterThan(0);
+                expect(result.daysWithoutExercise).toBeGreaterThan(0);
+            });
+
+            test('calculates mood difference between exercise days', () => {
+                const today = new Date();
+                const dates = [];
+                for (let i = 0; i < 6; i++) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    dates.push(date);
+                }
+
+                // Days with exercise - higher mood
+                dashboard.mentalHealth.data.moodLogs = [
+                    { rating: 8, timestamp: dates[0].toISOString() },
+                    { rating: 8, timestamp: dates[1].toISOString() },
+                    { rating: 8, timestamp: dates[2].toISOString() },
+                    { rating: 6, timestamp: dates[3].toISOString() },
+                    { rating: 6, timestamp: dates[4].toISOString() },
+                    { rating: 6, timestamp: dates[5].toISOString() }
+                ];
+
+                // Exercise only on first 3 days
+                dashboard.exercise.data.exercises = dates.slice(0, 3).map(date => ({
+                    duration: 30,
+                    date: date.toISOString().split('T')[0],
+                    timestamp: date.toISOString(),
+                    intensity: 'moderate',
+                    type: 'Running'
+                }));
+
+                const result = dashboard.analyzeExerciseMoodCorrelation(30);
+                expect(result.avgMoodWithExercise).toBeCloseTo(8, 1);
+                expect(result.avgMoodWithoutExercise).toBeCloseTo(6, 1);
+                expect(result.moodDifference).toBeCloseTo(2, 1);
+            });
+        });
+
+        describe('analyzeMedicationMoodCorrelation', () => {
+            test('returns null when mental health tracker missing', () => {
+                dashboard.mentalHealth = null;
+                const result = dashboard.analyzeMedicationMoodCorrelation(30);
+                expect(result).toBeNull();
+            });
+
+            test('returns null when medication tracker missing', () => {
+                dashboard.medication = null;
+                const result = dashboard.analyzeMedicationMoodCorrelation(30);
+                expect(result).toBeNull();
+            });
+
+            test('returns null when no active medications', () => {
+                dashboard.medication.data.medications = [];
+                const result = dashboard.analyzeMedicationMoodCorrelation(30);
+                expect(result).toBeNull();
+            });
+
+            test('analyzes medication-mood correlation with sufficient data', () => {
+                const today = new Date();
+                const dates = [];
+                for (let i = 0; i < 5; i++) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    dates.push(date);
+                }
+
+                dashboard.medication.data.medications = [
+                    { id: 1, name: 'Med1', active: true }
+                ];
+
+                dashboard.mentalHealth.data.moodLogs = dates.map(date => ({
+                    rating: 7 + Math.random(),
+                    timestamp: date.toISOString()
+                }));
+
+                dashboard.medication.data.history = dates.slice(0, 3).map(date => ({
+                    medicationId: 1,
+                    timestamp: date.toISOString()
+                }));
+
+                const result = dashboard.analyzeMedicationMoodCorrelation(30);
+                expect(result).not.toBeNull();
+                expect(result.insufficient).toBeUndefined();
+                expect(result.sampleSize).toBeGreaterThanOrEqual(3);
+                expect(result.correlation).toBeDefined();
+            });
+        });
+
+        describe('showCorrelations', () => {
+            test('displays correlations with sufficient data', () => {
+                const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+                const today = new Date();
+                const dates = [];
+                for (let i = 0; i < 5; i++) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    dates.push(date);
+                }
+
+                dashboard.mentalHealth.data.moodLogs = dates.map(date => ({
+                    rating: 7,
+                    timestamp: date.toISOString()
+                }));
+
+                dashboard.sleep.data.sleepEntries = dates.map(date => ({
+                    duration: '7.5',
+                    quality: 8,
+                    timestamp: date.toISOString()
+                }));
+
+                dashboard.showCorrelations(30);
+                expect(consoleSpy).toHaveBeenCalled();
+                const output = consoleSpy.mock.calls.map(call => call[0]).join('\n');
+                expect(output).toContain('WELLNESS CORRELATIONS ANALYSIS');
+                consoleSpy.mockRestore();
+            });
+
+            test('displays message when insufficient data', () => {
+                const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+                dashboard.showCorrelations(30);
+                expect(consoleSpy).toHaveBeenCalled();
+                const output = consoleSpy.mock.calls.map(call => call[0]).join('\n');
+                expect(output).toContain('Not enough data yet');
+                consoleSpy.mockRestore();
+            });
+        });
+
+        describe('Helper Methods', () => {
+            test('getCorrelationStrength returns correct labels', () => {
+                expect(dashboard.getCorrelationStrength(0.8)).toBe('Strong');
+                expect(dashboard.getCorrelationStrength(0.6)).toBe('Moderate to Strong');
+                expect(dashboard.getCorrelationStrength(0.4)).toBe('Moderate');
+                expect(dashboard.getCorrelationStrength(0.2)).toBe('Weak');
+                expect(dashboard.getCorrelationStrength(0.05)).toBe('Very Weak');
+            });
+
+            test('getCorrelationEmoji returns correct emojis', () => {
+                expect(dashboard.getCorrelationEmoji(0.6)).toBe('💚');
+                expect(dashboard.getCorrelationEmoji(0.4)).toBe('🟢');
+                expect(dashboard.getCorrelationEmoji(0.2)).toBe('🟡');
+                expect(dashboard.getCorrelationEmoji(0.0)).toBe('⚪');
+                expect(dashboard.getCorrelationEmoji(-0.2)).toBe('🟠');
+                expect(dashboard.getCorrelationEmoji(-0.4)).toBe('🔴');
+            });
+
+            test('interpretSleepDurationCorrelation returns correct messages', () => {
+                expect(dashboard.interpretSleepDurationCorrelation(0.6)).toContain('strongly improves');
+                expect(dashboard.interpretSleepDurationCorrelation(0.4)).toContain('tends to improve');
+                expect(dashboard.interpretSleepDurationCorrelation(0.0)).toContain('doesn\'t clearly affect');
+            });
+
+            test('interpretSleepQualityCorrelation returns correct messages', () => {
+                expect(dashboard.interpretSleepQualityCorrelation(0.6)).toContain('strongly boosts');
+                expect(dashboard.interpretSleepQualityCorrelation(0.4)).toContain('improves');
+                expect(dashboard.interpretSleepQualityCorrelation(0.0)).toContain('doesn\'t clearly affect');
+            });
+        });
+    });
 });

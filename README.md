@@ -1,6 +1,6 @@
 # StepSyncAI - Health & Wellness Apps
 
-[![Tests](https://img.shields.io/badge/tests-823%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Tests](https://img.shields.io/badge/tests-847%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Coverage](https://img.shields.io/badge/coverage-87.21%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Branch Coverage](https://img.shields.io/badge/branch%20coverage-71.64%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
@@ -752,6 +752,118 @@ node daily-dashboard.js weekly
 - Use recommendations to focus improvement efforts
 - Celebrate wins when scores improve
 
+**Discover Correlations**
+```bash
+# Analyze how sleep, exercise, and medication affect your mood
+node daily-dashboard.js correlations
+
+# Analyze last 60 days
+node daily-dashboard.js correlations 60
+```
+
+### Correlation Analysis 🔗
+
+Discover powerful insights about how different wellness factors affect your mood using statistical correlation analysis.
+
+#### What Correlations Are Analyzed
+
+**😴 Sleep → Mood**
+- **Sleep Duration**: Does getting more/less sleep affect your mood?
+- **Sleep Quality**: Does better sleep quality boost your mood?
+- Shows correlation strength and interpretation
+- Example: "Getting more sleep strongly improves your mood! 🌟"
+
+**🏃 Exercise → Mood**
+- How does physical activity impact your emotional state?
+- Compares mood on exercise days vs. non-exercise days
+- Shows average mood difference
+- Example: "You feel 1.5 points better on days you exercise!"
+
+**💊 Medication → Mood**
+- Does medication adherence correlate with mood improvements?
+- Compares full adherence vs. no adherence days
+- Helps validate medication effectiveness
+- Example: "You feel 2.0 points better with full medication adherence!"
+
+#### Understanding Correlation Results
+
+The dashboard uses **Pearson correlation coefficient** (-1.0 to +1.0):
+
+| Correlation | Strength | Meaning | Emoji |
+|-------------|----------|---------|-------|
+| 0.7 to 1.0 | Strong | Factors move together strongly | 💚 |
+| 0.5 to 0.7 | Moderate to Strong | Clear relationship | 💚 🟢 |
+| 0.3 to 0.5 | Moderate | Some relationship | 🟢 |
+| 0.1 to 0.3 | Weak | Slight relationship | 🟡 |
+| -0.1 to 0.1 | Very Weak | No clear relationship | ⚪ |
+| -0.3 to -0.1 | Weak Negative | Inverse relationship | 🟠 |
+| -1.0 to -0.3 | Moderate to Strong Negative | Factors move opposite | 🔴 |
+
+#### Example Correlation Output
+
+```
+╔════════════════════════════════════════════════════════════╗
+║         🔗 WELLNESS CORRELATIONS ANALYSIS                  ║
+╚════════════════════════════════════════════════════════════╝
+
+📊 Analyzing patterns over the last 30 days...
+
+😴 Sleep → Mood Correlation
+
+   Sample Size: 25 days with both sleep and mood data
+
+   💚 Sleep Duration ↔ Mood: Moderate to Strong
+      Correlation: 0.612
+      Getting more sleep strongly improves your mood! 🌟
+
+   💚 Sleep Quality ↔ Mood: Strong
+      Correlation: 0.743
+      Better sleep quality strongly boosts your mood! 🌟
+
+🏃 Exercise → Mood Correlation
+
+   Sample Size: 30 days with mood data
+
+   🟢 Exercise Minutes ↔ Mood: Moderate
+      Correlation: 0.423
+
+   📊 Mood Comparison:
+      With Exercise (18 days): 7.8/10
+      Without Exercise (12 days): 6.5/10
+      💚 You feel 1.3 points better on days you exercise!
+
+💊 Medication Adherence → Mood Correlation
+
+   Sample Size: 30 days with mood data
+
+   💚 Medication Adherence ↔ Mood: Moderate to Strong
+      Correlation: 0.587
+
+   📊 Mood Comparison:
+      Full Adherence (22 days): 7.9/10
+      No Adherence (3 days): 5.8/10
+      💚 You feel 2.1 points better with full medication adherence!
+
+────────────────────────────────────────────────────────────
+
+💡 Understanding Correlations:
+
+   • Strong positive (0.7+): These factors move together
+   • Moderate positive (0.3-0.7): Some relationship exists
+   • Weak (0-0.3): Little to no relationship
+   • Negative: Inverse relationship
+
+   Keep logging data to strengthen these insights!
+```
+
+#### Data Requirements
+
+- **Minimum**: 3 days with matching data for each correlation type
+- **Recommended**: 30+ days for reliable patterns
+- **Best**: 60+ days for strong statistical confidence
+
+The more data you log, the more accurate the correlations become!
+
 ### Tips for Best Results
 
 1. **Log Consistently**: The more data you track, the better insights
@@ -1191,12 +1303,13 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## 📈 Project Status
 
-**Version**: 3.5.0
+**Version**: 3.6.0
 **Status**: ✅ Active Development
 **Test Coverage**: 87.21%+ ⭐
 **Branch Coverage**: 71.64% ⭐ **MILESTONE ACHIEVED!** (3 modules at 70%+: Mental Health 70.75%, Medication 72.94%, Reminder 94.44% 🎯)
-**Tests**: 823 passing 🎉
+**Tests**: 847 passing 🎉
 **Latest Features**:
+- 🔗 **Correlation Analysis** - Discover how sleep, exercise & medication affect mood (NEW!)
 - 📊 **Daily Dashboard** - Unified wellness overview with scoring system
 - 😴 **Sleep Tracker** - Monitor sleep quality and patterns
 - 🏃 **Exercise Tracker** - Track physical activity and fitness goals
