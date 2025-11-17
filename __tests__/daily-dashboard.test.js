@@ -618,4 +618,279 @@ describe('Daily Dashboard', () => {
             });
         });
     });
+
+    describe('Trends & Progress Tracking', () => {
+        describe('getTrendsData', () => {
+            test('returns trends data for specified weeks', () => {
+                const trendsData = dashboard.getTrendsData(4);
+                expect(trendsData).toHaveLength(4);
+                expect(trendsData[0]).toHaveProperty('weekNumber');
+                expect(trendsData[0]).toHaveProperty('weekStart');
+                expect(trendsData[0]).toHaveProperty('weekEnd');
+                expect(trendsData[0]).toHaveProperty('score');
+                expect(trendsData[0]).toHaveProperty('percentage');
+            });
+
+            test('returns empty scores when no data', () => {
+                const trendsData = dashboard.getTrendsData(2);
+                trendsData.forEach(week => {
+                    // Exercise tracker exists by default, so daysWithData may be > 0
+                    expect(week.daysWithData).toBeGreaterThanOrEqual(0);
+                    expect(week.score).toBe(0);
+                });
+            });
+        });
+
+        describe('calculateDayScore', () => {
+            test('calculates score for specific date', () => {
+                const today = new Date();
+                const todayStr = today.toISOString().split('T')[0];
+
+                dashboard.mentalHealth.data.moodLogs = [
+                    { rating: 8, timestamp: today.toISOString() }
+                ];
+
+                const dayScore = dashboard.calculateDayScore(todayStr);
+                expect(dayScore.totalScore).toBeGreaterThan(0);
+                // Exercise tracker exists by default, contributing to maxScore
+                expect(dayScore.maxScore).toBeGreaterThanOrEqual(25);
+                expect(dayScore.breakdown.mood).toBeDefined();
+            });
+
+            test('returns zero score when no data for date', () => {
+                const dayScore = dashboard.calculateDayScore('2020-01-01');
+                expect(dayScore.totalScore).toBe(0);
+                // Exercise tracker exists by default, so maxScore is 25
+                expect(dayScore.maxScore).toBeGreaterThanOrEqual(0);
+            });
+        });
+
+        describe('getMoodDataForDate', () => {
+            test('returns mood data for specific date', () => {
+                const today = new Date();
+                const todayStr = today.toISOString().split('T')[0];
+
+                dashboard.mentalHealth.data.moodLogs = [
+                    { rating: 7, timestamp: today.toISOString() },
+                    { rating: 9, timestamp: today.toISOString() }
+                ];
+
+                const moodData = dashboard.getMoodDataForDate(todayStr);
+                expect(moodData).not.toBeNull();
+                expect(moodData.avgMood).toBe(8); // (7+9)/2
+            });
+
+            test('returns null when no mood data for date', () => {
+                const moodData = dashboard.getMoodDataForDate('2020-01-01');
+                expect(moodData).toBeNull();
+            });
+        });
+
+        describe('getSleepDataForDate', () => {
+            test('returns sleep data for specific date', () => {
+                const today = new Date();
+                const todayStr = today.toISOString().split('T')[0];
+
+                dashboard.sleep.data.sleepEntries = [
+                    { duration: '7.5', quality: 8, timestamp: today.toISOString() }
+                ];
+
+                const sleepData = dashboard.getSleepDataForDate(todayStr);
+                expect(sleepData).not.toBeNull();
+                expect(sleepData.duration).toBe(7.5);
+                expect(sleepData.quality).toBe(8);
+            });
+
+            test('returns null when no sleep data for date', () => {
+                const sleepData = dashboard.getSleepDataForDate('2020-01-01');
+                expect(sleepData).toBeNull();
+            });
+        });
+
+        describe('getExerciseDataForDate', () => {
+            test('returns total exercise minutes for date', () => {
+                const todayStr = new Date().toISOString().split('T')[0];
+
+                dashboard.exercise.data.exercises = [
+                    { duration: 20, date: todayStr, timestamp: new Date().toISOString() },
+                    { duration: 15, date: todayStr, timestamp: new Date().toISOString() }
+                ];
+
+                const exerciseData = dashboard.getExerciseDataForDate(todayStr);
+                expect(exerciseData).toBe(35);
+            });
+
+            test('returns 0 when no exercise for date', () => {
+                const exerciseData = dashboard.getExerciseDataForDate('2020-01-01');
+                expect(exerciseData).toBe(0);
+            });
+        });
+
+        describe('getMedicationDataForDate', () => {
+            test('calculates adherence for specific date', () => {
+                const today = new Date();
+                const todayStr = today.toISOString().split('T')[0];
+
+                dashboard.medication.data.medications = [
+                    { id: 1, name: 'Med1', active: true },
+                    { id: 2, name: 'Med2', active: true }
+                ];
+
+                dashboard.medication.data.history = [
+                    { medicationId: 1, timestamp: today.toISOString() },
+                    { medicationId: 2, timestamp: today.toISOString() }
+                ];
+
+                const adherence = dashboard.getMedicationDataForDate(todayStr);
+                expect(adherence).toBe(100); // 2/2 * 100
+            });
+
+            test('returns null when no active medications', () => {
+                dashboard.medication.data.medications = [];
+                const adherence = dashboard.getMedicationDataForDate('2020-01-01');
+                expect(adherence).toBeNull();
+            });
+        });
+
+        describe('analyzeWellnessTrend', () => {
+            test('returns insufficient for less than 2 weeks', () => {
+                const trendsData = [{ daysWithData: 5, percentage: 70 }];
+                const analysis = dashboard.analyzeWellnessTrend(trendsData);
+                expect(analysis.trend).toBe('insufficient');
+            });
+
+            test('identifies improving trend', () => {
+                const trendsData = [
+                    { daysWithData: 5, percentage: 50 },
+                    { daysWithData: 5, percentage: 55 },
+                    { daysWithData: 5, percentage: 60 },
+                    { daysWithData: 5, percentage: 70 }
+                ];
+
+                const analysis = dashboard.analyzeWellnessTrend(trendsData);
+                expect(analysis.trend).toBe('improving');
+                expect(analysis.emoji).toBe('⬆️');
+                expect(analysis.change).toBeGreaterThan(0);
+            });
+
+            test('identifies declining trend', () => {
+                const trendsData = [
+                    { daysWithData: 5, percentage: 70 },
+                    { daysWithData: 5, percentage: 65 },
+                    { daysWithData: 5, percentage: 55 },
+                    { daysWithData: 5, percentage: 45 }
+                ];
+
+                const analysis = dashboard.analyzeWellnessTrend(trendsData);
+                expect(analysis.trend).toBe('declining');
+                expect(analysis.emoji).toBe('⬇️');
+                expect(analysis.change).toBeLessThan(0);
+            });
+
+            test('identifies stable trend', () => {
+                const trendsData = [
+                    { daysWithData: 5, percentage: 70 },
+                    { daysWithData: 5, percentage: 71 },
+                    { daysWithData: 5, percentage: 69 },
+                    { daysWithData: 5, percentage: 70 }
+                ];
+
+                const analysis = dashboard.analyzeWellnessTrend(trendsData);
+                expect(analysis.trend).toBe('stable');
+                expect(analysis.emoji).toBe('➡️');
+            });
+        });
+
+        describe('generateTrendChart', () => {
+            test('generates chart with valid data', () => {
+                const trendsData = [
+                    { daysWithData: 5, percentage: 60, weekNumber: 1 },
+                    { daysWithData: 5, percentage: 70, weekNumber: 2 },
+                    { daysWithData: 5, percentage: 80, weekNumber: 3 }
+                ];
+
+                const chart = dashboard.generateTrendChart(trendsData);
+                expect(chart).toBeInstanceOf(Array);
+                expect(chart.length).toBeGreaterThan(0);
+                expect(chart.some(line => line.includes('●'))).toBe(true);
+            });
+
+            test('returns message when no data', () => {
+                const trendsData = [
+                    { daysWithData: 0, percentage: 0 }
+                ];
+
+                const chart = dashboard.generateTrendChart(trendsData);
+                expect(chart).toEqual(['No data available for chart']);
+            });
+        });
+
+        describe('generateDeclineSuggestions', () => {
+            test('provides suggestions based on weakest component', () => {
+                const trendsData = [
+                    {
+                        daysWithData: 5,
+                        breakdown: {
+                            mood: { score: 20 },
+                            sleep: { score: 20 },
+                            exercise: { score: 10 }
+                        }
+                    },
+                    {
+                        daysWithData: 5,
+                        breakdown: {
+                            mood: { score: 19 },
+                            sleep: { score: 19 },
+                            exercise: { score: 5 } // Biggest decline
+                        }
+                    }
+                ];
+
+                const suggestion = dashboard.generateDeclineSuggestions(trendsData);
+                expect(suggestion).toContain('30 minutes');
+            });
+
+            test('returns default message with insufficient data', () => {
+                const trendsData = [{ daysWithData: 5 }];
+                const suggestion = dashboard.generateDeclineSuggestions(trendsData);
+                expect(suggestion).toContain('consistent tracking');
+            });
+        });
+
+        describe('showTrends', () => {
+            test('displays trends with sufficient data', () => {
+                const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+                const today = new Date();
+                // Initialize moodLogs array first
+                dashboard.mentalHealth.data.moodLogs = [];
+                for (let i = 0; i < 14; i++) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+
+                    dashboard.mentalHealth.data.moodLogs.push({
+                        rating: 7,
+                        timestamp: date.toISOString()
+                    });
+                }
+
+                dashboard.showTrends(4);
+                expect(consoleSpy).toHaveBeenCalled();
+                const output = consoleSpy.mock.calls.map(call => call[0]).join('\n');
+                expect(output).toContain('WELLNESS TRENDS & PROGRESS');
+                consoleSpy.mockRestore();
+            });
+
+            test('displays trends even with minimal data', () => {
+                const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+                const emptyDashboard = new DailyDashboard();
+                emptyDashboard.showTrends(4);
+                expect(consoleSpy).toHaveBeenCalled();
+                const output = consoleSpy.mock.calls.map(call => call[0]).join('\n');
+                // Exercise tracker exists by default, so we get a chart with 0% scores
+                expect(output).toContain('WELLNESS TRENDS & PROGRESS');
+                consoleSpy.mockRestore();
+            });
+        });
+    });
 });

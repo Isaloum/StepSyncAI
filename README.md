@@ -1,6 +1,6 @@
 # StepSyncAI - Health & Wellness Apps
 
-[![Tests](https://img.shields.io/badge/tests-847%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Tests](https://img.shields.io/badge/tests-869%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Coverage](https://img.shields.io/badge/coverage-87.21%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Branch Coverage](https://img.shields.io/badge/branch%20coverage-71.64%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
@@ -864,6 +864,165 @@ The dashboard uses **Pearson correlation coefficient** (-1.0 to +1.0):
 
 The more data you log, the more accurate the correlations become!
 
+### Wellness Trends & Progress Tracking 📈
+
+Visualize your wellness journey over time with ASCII trend charts and detailed progress analysis. Track improvements, identify declines, and understand which wellness components are changing.
+
+#### Quick Start
+
+```bash
+# View 8-week wellness trend (default)
+node daily-dashboard.js trends
+
+# View 4-week trend
+node daily-dashboard.js trends 4
+
+# Alternative commands
+node daily-dashboard.js trend
+node daily-dashboard.js progress
+```
+
+#### What's Analyzed
+
+**Overall Wellness Trend**
+- Tracks your wellness score week by week
+- Identifies if you're improving ⬆️, declining ⬇️, or stable ➡️
+- Compares recent weeks to earlier weeks using moving averages
+- Shows percentage change over time
+
+**Component Trends** (Individual tracking for each):
+- 🧠 **Mood**: Average mood ratings over time
+- 😴 **Sleep**: Sleep quality and duration patterns
+- 🏃 **Exercise**: Physical activity levels
+- 💊 **Medication**: Adherence rate changes
+
+**Best & Worst Weeks**
+- Highlights your highest scoring week
+- Identifies your lowest scoring week
+- Helps you understand what worked (or didn't)
+
+#### Understanding Trend Types
+
+| Trend | Symbol | Meaning |
+|-------|--------|---------|
+| **Improving** | ⬆️ | Wellness score increasing over time |
+| **Declining** | ⬇️ | Wellness score decreasing - actionable suggestions provided |
+| **Stable** | ➡️ | Wellness score consistent (within 5% variation) |
+| **Insufficient** | ℹ️ | Less than 2 weeks of data - keep logging! |
+
+#### ASCII Trend Chart
+
+The dashboard generates visual charts showing your progress:
+
+```
+Week 1  ●
+Week 2   ●─
+Week 3     ●─
+Week 4       ●─
+Week 5         ●
+```
+
+- Each `●` represents your wellness score for that week
+- Lines (`─`) connect consecutive weeks
+- Higher position = better score
+- Shows 8 weeks by default (customizable)
+
+#### Example Trends Output
+
+```
+╔════════════════════════════════════════════════════════════╗
+║        📈 WELLNESS TRENDS & PROGRESS (8 Weeks)             ║
+╚════════════════════════════════════════════════════════════╝
+
+Overall Trend: ⬆️ Improving
+Your wellness is trending upward! Recent weeks average 15.2%
+higher than earlier weeks.
+
+Current Week: 78.5% (Good)
+Previous Week: 72.0% (Good)
+Change: +6.5% ⬆️
+
+────────────────────────────────────────────────────────────
+
+📊 8-Week Wellness Trend Chart:
+
+100% ┤
+ 90% ┤
+ 80% ┤                                         ●
+ 70% ┤                             ●─────────●─┘
+ 60% ┤                   ●───────●─┘
+ 50% ┤         ●───────●─┘
+ 40% ┤   ●───●─┘
+ 30% ┤ ●─┘
+ 20% ┤
+ 10% ┤
+  0% ┤
+     └─────────────────────────────────────────────
+     Week  1    2    3    4    5    6    7    8
+
+────────────────────────────────────────────────────────────
+
+📊 Component Trends:
+
+  🧠 Mood: Stable ➡️
+     Current: 8.0/10  |  Previous: 7.8/10  |  Change: +0.2
+
+  😴 Sleep: Improving ⬆️
+     Current: 8.5h, 8.2/10  |  Previous: 7.2h, 7.0/10
+
+  🏃 Exercise: Improving ⬆️
+     Current: 28 min/day  |  Previous: 20 min/day  |  +8 min
+
+  💊 Medication: Declining ⬇️
+     Current: 75%  |  Previous: 85%  |  -10%
+
+────────────────────────────────────────────────────────────
+
+🏆 Best Week: Week 8 (78.5%)
+😞 Worst Week: Week 1 (45.0%)
+
+Total Progress: +33.5 percentage points! 🎉
+
+────────────────────────────────────────────────────────────
+
+💡 Recommendations:
+
+  ✅ Great progress! You've improved by 15.2% over recent weeks.
+
+  🟡 Focus on medication adherence - it's declined by 10%.
+     Your medication tracker shows missed doses. Set reminders
+     to stay consistent.
+
+  🌟 Your sleep improvements are contributing to better overall
+     wellness. Keep maintaining good sleep hygiene!
+```
+
+#### Smart Decline Suggestions
+
+When trends show decline, the dashboard identifies which component needs attention most:
+
+- **Mood declining**: Suggests journaling, therapy, coping strategies
+- **Sleep declining**: Recommends consistent sleep schedule, reviewing sleep hygiene
+- **Exercise declining**: Encourages returning to 30-minute daily goal
+- **Medication declining**: Reminds to set reminders and track adherence
+
+#### Data Requirements
+
+- **Minimum**: 1 week of data (shows limited trends)
+- **Good**: 2+ weeks of data (identifies trend direction)
+- **Best**: 4-8+ weeks (reliable trend analysis and predictions)
+
+The dashboard calculates weekly scores by averaging daily wellness scores across each 7-day period.
+
+#### How It Works
+
+1. **Weekly Aggregation**: Divides your history into 7-day weeks
+2. **Score Calculation**: Computes average wellness score for each week
+3. **Trend Analysis**: Compares recent 50% of weeks to earlier 50%
+4. **Visualization**: Generates ASCII chart showing the progression
+5. **Component Analysis**: Tracks each wellness component individually
+6. **Recommendations**: Provides actionable suggestions based on trends
+
 ### Tips for Best Results
 
 1. **Log Consistently**: The more data you track, the better insights
@@ -1303,13 +1462,14 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## 📈 Project Status
 
-**Version**: 3.6.0
+**Version**: 3.7.0
 **Status**: ✅ Active Development
 **Test Coverage**: 87.21%+ ⭐
 **Branch Coverage**: 71.64% ⭐ **MILESTONE ACHIEVED!** (3 modules at 70%+: Mental Health 70.75%, Medication 72.94%, Reminder 94.44% 🎯)
-**Tests**: 847 passing 🎉
+**Tests**: 869 passing 🎉
 **Latest Features**:
-- 🔗 **Correlation Analysis** - Discover how sleep, exercise & medication affect mood (NEW!)
+- 📈 **Wellness Trends** - Visualize 8-week progress with ASCII charts & trend analysis (NEW!)
+- 🔗 **Correlation Analysis** - Discover how sleep, exercise & medication affect mood
 - 📊 **Daily Dashboard** - Unified wellness overview with scoring system
 - 😴 **Sleep Tracker** - Monitor sleep quality and patterns
 - 🏃 **Exercise Tracker** - Track physical activity and fitness goals

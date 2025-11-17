@@ -900,6 +900,469 @@ class DailyDashboard {
         }
     }
 
+    // Trends & Progress Tracking Methods
+    getTrendsData(weeks = 8) {
+        const trendsData = [];
+        const today = new Date();
+
+        // Get weekly scores going back in time
+        for (let i = 0; i < weeks; i++) {
+            const weekEnd = new Date(today);
+            weekEnd.setDate(weekEnd.getDate() - (i * 7));
+
+            const weekStart = new Date(weekEnd);
+            weekStart.setDate(weekStart.getDate() - 6);
+
+            // Calculate wellness score for this week
+            const weekData = this.calculateWeeklyScore(weekStart, weekEnd);
+
+            trendsData.unshift({
+                weekNumber: i + 1,
+                weekStart: weekStart.toISOString().split('T')[0],
+                weekEnd: weekEnd.toISOString().split('T')[0],
+                ...weekData
+            });
+        }
+
+        return trendsData;
+    }
+
+    calculateWeeklyScore(startDate, endDate) {
+        // Get all data within date range
+        const scores = [];
+        const currentDate = new Date(startDate);
+
+        while (currentDate <= endDate) {
+            const dateStr = currentDate.toISOString().split('T')[0];
+
+            // Calculate score for this specific day
+            const dayScore = this.calculateDayScore(dateStr);
+            if (dayScore.maxScore > 0) {
+                scores.push(dayScore);
+            }
+
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        if (scores.length === 0) {
+            return {
+                score: 0,
+                maxScore: 0,
+                percentage: 0,
+                daysWithData: 0,
+                breakdown: {}
+            };
+        }
+
+        // Average the scores
+        const avgScore = scores.reduce((sum, s) => sum + s.totalScore, 0) / scores.length;
+        const avgMaxScore = scores.reduce((sum, s) => sum + s.maxScore, 0) / scores.length;
+        const percentage = avgMaxScore > 0 ? (avgScore / avgMaxScore) * 100 : 0;
+
+        // Aggregate breakdown
+        const breakdown = {};
+        const categories = ['mood', 'sleep', 'exercise', 'medication'];
+
+        categories.forEach(cat => {
+            const catScores = scores
+                .filter(s => s.breakdown[cat])
+                .map(s => s.breakdown[cat]);
+
+            if (catScores.length > 0) {
+                const avgCatScore = catScores.reduce((sum, c) => sum + c.score, 0) / catScores.length;
+                breakdown[cat] = {
+                    score: parseFloat(avgCatScore.toFixed(1)),
+                    max: 25
+                };
+            }
+        });
+
+        return {
+            score: parseFloat(avgScore.toFixed(1)),
+            maxScore: parseFloat(avgMaxScore.toFixed(1)),
+            percentage: parseFloat(percentage.toFixed(1)),
+            daysWithData: scores.length,
+            breakdown
+        };
+    }
+
+    calculateDayScore(dateStr) {
+        // Similar to calculateWellnessScore but for a specific date
+        let totalScore = 0;
+        let maxScore = 0;
+        const breakdown = {};
+
+        // Mood Score for specific date
+        const moodData = this.getMoodDataForDate(dateStr);
+        if (moodData) {
+            const moodScore = (moodData.avgMood / 10) * 25;
+            breakdown.mood = {
+                score: parseFloat(moodScore.toFixed(1)),
+                max: 25
+            };
+            totalScore += moodScore;
+            maxScore += 25;
+        }
+
+        // Sleep Score for specific date
+        const sleepData = this.getSleepDataForDate(dateStr);
+        if (sleepData) {
+            const qualityScore = (sleepData.quality / 10) * 15;
+            let durationScore = 0;
+            if (sleepData.duration >= 7 && sleepData.duration <= 9) {
+                durationScore = 10;
+            } else if (sleepData.duration >= 6 && sleepData.duration <= 10) {
+                durationScore = 7;
+            } else if (sleepData.duration >= 5 && sleepData.duration <= 11) {
+                durationScore = 4;
+            }
+
+            const sleepScore = qualityScore + durationScore;
+            breakdown.sleep = {
+                score: parseFloat(sleepScore.toFixed(1)),
+                max: 25
+            };
+            totalScore += sleepScore;
+            maxScore += 25;
+        }
+
+        // Exercise Score for specific date
+        const exerciseData = this.getExerciseDataForDate(dateStr);
+        if (exerciseData !== null) {
+            let exerciseScore = 0;
+            if (exerciseData >= 30) {
+                exerciseScore = 25;
+            } else {
+                exerciseScore = (exerciseData / 30) * 25;
+            }
+
+            breakdown.exercise = {
+                score: parseFloat(exerciseScore.toFixed(1)),
+                max: 25
+            };
+            totalScore += exerciseScore;
+            maxScore += 25;
+        }
+
+        // Medication Score for specific date
+        const medData = this.getMedicationDataForDate(dateStr);
+        if (medData !== null) {
+            const medScore = (medData / 100) * 25;
+            breakdown.medication = {
+                score: parseFloat(medScore.toFixed(1)),
+                max: 25
+            };
+            totalScore += medScore;
+            maxScore += 25;
+        }
+
+        return {
+            totalScore: parseFloat(totalScore.toFixed(1)),
+            maxScore,
+            percentage: maxScore > 0 ? parseFloat(((totalScore / maxScore) * 100).toFixed(1)) : 0,
+            breakdown
+        };
+    }
+
+    getMoodDataForDate(dateStr) {
+        if (!this.mentalHealth || !this.mentalHealth.data.moodLogs) {
+            return null;
+        }
+
+        const dayMoods = this.mentalHealth.data.moodLogs.filter(log => {
+            return new Date(log.timestamp).toISOString().split('T')[0] === dateStr;
+        });
+
+        if (dayMoods.length === 0) return null;
+
+        const avgMood = dayMoods.reduce((sum, log) => sum + log.rating, 0) / dayMoods.length;
+        return { avgMood };
+    }
+
+    getSleepDataForDate(dateStr) {
+        if (!this.sleep || !this.sleep.data.sleepEntries) {
+            return null;
+        }
+
+        const daySleep = this.sleep.data.sleepEntries.find(entry => {
+            return new Date(entry.timestamp).toISOString().split('T')[0] === dateStr;
+        });
+
+        if (!daySleep) return null;
+
+        return {
+            duration: parseFloat(daySleep.duration),
+            quality: daySleep.quality
+        };
+    }
+
+    getExerciseDataForDate(dateStr) {
+        if (!this.exercise || !this.exercise.data.exercises) {
+            return null;
+        }
+
+        const dayExercises = this.exercise.data.exercises.filter(ex => ex.date === dateStr);
+        const totalMinutes = dayExercises.reduce((sum, ex) => sum + ex.duration, 0);
+
+        return totalMinutes;
+    }
+
+    getMedicationDataForDate(dateStr) {
+        if (!this.medication || !this.medication.data.medications) {
+            return null;
+        }
+
+        const activeMeds = this.medication.data.medications.filter(med => med.active);
+        if (activeMeds.length === 0) return null;
+
+        const dayMedsTaken = this.medication.data.history.filter(h => {
+            return new Date(h.timestamp).toISOString().split('T')[0] === dateStr;
+        }).length;
+
+        const adherence = (dayMedsTaken / activeMeds.length) * 100;
+        return adherence;
+    }
+
+    analyzeWellnessTrend(trendsData) {
+        if (trendsData.length < 2) {
+            return { trend: 'insufficient', message: 'Need at least 2 weeks of data' };
+        }
+
+        // Get scores that have data
+        const validScores = trendsData.filter(w => w.daysWithData > 0);
+        if (validScores.length < 2) {
+            return { trend: 'insufficient', message: 'Need at least 2 weeks with data' };
+        }
+
+        // Calculate trend using linear regression
+        const recentWeeks = validScores.slice(-4); // Last 4 weeks
+        const scores = recentWeeks.map(w => w.percentage);
+
+        // Simple moving average comparison
+        const firstHalf = scores.slice(0, Math.floor(scores.length / 2));
+        const secondHalf = scores.slice(Math.floor(scores.length / 2));
+
+        const firstAvg = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;
+        const secondAvg = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;
+
+        const change = secondAvg - firstAvg;
+        const changePercent = ((change / firstAvg) * 100).toFixed(1);
+
+        let trend, emoji, message;
+
+        if (change > 5) {
+            trend = 'improving';
+            emoji = '⬆️';
+            message = `Your wellness is improving! Up ${changePercent}% recently.`;
+        } else if (change < -5) {
+            trend = 'declining';
+            emoji = '⬇️';
+            message = `Your wellness has declined ${Math.abs(changePercent)}% recently.`;
+        } else {
+            trend = 'stable';
+            emoji = '➡️';
+            message = 'Your wellness is stable.';
+        }
+
+        return {
+            trend,
+            emoji,
+            message,
+            change: parseFloat(change.toFixed(1)),
+            changePercent: parseFloat(changePercent)
+        };
+    }
+
+    generateTrendChart(trendsData, height = 10, width = 60) {
+        const validWeeks = trendsData.filter(w => w.daysWithData > 0);
+        if (validWeeks.length === 0) {
+            return ['No data available for chart'];
+        }
+
+        const scores = validWeeks.map(w => w.percentage);
+        const maxScore = Math.max(...scores, 100);
+        const minScore = Math.min(...scores, 0);
+        const range = maxScore - minScore || 1;
+
+        const lines = [];
+
+        // Y-axis and chart
+        for (let y = height; y >= 0; y--) {
+            const value = minScore + (range * y / height);
+            let line = `${value.toFixed(0).padStart(3)} │ `;
+
+            for (let x = 0; x < validWeeks.length; x++) {
+                const score = scores[x];
+                const normalizedScore = ((score - minScore) / range) * height;
+
+                if (Math.abs(normalizedScore - y) < 0.5) {
+                    line += '●';
+                } else if (y === 0) {
+                    line += '─';
+                } else {
+                    line += ' ';
+                }
+
+                // Add spacing between points
+                if (x < validWeeks.length - 1) {
+                    // Draw line to next point
+                    const nextScore = scores[x + 1];
+                    const nextNormalized = ((nextScore - minScore) / range) * height;
+
+                    if (Math.abs((normalizedScore + nextNormalized) / 2 - y) < 0.5) {
+                        line += '─';
+                    } else {
+                        line += ' ';
+                    }
+                }
+            }
+
+            lines.push(line);
+        }
+
+        // X-axis
+        const xAxis = '    └' + '─'.repeat(validWeeks.length * 2);
+        lines.push(xAxis);
+
+        // Week labels
+        let labels = '     ';
+        validWeeks.forEach((week, i) => {
+            labels += `W${week.weekNumber} `;
+        });
+        lines.push(labels);
+
+        return lines;
+    }
+
+    showTrends(weeks = 8) {
+        console.log('\n╔════════════════════════════════════════════════════════════╗');
+        console.log('║         📈 WELLNESS TRENDS & PROGRESS                      ║');
+        console.log('╚════════════════════════════════════════════════════════════╝\n');
+
+        const trendsData = this.getTrendsData(weeks);
+        const validWeeks = trendsData.filter(w => w.daysWithData > 0);
+
+        if (validWeeks.length === 0) {
+            console.log('📭 No wellness data available yet.\n');
+            console.log('Start tracking your wellness to see trends over time!\n');
+            return;
+        }
+
+        // Overall Trend Analysis
+        const trendAnalysis = this.analyzeWellnessTrend(trendsData);
+        console.log('📊 Overall Trend:\n');
+        console.log(`   ${trendAnalysis.emoji} ${trendAnalysis.message}\n`);
+
+        if (trendAnalysis.trend !== 'insufficient') {
+            // Current vs Previous comparison
+            const currentWeek = validWeeks[validWeeks.length - 1];
+            const previousWeek = validWeeks.length > 1 ? validWeeks[validWeeks.length - 2] : null;
+
+            console.log('📅 Current Status:\n');
+            console.log(`   This Week: ${currentWeek.percentage}% (${currentWeek.score}/${currentWeek.maxScore})`);
+
+            if (previousWeek) {
+                const weekChange = currentWeek.percentage - previousWeek.percentage;
+                const changeEmoji = weekChange > 0 ? '⬆️' : weekChange < 0 ? '⬇️' : '➡️';
+                console.log(`   Last Week: ${previousWeek.percentage}% (${changeEmoji} ${Math.abs(weekChange).toFixed(1)}%)\n`);
+            } else {
+                console.log('');
+            }
+
+            // Trend Chart
+            console.log('📈 Wellness Score Over Time:\n');
+            const chart = this.generateTrendChart(trendsData, 8, 60);
+            chart.forEach(line => console.log(line));
+            console.log('');
+
+            // Component Trends
+            console.log('📊 Component Trends:\n');
+            const components = [
+                { key: 'mood', name: '🧠 Mood', emoji: '🧠' },
+                { key: 'sleep', name: '😴 Sleep', emoji: '😴' },
+                { key: 'exercise', name: '🏃 Exercise', emoji: '🏃' },
+                { key: 'medication', name: '💊 Medication', emoji: '💊' }
+            ];
+
+            components.forEach(comp => {
+                const compScores = validWeeks
+                    .filter(w => w.breakdown[comp.key])
+                    .map(w => w.breakdown[comp.key].score);
+
+                if (compScores.length >= 2) {
+                    const firstScore = compScores[0];
+                    const lastScore = compScores[compScores.length - 1];
+                    const change = lastScore - firstScore;
+                    const changePercent = ((change / firstScore) * 100).toFixed(1);
+                    const trendEmoji = change > 1 ? '⬆️' : change < -1 ? '⬇️' : '➡️';
+
+                    console.log(`   ${comp.emoji} ${comp.key.charAt(0).toUpperCase() + comp.key.slice(1)}: ${lastScore.toFixed(1)}/25 ${trendEmoji} (${changePercent > 0 ? '+' : ''}${changePercent}%)`);
+                }
+            });
+
+            console.log('');
+
+            // Best & Worst Weeks
+            const sortedByScore = [...validWeeks].sort((a, b) => b.percentage - a.percentage);
+            const bestWeek = sortedByScore[0];
+            const worstWeek = sortedByScore[sortedByScore.length - 1];
+
+            console.log('🏆 Performance Highlights:\n');
+            console.log(`   Best Week: Week ending ${bestWeek.weekEnd} (${bestWeek.percentage}%)`);
+            console.log(`   Needs Focus: Week ending ${worstWeek.weekEnd} (${worstWeek.percentage}%)\n`);
+
+            // Recommendations based on trend
+            console.log('💡 Recommendations:\n');
+            if (trendAnalysis.trend === 'improving') {
+                console.log('   ✅ Keep up the great work! Your wellness is on an upward trend.');
+                console.log('   ✅ Identify what\'s working and maintain those habits.');
+            } else if (trendAnalysis.trend === 'declining') {
+                console.log('   🔴 Your wellness has declined recently. Time to refocus.');
+                console.log('   🔴 Review your correlations to see what might help.');
+                console.log(`   🔴 Consider: ${this.generateDeclineSuggestions(trendsData)}`);
+            } else {
+                console.log('   ➡️  Consistency is good, but there\'s room for growth.');
+                console.log('   💡 Try setting small goals to push your score higher.');
+            }
+            console.log('');
+        }
+    }
+
+    generateDeclineSuggestions(trendsData) {
+        const validWeeks = trendsData.filter(w => w.daysWithData > 0);
+        if (validWeeks.length < 2) return 'Focus on consistent tracking';
+
+        const recent = validWeeks.slice(-2);
+        const suggestions = [];
+
+        // Check which components declined most
+        const components = ['mood', 'sleep', 'exercise', 'medication'];
+        let maxDecline = 0;
+        let weakestComponent = null;
+
+        components.forEach(comp => {
+            if (recent[0].breakdown[comp] && recent[1].breakdown[comp]) {
+                const decline = recent[1].breakdown[comp].score - recent[0].breakdown[comp].score;
+                if (decline < maxDecline) {
+                    maxDecline = decline;
+                    weakestComponent = comp;
+                }
+            }
+        });
+
+        if (weakestComponent) {
+            const tips = {
+                mood: 'Log your mood daily and use coping strategies',
+                sleep: 'Prioritize 7-9 hours of quality sleep',
+                exercise: 'Aim for 30 minutes of activity daily',
+                medication: 'Stay consistent with your medication schedule'
+            };
+            return tips[weakestComponent];
+        }
+
+        return 'Focus on tracking all wellness areas consistently';
+    }
+
     createProgressBar(score, max, width = 20) {
         const percentage = (score / max);
         const filled = Math.round(percentage * width);
@@ -938,6 +1401,13 @@ if (require.main === module) {
             dashboard.showCorrelations(days);
             break;
 
+        case 'trends':
+        case 'trend':
+        case 'progress':
+            const weeks = args[1] ? parseInt(args[1]) : 8;
+            dashboard.showTrends(weeks);
+            break;
+
         case 'help':
         default:
             console.log(`
@@ -956,6 +1426,10 @@ COMMANDS:
   correlations, corr, patterns [days]
       Analyze correlations between wellness factors (default: 30 days)
       Shows how sleep, exercise, and medication affect your mood
+
+  trends, trend, progress [weeks]
+      Show wellness trends and progress over time (default: 8 weeks)
+      Displays ASCII chart, component trends, and recommendations
 
   help
       Show this help message
@@ -978,6 +1452,8 @@ EXAMPLES:
   node daily-dashboard.js weekly
   node daily-dashboard.js correlations
   node daily-dashboard.js correlations 60  # Analyze last 60 days
+  node daily-dashboard.js trends
+  node daily-dashboard.js trends 12        # Show 12 weeks of trends
             `);
             break;
     }
