@@ -1,6 +1,6 @@
 # StepSyncAI - Health & Wellness Apps
 
-[![Tests](https://img.shields.io/badge/tests-869%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Tests](https://img.shields.io/badge/tests-900%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Coverage](https://img.shields.io/badge/coverage-87.21%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Branch Coverage](https://img.shields.io/badge/branch%20coverage-71.64%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
@@ -1023,6 +1023,163 @@ The dashboard calculates weekly scores by averaging daily wellness scores across
 5. **Component Analysis**: Tracks each wellness component individually
 6. **Recommendations**: Provides actionable suggestions based on trends
 
+### Goal Setting & Milestones 🏆
+
+Set wellness targets and track your progress toward achieving them. The dashboard provides intelligent goal tracking with progress bars, on-track indicators, and milestone celebrations.
+
+#### Quick Start
+
+```bash
+# View all goals
+node daily-dashboard.js goals
+
+# Set a wellness goal (reach 80% by end of year)
+node daily-dashboard.js set-goal wellness 80 2025-12-31
+
+# Set an exercise goal (30 min/day by summer)
+node daily-dashboard.js set-goal exercise 30 2025-06-30
+
+# Check specific goal progress
+node daily-dashboard.js goal-progress 1
+
+# Delete a goal
+node daily-dashboard.js delete-goal 1
+```
+
+#### Goal Types
+
+| Type | Target Range | Example |
+|------|--------------|---------|
+| **wellness** | 0-100% | Overall wellness score target |
+| **mood** | 1-10 | Average daily mood rating |
+| **sleep-duration** | hours | Average sleep duration (e.g., 8h) |
+| **sleep-quality** | 1-10 | Average sleep quality rating |
+| **exercise** | minutes/day | Daily exercise target (e.g., 30 min) |
+| **medication** | 0-100% | Medication adherence rate |
+
+#### What's Tracked
+
+**Progress Metrics**:
+- Current value vs. target
+- Progress percentage (0-100%)
+- Days remaining until target date
+- Days elapsed since goal creation
+- On-track status (based on trends)
+
+**Milestone Detection** (Automatic):
+- 25% progress
+- 50% progress (halfway!)
+- 75% progress (almost there!)
+- 100% - Goal achieved! 🎉
+
+**On-Track Analysis**:
+- 🟢 **On Track**: Making good progress, likely to achieve goal
+- 🔴 **Behind Schedule**: Need to increase effort
+- 🟡 **Uncertain**: Not enough data to determine
+
+#### Example Goals Display
+
+```
+╔════════════════════════════════════════════════════════════╗
+║              🏆 WELLNESS GOALS & MILESTONES                ║
+╚════════════════════════════════════════════════════════════╝
+
+🎯 Active Goals:
+
+1. 🟢 Reach 80% overall wellness score (ID: 1)
+   [████████████████░░░░░░░░░░░░░░] 55.0%
+   Current: 44.0% / Target: 80%
+   25 days remaining (15 days elapsed)
+   🎯 Milestones reached: 25%, 50%
+   ✅ On track to achieve!
+
+2. 🔴 Exercise 30 minutes per day (ID: 2)
+   [████████░░░░░░░░░░░░░░░░░░░░] 28.3%
+   Current: 8.5 min/day / Target: 30 min/day
+   45 days remaining (5 days elapsed)
+   ⚠️  Behind schedule - increase effort!
+
+3. ✅ Maintain average mood of 8/10 (ID: 3)
+   [████████████████████████████████] 106.3%
+   Current: 8.5/10 / Target: 8/10
+   60 days remaining (10 days elapsed)
+   🎯 Milestones reached: 25%, 50%, 75%, 100%
+
+
+🏆 Recently Achieved Goals:
+
+1. ✅ Average 7 hours of sleep per night
+   Achieved: 2025-11-01
+
+2. ✅ Reach 70% overall wellness score
+   Achieved: 2025-10-15
+
+────────────────────────────────────────────────────────────
+
+📊 Summary: 3 active, 2 achieved
+```
+
+#### Smart Features
+
+**Automatic Status Updates**:
+- Goals automatically marked as "achieved" when reaching 100%
+- Expired goals detected when target date passes
+- Milestones celebrated as you reach them
+
+**Trend-Based Predictions**:
+- Uses your wellness trends to predict if you'll achieve the goal
+- Factors in current trajectory and time remaining
+- Suggests course corrections if falling behind
+
+**Progress Tracking**:
+- Real-time progress calculation based on latest data
+- Beautiful progress bars showing visual progress
+- Days remaining countdown
+
+#### Creating Effective Goals
+
+**SMART Goal Examples**:
+
+```bash
+# Specific & Measurable: Reach 80% wellness
+node daily-dashboard.js set-goal wellness 80 2025-12-31 "End year strong"
+
+# Achievable: Improve mood gradually
+node daily-dashboard.js set-goal mood 7.5 2025-06-30 "Feel happier"
+
+# Realistic: Increase exercise moderately
+node daily-dashboard.js set-goal exercise 25 2025-03-31 "Build habit"
+
+# Time-bound: Summer sleep goal
+node daily-dashboard.js set-goal sleep-duration 8 2025-06-21 "Better rest"
+```
+
+**Tips for Success**:
+1. **Start Small**: Set achievable targets, then increase
+2. **Be Specific**: Choose exact numbers and dates
+3. **Track Progress**: Check `goal-progress` weekly
+4. **Stay Consistent**: Log data daily for accurate tracking
+5. **Celebrate**: Acknowledge milestones and achievements!
+
+#### Goal Management
+
+**View All Goals**:
+```bash
+node daily-dashboard.js goals
+```
+
+**Check Specific Goal**:
+```bash
+node daily-dashboard.js goal-progress 1
+```
+Shows detailed progress including on-track status and estimated completion.
+
+**Delete a Goal**:
+```bash
+node daily-dashboard.js delete-goal 1
+```
+Removes a goal you no longer want to track.
+
 ### Tips for Best Results
 
 1. **Log Consistently**: The more data you track, the better insights
@@ -1462,13 +1619,14 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## 📈 Project Status
 
-**Version**: 3.7.0
+**Version**: 3.8.0
 **Status**: ✅ Active Development
 **Test Coverage**: 87.21%+ ⭐
 **Branch Coverage**: 71.64% ⭐ **MILESTONE ACHIEVED!** (3 modules at 70%+: Mental Health 70.75%, Medication 72.94%, Reminder 94.44% 🎯)
-**Tests**: 869 passing 🎉
+**Tests**: 900 passing 🎉
 **Latest Features**:
-- 📈 **Wellness Trends** - Visualize 8-week progress with ASCII charts & trend analysis (NEW!)
+- 🏆 **Goal Setting & Milestones** - Set wellness targets, track progress, celebrate achievements (NEW!)
+- 📈 **Wellness Trends** - Visualize 8-week progress with ASCII charts & trend analysis
 - 🔗 **Correlation Analysis** - Discover how sleep, exercise & medication affect mood
 - 📊 **Daily Dashboard** - Unified wellness overview with scoring system
 - 😴 **Sleep Tracker** - Monitor sleep quality and patterns

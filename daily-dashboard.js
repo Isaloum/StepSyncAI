@@ -5,12 +5,40 @@ const SleepTracker = require('./sleep-tracker');
 const ExerciseTracker = require('./exercise-tracker');
 
 class DailyDashboard {
-    constructor() {
+    constructor(dataFile = 'dashboard-goals.json') {
+        this.dataFile = dataFile;
+        this.data = this.loadData();
         this.mentalHealth = null;
         this.medication = null;
         this.sleep = null;
         this.exercise = null;
         this.loadTrackers();
+    }
+
+    loadData() {
+        try {
+            if (fs.existsSync(this.dataFile)) {
+                const rawData = fs.readFileSync(this.dataFile, 'utf8');
+                return JSON.parse(rawData);
+            }
+        } catch (error) {
+            console.error('Error loading dashboard data:', error.message);
+        }
+        return {
+            goals: [],
+            achievedGoals: [],
+            nextGoalId: 1
+        };
+    }
+
+    saveData() {
+        try {
+            fs.writeFileSync(this.dataFile, JSON.stringify(this.data, null, 2));
+            return true;
+        } catch (error) {
+            console.error('Error saving dashboard data:', error.message);
+            return false;
+        }
     }
 
     loadTrackers() {
@@ -1375,6 +1403,353 @@ class DailyDashboard {
 
         return `[${color.repeat(filled)}${'░'.repeat(empty)}]`;
     }
+
+    // ==================== GOAL SETTING & MILESTONES ====================
+
+    setGoal(type, target, targetDate, description = '') {
+        // Validate goal type
+        const validTypes = ['wellness', 'mood', 'sleep-duration', 'sleep-quality', 'exercise', 'medication'];
+        if (!validTypes.includes(type)) {
+            console.error('❌ Invalid goal type. Must be one of: wellness, mood, sleep-duration, sleep-quality, exercise, medication');
+            return null;
+        }
+
+        // Validate target
+        const targetNum = parseFloat(target);
+        if (isNaN(targetNum) || targetNum <= 0) {
+            console.error('❌ Target must be a positive number');
+            return null;
+        }
+
+        // Validate target ranges
+        if (type === 'wellness' && (targetNum < 0 || targetNum > 100)) {
+            console.error('❌ Wellness target must be between 0-100');
+            return null;
+        }
+        if (type === 'mood' && (targetNum < 1 || targetNum > 10)) {
+            console.error('❌ Mood target must be between 1-10');
+            return null;
+        }
+        if ((type === 'sleep-quality') && (targetNum < 1 || targetNum > 10)) {
+            console.error('❌ Sleep quality target must be between 1-10');
+            return null;
+        }
+        if (type === 'medication' && (targetNum < 0 || targetNum > 100)) {
+            console.error('❌ Medication adherence target must be between 0-100%');
+            return null;
+        }
+
+        // Validate target date
+        const targetDateObj = new Date(targetDate);
+        if (isNaN(targetDateObj.getTime())) {
+            console.error('❌ Invalid target date format. Use YYYY-MM-DD');
+            return null;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (targetDateObj <= today) {
+            console.error('❌ Target date must be in the future');
+            return null;
+        }
+
+        const goal = {
+            id: this.data.nextGoalId++,
+            type,
+            target: targetNum,
+            targetDate: targetDateObj.toISOString().split('T')[0],
+            description: description || this.getDefaultGoalDescription(type, targetNum),
+            createdDate: new Date().toISOString().split('T')[0],
+            status: 'active',
+            milestones: {
+                '25': false,
+                '50': false,
+                '75': false,
+                '100': false
+            }
+        };
+
+        this.data.goals.push(goal);
+        this.saveData();
+
+        console.log(`✅ Goal created successfully! (ID: ${goal.id})`);
+        console.log(`   ${goal.description}`);
+        console.log(`   Target: ${this.formatGoalTarget(type, targetNum)} by ${goal.targetDate}`);
+
+        return goal;
+    }
+
+    getDefaultGoalDescription(type, target) {
+        const descriptions = {
+            'wellness': `Reach ${target}% overall wellness score`,
+            'mood': `Maintain average mood of ${target}/10`,
+            'sleep-duration': `Average ${target} hours of sleep per night`,
+            'sleep-quality': `Achieve ${target}/10 sleep quality`,
+            'exercise': `Exercise ${target} minutes per day`,
+            'medication': `Maintain ${target}% medication adherence`
+        };
+        return descriptions[type] || 'Custom wellness goal';
+    }
+
+    formatGoalTarget(type, target) {
+        const formats = {
+            'wellness': `${target}%`,
+            'mood': `${target}/10`,
+            'sleep-duration': `${target}h`,
+            'sleep-quality': `${target}/10`,
+            'exercise': `${target} min/day`,
+            'medication': `${target}%`
+        };
+        return formats[type] || target.toString();
+    }
+
+    getActiveGoals() {
+        return this.data.goals.filter(goal => goal.status === 'active');
+    }
+
+    getAllGoals() {
+        return this.data.goals;
+    }
+
+    getGoalById(id) {
+        return this.data.goals.find(goal => goal.id === id);
+    }
+
+    checkGoalProgress(goalId) {
+        const goal = this.getGoalById(goalId);
+        if (!goal) {
+            console.error(`❌ Goal with ID ${goalId} not found`);
+            return null;
+        }
+
+        // Calculate current value based on goal type
+        let current = 0;
+        let max = goal.target;
+
+        switch (goal.type) {
+            case 'wellness':
+                const wellnessScore = this.calculateWellnessScore(7);
+                current = wellnessScore.percentage;
+                break;
+            case 'mood':
+                const moodData = this.getMoodData(7);
+                current = moodData ? moodData.avgMood : 0;
+                max = 10;
+                break;
+            case 'sleep-duration':
+                const sleepData = this.getSleepData(7);
+                current = sleepData ? sleepData.avgDuration : 0;
+                break;
+            case 'sleep-quality':
+                const sleepQData = this.getSleepData(7);
+                current = sleepQData ? sleepQData.avgQuality : 0;
+                max = 10;
+                break;
+            case 'exercise':
+                const exerciseData = this.getExerciseData(7);
+                current = exerciseData ? exerciseData.avgMinutes : 0;
+                break;
+            case 'medication':
+                const medData = this.getMedicationData(7);
+                current = medData ? medData.adherenceRate : 0;
+                break;
+        }
+
+        // Calculate progress percentage
+        const progressPercentage = Math.min((current / goal.target) * 100, 100);
+
+        // Calculate days remaining
+        const today = new Date();
+        const targetDate = new Date(goal.targetDate);
+        const daysRemaining = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+
+        // Estimate completion based on trends
+        const onTrack = this.isGoalOnTrack(goal, current, daysRemaining);
+
+        return {
+            goal,
+            current,
+            target: goal.target,
+            progressPercentage,
+            daysRemaining,
+            onTrack,
+            achieved: progressPercentage >= 100,
+            daysElapsed: this.getDaysElapsed(goal.createdDate)
+        };
+    }
+
+    isGoalOnTrack(goal, current, daysRemaining) {
+        if (daysRemaining <= 0) return false;
+
+        // If already achieved, definitely on track
+        if (current >= goal.target) return true;
+
+        // Get trend data to see if we're improving
+        const trendsData = this.getTrendsData(4); // Last 4 weeks
+        if (trendsData.length < 2) return null; // Not enough data
+
+        const trendAnalysis = this.analyzeWellnessTrend(trendsData);
+
+        // If improving, likely on track
+        if (trendAnalysis.trend === 'improving') return true;
+
+        // If declining, not on track
+        if (trendAnalysis.trend === 'declining') return false;
+
+        // For stable trend, check if current value is close enough to target
+        const progressNeeded = goal.target - current;
+        const progressRate = progressNeeded / daysRemaining;
+
+        // Simple heuristic: if we need less than 2% improvement per day, we're on track
+        return progressRate < 2;
+    }
+
+    getDaysElapsed(startDate) {
+        const start = new Date(startDate);
+        const today = new Date();
+        return Math.floor((today - start) / (1000 * 60 * 60 * 24));
+    }
+
+    updateGoalStatus() {
+        let updated = false;
+
+        this.data.goals.forEach(goal => {
+            if (goal.status !== 'active') return;
+
+            const progress = this.checkGoalProgress(goal.id);
+            if (!progress) return;
+
+            // Check if goal achieved
+            if (progress.achieved && goal.status === 'active') {
+                goal.status = 'achieved';
+                goal.achievedDate = new Date().toISOString().split('T')[0];
+                this.data.achievedGoals.push(goal);
+                console.log(`🎉 Goal achieved! ${goal.description}`);
+                updated = true;
+            }
+
+            // Check if goal expired
+            if (progress.daysRemaining < 0 && goal.status === 'active' && !progress.achieved) {
+                goal.status = 'expired';
+                goal.expiredDate = new Date().toISOString().split('T')[0];
+                console.log(`⏰ Goal expired: ${goal.description}`);
+                updated = true;
+            }
+
+            // Check milestones
+            ['25', '50', '75', '100'].forEach(milestone => {
+                if (progress.progressPercentage >= parseInt(milestone) && !goal.milestones[milestone]) {
+                    goal.milestones[milestone] = true;
+                    if (milestone !== '100') {
+                        console.log(`🎯 Milestone ${milestone}% reached for: ${goal.description}`);
+                        updated = true;
+                    }
+                }
+            });
+        });
+
+        if (updated) {
+            this.saveData();
+        }
+
+        return updated;
+    }
+
+    deleteGoal(goalId) {
+        const goalIndex = this.data.goals.findIndex(goal => goal.id === goalId);
+        if (goalIndex === -1) {
+            console.error(`❌ Goal with ID ${goalId} not found`);
+            return false;
+        }
+
+        const goal = this.data.goals[goalIndex];
+        this.data.goals.splice(goalIndex, 1);
+        this.saveData();
+
+        console.log(`✅ Goal deleted: ${goal.description}`);
+        return true;
+    }
+
+    showGoals() {
+        // Update goal statuses first
+        this.updateGoalStatus();
+
+        const activeGoals = this.getActiveGoals();
+        const achievedGoals = this.data.achievedGoals || [];
+
+        console.log(`
+╔════════════════════════════════════════════════════════════╗
+║              🏆 WELLNESS GOALS & MILESTONES                ║
+╚════════════════════════════════════════════════════════════╝
+`);
+
+        if (activeGoals.length === 0 && achievedGoals.length === 0) {
+            console.log(`
+📋 No goals set yet!
+
+Get started by setting a wellness goal:
+  node daily-dashboard.js set-goal wellness 80 2025-12-31
+  node daily-dashboard.js set-goal exercise 30 2025-06-30
+
+Goal types: wellness, mood, sleep-duration, sleep-quality, exercise, medication
+`);
+            return;
+        }
+
+        // Display active goals
+        if (activeGoals.length > 0) {
+            console.log('🎯 Active Goals:\n');
+
+            activeGoals.forEach((goal, index) => {
+                const progress = this.checkGoalProgress(goal.id);
+                if (!progress) return;
+
+                const progressBar = this.createProgressBar(progress.current, progress.target, 30);
+                const daysText = progress.daysRemaining === 1 ? 'day' : 'days';
+                const statusEmoji = progress.achieved ? '✅' :
+                                   progress.onTrack === true ? '🟢' :
+                                   progress.onTrack === false ? '🔴' : '🟡';
+
+                console.log(`${index + 1}. ${statusEmoji} ${goal.description} (ID: ${goal.id})`);
+                console.log(`   ${progressBar} ${progress.progressPercentage.toFixed(1)}%`);
+                console.log(`   Current: ${this.formatGoalTarget(goal.type, progress.current.toFixed(1))} / Target: ${this.formatGoalTarget(goal.type, progress.target)}`);
+                console.log(`   ${progress.daysRemaining} ${daysText} remaining (${progress.daysElapsed} days elapsed)`);
+
+                // Show milestone progress
+                const milestones = Object.entries(goal.milestones)
+                    .filter(([_, achieved]) => achieved)
+                    .map(([pct]) => `${pct}%`)
+                    .join(', ');
+                if (milestones) {
+                    console.log(`   🎯 Milestones reached: ${milestones}`);
+                }
+
+                // Show on-track status
+                if (progress.onTrack === true) {
+                    console.log(`   ✅ On track to achieve!`);
+                } else if (progress.onTrack === false) {
+                    console.log(`   ⚠️  Behind schedule - increase effort!`);
+                }
+
+                console.log('');
+            });
+        }
+
+        // Display recently achieved goals
+        if (achievedGoals.length > 0) {
+            console.log('\n🏆 Recently Achieved Goals:\n');
+
+            const recentAchievements = achievedGoals.slice(-5).reverse();
+            recentAchievements.forEach((goal, index) => {
+                console.log(`${index + 1}. ✅ ${goal.description}`);
+                console.log(`   Achieved: ${goal.achievedDate}`);
+                console.log('');
+            });
+        }
+
+        console.log('────────────────────────────────────────────────────────────');
+        console.log(`\n📊 Summary: ${activeGoals.length} active, ${achievedGoals.length} achieved\n`);
+    }
 }
 
 // CLI Interface
@@ -1408,6 +1783,50 @@ if (require.main === module) {
             dashboard.showTrends(weeks);
             break;
 
+        case 'goals':
+        case 'goal':
+            dashboard.showGoals();
+            break;
+
+        case 'set-goal':
+            if (args.length < 4) {
+                console.error('❌ Usage: node daily-dashboard.js set-goal <type> <target> <date> [description]');
+                console.error('   Types: wellness, mood, sleep-duration, sleep-quality, exercise, medication');
+                console.error('   Example: node daily-dashboard.js set-goal wellness 80 2025-12-31 "Get healthier"');
+                process.exit(1);
+            }
+            dashboard.setGoal(args[1], args[2], args[3], args[4] || '');
+            break;
+
+        case 'delete-goal':
+            if (args.length < 2) {
+                console.error('❌ Usage: node daily-dashboard.js delete-goal <goal-id>');
+                process.exit(1);
+            }
+            dashboard.deleteGoal(parseInt(args[1]));
+            break;
+
+        case 'goal-progress':
+            if (args.length < 2) {
+                console.error('❌ Usage: node daily-dashboard.js goal-progress <goal-id>');
+                process.exit(1);
+            }
+            const progress = dashboard.checkGoalProgress(parseInt(args[1]));
+            if (progress) {
+                const goal = progress.goal;
+                console.log(`\n🎯 Goal Progress: ${goal.description}`);
+                console.log(`   ID: ${goal.id}`);
+                console.log(`   Type: ${goal.type}`);
+                console.log(`   Current: ${dashboard.formatGoalTarget(goal.type, progress.current.toFixed(1))}`);
+                console.log(`   Target: ${dashboard.formatGoalTarget(goal.type, progress.target)}`);
+                console.log(`   Progress: ${progress.progressPercentage.toFixed(1)}%`);
+                console.log(`   Days Remaining: ${progress.daysRemaining}`);
+                console.log(`   Days Elapsed: ${progress.daysElapsed}`);
+                console.log(`   On Track: ${progress.onTrack === true ? '✅ Yes' : progress.onTrack === false ? '❌ No' : '🟡 Uncertain'}`);
+                console.log('');
+            }
+            break;
+
         case 'help':
         default:
             console.log(`
@@ -1430,6 +1849,21 @@ COMMANDS:
   trends, trend, progress [weeks]
       Show wellness trends and progress over time (default: 8 weeks)
       Displays ASCII chart, component trends, and recommendations
+
+  goals, goal
+      Show all wellness goals and their progress
+      Displays active goals, milestones, and achievements
+
+  set-goal <type> <target> <date> [description]
+      Create a new wellness goal
+      Types: wellness, mood, sleep-duration, sleep-quality, exercise, medication
+      Example: set-goal wellness 80 2025-12-31
+
+  goal-progress <id>
+      Check detailed progress for a specific goal
+
+  delete-goal <id>
+      Delete a goal by its ID
 
   help
       Show this help message
@@ -1454,6 +1888,9 @@ EXAMPLES:
   node daily-dashboard.js correlations 60  # Analyze last 60 days
   node daily-dashboard.js trends
   node daily-dashboard.js trends 12        # Show 12 weeks of trends
+  node daily-dashboard.js goals            # View all goals
+  node daily-dashboard.js set-goal wellness 80 2025-12-31
+  node daily-dashboard.js goal-progress 1  # Check goal #1
             `);
             break;
     }

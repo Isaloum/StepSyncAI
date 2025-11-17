@@ -893,4 +893,326 @@ describe('Daily Dashboard', () => {
             });
         });
     });
+
+    describe('Goals & Milestones', () => {
+        describe('setGoal', () => {
+            test('creates a wellness goal successfully', () => {
+                const goal = dashboard.setGoal('wellness', 80, '2025-12-31', 'Reach 80% wellness');
+                expect(goal).toBeDefined();
+                expect(goal.type).toBe('wellness');
+                expect(goal.target).toBe(80);
+                expect(goal.targetDate).toBe('2025-12-31');
+                expect(goal.status).toBe('active');
+                expect(goal.id).toBe(1);
+            });
+
+            test('creates goal with default description', () => {
+                const goal = dashboard.setGoal('mood', 8, '2025-12-31');
+                expect(goal.description).toBe('Maintain average mood of 8/10');
+            });
+
+            test('validates goal type', () => {
+                const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+                const goal = dashboard.setGoal('invalid-type', 50, '2025-12-31');
+                expect(goal).toBeNull();
+                expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid goal type'));
+                consoleSpy.mockRestore();
+            });
+
+            test('validates target is positive number', () => {
+                const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+                const goal = dashboard.setGoal('wellness', -10, '2025-12-31');
+                expect(goal).toBeNull();
+                expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('positive number'));
+                consoleSpy.mockRestore();
+            });
+
+            test('validates wellness target range (0-100)', () => {
+                const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+                const goal = dashboard.setGoal('wellness', 150, '2025-12-31');
+                expect(goal).toBeNull();
+                expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('between 0-100'));
+                consoleSpy.mockRestore();
+            });
+
+            test('validates mood target range (1-10)', () => {
+                const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+                const goal = dashboard.setGoal('mood', 15, '2025-12-31');
+                expect(goal).toBeNull();
+                expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('between 1-10'));
+                consoleSpy.mockRestore();
+            });
+
+            test('validates target date is in future', () => {
+                const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+                const goal = dashboard.setGoal('wellness', 80, '2020-01-01');
+                expect(goal).toBeNull();
+                expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('must be in the future'));
+                consoleSpy.mockRestore();
+            });
+
+            test('validates target date format', () => {
+                const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+                const goal = dashboard.setGoal('wellness', 80, 'invalid-date');
+                expect(goal).toBeNull();
+                expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid target date'));
+                consoleSpy.mockRestore();
+            });
+
+            test('increments goal IDs correctly', () => {
+                const goal1 = dashboard.setGoal('wellness', 80, '2025-12-31');
+                const goal2 = dashboard.setGoal('mood', 8, '2025-12-31');
+                expect(goal1.id).toBe(1);
+                expect(goal2.id).toBe(2);
+            });
+
+            test('initializes milestones correctly', () => {
+                const goal = dashboard.setGoal('wellness', 80, '2025-12-31');
+                expect(goal.milestones).toEqual({
+                    '25': false,
+                    '50': false,
+                    '75': false,
+                    '100': false
+                });
+            });
+        });
+
+        describe('getActiveGoals', () => {
+            test('returns only active goals', () => {
+                dashboard.setGoal('wellness', 80, '2025-12-31');
+                dashboard.setGoal('mood', 8, '2025-12-31');
+
+                const activeGoals = dashboard.getActiveGoals();
+                expect(activeGoals.length).toBe(2);
+                activeGoals.forEach(goal => {
+                    expect(goal.status).toBe('active');
+                });
+            });
+
+            test('returns empty array when no goals', () => {
+                const activeGoals = dashboard.getActiveGoals();
+                expect(activeGoals).toEqual([]);
+            });
+        });
+
+        describe('getGoalById', () => {
+            test('retrieves goal by ID', () => {
+                const goal = dashboard.setGoal('wellness', 80, '2025-12-31');
+                const retrieved = dashboard.getGoalById(goal.id);
+                expect(retrieved).toEqual(goal);
+            });
+
+            test('returns undefined for non-existent ID', () => {
+                const retrieved = dashboard.getGoalById(999);
+                expect(retrieved).toBeUndefined();
+            });
+        });
+
+        describe('checkGoalProgress', () => {
+            test('calculates wellness goal progress', () => {
+                const today = new Date();
+                const futureDate = new Date(today);
+                futureDate.setDate(futureDate.getDate() + 30);
+
+                // Add some wellness data
+                dashboard.mentalHealth.data.moodLogs = [
+                    { rating: 7, timestamp: today.toISOString() }
+                ];
+
+                const goal = dashboard.setGoal('wellness', 80, futureDate.toISOString().split('T')[0]);
+                const progress = dashboard.checkGoalProgress(goal.id);
+
+                expect(progress).toBeDefined();
+                expect(progress.goal).toEqual(goal);
+                expect(progress.current).toBeGreaterThanOrEqual(0);
+                expect(progress.target).toBe(80);
+                expect(progress.progressPercentage).toBeGreaterThanOrEqual(0);
+                expect(progress.daysRemaining).toBeGreaterThan(0);
+            });
+
+            test('calculates mood goal progress', () => {
+                const today = new Date();
+                const futureDate = new Date(today);
+                futureDate.setDate(futureDate.getDate() + 30);
+
+                dashboard.mentalHealth.data.moodLogs = [
+                    { rating: 7, timestamp: today.toISOString() },
+                    { rating: 8, timestamp: today.toISOString() }
+                ];
+
+                const goal = dashboard.setGoal('mood', 8, futureDate.toISOString().split('T')[0]);
+                const progress = dashboard.checkGoalProgress(goal.id);
+
+                expect(progress).toBeDefined();
+                expect(progress.current).toBeCloseTo(7.5, 1);
+            });
+
+            test('calculates exercise goal progress', () => {
+                const today = new Date();
+                const todayStr = today.toISOString().split('T')[0];
+                const futureDate = new Date(today);
+                futureDate.setDate(futureDate.getDate() + 30);
+
+                dashboard.exercise.data.exercises = [
+                    { duration: 25, date: todayStr, timestamp: today.toISOString() }
+                ];
+
+                const goal = dashboard.setGoal('exercise', 30, futureDate.toISOString().split('T')[0]);
+                const progress = dashboard.checkGoalProgress(goal.id);
+
+                expect(progress).toBeDefined();
+                expect(progress.current).toBeGreaterThan(0);
+            });
+
+            test('returns null for non-existent goal', () => {
+                const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+                const progress = dashboard.checkGoalProgress(999);
+                expect(progress).toBeNull();
+                expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('not found'));
+                consoleSpy.mockRestore();
+            });
+
+            test('marks goal as achieved when progress >= 100%', () => {
+                const today = new Date();
+                const futureDate = new Date(today);
+                futureDate.setDate(futureDate.getDate() + 30);
+
+                // Set high mood to achieve goal
+                dashboard.mentalHealth.data.moodLogs = [
+                    { rating: 9, timestamp: today.toISOString() },
+                    { rating: 10, timestamp: today.toISOString() }
+                ];
+
+                const goal = dashboard.setGoal('mood', 8, futureDate.toISOString().split('T')[0]);
+                const progress = dashboard.checkGoalProgress(goal.id);
+
+                expect(progress.achieved).toBe(true);
+                expect(progress.progressPercentage).toBeGreaterThanOrEqual(100);
+            });
+        });
+
+        describe('deleteGoal', () => {
+            test('deletes goal successfully', () => {
+                const goal = dashboard.setGoal('wellness', 80, '2025-12-31');
+                const result = dashboard.deleteGoal(goal.id);
+
+                expect(result).toBe(true);
+                expect(dashboard.getGoalById(goal.id)).toBeUndefined();
+            });
+
+            test('returns false for non-existent goal', () => {
+                const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+                const result = dashboard.deleteGoal(999);
+                expect(result).toBe(false);
+                expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('not found'));
+                consoleSpy.mockRestore();
+            });
+        });
+
+        describe('updateGoalStatus', () => {
+            test('marks achieved goals', () => {
+                const today = new Date();
+                const futureDate = new Date(today);
+                futureDate.setDate(futureDate.getDate() + 30);
+
+                dashboard.mentalHealth.data.moodLogs = [
+                    { rating: 9, timestamp: today.toISOString() },
+                    { rating: 10, timestamp: today.toISOString() }
+                ];
+
+                const goal = dashboard.setGoal('mood', 8, futureDate.toISOString().split('T')[0]);
+                const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+                dashboard.updateGoalStatus();
+
+                expect(goal.status).toBe('achieved');
+                expect(goal.achievedDate).toBeDefined();
+                expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Goal achieved'));
+                consoleSpy.mockRestore();
+            });
+
+            test('detects 25% milestone', () => {
+                const today = new Date();
+                const futureDate = new Date(today);
+                futureDate.setDate(futureDate.getDate() + 30);
+
+                // Set data to reach 25% progress (wellness ~25%)
+                dashboard.mentalHealth.data.moodLogs = [
+                    { rating: 5, timestamp: today.toISOString() }
+                ];
+
+                const goal = dashboard.setGoal('wellness', 100, futureDate.toISOString().split('T')[0]);
+                const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+                dashboard.updateGoalStatus();
+
+                // Check if 25% milestone is reached
+                const progress = dashboard.checkGoalProgress(goal.id);
+                if (progress.progressPercentage >= 25) {
+                    expect(goal.milestones['25']).toBe(true);
+                }
+                consoleSpy.mockRestore();
+            });
+        });
+
+        describe('formatGoalTarget', () => {
+            test('formats wellness target', () => {
+                expect(dashboard.formatGoalTarget('wellness', 80)).toBe('80%');
+            });
+
+            test('formats mood target', () => {
+                expect(dashboard.formatGoalTarget('mood', 8)).toBe('8/10');
+            });
+
+            test('formats sleep-duration target', () => {
+                expect(dashboard.formatGoalTarget('sleep-duration', 8)).toBe('8h');
+            });
+
+            test('formats exercise target', () => {
+                expect(dashboard.formatGoalTarget('exercise', 30)).toBe('30 min/day');
+            });
+
+            test('formats medication target', () => {
+                expect(dashboard.formatGoalTarget('medication', 95)).toBe('95%');
+            });
+        });
+
+        describe('getDaysElapsed', () => {
+            test('calculates days elapsed correctly', () => {
+                const today = new Date();
+                const pastDate = new Date(today);
+                pastDate.setDate(pastDate.getDate() - 10);
+
+                const days = dashboard.getDaysElapsed(pastDate.toISOString().split('T')[0]);
+                expect(days).toBe(10);
+            });
+        });
+
+        describe('showGoals', () => {
+            test('displays message when no goals exist', () => {
+                const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+                dashboard.showGoals();
+                expect(consoleSpy).toHaveBeenCalled();
+                const output = consoleSpy.mock.calls.map(call => call[0]).join('\n');
+                expect(output).toContain('No goals set yet');
+                consoleSpy.mockRestore();
+            });
+
+            test('displays active goals', () => {
+                const today = new Date();
+                const futureDate = new Date(today);
+                futureDate.setDate(futureDate.getDate() + 30);
+
+                dashboard.setGoal('wellness', 80, futureDate.toISOString().split('T')[0]);
+
+                const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+                dashboard.showGoals();
+                expect(consoleSpy).toHaveBeenCalled();
+                const output = consoleSpy.mock.calls.map(call => call[0]).join('\n');
+                expect(output).toContain('Active Goals');
+                expect(output).toContain('WELLNESS GOALS & MILESTONES');
+                consoleSpy.mockRestore();
+            });
+        });
+    });
 });
