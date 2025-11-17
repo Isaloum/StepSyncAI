@@ -1,6 +1,6 @@
 # StepSyncAI - Health & Wellness Apps
 
-[![Tests](https://img.shields.io/badge/tests-900%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Tests](https://img.shields.io/badge/tests-920%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Coverage](https://img.shields.io/badge/coverage-87.21%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Branch Coverage](https://img.shields.io/badge/branch%20coverage-71.64%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
@@ -1180,6 +1180,158 @@ node daily-dashboard.js delete-goal 1
 ```
 Removes a goal you no longer want to track.
 
+### Wellness Insights & Pattern Detection 💡
+
+Get AI-like pattern detection across all wellness metrics with weekly insights reports and personalized predictions based on your unique data patterns.
+
+#### Quick Start
+
+```bash
+# Get 30-day insights report (default)
+node daily-dashboard.js insights
+
+# Analyze last 60 days
+node daily-dashboard.js insights 60
+
+# Alternative commands
+node daily-dashboard.js insight
+node daily-dashboard.js patterns
+```
+
+#### What's Analyzed
+
+**📅 Day of Week Patterns**:
+- Identifies your best and worst days of the week
+- Shows average wellness score for each day
+- Reveals which days tend to be challenging
+- Example: "Mondays average 55% wellness, Saturdays 85%"
+
+**📈 Tracking Consistency**:
+- Measures how consistently you log data
+- Separate tracking for mood, sleep, and exercise
+- Overall consistency percentage
+- Encourages daily logging for better insights
+
+**🔥 Current Streaks**:
+- Tracks consecutive days of logging
+- Separate streaks for mood, sleep, exercise
+- Celebrates week-long+ streaks
+- Motivates consistency
+
+**💡 Predictive Suggestions**:
+- Day-based: Extra self-care for challenging days
+- Consistency: Encouragement to log more frequently
+- Trend-based: Warnings if wellness declining
+- Positive reinforcement for improvements
+
+**📊 Trend Integration**:
+- Uses your wellness trends for predictions
+- Identifies improving/declining patterns
+- Suggests course corrections
+
+#### Example Insights Output
+
+```
+╔════════════════════════════════════════════════════════════╗
+║              💡 WELLNESS INSIGHTS & PATTERNS               ║
+╚════════════════════════════════════════════════════════════╝
+
+📊 Analysis Period: Last 30 days
+
+Current Wellness: 😊 72.3% - Good
+Weekly Change: ⬆️ +5.2%
+
+────────────────────────────────────────────────────────────
+
+📅 Day of Week Patterns:
+
+🌟 Best Day: Saturday (85.2% avg wellness)
+😞 Challenging Day: Monday (55.8% avg wellness)
+
+   Weekly Breakdown:
+   Sunday     [███████████████░] 80.5%
+   Monday     [███████░░░░░░░░░] 55.8%
+   Tuesday    [██████████░░░░░░] 65.0%
+   Wednesday  [███████████░░░░░] 68.5%
+   Thursday   [████████████░░░░] 72.0%
+   Friday     [██████████████░░] 78.5%
+   Saturday   [████████████████] 85.2%
+
+────────────────────────────────────────────────────────────
+
+📈 Tracking Consistency:
+
+   Mood Logging:     [████████████████░░░░] 80%
+   Sleep Logging:    [██████████████░░░░░░] 70%
+   Exercise Logging: [█████████░░░░░░░░░░░] 45%
+   Overall:          65% of data logged
+
+────────────────────────────────────────────────────────────
+
+🔥 Current Streaks:
+
+   🧠 Mood: 12 days 🌟
+   😴 Sleep: 8 days 🌟
+   🏃 Exercise: 4 days
+
+   🎉 Week-long streak! Consistency is key to wellness!
+
+────────────────────────────────────────────────────────────
+
+💡 Personalized Insights:
+
+   🔴 Mondays tend to be challenging (55.8% wellness). Plan extra self-care on Mondays.
+   🟡 Exercise logged only 45% of days. Even 10 minutes counts!
+   ✅ Saturdays are your best days (85.2% wellness)! What makes Saturdays great? Replicate that.
+   ✅ Wellness improving by 5.2%! Keep up the momentum!
+
+────────────────────────────────────────────────────────────
+
+📊 Trend: ⬆️ Improving
+   Recent weeks 8.3% higher than earlier weeks
+```
+
+#### Types of Insights Generated
+
+**Temporal Insights** (Day-Based):
+- High Priority 🔴: Challenging days < 50% wellness
+- Positive ✅: Best days > 70% wellness
+- Helps you plan around difficult days
+
+**Consistency Insights**:
+- Medium Priority 🟡: Logging < 50% of days
+- Encourages daily tracking
+- "You're logging mood only 45% of days. Daily tracking reveals better patterns."
+
+**Trend Insights**:
+- High Priority 🔴: Wellness declining
+- Positive ✅: Wellness improving
+- Includes percentage change
+- Provides specific suggestions
+
+#### Use Cases
+
+**Weekly Review**:
+```bash
+# Every Sunday, check insights
+node daily-dashboard.js insights
+```
+
+**Pattern Discovery**:
+- "Why do I feel worse on Mondays?"
+- "Which days should I schedule important tasks?"
+- "Am I tracking consistently enough?"
+
+**Motivation**:
+- Celebrate streaks
+- See improvement trends
+- Get positive reinforcement
+
+**Course Correction**:
+- Warnings about declining trends
+- Reminders to log more consistently
+- Suggestions for challenging days
+
 ### Tips for Best Results
 
 1. **Log Consistently**: The more data you track, the better insights
@@ -1619,13 +1771,14 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## 📈 Project Status
 
-**Version**: 3.8.0
+**Version**: 3.9.0
 **Status**: ✅ Active Development
 **Test Coverage**: 87.21%+ ⭐
 **Branch Coverage**: 71.64% ⭐ **MILESTONE ACHIEVED!** (3 modules at 70%+: Mental Health 70.75%, Medication 72.94%, Reminder 94.44% 🎯)
-**Tests**: 900 passing 🎉
+**Tests**: 920 passing 🎉
 **Latest Features**:
-- 🏆 **Goal Setting & Milestones** - Set wellness targets, track progress, celebrate achievements (NEW!)
+- 💡 **Wellness Insights** - AI-like pattern detection, best/worst days, streaks, predictive suggestions (NEW!)
+- 🏆 **Goal Setting & Milestones** - Set wellness targets, track progress, celebrate achievements
 - 📈 **Wellness Trends** - Visualize 8-week progress with ASCII charts & trend analysis
 - 🔗 **Correlation Analysis** - Discover how sleep, exercise & medication affect mood
 - 📊 **Daily Dashboard** - Unified wellness overview with scoring system

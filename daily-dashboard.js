@@ -1750,6 +1750,372 @@ Goal types: wellness, mood, sleep-duration, sleep-quality, exercise, medication
         console.log('────────────────────────────────────────────────────────────');
         console.log(`\n📊 Summary: ${activeGoals.length} active, ${achievedGoals.length} achieved\n`);
     }
+
+    // ==================== WELLNESS INSIGHTS ====================
+
+    detectWeeklyPatterns(days = 30) {
+        // Analyze patterns by day of week
+        const dayStats = {
+            0: { name: 'Sunday', moods: [], scores: [], exercises: [] },
+            1: { name: 'Monday', moods: [], scores: [], exercises: [] },
+            2: { name: 'Tuesday', moods: [], scores: [], exercises: [] },
+            3: { name: 'Wednesday', moods: [], scores: [], exercises: [] },
+            4: { name: 'Thursday', moods: [], scores: [], exercises: [] },
+            5: { name: 'Friday', moods: [], scores: [], exercises: [] },
+            6: { name: 'Saturday', moods: [], scores: [], exercises: [] }
+        };
+
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - days);
+
+        // Collect mood data by day of week
+        if (this.mentalHealth && this.mentalHealth.data.moodLogs) {
+            this.mentalHealth.data.moodLogs
+                .filter(log => new Date(log.timestamp) >= cutoffDate)
+                .forEach(log => {
+                    const dayOfWeek = new Date(log.timestamp).getDay();
+                    dayStats[dayOfWeek].moods.push(log.rating);
+                });
+        }
+
+        // Collect wellness scores by day of week
+        for (let i = 0; i < days; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0];
+            const dayOfWeek = date.getDay();
+
+            const dayScore = this.calculateDayScore(dateStr);
+            if (dayScore.totalScore > 0 || dayScore.maxScore > 0) {
+                dayStats[dayOfWeek].scores.push(dayScore.percentage);
+            }
+        }
+
+        // Collect exercise data by day of week
+        if (this.exercise && this.exercise.data.exercises) {
+            this.exercise.data.exercises
+                .filter(ex => new Date(ex.timestamp) >= cutoffDate)
+                .forEach(ex => {
+                    const dayOfWeek = new Date(ex.timestamp).getDay();
+                    dayStats[dayOfWeek].exercises.push(ex.duration);
+                });
+        }
+
+        // Calculate averages
+        const patterns = {};
+        Object.keys(dayStats).forEach(day => {
+            const stats = dayStats[day];
+            patterns[day] = {
+                name: stats.name,
+                avgMood: stats.moods.length > 0 ?
+                    stats.moods.reduce((a, b) => a + b, 0) / stats.moods.length : null,
+                avgScore: stats.scores.length > 0 ?
+                    stats.scores.reduce((a, b) => a + b, 0) / stats.scores.length : null,
+                avgExercise: stats.exercises.length > 0 ?
+                    stats.exercises.reduce((a, b) => a + b, 0) / stats.exercises.length : null,
+                dataPoints: Math.max(stats.moods.length, stats.scores.length, stats.exercises.length)
+            };
+        });
+
+        return patterns;
+    }
+
+    findBestWorstDays(patterns) {
+        const daysWithData = Object.values(patterns).filter(p => p.avgScore !== null);
+        if (daysWithData.length === 0) return null;
+
+        const bestDay = daysWithData.reduce((best, current) =>
+            current.avgScore > best.avgScore ? current : best
+        );
+
+        const worstDay = daysWithData.reduce((worst, current) =>
+            current.avgScore < worst.avgScore ? current : worst
+        );
+
+        return { bestDay, worstDay };
+    }
+
+    detectConsistencyPattern(days = 30) {
+        // Check how consistently user logs data
+        const today = new Date();
+        let daysWithMoodLog = 0;
+        let daysWithSleepLog = 0;
+        let daysWithExerciseLog = 0;
+
+        for (let i = 0; i < days; i++) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0];
+
+            // Check mood
+            if (this.getMoodDataForDate(dateStr)) daysWithMoodLog++;
+
+            // Check sleep
+            if (this.getSleepDataForDate(dateStr)) daysWithSleepLog++;
+
+            // Check exercise
+            if (this.getExerciseDataForDate(dateStr) > 0) daysWithExerciseLog++;
+        }
+
+        return {
+            moodConsistency: (daysWithMoodLog / days) * 100,
+            sleepConsistency: (daysWithSleepLog / days) * 100,
+            exerciseConsistency: (daysWithExerciseLog / days) * 100,
+            overallConsistency: ((daysWithMoodLog + daysWithSleepLog + daysWithExerciseLog) / (days * 3)) * 100
+        };
+    }
+
+    detectStreaks(days = 30) {
+        // Find current streaks for each tracker
+        const today = new Date();
+        const streaks = {
+            mood: 0,
+            sleep: 0,
+            exercise: 0
+        };
+
+        // Check mood streak
+        for (let i = 0; i < days; i++) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0];
+
+            if (this.getMoodDataForDate(dateStr)) {
+                streaks.mood++;
+            } else {
+                break;
+            }
+        }
+
+        // Check sleep streak
+        for (let i = 0; i < days; i++) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0];
+
+            if (this.getSleepDataForDate(dateStr)) {
+                streaks.sleep++;
+            } else {
+                break;
+            }
+        }
+
+        // Check exercise streak
+        for (let i = 0; i < days; i++) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0];
+
+            if (this.getExerciseDataForDate(dateStr) > 0) {
+                streaks.exercise++;
+            } else {
+                break;
+            }
+        }
+
+        return streaks;
+    }
+
+    generatePredictiveSuggestions(patterns, consistency, trends) {
+        const suggestions = [];
+
+        // Day-based suggestions
+        const bestWorst = this.findBestWorstDays(patterns);
+        if (bestWorst) {
+            if (bestWorst.worstDay.avgScore < 50) {
+                suggestions.push({
+                    type: 'temporal',
+                    priority: 'high',
+                    message: `${bestWorst.worstDay.name}s tend to be challenging (${bestWorst.worstDay.avgScore.toFixed(1)}% wellness). Plan extra self-care on ${bestWorst.worstDay.name}s.`
+                });
+            }
+
+            if (bestWorst.bestDay.avgScore > 70) {
+                suggestions.push({
+                    type: 'temporal',
+                    priority: 'positive',
+                    message: `${bestWorst.bestDay.name}s are your best days (${bestWorst.bestDay.avgScore.toFixed(1)}% wellness)! What makes ${bestWorst.bestDay.name}s great? Replicate that.`
+                });
+            }
+        }
+
+        // Consistency suggestions
+        if (consistency.moodConsistency < 50) {
+            suggestions.push({
+                type: 'consistency',
+                priority: 'medium',
+                message: `You're logging mood only ${consistency.moodConsistency.toFixed(0)}% of days. Daily tracking reveals better patterns.`
+            });
+        }
+
+        if (consistency.exerciseConsistency < 30) {
+            suggestions.push({
+                type: 'consistency',
+                priority: 'medium',
+                message: `Exercise logged only ${consistency.exerciseConsistency.toFixed(0)}% of days. Even 10 minutes counts!`
+            });
+        }
+
+        // Trend-based suggestions
+        if (trends && trends.trend === 'declining') {
+            suggestions.push({
+                type: 'trend',
+                priority: 'high',
+                message: `Wellness declining by ${Math.abs(trends.change).toFixed(1)}%. ${trends.suggestion || 'Focus on consistent tracking'}`
+            });
+        }
+
+        if (trends && trends.trend === 'improving') {
+            suggestions.push({
+                type: 'trend',
+                priority: 'positive',
+                message: `Wellness improving by ${trends.change.toFixed(1)}%! Keep up the momentum!`
+            });
+        }
+
+        return suggestions;
+    }
+
+    generateWeeklyInsights(days = 30) {
+        const patterns = this.detectWeeklyPatterns(days);
+        const consistency = this.detectConsistencyPattern(days);
+        const streaks = this.detectStreaks(days);
+        const trendsData = this.getTrendsData(4);
+        const trendAnalysis = this.analyzeWellnessTrend(trendsData);
+        const suggestions = this.generatePredictiveSuggestions(patterns, consistency, trendAnalysis);
+
+        // Get current wellness score
+        const currentScore = this.calculateWellnessScore(7);
+
+        // Calculate improvement from last week
+        let weeklyChange = null;
+        if (trendsData.length >= 2) {
+            const thisWeek = trendsData[trendsData.length - 1];
+            const lastWeek = trendsData[trendsData.length - 2];
+            weeklyChange = thisWeek.percentage - lastWeek.percentage;
+        }
+
+        return {
+            period: `Last ${days} days`,
+            currentScore,
+            weeklyChange,
+            patterns,
+            consistency,
+            streaks,
+            trendAnalysis,
+            suggestions,
+            generatedAt: new Date().toISOString()
+        };
+    }
+
+    showInsights(days = 30) {
+        const insights = this.generateWeeklyInsights(days);
+
+        console.log(`
+╔════════════════════════════════════════════════════════════╗
+║              💡 WELLNESS INSIGHTS & PATTERNS               ║
+╚════════════════════════════════════════════════════════════╝
+
+📊 Analysis Period: ${insights.period}
+`);
+
+        // Current status
+        const statusEmoji = this.getScoreEmoji(insights.currentScore.percentage);
+        console.log(`Current Wellness: ${statusEmoji} ${insights.currentScore.percentage.toFixed(1)}% - ${this.getScoreLabel(insights.currentScore.percentage)}`);
+
+        if (insights.weeklyChange !== null) {
+            const changeEmoji = insights.weeklyChange > 0 ? '⬆️' : insights.weeklyChange < 0 ? '⬇️' : '➡️';
+            const changeStr = insights.weeklyChange > 0 ? `+${insights.weeklyChange.toFixed(1)}%` : `${insights.weeklyChange.toFixed(1)}%`;
+            console.log(`Weekly Change: ${changeEmoji} ${changeStr}\n`);
+        }
+
+        console.log('────────────────────────────────────────────────────────────\n');
+
+        // Weekly patterns
+        const bestWorst = this.findBestWorstDays(insights.patterns);
+        if (bestWorst) {
+            console.log('📅 Day of Week Patterns:\n');
+            console.log(`🌟 Best Day: ${bestWorst.bestDay.name} (${bestWorst.bestDay.avgScore.toFixed(1)}% avg wellness)`);
+            console.log(`😞 Challenging Day: ${bestWorst.worstDay.name} (${bestWorst.worstDay.avgScore.toFixed(1)}% avg wellness)`);
+
+            // Show all days
+            console.log('\n   Weekly Breakdown:');
+            Object.values(insights.patterns)
+                .filter(p => p.avgScore !== null)
+                .forEach(day => {
+                    const bar = this.createProgressBar(day.avgScore, 100, 15);
+                    console.log(`   ${day.name.padEnd(10)} ${bar} ${day.avgScore.toFixed(1)}%`);
+                });
+
+            console.log('\n────────────────────────────────────────────────────────────\n');
+        }
+
+        // Consistency tracking
+        console.log('📈 Tracking Consistency:\n');
+        const moodBar = this.createProgressBar(insights.consistency.moodConsistency, 100, 20);
+        const sleepBar = this.createProgressBar(insights.consistency.sleepConsistency, 100, 20);
+        const exerciseBar = this.createProgressBar(insights.consistency.exerciseConsistency, 100, 20);
+
+        console.log(`   Mood Logging:     ${moodBar} ${insights.consistency.moodConsistency.toFixed(0)}%`);
+        console.log(`   Sleep Logging:    ${sleepBar} ${insights.consistency.sleepConsistency.toFixed(0)}%`);
+        console.log(`   Exercise Logging: ${exerciseBar} ${insights.consistency.exerciseConsistency.toFixed(0)}%`);
+        console.log(`   Overall:          ${insights.consistency.overallConsistency.toFixed(0)}% of data logged`);
+
+        console.log('\n────────────────────────────────────────────────────────────\n');
+
+        // Streaks
+        const maxStreak = Math.max(insights.streaks.mood, insights.streaks.sleep, insights.streaks.exercise);
+        if (maxStreak > 0) {
+            console.log('🔥 Current Streaks:\n');
+            if (insights.streaks.mood > 0) {
+                console.log(`   🧠 Mood: ${insights.streaks.mood} day${insights.streaks.mood > 1 ? 's' : ''} ${insights.streaks.mood >= 7 ? '🌟' : ''}`);
+            }
+            if (insights.streaks.sleep > 0) {
+                console.log(`   😴 Sleep: ${insights.streaks.sleep} day${insights.streaks.sleep > 1 ? 's' : ''} ${insights.streaks.sleep >= 7 ? '🌟' : ''}`);
+            }
+            if (insights.streaks.exercise > 0) {
+                console.log(`   🏃 Exercise: ${insights.streaks.exercise} day${insights.streaks.exercise > 1 ? 's' : ''} ${insights.streaks.exercise >= 7 ? '🌟' : ''}`);
+            }
+
+            if (maxStreak >= 7) {
+                console.log('\n   🎉 Week-long streak! Consistency is key to wellness!');
+            }
+
+            console.log('\n────────────────────────────────────────────────────────────\n');
+        }
+
+        // Suggestions
+        if (insights.suggestions.length > 0) {
+            console.log('💡 Personalized Insights:\n');
+
+            const highPriority = insights.suggestions.filter(s => s.priority === 'high');
+            const mediumPriority = insights.suggestions.filter(s => s.priority === 'medium');
+            const positive = insights.suggestions.filter(s => s.priority === 'positive');
+
+            highPriority.forEach(s => {
+                console.log(`   🔴 ${s.message}`);
+            });
+
+            mediumPriority.forEach(s => {
+                console.log(`   🟡 ${s.message}`);
+            });
+
+            positive.forEach(s => {
+                console.log(`   ✅ ${s.message}`);
+            });
+
+            console.log('\n────────────────────────────────────────────────────────────\n');
+        }
+
+        // Trending insight
+        if (insights.trendAnalysis && insights.trendAnalysis.trend !== 'insufficient') {
+            console.log(`📊 Trend: ${insights.trendAnalysis.emoji} ${insights.trendAnalysis.trend.charAt(0).toUpperCase() + insights.trendAnalysis.trend.slice(1)}`);
+            if (insights.trendAnalysis.change) {
+                console.log(`   Recent weeks ${Math.abs(insights.trendAnalysis.change).toFixed(1)}% ${insights.trendAnalysis.change > 0 ? 'higher' : 'lower'} than earlier weeks`);
+            }
+            console.log('');
+        }
+    }
 }
 
 // CLI Interface
@@ -1827,6 +2193,13 @@ if (require.main === module) {
             }
             break;
 
+        case 'insights':
+        case 'insight':
+        case 'patterns':
+            const insightDays = args[1] ? parseInt(args[1]) : 30;
+            dashboard.showInsights(insightDays);
+            break;
+
         case 'help':
         default:
             console.log(`
@@ -1865,6 +2238,10 @@ COMMANDS:
   delete-goal <id>
       Delete a goal by its ID
 
+  insights, insight, patterns [days]
+      AI-like pattern detection and weekly insights (default: 30 days)
+      Shows best/worst days, consistency tracking, streaks, and predictions
+
   help
       Show this help message
 
@@ -1891,6 +2268,8 @@ EXAMPLES:
   node daily-dashboard.js goals            # View all goals
   node daily-dashboard.js set-goal wellness 80 2025-12-31
   node daily-dashboard.js goal-progress 1  # Check goal #1
+  node daily-dashboard.js insights         # Get weekly insights
+  node daily-dashboard.js insights 60      # 60-day pattern analysis
             `);
             break;
     }

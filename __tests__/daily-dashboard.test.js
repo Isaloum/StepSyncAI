@@ -1215,4 +1215,348 @@ describe('Daily Dashboard', () => {
             });
         });
     });
+
+    describe('Wellness Insights', () => {
+        describe('detectWeeklyPatterns', () => {
+            test('analyzes patterns by day of week', () => {
+                const today = new Date();
+
+                // Initialize moodLogs array
+                dashboard.mentalHealth.data.moodLogs = [];
+
+                // Add data for different days of the week
+                for (let i = 0; i < 14; i++) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    const dayOfWeek = date.getDay();
+
+                    dashboard.mentalHealth.data.moodLogs.push({
+                        rating: dayOfWeek === 0 ? 9 : 7, // Sunday is best
+                        timestamp: date.toISOString()
+                    });
+                }
+
+                const patterns = dashboard.detectWeeklyPatterns(14);
+
+                expect(patterns).toBeDefined();
+                expect(patterns['0'].name).toBe('Sunday');
+                expect(patterns['0'].avgMood).toBeGreaterThan(patterns['1'].avgMood);
+            });
+
+            test('returns null avgScore when no data', () => {
+                const patterns = dashboard.detectWeeklyPatterns(30);
+
+                Object.values(patterns).forEach(day => {
+                    expect(day.avgMood).toBeNull();
+                });
+            });
+
+            test('calculates exercise averages by day', () => {
+                const today = new Date();
+                const todayStr = today.toISOString().split('T')[0];
+
+                dashboard.exercise.data.exercises = [
+                    { duration: 30, date: todayStr, timestamp: today.toISOString() },
+                    { duration: 40, date: todayStr, timestamp: today.toISOString() }
+                ];
+
+                const patterns = dashboard.detectWeeklyPatterns(7);
+                const todayDayOfWeek = today.getDay();
+
+                expect(patterns[todayDayOfWeek].avgExercise).toBe(35); // (30+40)/2
+            });
+        });
+
+        describe('findBestWorstDays', () => {
+            test('identifies best and worst days', () => {
+                const patterns = {
+                    '0': { name: 'Sunday', avgScore: 80 },
+                    '1': { name: 'Monday', avgScore: 50 },
+                    '2': { name: 'Tuesday', avgScore: 70 },
+                    '3': { name: 'Wednesday', avgScore: null }
+                };
+
+                const bestWorst = dashboard.findBestWorstDays(patterns);
+
+                expect(bestWorst).toBeDefined();
+                expect(bestWorst.bestDay.name).toBe('Sunday');
+                expect(bestWorst.bestDay.avgScore).toBe(80);
+                expect(bestWorst.worstDay.name).toBe('Monday');
+                expect(bestWorst.worstDay.avgScore).toBe(50);
+            });
+
+            test('returns null when no data', () => {
+                const patterns = {
+                    '0': { name: 'Sunday', avgScore: null },
+                    '1': { name: 'Monday', avgScore: null }
+                };
+
+                const bestWorst = dashboard.findBestWorstDays(patterns);
+                expect(bestWorst).toBeNull();
+            });
+        });
+
+        describe('detectConsistencyPattern', () => {
+            test('calculates logging consistency', () => {
+                const today = new Date();
+
+                // Initialize moodLogs array
+                dashboard.mentalHealth.data.moodLogs = [];
+
+                // Log mood for 20 out of 30 days
+                for (let i = 0; i < 20; i++) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    dashboard.mentalHealth.data.moodLogs.push({
+                        rating: 7,
+                        timestamp: date.toISOString()
+                    });
+                }
+
+                const consistency = dashboard.detectConsistencyPattern(30);
+
+                expect(consistency.moodConsistency).toBeCloseTo(66.7, 1); // 20/30 * 100
+                expect(consistency.overallConsistency).toBeGreaterThan(0);
+            });
+
+            test('returns 0% when no data', () => {
+                const consistency = dashboard.detectConsistencyPattern(30);
+
+                expect(consistency.moodConsistency).toBe(0);
+                expect(consistency.sleepConsistency).toBe(0);
+                expect(consistency.exerciseConsistency).toBe(0);
+            });
+        });
+
+        describe('detectStreaks', () => {
+            test('detects current mood streak', () => {
+                const today = new Date();
+
+                // Initialize moodLogs array
+                dashboard.mentalHealth.data.moodLogs = [];
+
+                // Add 5 consecutive days of mood logs
+                for (let i = 0; i < 5; i++) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    dashboard.mentalHealth.data.moodLogs.push({
+                        rating: 7,
+                        timestamp: date.toISOString()
+                    });
+                }
+
+                const streaks = dashboard.detectStreaks(30);
+
+                expect(streaks.mood).toBe(5);
+            });
+
+            test('breaks streak when data missing', () => {
+                const today = new Date();
+
+                // Initialize moodLogs array
+                dashboard.mentalHealth.data.moodLogs = [];
+
+                // Add mood log for today and 2 days ago (skip yesterday)
+                dashboard.mentalHealth.data.moodLogs.push({
+                    rating: 7,
+                    timestamp: today.toISOString()
+                });
+
+                const twoDaysAgo = new Date(today);
+                twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+                dashboard.mentalHealth.data.moodLogs.push({
+                    rating: 7,
+                    timestamp: twoDaysAgo.toISOString()
+                });
+
+                const streaks = dashboard.detectStreaks(30);
+
+                expect(streaks.mood).toBe(1); // Only today counts
+            });
+
+            test('returns 0 for all streaks when no data', () => {
+                const streaks = dashboard.detectStreaks(30);
+
+                expect(streaks.mood).toBe(0);
+                expect(streaks.sleep).toBe(0);
+                expect(streaks.exercise).toBe(0);
+            });
+        });
+
+        describe('generatePredictiveSuggestions', () => {
+            test('generates day-based suggestions', () => {
+                const patterns = {
+                    '0': { name: 'Sunday', avgScore: 45 }, // Low score
+                    '1': { name: 'Monday', avgScore: 80 }  // High score
+                };
+                const consistency = { moodConsistency: 90, exerciseConsistency: 90 };
+                const trends = { trend: 'stable' };
+
+                const suggestions = dashboard.generatePredictiveSuggestions(patterns, consistency, trends);
+
+                expect(suggestions.length).toBeGreaterThan(0);
+                const tempSuggestion = suggestions.find(s => s.type === 'temporal');
+                expect(tempSuggestion).toBeDefined();
+            });
+
+            test('generates consistency suggestions', () => {
+                const patterns = {};
+                const consistency = {
+                    moodConsistency: 30, // Low
+                    exerciseConsistency: 20 // Very low
+                };
+                const trends = { trend: 'stable' };
+
+                const suggestions = dashboard.generatePredictiveSuggestions(patterns, consistency, trends);
+
+                const consistencySuggestions = suggestions.filter(s => s.type === 'consistency');
+                expect(consistencySuggestions.length).toBeGreaterThan(0);
+            });
+
+            test('generates trend-based suggestions', () => {
+                const patterns = {};
+                const consistency = { moodConsistency: 90, exerciseConsistency: 90 };
+                const trends = { trend: 'declining', change: -15 };
+
+                const suggestions = dashboard.generatePredictiveSuggestions(patterns, consistency, trends);
+
+                const trendSuggestion = suggestions.find(s => s.type === 'trend' && s.priority === 'high');
+                expect(trendSuggestion).toBeDefined();
+            });
+
+            test('generates positive suggestions for improving trends', () => {
+                const patterns = {};
+                const consistency = { moodConsistency: 90, exerciseConsistency: 90 };
+                const trends = { trend: 'improving', change: 12 };
+
+                const suggestions = dashboard.generatePredictiveSuggestions(patterns, consistency, trends);
+
+                const positiveSuggestion = suggestions.find(s => s.priority === 'positive');
+                expect(positiveSuggestion).toBeDefined();
+            });
+        });
+
+        describe('generateWeeklyInsights', () => {
+            test('generates comprehensive insights', () => {
+                const today = new Date();
+
+                // Initialize moodLogs array
+                dashboard.mentalHealth.data.moodLogs = [];
+
+                // Add some data
+                for (let i = 0; i < 14; i++) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    dashboard.mentalHealth.data.moodLogs.push({
+                        rating: 7,
+                        timestamp: date.toISOString()
+                    });
+                }
+
+                const insights = dashboard.generateWeeklyInsights(30);
+
+                expect(insights).toBeDefined();
+                expect(insights.period).toBe('Last 30 days');
+                expect(insights.currentScore).toBeDefined();
+                expect(insights.patterns).toBeDefined();
+                expect(insights.consistency).toBeDefined();
+                expect(insights.streaks).toBeDefined();
+                expect(insights.suggestions).toBeDefined();
+                expect(insights.generatedAt).toBeDefined();
+            });
+
+            test('calculates weekly change', () => {
+                const insights = dashboard.generateWeeklyInsights(30);
+
+                if (insights.weeklyChange !== null) {
+                    expect(typeof insights.weeklyChange).toBe('number');
+                }
+            });
+        });
+
+        describe('showInsights', () => {
+            test('displays insights with sufficient data', () => {
+                const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+                const today = new Date();
+                dashboard.mentalHealth.data.moodLogs = [];
+                for (let i = 0; i < 14; i++) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    dashboard.mentalHealth.data.moodLogs.push({
+                        rating: 7,
+                        timestamp: date.toISOString()
+                    });
+                }
+
+                dashboard.showInsights(30);
+
+                expect(consoleSpy).toHaveBeenCalled();
+                const output = consoleSpy.mock.calls.map(call => call[0]).join('\n');
+                expect(output).toContain('WELLNESS INSIGHTS & PATTERNS');
+                consoleSpy.mockRestore();
+            });
+
+            test('displays insights even with minimal data', () => {
+                const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+                const emptyDashboard = new DailyDashboard();
+
+                emptyDashboard.showInsights(30);
+
+                expect(consoleSpy).toHaveBeenCalled();
+                const output = consoleSpy.mock.calls.map(call => call[0]).join('\n');
+                expect(output).toContain('WELLNESS INSIGHTS & PATTERNS');
+                consoleSpy.mockRestore();
+            });
+
+            test('displays best/worst days when data available', () => {
+                const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+                const today = new Date();
+                dashboard.mentalHealth.data.moodLogs = [];
+
+                // Add varied data for different days
+                for (let i = 0; i < 21; i++) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    const dayOfWeek = date.getDay();
+
+                    dashboard.mentalHealth.data.moodLogs.push({
+                        rating: dayOfWeek === 0 ? 9 : 6, // Sunday high, others low
+                        timestamp: date.toISOString()
+                    });
+                }
+
+                dashboard.showInsights(30);
+
+                const output = consoleSpy.mock.calls.map(call => call[0]).join('\n');
+                expect(output).toContain('Best Day');
+                expect(output).toContain('Challenging Day');
+                consoleSpy.mockRestore();
+            });
+
+            test('displays streaks when present', () => {
+                const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+                const today = new Date();
+                dashboard.mentalHealth.data.moodLogs = [];
+
+                // Add 10 consecutive days
+                for (let i = 0; i < 10; i++) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    dashboard.mentalHealth.data.moodLogs.push({
+                        rating: 7,
+                        timestamp: date.toISOString()
+                    });
+                }
+
+                dashboard.showInsights(30);
+
+                const output = consoleSpy.mock.calls.map(call => call[0]).join('\n');
+                expect(output).toContain('Current Streaks');
+                consoleSpy.mockRestore();
+            });
+        });
+    });
 });
