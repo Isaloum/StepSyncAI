@@ -1015,7 +1015,7 @@ describe('MedicationTracker', () => {
       });
 
       test('should calculate days remaining for twice-daily medication', async () => {
-        await new Promise(resolve => setTimeout(resolve, 1));
+        await new Promise(resolve => setTimeout(resolve, 10));
         const med2 = tracker.addMedication('Med2', '50mg', 'twice-daily', '08:00,20:00');
         tracker.setRefillInfo(med2.id, 60, 1);
         const updated = tracker.data.medications.find(m => m.id === med2.id);
@@ -1026,7 +1026,7 @@ describe('MedicationTracker', () => {
       });
 
       test('should calculate days remaining for weekly medication', async () => {
-        await new Promise(resolve => setTimeout(resolve, 1));
+        await new Promise(resolve => setTimeout(resolve, 15));
         const med3 = tracker.addMedication('Med3', '25mg', 'weekly', '08:00');
         tracker.setRefillInfo(med3.id, 4, 1);
         const updated = tracker.data.medications.find(m => m.id === med3.id);
@@ -1085,9 +1085,14 @@ describe('MedicationTracker', () => {
       });
 
       test('should return false when refill tracking not enabled', async () => {
-        // Wait 1ms to ensure different timestamp
-        await new Promise(resolve => setTimeout(resolve, 1));
+        // Wait 5ms to ensure different timestamp
+        await new Promise(resolve => setTimeout(resolve, 5));
         const med2 = tracker.addMedication('Med2', '50mg', 'daily', '08:00');
+
+        // Verify no refill info
+        const found = tracker.data.medications.find(m => m.id === med2.id);
+        expect(found.pillCount).toBeUndefined();
+
         const result = tracker.updatePillCount(med2.id, -1);
 
         expect(result).toBe(false);
@@ -1169,7 +1174,7 @@ describe('MedicationTracker', () => {
     describe('showRefillStatus', () => {
       test('should display refill status for all medications', async () => {
         tracker.setRefillInfo(medication.id, 30, 1, 7);
-        await new Promise(resolve => setTimeout(resolve, 1));
+        await new Promise(resolve => setTimeout(resolve, 20));
         const med2 = tracker.addMedication('Med2', '50mg', 'daily', '08:00');
         tracker.setRefillInfo(med2.id, 5, 1, 7);
 
@@ -1192,10 +1197,10 @@ describe('MedicationTracker', () => {
 
       test('should categorize medications by status', async () => {
         tracker.setRefillInfo(medication.id, 0, 1, 7); // OUT
-        await new Promise(resolve => setTimeout(resolve, 1));
+        await new Promise(resolve => setTimeout(resolve, 25));
         const med2 = tracker.addMedication('Med2', '50mg', 'daily', '08:00');
         tracker.setRefillInfo(med2.id, 5, 1, 7); // LOW
-        await new Promise(resolve => setTimeout(resolve, 1));
+        await new Promise(resolve => setTimeout(resolve, 30));
         const med3 = tracker.addMedication('Med3', '25mg', 'daily', '08:00');
         tracker.setRefillInfo(med3.id, 30, 1, 7); // OK
 
