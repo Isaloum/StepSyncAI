@@ -1559,4 +1559,304 @@ describe('Daily Dashboard', () => {
             });
         });
     });
+
+    describe('Export & Reporting', () => {
+        let dashboard;
+        let fs;
+
+        beforeAll(() => {
+            // Get the real fs module for export tests
+            fs = jest.requireActual('fs');
+            // Replace the mocked fs methods with real ones in the test scope
+            jest.spyOn(require('fs'), 'writeFileSync').mockImplementation((...args) => fs.writeFileSync(...args));
+            jest.spyOn(require('fs'), 'readFileSync').mockImplementation((...args) => fs.readFileSync(...args));
+            jest.spyOn(require('fs'), 'existsSync').mockImplementation((...args) => fs.existsSync(...args));
+            jest.spyOn(require('fs'), 'unlinkSync').mockImplementation((...args) => fs.unlinkSync(...args));
+            jest.spyOn(require('fs'), 'readdirSync').mockImplementation((...args) => fs.readdirSync(...args));
+        });
+
+        afterAll(() => {
+            jest.restoreAllMocks();
+        });
+
+        beforeEach(() => {
+            dashboard = new DailyDashboard('test-dashboard-export.json');
+            dashboard.mentalHealth.data.moodLogs = [];
+            dashboard.sleep.data.sleepEntries = [];
+            dashboard.exercise.data.exercises = [];
+
+            // Add sample data for export testing
+            const today = new Date();
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toISOString();
+                const datePart = date.toISOString().split('T')[0];
+
+                dashboard.mentalHealth.data.moodLogs.push({
+                    rating: 7 + i % 3,
+                    notes: `Day ${i} notes`,
+                    timestamp: dateStr
+                });
+
+                dashboard.sleep.data.sleepEntries.push({
+                    duration: '7.5',
+                    quality: 8,
+                    notes: `Sleep ${i}`,
+                    timestamp: dateStr
+                });
+
+                dashboard.exercise.data.exercises.push({
+                    type: 'Running',
+                    duration: 30,
+                    intensity: 'moderate',
+                    timestamp: dateStr,
+                    date: datePart
+                });
+            }
+        });
+
+        afterEach(() => {
+            // Clean up test files
+            const files = [
+                'test-dashboard-export.json',
+                'test-export.json',
+                'test-export.csv',
+                'test-report.txt'
+            ];
+            files.forEach(file => {
+                if (fs.existsSync(file)) {
+                    fs.unlinkSync(file);
+                }
+            });
+        });
+
+        describe('gatherExportData', () => {
+            test('gathers comprehensive export data', () => {
+                const data = dashboard.gatherExportData(7);
+
+                expect(data).toHaveProperty('exportInfo');
+                expect(data).toHaveProperty('summary');
+                expect(data).toHaveProperty('dailyRecords');
+                expect(data).toHaveProperty('goals');
+                expect(data).toHaveProperty('insights');
+                expect(data).toHaveProperty('trends');
+                expect(data).toHaveProperty('correlations');
+
+                expect(data.exportInfo.daysIncluded).toBe(7);
+                expect(data.dailyRecords).toHaveLength(7);
+            });
+
+            test('includes daily records with all data types', () => {
+                const data = dashboard.gatherExportData(7);
+                const firstRecord = data.dailyRecords[0];
+
+                expect(firstRecord).toHaveProperty('date');
+                expect(firstRecord).toHaveProperty('dayOfWeek');
+                expect(firstRecord).toHaveProperty('mood');
+                expect(firstRecord).toHaveProperty('sleep');
+                expect(firstRecord).toHaveProperty('exercise');
+                expect(firstRecord).toHaveProperty('wellnessScore');
+            });
+
+            test('handles missing data gracefully', () => {
+                dashboard.mentalHealth.data.moodLogs = [];
+                dashboard.sleep.data.sleepEntries = [];
+                dashboard.exercise.data.exercises = [];
+
+                const data = dashboard.gatherExportData(7);
+                const firstRecord = data.dailyRecords[0];
+
+                expect(firstRecord.mood).toBeNull();
+                expect(firstRecord.sleep).toBeNull();
+                expect(firstRecord.exercise).toBeNull();
+            });
+        });
+
+        describe('calculateWellnessSummary', () => {
+            test('calculates accurate summary statistics', () => {
+                const summary = dashboard.calculateWellnessSummary(7);
+
+                expect(summary.totalDays).toBe(7);
+                expect(summary.moodStats.logs).toBe(7);
+                expect(summary.sleepStats.logs).toBe(7);
+                expect(summary.exerciseStats.activeDays).toBe(7);
+                expect(parseFloat(summary.moodStats.average)).toBeGreaterThan(0);
+                expect(parseFloat(summary.sleepStats.averageDuration)).toBe(7.5);
+            });
+
+            test('returns zeros when no data available', () => {
+                dashboard.mentalHealth.data.moodLogs = [];
+                dashboard.sleep.data.sleepEntries = [];
+                dashboard.exercise.data.exercises = [];
+
+                const summary = dashboard.calculateWellnessSummary(7);
+
+                expect(summary.moodStats.average).toBe(0);
+                expect(summary.sleepStats.averageDuration).toBe(0);
+                expect(summary.exerciseStats.averageMinutes).toBe(0);
+            });
+        });
+
+        describe('exportToJSON', () => {
+            test('exports data to JSON file successfully', () => {
+                const filename = 'test-export.json';
+
+                const result = dashboard.exportToJSON(7, filename);
+
+                expect(result).toBe(true);
+                expect(fs.existsSync(filename)).toBe(true);
+
+                const content = JSON.parse(fs.readFileSync(filename, 'utf8'));
+                expect(content).toHaveProperty('exportInfo');
+                expect(content).toHaveProperty('dailyRecords');
+                expect(content.dailyRecords).toHaveLength(7);
+            });
+
+            test('uses default filename when not provided', () => {
+                const result = dashboard.exportToJSON(7);
+
+                expect(result).toBe(true);
+
+                // Find the generated file
+                const files = fs.readdirSync('.');
+                const exportFile = files.find(f => f.startsWith('wellness-export-') && f.endsWith('.json'));
+                expect(exportFile).toBeTruthy();
+
+                // Clean up
+                if (exportFile) fs.unlinkSync(exportFile);
+            });
+
+            test('includes insights and trends in export', () => {
+                const filename = 'test-export.json';
+
+                dashboard.exportToJSON(7, filename);
+                const content = JSON.parse(fs.readFileSync(filename, 'utf8'));
+
+                expect(content.insights).toBeDefined();
+                expect(content.trends).toBeDefined();
+                expect(content.correlations).toBeDefined();
+            });
+        });
+
+        describe('exportToCSV', () => {
+            test('exports data to CSV file successfully', () => {
+                const filename = 'test-export.csv';
+
+                const result = dashboard.exportToCSV(7, filename);
+
+                expect(result).toBe(true);
+                expect(fs.existsSync(filename)).toBe(true);
+
+                const content = fs.readFileSync(filename, 'utf8');
+                const lines = content.split('\n');
+
+                // Header + 7 data rows
+                expect(lines.length).toBeGreaterThanOrEqual(8);
+
+                // Check header
+                expect(lines[0]).toContain('Date');
+                expect(lines[0]).toContain('Wellness Score');
+                expect(lines[0]).toContain('Mood Rating');
+            });
+
+            test('properly escapes CSV content', () => {
+                const filename = 'test-export.csv';
+
+                // Add data with special characters
+                dashboard.mentalHealth.data.moodLogs[0].notes = 'Has "quotes" in it';
+
+                dashboard.exportToCSV(7, filename);
+                const content = fs.readFileSync(filename, 'utf8');
+
+                // Quotes should be escaped
+                expect(content).toContain('""quotes""');
+            });
+
+            test('handles empty exercise data', () => {
+                const filename = 'test-export.csv';
+
+                dashboard.exercise.data.exercises = [];
+
+                const result = dashboard.exportToCSV(7, filename);
+                expect(result).toBe(true);
+
+                const content = fs.readFileSync(filename, 'utf8');
+                expect(content).toBeTruthy();
+            });
+        });
+
+        describe('generateReport', () => {
+            test('generates comprehensive text report', () => {
+                const filename = 'test-report.txt';
+
+                const result = dashboard.generateReport(7, filename);
+
+                expect(result).toBe(true);
+                expect(fs.existsSync(filename)).toBe(true);
+
+                const content = fs.readFileSync(filename, 'utf8');
+                expect(content).toContain('WELLNESS REPORT');
+                expect(content).toContain('EXECUTIVE SUMMARY');
+                expect(content).toContain('Average Wellness Score');
+            });
+
+            test('includes all major sections in report', () => {
+                const filename = 'test-report.txt';
+
+                // Add a goal for testing
+                dashboard.data.goals = [{
+                    id: 1,
+                    type: 'wellness',
+                    target: 80,
+                    targetDate: '2025-12-31',
+                    description: 'Test goal',
+                    createdDate: '2025-01-01'
+                }];
+
+                dashboard.generateReport(7, filename);
+                const content = fs.readFileSync(filename, 'utf8');
+
+                expect(content).toContain('EXECUTIVE SUMMARY');
+                expect(content).toContain('GOALS & MILESTONES');
+                expect(content).toContain('WELLNESS INSIGHTS');
+                // Correlation analysis might not appear with minimal test data
+                // expect(content).toContain('CORRELATION ANALYSIS');
+            });
+
+            test('formats statistics correctly in report', () => {
+                const filename = 'test-report.txt';
+
+                dashboard.generateReport(7, filename);
+                const content = fs.readFileSync(filename, 'utf8');
+
+                expect(content).toContain('Mood Average:');
+                expect(content).toContain('Sleep Duration:');
+                expect(content).toContain('Exercise:');
+            });
+
+            test('includes insights suggestions when available', () => {
+                const filename = 'test-report.txt';
+
+                dashboard.generateReport(7, filename);
+                const content = fs.readFileSync(filename, 'utf8');
+
+                expect(content).toContain('WELLNESS INSIGHTS');
+            });
+
+            test('handles reports with minimal data', () => {
+                const filename = 'test-report.txt';
+
+                dashboard.mentalHealth.data.moodLogs = [];
+                dashboard.sleep.data.sleepEntries = [];
+                dashboard.exercise.data.exercises = [];
+
+                const result = dashboard.generateReport(7, filename);
+                expect(result).toBe(true);
+
+                const content = fs.readFileSync(filename, 'utf8');
+                expect(content).toContain('WELLNESS REPORT');
+            });
+        });
+    });
 });

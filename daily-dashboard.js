@@ -2116,6 +2116,615 @@ Goal types: wellness, mood, sleep-duration, sleep-quality, exercise, medication
             console.log('');
         }
     }
+
+    // ========================================
+    // Export & Reporting
+    // ========================================
+
+    /**
+     * Gather trends data for export
+     */
+    gatherTrendsForExport(weeks = 8) {
+        const trendsData = this.getTrendsData(weeks);
+        const validWeeks = trendsData.filter(w => w.daysWithData > 0);
+
+        if (validWeeks.length === 0) {
+            return { trend: 'insufficient', message: 'No data available' };
+        }
+
+        const trendAnalysis = this.analyzeWellnessTrend(trendsData);
+
+        // Component trends
+        const componentTrends = {};
+        const components = ['mood', 'sleep', 'exercise', 'medication'];
+
+        components.forEach(comp => {
+            const compData = validWeeks.map(w => w[comp]).filter(v => v !== null);
+            if (compData.length >= 2) {
+                const recent = compData.slice(-Math.ceil(compData.length / 2));
+                const earlier = compData.slice(0, Math.ceil(compData.length / 2));
+
+                const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
+                const earlierAvg = earlier.reduce((a, b) => a + b, 0) / earlier.length;
+
+                const change = recentAvg - earlierAvg;
+                let trend = 'stable';
+                let emoji = '➡️';
+
+                if (change > 2) {
+                    trend = 'improving';
+                    emoji = '📈';
+                } else if (change < -2) {
+                    trend = 'declining';
+                    emoji = '📉';
+                }
+
+                componentTrends[comp] = { trend, emoji, change: change.toFixed(1) };
+            }
+        });
+
+        return {
+            ...trendAnalysis,
+            componentTrends,
+            weeklyData: validWeeks
+        };
+    }
+
+    /**
+     * Gather correlations data for export
+     */
+    gatherCorrelationsForExport(days = 30) {
+        const findings = [];
+
+        // Sleep-Mood Correlation
+        const sleepMood = this.analyzeSleepMoodCorrelation(days);
+        if (sleepMood && !sleepMood.insufficient) {
+            if (sleepMood.durationCorrelation !== null) {
+                findings.push({
+                    factor: 'Sleep Duration',
+                    correlation: sleepMood.durationCorrelation,
+                    strength: this.getCorrelationStrength(sleepMood.durationCorrelation),
+                    description: this.interpretSleepDurationCorrelation(sleepMood.durationCorrelation)
+                });
+            }
+            if (sleepMood.qualityCorrelation !== null) {
+                findings.push({
+                    factor: 'Sleep Quality',
+                    correlation: sleepMood.qualityCorrelation,
+                    strength: this.getCorrelationStrength(sleepMood.qualityCorrelation),
+                    description: this.interpretSleepQualityCorrelation(sleepMood.qualityCorrelation)
+                });
+            }
+        }
+
+        // Exercise-Mood Correlation
+        const exerciseMood = this.analyzeExerciseMoodCorrelation(days);
+        if (exerciseMood && !exerciseMood.insufficient && exerciseMood.correlation !== null) {
+            let description = 'Exercise and mood show some correlation.';
+            if (exerciseMood.avgMoodWithExercise && exerciseMood.avgMoodWithoutExercise) {
+                const diff = exerciseMood.moodDifference;
+                if (diff > 0) {
+                    description = `Mood is ${diff.toFixed(1)} points higher on days with exercise`;
+                } else if (diff < 0) {
+                    description = `Mood is ${Math.abs(diff).toFixed(1)} points lower on days with exercise`;
+                }
+            }
+
+            findings.push({
+                factor: 'Exercise',
+                correlation: exerciseMood.correlation,
+                strength: this.getCorrelationStrength(exerciseMood.correlation),
+                description
+            });
+        }
+
+        // Medication-Mood Correlation
+        const medicationMood = this.analyzeMedicationMoodCorrelation(days);
+        if (medicationMood && !medicationMood.insufficient && medicationMood.correlation !== null) {
+            let description = 'Medication adherence and mood show some correlation.';
+            if (medicationMood.avgMoodFullAdherence && medicationMood.avgMoodNoAdherence) {
+                const diff = medicationMood.moodDifference;
+                if (diff > 0) {
+                    description = `Mood is ${diff.toFixed(1)} points higher with full medication adherence`;
+                } else if (diff < 0) {
+                    description = `Mood is ${Math.abs(diff).toFixed(1)} points lower with full adherence`;
+                }
+            }
+
+            findings.push({
+                factor: 'Medication Adherence',
+                correlation: medicationMood.correlation,
+                strength: this.getCorrelationStrength(medicationMood.correlation),
+                description
+            });
+        }
+
+        return {
+            findings,
+            daysAnalyzed: days,
+            hasData: findings.length > 0
+        };
+    }
+
+    /**
+     * Gather all wellness data for export
+     */
+    gatherExportData(days = 30) {
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(endDate.getDate() - days);
+
+        const data = {
+            exportInfo: {
+                generatedAt: new Date().toISOString(),
+                startDate: startDate.toISOString().split('T')[0],
+                endDate: endDate.toISOString().split('T')[0],
+                daysIncluded: days
+            },
+            summary: this.calculateWellnessSummary(days),
+            dailyRecords: [],
+            goals: this.data.goals || [],
+            achievedGoals: this.data.achievedGoals || [],
+            insights: this.generateWeeklyInsights(days),
+            trends: this.gatherTrendsForExport(Math.ceil(days / 7)),
+            correlations: this.gatherCorrelationsForExport(days)
+        };
+
+        // Gather daily records
+        for (let i = 0; i < days; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0];
+
+            const dailyData = {
+                date: dateStr,
+                dayOfWeek: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getDay()],
+                mood: null,
+                sleep: null,
+                exercise: null,
+                medication: null,
+                wellnessScore: null
+            };
+
+            // Mood data
+            if (this.mentalHealth?.data?.moodLogs) {
+                const moodLog = this.mentalHealth.data.moodLogs.find(log => {
+                    const logDate = new Date(log.timestamp).toISOString().split('T')[0];
+                    return logDate === dateStr;
+                });
+                if (moodLog) {
+                    dailyData.mood = {
+                        rating: moodLog.rating,
+                        notes: moodLog.notes || ''
+                    };
+                }
+            }
+
+            // Sleep data
+            if (this.sleep?.data?.sleepEntries) {
+                const sleepLog = this.sleep.data.sleepEntries.find(log => {
+                    const logDate = new Date(log.timestamp).toISOString().split('T')[0];
+                    return logDate === dateStr;
+                });
+                if (sleepLog) {
+                    dailyData.sleep = {
+                        duration: parseFloat(sleepLog.duration),
+                        quality: sleepLog.quality,
+                        notes: sleepLog.notes || ''
+                    };
+                }
+            }
+
+            // Exercise data
+            if (this.exercise?.data?.exercises) {
+                const exercises = this.exercise.data.exercises.filter(act => {
+                    const actDate = new Date(act.timestamp).toISOString().split('T')[0];
+                    return actDate === dateStr;
+                });
+                if (exercises.length > 0) {
+                    const totalMinutes = exercises.reduce((sum, ex) => sum + ex.duration, 0);
+                    dailyData.exercise = {
+                        totalMinutes,
+                        activities: exercises.map(ex => ({
+                            type: ex.type,
+                            duration: ex.duration,
+                            intensity: ex.intensity || 'moderate'
+                        }))
+                    };
+                }
+            }
+
+            // Medication data
+            if (this.medication?.data?.medications && this.medication?.data?.doses) {
+                const dayDoses = this.medication.data.doses.filter(dose =>
+                    dose.date.split('T')[0] === dateStr
+                );
+                if (dayDoses.length > 0) {
+                    dailyData.medication = {
+                        taken: dayDoses.filter(d => d.taken).length,
+                        scheduled: dayDoses.length,
+                        adherence: (dayDoses.filter(d => d.taken).length / dayDoses.length * 100).toFixed(1)
+                    };
+                }
+            }
+
+            // Calculate wellness score for this day
+            const scoreComponents = this.calculateDayScore(dateStr);
+            if (scoreComponents.totalScore > 0) {
+                dailyData.wellnessScore = scoreComponents.totalScore;
+            }
+
+            data.dailyRecords.push(dailyData);
+        }
+
+        return data;
+    }
+
+    /**
+     * Calculate summary statistics
+     */
+    calculateWellnessSummary(days = 30) {
+        const summary = {
+            totalDays: days,
+            averageWellnessScore: 0,
+            moodStats: { average: 0, logs: 0 },
+            sleepStats: { averageDuration: 0, averageQuality: 0, logs: 0 },
+            exerciseStats: { averageMinutes: 0, totalMinutes: 0, activeDays: 0 },
+            medicationStats: { adherenceRate: 0, doses: 0 }
+        };
+
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(endDate.getDate() - days);
+
+        let totalScore = 0;
+        let scoreDays = 0;
+
+        for (let i = 0; i < days; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0];
+
+            const scores = this.calculateDayScore(dateStr);
+            if (scores.totalScore > 0) {
+                totalScore += scores.totalScore;
+                scoreDays++;
+            }
+
+            // Mood
+            if (this.mentalHealth?.data?.moodLogs) {
+                const log = this.mentalHealth.data.moodLogs.find(l => {
+                    const logDate = new Date(l.timestamp).toISOString().split('T')[0];
+                    return logDate === dateStr;
+                });
+                if (log) {
+                    summary.moodStats.average += log.rating;
+                    summary.moodStats.logs++;
+                }
+            }
+
+            // Sleep
+            if (this.sleep?.data?.sleepEntries) {
+                const log = this.sleep.data.sleepEntries.find(l => {
+                    const logDate = new Date(l.timestamp).toISOString().split('T')[0];
+                    return logDate === dateStr;
+                });
+                if (log) {
+                    summary.sleepStats.averageDuration += parseFloat(log.duration);
+                    summary.sleepStats.averageQuality += log.quality;
+                    summary.sleepStats.logs++;
+                }
+            }
+
+            // Exercise
+            if (this.exercise?.data?.exercises) {
+                const exercises = this.exercise.data.exercises.filter(a => {
+                    const actDate = new Date(a.timestamp).toISOString().split('T')[0];
+                    return actDate === dateStr;
+                });
+                if (exercises.length > 0) {
+                    const dayMinutes = exercises.reduce((sum, a) => sum + a.duration, 0);
+                    summary.exerciseStats.totalMinutes += dayMinutes;
+                    summary.exerciseStats.activeDays++;
+                }
+            }
+        }
+
+        // Calculate averages
+        if (scoreDays > 0) summary.averageWellnessScore = (totalScore / scoreDays).toFixed(1);
+        if (summary.moodStats.logs > 0) summary.moodStats.average = (summary.moodStats.average / summary.moodStats.logs).toFixed(1);
+        if (summary.sleepStats.logs > 0) {
+            summary.sleepStats.averageDuration = (summary.sleepStats.averageDuration / summary.sleepStats.logs).toFixed(1);
+            summary.sleepStats.averageQuality = (summary.sleepStats.averageQuality / summary.sleepStats.logs).toFixed(1);
+        }
+        if (summary.exerciseStats.activeDays > 0) {
+            summary.exerciseStats.averageMinutes = (summary.exerciseStats.totalMinutes / summary.exerciseStats.activeDays).toFixed(1);
+        }
+
+        // Medication adherence
+        if (this.medication?.data?.doses) {
+            const relevantDoses = this.medication.data.doses.filter(d => {
+                const doseDate = new Date(d.date);
+                return doseDate >= startDate && doseDate <= endDate;
+            });
+            if (relevantDoses.length > 0) {
+                const takenDoses = relevantDoses.filter(d => d.taken).length;
+                summary.medicationStats.adherenceRate = (takenDoses / relevantDoses.length * 100).toFixed(1);
+                summary.medicationStats.doses = relevantDoses.length;
+            }
+        }
+
+        return summary;
+    }
+
+    /**
+     * Export data to JSON file
+     */
+    exportToJSON(days = 30, filename = null) {
+        const data = this.gatherExportData(days);
+
+        if (!filename) {
+            filename = `wellness-export-${new Date().toISOString().split('T')[0]}.json`;
+        }
+
+        try {
+            fs.writeFileSync(filename, JSON.stringify(data, null, 2));
+            console.log(`\n✅ Data exported successfully to: ${filename}`);
+            console.log(`   Period: ${data.exportInfo.startDate} to ${data.exportInfo.endDate}`);
+            console.log(`   Daily records: ${data.dailyRecords.length}`);
+            console.log(`   Goals: ${data.goals.length} active, ${data.achievedGoals.length} achieved\n`);
+            return true;
+        } catch (error) {
+            console.error(`\n❌ Export failed: ${error.message}\n`);
+            return false;
+        }
+    }
+
+    /**
+     * Export data to CSV file
+     */
+    exportToCSV(days = 30, filename = null) {
+        const data = this.gatherExportData(days);
+
+        if (!filename) {
+            filename = `wellness-export-${new Date().toISOString().split('T')[0]}.csv`;
+        }
+
+        try {
+            // CSV header
+            const headers = [
+                'Date',
+                'Day of Week',
+                'Wellness Score',
+                'Mood Rating',
+                'Mood Notes',
+                'Sleep Duration (hrs)',
+                'Sleep Quality',
+                'Sleep Notes',
+                'Exercise Minutes',
+                'Exercise Types',
+                'Medication Taken',
+                'Medication Scheduled',
+                'Medication Adherence %'
+            ];
+
+            const rows = [headers.join(',')];
+
+            // Add data rows
+            data.dailyRecords.forEach(record => {
+                const row = [
+                    record.date,
+                    record.dayOfWeek,
+                    record.wellnessScore || '',
+                    record.mood?.rating || '',
+                    `"${(record.mood?.notes || '').replace(/"/g, '""')}"`,
+                    record.sleep?.duration || '',
+                    record.sleep?.quality || '',
+                    `"${(record.sleep?.notes || '').replace(/"/g, '""')}"`,
+                    record.exercise?.totalMinutes || '',
+                    `"${record.exercise?.activities.map(a => a.type).join(', ') || ''}"`,
+                    record.medication?.taken || '',
+                    record.medication?.scheduled || '',
+                    record.medication?.adherence || ''
+                ];
+                rows.push(row.join(','));
+            });
+
+            fs.writeFileSync(filename, rows.join('\n'));
+            console.log(`\n✅ CSV exported successfully to: ${filename}`);
+            console.log(`   Period: ${data.exportInfo.startDate} to ${data.exportInfo.endDate}`);
+            console.log(`   Records: ${data.dailyRecords.length} days\n`);
+            return true;
+        } catch (error) {
+            console.error(`\n❌ CSV export failed: ${error.message}\n`);
+            return false;
+        }
+    }
+
+    /**
+     * Generate comprehensive text report
+     */
+    generateReport(days = 30, filename = null) {
+        const data = this.gatherExportData(days);
+
+        if (!filename) {
+            filename = `wellness-report-${new Date().toISOString().split('T')[0]}.txt`;
+        }
+
+        try {
+            const lines = [];
+
+            // Header
+            lines.push('═══════════════════════════════════════════════════════════');
+            lines.push('              WELLNESS REPORT');
+            lines.push('═══════════════════════════════════════════════════════════');
+            lines.push('');
+            lines.push(`Report Generated: ${new Date().toLocaleString()}`);
+            lines.push(`Period: ${data.exportInfo.startDate} to ${data.exportInfo.endDate}`);
+            lines.push(`Days Analyzed: ${data.exportInfo.daysIncluded}`);
+            lines.push('');
+
+            // Executive Summary
+            lines.push('───────────────────────────────────────────────────────────');
+            lines.push('EXECUTIVE SUMMARY');
+            lines.push('───────────────────────────────────────────────────────────');
+            lines.push('');
+            lines.push(`Average Wellness Score: ${data.summary.averageWellnessScore}/100`);
+            lines.push(`Mood Average: ${data.summary.moodStats.average}/10 (${data.summary.moodStats.logs} entries)`);
+            lines.push(`Sleep Duration: ${data.summary.sleepStats.averageDuration} hours avg (${data.summary.sleepStats.logs} nights)`);
+            lines.push(`Sleep Quality: ${data.summary.sleepStats.averageQuality}/10`);
+            lines.push(`Exercise: ${data.summary.exerciseStats.averageMinutes} min/day avg (${data.summary.exerciseStats.activeDays} active days)`);
+            lines.push(`Medication Adherence: ${data.summary.medicationStats.adherenceRate}%`);
+            lines.push('');
+
+            // Goals Status
+            if (data.goals.length > 0 || data.achievedGoals.length > 0) {
+                lines.push('───────────────────────────────────────────────────────────');
+                lines.push('GOALS & MILESTONES');
+                lines.push('───────────────────────────────────────────────────────────');
+                lines.push('');
+
+                lines.push(`Active Goals: ${data.goals.length}`);
+                data.goals.forEach(goal => {
+                    const progress = this.checkGoalProgress(goal.id);
+                    if (progress) {
+                        lines.push(`  • ${goal.description}`);
+                        lines.push(`    Progress: ${progress.progressPercentage.toFixed(1)}% (${progress.current.toFixed(1)}/${progress.target})`);
+                        lines.push(`    Target Date: ${goal.targetDate}`);
+                        lines.push(`    Status: ${progress.onTrack === true ? '✅ On Track' : progress.onTrack === false ? '❌ Behind' : '🟡 Uncertain'}`);
+                    }
+                });
+                lines.push('');
+
+                if (data.achievedGoals.length > 0) {
+                    lines.push(`Achieved Goals: ${data.achievedGoals.length}`);
+                    data.achievedGoals.forEach(goal => {
+                        lines.push(`  ✅ ${goal.description}`);
+                        if (goal.achievedDate) {
+                            lines.push(`     Achieved: ${goal.achievedDate}`);
+                        }
+                    });
+                    lines.push('');
+                }
+            }
+
+            // Insights & Patterns
+            if (data.insights) {
+                lines.push('───────────────────────────────────────────────────────────');
+                lines.push('WELLNESS INSIGHTS & PATTERNS');
+                lines.push('───────────────────────────────────────────────────────────');
+                lines.push('');
+
+                if (data.insights.bestDay || data.insights.worstDay) {
+                    lines.push('Day-of-Week Patterns:');
+                    if (data.insights.bestDay) {
+                        lines.push(`  Best Day: ${data.insights.bestDay} (avg score: ${data.insights.patterns[data.insights.bestDay]?.avgScore?.toFixed(1) || 'N/A'})`);
+                    }
+                    if (data.insights.worstDay) {
+                        lines.push(`  Worst Day: ${data.insights.worstDay} (avg score: ${data.insights.patterns[data.insights.worstDay]?.avgScore?.toFixed(1) || 'N/A'})`);
+                    }
+                    lines.push('');
+                }
+
+                if (data.insights.consistency) {
+                    lines.push('Logging Consistency:');
+                    lines.push(`  Mood: ${data.insights.consistency.moodConsistency.toFixed(1)}%`);
+                    lines.push(`  Sleep: ${data.insights.consistency.sleepConsistency.toFixed(1)}%`);
+                    lines.push(`  Exercise: ${data.insights.consistency.exerciseConsistency.toFixed(1)}%`);
+                    lines.push(`  Overall: ${data.insights.consistency.overallConsistency.toFixed(1)}%`);
+                    lines.push('');
+                }
+
+                if (data.insights.streaks) {
+                    const hasStreaks = data.insights.streaks.moodStreak > 0 ||
+                                      data.insights.streaks.sleepStreak > 0 ||
+                                      data.insights.streaks.exerciseStreak > 0;
+                    if (hasStreaks) {
+                        lines.push('Current Streaks:');
+                        if (data.insights.streaks.moodStreak > 0) {
+                            lines.push(`  🎯 Mood tracking: ${data.insights.streaks.moodStreak} days`);
+                        }
+                        if (data.insights.streaks.sleepStreak > 0) {
+                            lines.push(`  😴 Sleep logging: ${data.insights.streaks.sleepStreak} days`);
+                        }
+                        if (data.insights.streaks.exerciseStreak > 0) {
+                            lines.push(`  💪 Exercise: ${data.insights.streaks.exerciseStreak} days`);
+                        }
+                        lines.push('');
+                    }
+                }
+
+                if (data.insights.suggestions && data.insights.suggestions.length > 0) {
+                    lines.push('AI Suggestions:');
+                    const high = data.insights.suggestions.filter(s => s.priority === 'high');
+                    const medium = data.insights.suggestions.filter(s => s.priority === 'medium');
+                    const positive = data.insights.suggestions.filter(s => s.priority === 'positive');
+
+                    if (high.length > 0) {
+                        lines.push('  High Priority:');
+                        high.forEach(s => lines.push(`    🔴 ${s.message}`));
+                    }
+                    if (medium.length > 0) {
+                        lines.push('  Medium Priority:');
+                        medium.forEach(s => lines.push(`    🟡 ${s.message}`));
+                    }
+                    if (positive.length > 0) {
+                        lines.push('  Positive Trends:');
+                        positive.forEach(s => lines.push(`    ✅ ${s.message}`));
+                    }
+                    lines.push('');
+                }
+            }
+
+            // Correlations
+            if (data.correlations && data.correlations.findings.length > 0) {
+                lines.push('───────────────────────────────────────────────────────────');
+                lines.push('CORRELATION ANALYSIS');
+                lines.push('───────────────────────────────────────────────────────────');
+                lines.push('');
+                data.correlations.findings.forEach(finding => {
+                    lines.push(`• ${finding.factor}: ${finding.description}`);
+                    lines.push(`  Correlation: ${finding.correlation.toFixed(3)} (${finding.strength})`);
+                });
+                lines.push('');
+            }
+
+            // Trends
+            if (data.trends && data.trends.trend !== 'insufficient') {
+                lines.push('───────────────────────────────────────────────────────────');
+                lines.push('WELLNESS TRENDS');
+                lines.push('───────────────────────────────────────────────────────────');
+                lines.push('');
+                lines.push(`Overall Trend: ${data.trends.emoji} ${data.trends.trend.toUpperCase()}`);
+                if (data.trends.change) {
+                    lines.push(`Weekly Change: ${data.trends.change > 0 ? '+' : ''}${data.trends.change.toFixed(1)}%`);
+                }
+                lines.push('');
+
+                if (data.trends.componentTrends) {
+                    lines.push('Component Trends:');
+                    Object.entries(data.trends.componentTrends).forEach(([component, trend]) => {
+                        lines.push(`  ${component}: ${trend.emoji} ${trend.trend}`);
+                    });
+                    lines.push('');
+                }
+            }
+
+            // Footer
+            lines.push('═══════════════════════════════════════════════════════════');
+            lines.push('End of Report');
+            lines.push('═══════════════════════════════════════════════════════════');
+
+            fs.writeFileSync(filename, lines.join('\n'));
+            console.log(`\n✅ Report generated successfully: ${filename}`);
+            console.log(`   Period: ${data.exportInfo.startDate} to ${data.exportInfo.endDate}`);
+            console.log(`   ${lines.length} lines written\n`);
+            return true;
+        } catch (error) {
+            console.error(`\n❌ Report generation failed: ${error.message}\n`);
+            return false;
+        }
+    }
 }
 
 // CLI Interface
@@ -2200,6 +2809,26 @@ if (require.main === module) {
             dashboard.showInsights(insightDays);
             break;
 
+        case 'export-json':
+        case 'export':
+            const jsonDays = args[1] ? parseInt(args[1]) : 30;
+            const jsonFile = args[2] || null;
+            dashboard.exportToJSON(jsonDays, jsonFile);
+            break;
+
+        case 'export-csv':
+            const csvDays = args[1] ? parseInt(args[1]) : 30;
+            const csvFile = args[2] || null;
+            dashboard.exportToCSV(csvDays, csvFile);
+            break;
+
+        case 'report':
+        case 'generate-report':
+            const reportDays = args[1] ? parseInt(args[1]) : 30;
+            const reportFile = args[2] || null;
+            dashboard.generateReport(reportDays, reportFile);
+            break;
+
         case 'help':
         default:
             console.log(`
@@ -2242,6 +2871,21 @@ COMMANDS:
       AI-like pattern detection and weekly insights (default: 30 days)
       Shows best/worst days, consistency tracking, streaks, and predictions
 
+  export, export-json [days] [filename]
+      Export wellness data to JSON format (default: 30 days)
+      Includes all data, insights, trends, and correlations
+      Example: export-json 60 my-data.json
+
+  export-csv [days] [filename]
+      Export wellness data to CSV format for Excel (default: 30 days)
+      Daily records with all wellness metrics
+      Example: export-csv 90 wellness.csv
+
+  report, generate-report [days] [filename]
+      Generate comprehensive wellness report (default: 30 days)
+      Text format with executive summary, goals, insights, and trends
+      Example: report 30 monthly-report.txt
+
   help
       Show this help message
 
@@ -2270,6 +2914,9 @@ EXAMPLES:
   node daily-dashboard.js goal-progress 1  # Check goal #1
   node daily-dashboard.js insights         # Get weekly insights
   node daily-dashboard.js insights 60      # 60-day pattern analysis
+  node daily-dashboard.js export-json      # Export last 30 days
+  node daily-dashboard.js export-csv 90    # Export last 90 days to CSV
+  node daily-dashboard.js report           # Generate wellness report
             `);
             break;
     }
