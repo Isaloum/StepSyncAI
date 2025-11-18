@@ -1,6 +1,6 @@
 # StepSyncAI - Health & Wellness Apps
 
-[![Tests](https://img.shields.io/badge/tests-920%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Tests](https://img.shields.io/badge/tests-936%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Coverage](https://img.shields.io/badge/coverage-87.21%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Branch Coverage](https://img.shields.io/badge/branch%20coverage-71.64%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
@@ -1331,6 +1331,231 @@ node daily-dashboard.js insights
 - Warnings about declining trends
 - Reminders to log more consistently
 - Suggestions for challenging days
+
+### Export & Reporting 📄
+
+Export your wellness data for backup, sharing with healthcare providers, or external analysis. Generate comprehensive reports combining all your wellness metrics, insights, trends, and correlations.
+
+#### Quick Start
+
+```bash
+# Export to JSON (complete data with insights)
+node daily-dashboard.js export
+
+# Export to CSV (daily records for Excel)
+node daily-dashboard.js export-csv
+
+# Generate comprehensive text report
+node daily-dashboard.js report
+```
+
+#### Export Formats
+
+**JSON Export** (Complete Data Backup):
+```bash
+# Export last 30 days (default)
+node daily-dashboard.js export-json
+
+# Export last 90 days with custom filename
+node daily-dashboard.js export-json 90 my-wellness-data.json
+
+# Alternative command
+node daily-dashboard.js export
+```
+
+**What's Included**:
+- Export metadata (dates, period)
+- Daily records (mood, sleep, exercise, medication, wellness scores)
+- Summary statistics (averages, totals, adherence rates)
+- Active and achieved goals
+- Wellness insights (patterns, streaks, suggestions)
+- Trend analysis (overall and component trends)
+- Correlation findings (sleep, exercise, medication impacts)
+
+**CSV Export** (Excel-Compatible):
+```bash
+# Export last 30 days to CSV
+node daily-dashboard.js export-csv
+
+# Export last 60 days with custom filename
+node daily-dashboard.js export-csv 60 wellness-data.csv
+```
+
+**CSV Columns**:
+- Date, Day of Week, Wellness Score
+- Mood Rating, Mood Notes
+- Sleep Duration (hrs), Sleep Quality, Sleep Notes
+- Exercise Minutes, Exercise Types
+- Medication Taken, Medication Scheduled, Medication Adherence %
+
+**Text Report** (Comprehensive Overview):
+```bash
+# Generate 30-day report (default)
+node daily-dashboard.js report
+
+# Generate 90-day report with custom filename
+node daily-dashboard.js report 90 quarterly-wellness-report.txt
+
+# Alternative command
+node daily-dashboard.js generate-report
+```
+
+**Report Sections**:
+- Executive Summary (averages and key metrics)
+- Goals & Milestones (progress and achievements)
+- Wellness Insights & Patterns (day-of-week, consistency, streaks)
+- Correlation Analysis (factor relationships)
+- Wellness Trends (overall and component trends)
+
+#### Example Report Output
+
+```
+═══════════════════════════════════════════════════════════
+              WELLNESS REPORT
+═══════════════════════════════════════════════════════════
+
+Report Generated: Monday, November 18, 2025, 10:30 AM
+Period: 2025-10-19 to 2025-11-18
+Days Analyzed: 30
+
+───────────────────────────────────────────────────────────
+EXECUTIVE SUMMARY
+───────────────────────────────────────────────────────────
+
+Average Wellness Score: 72.5/100
+Mood Average: 7.2/10 (27 entries)
+Sleep Duration: 7.8 hours avg (25 nights)
+Sleep Quality: 8.1/10
+Exercise: 22.5 min/day avg (18 active days)
+Medication Adherence: 88.3%
+
+───────────────────────────────────────────────────────────
+GOALS & MILESTONES
+───────────────────────────────────────────────────────────
+
+Active Goals: 2
+  • Reach 80% overall wellness score
+    Progress: 90.6% (72.5/80)
+    Target Date: 2025-12-31
+    Status: ✅ On Track
+
+  • Maintain average mood of 8/10
+    Progress: 90.0% (7.2/8.0)
+    Target Date: 2025-12-31
+    Status: 🟡 Uncertain
+
+Achieved Goals: 1
+  ✅ Average 7 hours of sleep per night
+     Achieved: 2025-11-01
+
+───────────────────────────────────────────────────────────
+WELLNESS INSIGHTS & PATTERNS
+───────────────────────────────────────────────────────────
+
+Day-of-Week Patterns:
+  Best Day: Saturday (avg score: 85.2)
+  Worst Day: Monday (avg score: 58.3)
+
+Logging Consistency:
+  Mood: 90.0%
+  Sleep: 83.3%
+  Exercise: 60.0%
+  Overall: 77.8%
+
+Current Streaks:
+  🎯 Mood tracking: 12 days
+  😴 Sleep logging: 8 days
+  💪 Exercise: 4 days
+
+AI Suggestions:
+  High Priority:
+    🔴 Mondays tend to be challenging. Plan extra self-care.
+  Medium Priority:
+    🟡 Exercise logged only 60% of days. Even 10 minutes counts!
+  Positive Trends:
+    ✅ Saturdays are your best days! Replicate that.
+    ✅ Wellness improving by 5.2%! Keep momentum!
+
+───────────────────────────────────────────────────────────
+CORRELATION ANALYSIS
+───────────────────────────────────────────────────────────
+
+• Sleep Duration: Better sleep improves mood
+  Correlation: 0.612 (Moderate to Strong)
+• Sleep Quality: Better sleep quality boosts mood strongly
+  Correlation: 0.743 (Strong)
+• Exercise: Mood is 1.3 points higher on exercise days
+  Correlation: 0.423 (Moderate)
+
+───────────────────────────────────────────────────────────
+WELLNESS TRENDS
+───────────────────────────────────────────────────────────
+
+Overall Trend: ⬆️ IMPROVING
+Weekly Change: +5.2%
+
+Component Trends:
+  Mood: 📈 improving
+  Sleep: ➡️ stable
+  Exercise: 📈 improving
+  Medication: ➡️ stable
+
+═══════════════════════════════════════════════════════════
+End of Report
+═══════════════════════════════════════════════════════════
+```
+
+#### Use Cases
+
+**Healthcare Provider Sharing**:
+```bash
+# Generate comprehensive report for doctor appointment
+node daily-dashboard.js report 90 doctor-visit-nov-2025.txt
+```
+Share detailed wellness data with your therapist, doctor, or psychiatrist.
+
+**Data Backup**:
+```bash
+# Monthly JSON backup
+node daily-dashboard.js export-json 30 backup-nov-2025.json
+```
+Keep backups of your wellness data for safekeeping.
+
+**Excel Analysis**:
+```bash
+# Export to CSV for custom analysis
+node daily-dashboard.js export-csv 90 wellness-q4-2025.csv
+```
+Open in Excel/Google Sheets for custom charts and pivot tables.
+
+**Insurance Documentation**:
+```bash
+# Generate quarterly wellness report
+node daily-dashboard.js report 90 insurance-q4-2025.txt
+```
+Provide evidence of wellness management for insurance claims.
+
+**Progress Reviews**:
+```bash
+# Monthly wellness review
+node daily-dashboard.js report 30 monthly-review.txt
+```
+Review your monthly progress and share with accountability partners.
+
+#### File Naming
+
+**Default Filenames** (auto-generated with today's date):
+- JSON: `wellness-export-2025-11-18.json`
+- CSV: `wellness-export-2025-11-18.csv`
+- Report: `wellness-report-2025-11-18.txt`
+
+**Custom Filenames**:
+```bash
+# Use descriptive names for easy organization
+node daily-dashboard.js export-json 30 "november-2025-wellness.json"
+node daily-dashboard.js export-csv 90 "q4-2025-daily-data.csv"
+node daily-dashboard.js report 30 "monthly-review-nov-2025.txt"
+```
 
 ### Tips for Best Results
 
