@@ -25,7 +25,16 @@ class AWSForKids {
             progress: {},
             quizScores: [],
             completedLessons: [],
-            totalStudyTime: 0
+            totalStudyTime: 0,
+            badges: [],
+            achievements: [],
+            studyStreak: {
+                current: 0,
+                longest: 0,
+                lastStudyDate: null
+            },
+            points: 0,
+            level: 1
         };
     }
 
@@ -100,6 +109,207 @@ class AWSForKids {
         console.log(`   Practice Consistency: ${practiceConsistencyPoints.toFixed(0)}/20`);
 
         console.log('\n═'.repeat(60));
+    }
+
+    // ==================== GAMIFICATION SYSTEM ====================
+
+    updateStreak() {
+        const today = new Date().toDateString();
+        const lastStudy = this.data.studyStreak.lastStudyDate;
+
+        if (!lastStudy) {
+            // First time studying
+            this.data.studyStreak.current = 1;
+            this.data.studyStreak.longest = 1;
+            this.data.studyStreak.lastStudyDate = today;
+        } else if (lastStudy === today) {
+            // Already studied today
+            return;
+        } else {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toDateString();
+
+            if (lastStudy === yesterdayStr) {
+                // Consecutive day
+                this.data.studyStreak.current++;
+                if (this.data.studyStreak.current > this.data.studyStreak.longest) {
+                    this.data.studyStreak.longest = this.data.studyStreak.current;
+                }
+            } else {
+                // Streak broken
+                this.data.studyStreak.current = 1;
+            }
+            this.data.studyStreak.lastStudyDate = today;
+        }
+
+        // Check streak achievements
+        if (this.data.studyStreak.current === 3) {
+            this.unlockAchievement('streak_3', '🔥 3-Day Streak', 'Studied for 3 consecutive days', 50);
+        } else if (this.data.studyStreak.current === 7) {
+            this.unlockAchievement('streak_7', '🔥 Week Warrior', 'Studied for 7 consecutive days!', 100);
+        } else if (this.data.studyStreak.current === 30) {
+            this.unlockAchievement('streak_30', '🔥 Monthly Master', 'Studied for 30 consecutive days!', 300);
+        }
+
+        this.saveData();
+    }
+
+    awardPoints(points, reason) {
+        this.data.points += points;
+        const newLevel = Math.floor(this.data.points / 1000) + 1;
+
+        if (newLevel > this.data.level) {
+            const oldLevel = this.data.level;
+            this.data.level = newLevel;
+            console.log(`\n🎉 LEVEL UP! ${oldLevel} → ${newLevel}`);
+            console.log(`   You've reached Level ${newLevel}!`);
+
+            // Award level-up achievement
+            this.unlockAchievement(`level_${newLevel}`, `⭐ Level ${newLevel}`, `Reached Level ${newLevel}`, 100);
+        }
+
+        this.saveData();
+    }
+
+    unlockBadge(topicId, topicName) {
+        const badgeExists = this.data.badges.find(b => b.id === topicId);
+
+        if (!badgeExists) {
+            const badge = {
+                id: topicId,
+                name: `${topicName} Expert`,
+                earnedAt: new Date().toISOString(),
+                icon: this.getTopicIcon(topicId)
+            };
+
+            this.data.badges.push(badge);
+            console.log(`\n🏅 BADGE EARNED: ${badge.icon} ${badge.name}`);
+            this.awardPoints(100, `Earned ${badge.name} badge`);
+            this.saveData();
+        }
+    }
+
+    unlockAchievement(id, title, description, points) {
+        const exists = this.data.achievements.find(a => a.id === id);
+
+        if (!exists) {
+            const achievement = {
+                id,
+                title,
+                description,
+                points,
+                unlockedAt: new Date().toISOString()
+            };
+
+            this.data.achievements.push(achievement);
+            console.log(`\n🏆 ACHIEVEMENT UNLOCKED: ${title}`);
+            console.log(`   ${description}`);
+            console.log(`   +${points} points!`);
+
+            this.data.points += points;
+            this.saveData();
+        }
+    }
+
+    getTopicIcon(topicId) {
+        const icons = {
+            'ec2': '🖥️', 's3': '🗄️', 'lambda': '⚡', 'vpc': '🌐', 'iam': '🔐',
+            'rds': '🗃️', 'dynamodb': '⚡', 'cloudfront': '🚀', 'route53': '🌍',
+            'ebs': '💾', 'efs': '📁', 'cloudwatch': '📊', 'sns': '📨', 'sqs': '📬',
+            'elasticbeanstalk': '🌱', 'cloudformation': '📋', 'kms': '🔑',
+            'securitygroups': '🛡️', 'nacl': '🚧', 'elb': '⚖️', 'autoscaling': '📈'
+        };
+        return icons[topicId] || '🎓';
+    }
+
+    checkAchievements() {
+        const totalTopics = Object.keys(this.concepts).length;
+        const completed = this.data.completedLessons.length;
+        const quizCount = this.data.quizScores.length;
+
+        // Quiz milestones
+        if (quizCount === 1) {
+            this.unlockAchievement('first_quiz', '📝 First Quiz', 'Completed your first quiz!', 25);
+        } else if (quizCount === 10) {
+            this.unlockAchievement('quiz_10', '📝 Quiz Enthusiast', 'Completed 10 quizzes', 100);
+        } else if (quizCount === 50) {
+            this.unlockAchievement('quiz_50', '📝 Quiz Master', 'Completed 50 quizzes!', 250);
+        }
+
+        // Topic completion milestones
+        if (completed === 5) {
+            this.unlockAchievement('topics_5', '📚 Getting Started', 'Learned 5 AWS topics', 50);
+        } else if (completed === 10) {
+            this.unlockAchievement('topics_10', '📚 Intermediate', 'Learned 10 AWS topics', 100);
+        } else if (completed === totalTopics) {
+            this.unlockAchievement('all_topics', '📚 AWS Expert', 'Completed all AWS topics!', 500);
+        }
+
+        // Perfect quiz scores
+        const recentQuiz = this.data.quizScores[this.data.quizScores.length - 1];
+        if (recentQuiz && recentQuiz.score === recentQuiz.total) {
+            this.unlockAchievement('perfect_quiz', '💯 Perfect Score', 'Got 100% on a quiz!', 75);
+        }
+
+        // High average
+        const avgScore = this.calculateAverageQuizScore();
+        if (quizCount >= 5 && avgScore >= 90) {
+            this.unlockAchievement('high_avg', '⭐ Excellent Student', 'Maintained 90%+ average', 150);
+        }
+    }
+
+    calculateAverageQuizScore() {
+        if (this.data.quizScores.length === 0) return 0;
+        const totalCorrect = this.data.quizScores.reduce((sum, q) => sum + q.score, 0);
+        const totalQuestions = this.data.quizScores.reduce((sum, q) => sum + q.total, 0);
+        return (totalCorrect / totalQuestions) * 100;
+    }
+
+    showGamificationStats() {
+        console.log('\n🎮 AWS Learning - Gamification Stats');
+        console.log('═'.repeat(60));
+
+        // Level & Points
+        const pointsToNextLevel = (this.data.level * 1000) - this.data.points;
+        const levelProgress = ((this.data.points % 1000) / 1000 * 100).toFixed(1);
+        console.log(`\n⭐ Level ${this.data.level}`);
+        console.log(`   Points: ${this.data.points}`);
+        console.log(`   Progress to Level ${this.data.level + 1}: ${levelProgress}%`);
+        console.log(`   ${pointsToNextLevel} points needed`);
+
+        // Streaks
+        console.log(`\n🔥 Study Streak`);
+        console.log(`   Current: ${this.data.studyStreak.current} day${this.data.studyStreak.current !== 1 ? 's' : ''}`);
+        console.log(`   Longest: ${this.data.studyStreak.longest} day${this.data.studyStreak.longest !== 1 ? 's' : ''}`);
+
+        // Badges
+        console.log(`\n🏅 Badges (${this.data.badges.length}/${Object.keys(this.concepts).length})`);
+        if (this.data.badges.length > 0) {
+            this.data.badges.slice(-5).forEach(badge => {
+                console.log(`   ${badge.icon} ${badge.name}`);
+            });
+            if (this.data.badges.length > 5) {
+                console.log(`   ... and ${this.data.badges.length - 5} more`);
+            }
+        } else {
+            console.log(`   Complete topics to earn badges!`);
+        }
+
+        // Achievements
+        console.log(`\n🏆 Achievements (${this.data.achievements.length})`);
+        if (this.data.achievements.length > 0) {
+            this.data.achievements.slice(-5).forEach(ach => {
+                console.log(`   ${ach.title} (+${ach.points} pts)`);
+            });
+            if (this.data.achievements.length > 5) {
+                console.log(`   ... and ${this.data.achievements.length - 5} more`);
+            }
+        } else {
+            console.log(`   Keep learning to unlock achievements!`);
+        }
+
+        console.log('\n' + '═'.repeat(60));
     }
 
     // Backup and Restore
@@ -1277,6 +1487,13 @@ Shared: Patch management, configuration management, awareness & training`,
         // Track progress
         if (!this.data.completedLessons.includes(topicKey)) {
             this.data.completedLessons.push(topicKey);
+
+            // Gamification
+            this.updateStreak();
+            this.unlockBadge(topicKey, concept.name);
+            this.awardPoints(50, `Completed ${concept.name}`);
+            this.checkAchievements();
+
             this.saveData();
             console.log(`\n✅ Topic marked as learned! (${this.data.completedLessons.length}/${Object.keys(this.concepts).length} topics completed)`);
         }
@@ -1359,10 +1576,18 @@ Shared: Patch management, configuration management, awareness & training`,
                 // Save score
                 this.data.quizScores.push({
                     date: new Date().toISOString(),
+                    timestamp: new Date().toISOString(),
                     score: score,
                     total: numQuestions,
                     percentage: percentage
                 });
+
+                // Gamification
+                this.updateStreak();
+                const quizPoints = score * 10; // 10 points per correct answer
+                this.awardPoints(quizPoints, `Quiz: ${score}/${numQuestions} correct`);
+                this.checkAchievements();
+
                 this.saveData();
 
                 readline.close();
@@ -1916,6 +2141,13 @@ function main() {
         case 'stats':
         case 'statistics':
             app.showStats();
+            break;
+
+        case 'gamification':
+        case 'game-stats':
+        case 'achievements':
+        case 'badges':
+            app.showGamificationStats();
             break;
 
         case 'dashboard':
