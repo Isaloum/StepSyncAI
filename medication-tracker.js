@@ -644,10 +644,185 @@ class MedicationTracker {
 
         this.data.history.push(record);
 
+        // Auto-update pill count if refill tracking is enabled
+        if (medication.pillCount !== undefined && medication.pillsPerDose) {
+            this.updatePillCount(medication.id, -medication.pillsPerDose);
+        }
+
         if (this.saveData()) {
             console.log(`✓ Marked "${medication.name}" as taken!`);
             console.log(`  Time: ${new Date().toLocaleString()}`);
             if (notes) console.log(`  Notes: ${notes}`);
+
+            // Show refill alert if needed
+            if (medication.pillCount !== undefined) {
+                const updated = this.data.medications.find(m => m.id === medication.id);
+                this.checkRefillAlert(updated);
+            }
+
+            return true;
+        }
+        return false;
+    }
+
+    // ==================== REFILL TRACKING SYSTEM ====================
+
+    setRefillInfo(medicationId, pillCount, pillsPerDose = 1, refillThreshold = 7) {
+        const medication = this.data.medications.find(m => m.id === parseInt(medicationId));
+
+        if (!medication) {
+            console.log('❌ Medication not found!');
+            return false;
+        }
+
+        medication.pillCount = parseInt(pillCount);
+        medication.pillsPerDose = parseInt(pillsPerDose);
+        medication.refillThreshold = parseInt(refillThreshold); // Days of supply threshold
+
+        if (this.saveData()) {
+            console.log(`✅ Refill tracking enabled for "${medication.name}"`);
+            console.log(`   💊 Current pills: ${medication.pillCount}`);
+            console.log(`   📊 Pills per dose: ${medication.pillsPerDose}`);
+            console.log(`   ⚠️  Refill alert when ≤ ${medication.refillThreshold} days remaining`);
+
+            const daysRemaining = this.calculateDaysRemaining(medication);
+            if (daysRemaining !== null) {
+                console.log(`   📅 Days remaining: ${daysRemaining}`);
+                this.checkRefillAlert(medication);
+            }
+
+            return true;
+        }
+        return false;
+    }
+
+    updatePillCount(medicationId, change) {
+        const medication = this.data.medications.find(m => m.id === parseInt(medicationId));
+
+        if (!medication) {
+            return false;
+        }
+
+        if (medication.pillCount === undefined) {
+            return false; // Refill tracking not enabled
+        }
+
+        medication.pillCount = Math.max(0, medication.pillCount + change);
+        return this.saveData();
+    }
+
+    calculateDaysRemaining(medication) {
+        if (medication.pillCount === undefined || !medication.pillsPerDose) {
+            return null;
+        }
+
+        // Calculate daily dose based on frequency
+        let dosesPerDay = 1;
+        if (medication.frequency === 'twice-daily') dosesPerDay = 2;
+        else if (medication.frequency === 'three-times-daily') dosesPerDay = 3;
+        else if (medication.frequency === 'four-times-daily') dosesPerDay = 4;
+        else if (medication.frequency === 'weekly') dosesPerDay = 1/7;
+        else if (medication.frequency === 'every-other-day') dosesPerDay = 0.5;
+
+        const pillsPerDay = dosesPerDay * medication.pillsPerDose;
+        const daysRemaining = Math.floor(medication.pillCount / pillsPerDay);
+
+        return daysRemaining;
+    }
+
+    checkRefillAlert(medication) {
+        const daysRemaining = this.calculateDaysRemaining(medication);
+
+        if (daysRemaining === null) {
+            return false;
+        }
+
+        const threshold = medication.refillThreshold || 7;
+
+        if (daysRemaining === 0) {
+            console.log(`\n🔴 CRITICAL: "${medication.name}" is OUT OF PILLS!`);
+            console.log(`   ⚕️  Refill immediately!`);
+            return true;
+        } else if (daysRemaining <= threshold) {
+            console.log(`\n🟡 REFILL REMINDER: "${medication.name}"`);
+            console.log(`   💊 ${medication.pillCount} pills remaining`);
+            console.log(`   📅 ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} of supply left`);
+            console.log(`   ⚕️  Time to refill!`);
+            return true;
+        }
+
+        return false;
+    }
+
+    showRefillStatus() {
+        const medsWithRefill = this.data.medications.filter(m =>
+            m.active && m.pillCount !== undefined
+        );
+
+        console.log('\n💊 Medication Refill Status');
+        console.log('═'.repeat(60));
+
+        if (medsWithRefill.length === 0) {
+            console.log('\nNo medications with refill tracking enabled.');
+            console.log('Use: node medication-tracker.js set-refill <id> <pills> [pills-per-dose] [threshold]');
+            return;
+        }
+
+        medsWithRefill.forEach(med => {
+            const daysRemaining = this.calculateDaysRemaining(med);
+            const status = daysRemaining === 0 ? '🔴 OUT' :
+                          daysRemaining <= (med.refillThreshold || 7) ? '🟡 LOW' : '🟢 OK';
+
+            console.log(`\n${status} ${med.name} (${med.dosage})`);
+            console.log(`   💊 Pills: ${med.pillCount}`);
+            console.log(`   📊 Per dose: ${med.pillsPerDose}`);
+            console.log(`   📅 Days remaining: ${daysRemaining}`);
+
+            if (daysRemaining === 0) {
+                console.log(`   ⚠️  OUT OF PILLS - Refill immediately!`);
+            } else if (daysRemaining <= (med.refillThreshold || 7)) {
+                console.log(`   ⚠️  Low supply - Time to refill!`);
+            }
+        });
+
+        // Summary
+        const outOfStock = medsWithRefill.filter(m => this.calculateDaysRemaining(m) === 0).length;
+        const lowStock = medsWithRefill.filter(m => {
+            const days = this.calculateDaysRemaining(m);
+            return days > 0 && days <= (m.refillThreshold || 7);
+        }).length;
+        const okStock = medsWithRefill.length - outOfStock - lowStock;
+
+        console.log('\n' + '─'.repeat(60));
+        console.log(`Summary: ${outOfStock} out of stock | ${lowStock} low | ${okStock} OK`);
+    }
+
+    refillMedication(medicationId, pillsAdded) {
+        const medication = this.data.medications.find(m => m.id === parseInt(medicationId));
+
+        if (!medication) {
+            console.log('❌ Medication not found!');
+            return false;
+        }
+
+        if (medication.pillCount === undefined || medication.pillCount === null) {
+            console.log('❌ Refill tracking not enabled for this medication!');
+            console.log('Use: node medication-tracker.js set-refill <id> <pills>');
+            return false;
+        }
+
+        const oldCount = medication.pillCount;
+        medication.pillCount += parseInt(pillsAdded);
+
+        if (this.saveData()) {
+            console.log(`✅ Refilled "${medication.name}"`);
+            console.log(`   💊 Pills: ${oldCount} → ${medication.pillCount}`);
+
+            const daysRemaining = this.calculateDaysRemaining(medication);
+            if (daysRemaining !== null) {
+                console.log(`   📅 Days remaining: ${daysRemaining}`);
+            }
+
             return true;
         }
         return false;
@@ -1072,6 +1247,23 @@ Commands:
   adherence [days]
       Visualize medication adherence with charts (default: 30 days)
 
+  set-refill <id> <pill-count> [pills-per-dose] [refill-threshold-days]
+      Enable refill tracking for a medication
+      Auto-decrements pills when taken, alerts when low
+      Example: node medication-tracker.js set-refill 1234567890 90 1 7
+      Default: 1 pill per dose, 7 day threshold
+
+  refill-status (or refills)
+      Check refill status for all medications
+      Shows pills remaining, days of supply, and alerts
+      🔴 OUT: No pills remaining - refill immediately
+      🟡 LOW: Running low - time to refill
+      🟢 OK: Sufficient supply
+
+  refill <id> <pills-added>
+      Record a refill for a medication
+      Example: node medication-tracker.js refill 1234567890 90
+
   export [directory]
       Export all data to CSV files (default: ./exports)
       Creates separate CSV files for medications and history
@@ -1216,6 +1408,31 @@ function main() {
         case 'reminders-status':
         case 'reminders':
             tracker.showReminderStatus();
+            break;
+
+        case 'set-refill':
+            if (!args[1] || !args[2]) {
+                console.log('Usage: node medication-tracker.js set-refill <medication-id> <pill-count> [pills-per-dose] [refill-threshold-days]');
+                console.log('Example: node medication-tracker.js set-refill 1234567890 90 1 7');
+            } else {
+                const pillsPerDose = args[3] ? parseInt(args[3]) : 1;
+                const threshold = args[4] ? parseInt(args[4]) : 7;
+                tracker.setRefillInfo(args[1], args[2], pillsPerDose, threshold);
+            }
+            break;
+
+        case 'refill-status':
+        case 'refills':
+            tracker.showRefillStatus();
+            break;
+
+        case 'refill':
+            if (!args[1] || !args[2]) {
+                console.log('Usage: node medication-tracker.js refill <medication-id> <pills-added>');
+                console.log('Example: node medication-tracker.js refill 1234567890 90');
+            } else {
+                tracker.refillMedication(args[1], args[2]);
+            }
             break;
 
         case 'help':
