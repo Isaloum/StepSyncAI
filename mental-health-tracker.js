@@ -32,7 +32,9 @@ class MentalHealthTracker {
             triggers: [],
             copingStrategies: [],
             emergencyContacts: [],
-            goals: []
+            goals: [],
+            therapists: [],
+            therapySessions: []
         };
     }
 
@@ -111,6 +113,235 @@ class MentalHealthTracker {
         }
 
         console.log('\n═'.repeat(60));
+    }
+
+    // ==================== THERAPY SESSION MANAGER ====================
+
+    addTherapist(name, specialty, phone, email) {
+        const therapist = {
+            id: Date.now(),
+            name,
+            specialty,
+            phone,
+            email,
+            addedAt: new Date().toISOString()
+        };
+
+        this.data.therapists.push(therapist);
+
+        if (this.saveData()) {
+            console.log('\n✅ Therapist added successfully!');
+            console.log(`   Name: ${name}`);
+            console.log(`   Specialty: ${specialty}`);
+            console.log(`   Phone: ${phone}`);
+            if (email) console.log(`   Email: ${email}`);
+            return therapist;
+        }
+        return null;
+    }
+
+    scheduleSession(therapistId, date, time, type = 'regular') {
+        const therapist = this.data.therapists.find(t => t.id === parseInt(therapistId));
+
+        if (!therapist) {
+            console.log('❌ Therapist not found! Use list-therapists to see available therapists.');
+            return false;
+        }
+
+        const session = {
+            id: Date.now(),
+            therapistId: therapist.id,
+            therapistName: therapist.name,
+            date,
+            time,
+            type, // regular, intake, followup, crisis
+            status: 'scheduled',
+            preSessionMood: null,
+            postSessionMood: null,
+            preSessionNotes: null,
+            postSessionNotes: null,
+            effectiveness: null,
+            createdAt: new Date().toISOString()
+        };
+
+        this.data.therapySessions.push(session);
+
+        if (this.saveData()) {
+            console.log('\n✅ Therapy session scheduled!');
+            console.log(`   Therapist: ${therapist.name}`);
+            console.log(`   Date: ${date} at ${time}`);
+            console.log(`   Type: ${type}`);
+            console.log(`   Session ID: ${session.id}`);
+            return session;
+        }
+        return null;
+    }
+
+    listTherapists() {
+        if (this.data.therapists.length === 0) {
+            console.log('\n📋 No therapists added yet.');
+            console.log('Use: node mental-health-tracker.js add-therapist <name> <specialty> <phone> [email]');
+            return;
+        }
+
+        console.log('\n📋 Your Therapists');
+        console.log('═'.repeat(60));
+
+        this.data.therapists.forEach(therapist => {
+            console.log(`\n👤 ${therapist.name} (ID: ${therapist.id})`);
+            console.log(`   Specialty: ${therapist.specialty}`);
+            console.log(`   Phone: ${therapist.phone}`);
+            if (therapist.email) console.log(`   Email: ${therapist.email}`);
+        });
+    }
+
+    listSessions(upcoming = true) {
+        let sessions = this.data.therapySessions;
+
+        if (upcoming) {
+            sessions = sessions.filter(s => s.status === 'scheduled');
+        }
+
+        if (sessions.length === 0) {
+            console.log('\n📅 No therapy sessions found.');
+            return;
+        }
+
+        console.log(`\n📅 ${upcoming ? 'Upcoming' : 'All'} Therapy Sessions`);
+        console.log('═'.repeat(60));
+
+        sessions.forEach(session => {
+            const statusIcon = {
+                'scheduled': '📅',
+                'completed': '✅',
+                'cancelled': '❌',
+                'missed': '⚠️'
+            };
+
+            console.log(`\n${statusIcon[session.status] || '📝'} Session ID: ${session.id}`);
+            console.log(`   Therapist: ${session.therapistName}`);
+            console.log(`   Date: ${session.date} at ${session.time}`);
+            console.log(`   Type: ${session.type}`);
+            console.log(`   Status: ${session.status}`);
+
+            if (session.effectiveness) {
+                console.log(`   Effectiveness: ${session.effectiveness}/10`);
+            }
+        });
+    }
+
+    preSessionPrep(sessionId, mood, notes) {
+        const session = this.data.therapySessions.find(s => s.id === parseInt(sessionId));
+
+        if (!session) {
+            console.log('❌ Session not found!');
+            return false;
+        }
+
+        session.preSessionMood = parseInt(mood);
+        session.preSessionNotes = notes;
+
+        if (this.saveData()) {
+            console.log('\n✅ Pre-session prep saved!');
+            console.log(`   Mood: ${mood}/10`);
+            console.log(`   Notes: ${notes}`);
+
+            // Show recent mood trends for context
+            const recentMoods = this.data.moodEntries.slice(-7);
+            if (recentMoods.length > 0) {
+                const avg = (recentMoods.reduce((sum, m) => sum + m.rating, 0) / recentMoods.length).toFixed(1);
+                console.log(`\n📊 Your average mood (last 7 entries): ${avg}/10`);
+            }
+
+            return true;
+        }
+        return false;
+    }
+
+    completeSession(sessionId, postMood, postNotes, effectiveness) {
+        const session = this.data.therapySessions.find(s => s.id === parseInt(sessionId));
+
+        if (!session) {
+            console.log('❌ Session not found!');
+            return false;
+        }
+
+        session.status = 'completed';
+        session.postSessionMood = parseInt(postMood);
+        session.postSessionNotes = postNotes;
+        session.effectiveness = parseInt(effectiveness);
+        session.completedAt = new Date().toISOString();
+
+        if (this.saveData()) {
+            console.log('\n✅ Session marked as complete!');
+            console.log(`   Post-session mood: ${postMood}/10`);
+            console.log(`   Effectiveness: ${effectiveness}/10`);
+
+            if (session.preSessionMood) {
+                const moodChange = session.postSessionMood - session.preSessionMood;
+                if (moodChange > 0) {
+                    console.log(`   📈 Mood improved by ${moodChange} points!`);
+                } else if (moodChange < 0) {
+                    console.log(`   📉 Mood decreased by ${Math.abs(moodChange)} points`);
+                } else {
+                    console.log(`   ➡️  Mood stayed the same`);
+                }
+            }
+
+            return true;
+        }
+        return false;
+    }
+
+    therapyAnalytics() {
+        const completed = this.data.therapySessions.filter(s => s.status === 'completed');
+
+        if (completed.length === 0) {
+            console.log('\n📊 No completed therapy sessions yet.');
+            return;
+        }
+
+        console.log('\n📊 Therapy Session Analytics');
+        console.log('═'.repeat(60));
+
+        // Total sessions
+        console.log(`\n📅 Total Sessions: ${this.data.therapySessions.length}`);
+        console.log(`   Completed: ${completed.length}`);
+        console.log(`   Scheduled: ${this.data.therapySessions.filter(s => s.status === 'scheduled').length}`);
+
+        // Average effectiveness
+        const avgEffectiveness = (completed.reduce((sum, s) => sum + (s.effectiveness || 0), 0) / completed.length).toFixed(1);
+        console.log(`\n⭐ Average Effectiveness: ${avgEffectiveness}/10`);
+
+        // Mood improvement
+        const sessionsWithMood = completed.filter(s => s.preSessionMood && s.postSessionMood);
+        if (sessionsWithMood.length > 0) {
+            const totalImprovement = sessionsWithMood.reduce((sum, s) =>
+                sum + (s.postSessionMood - s.preSessionMood), 0
+            );
+            const avgImprovement = (totalImprovement / sessionsWithMood.length).toFixed(1);
+
+            console.log(`\n📈 Mood Impact:`);
+            console.log(`   Average mood change per session: ${avgImprovement > 0 ? '+' : ''}${avgImprovement} points`);
+            console.log(`   Sessions tracked: ${sessionsWithMood.length}`);
+        }
+
+        // By therapist
+        const byTherapist = {};
+        completed.forEach(s => {
+            if (!byTherapist[s.therapistName]) {
+                byTherapist[s.therapistName] = { count: 0, totalEff: 0 };
+            }
+            byTherapist[s.therapistName].count++;
+            byTherapist[s.therapistName].totalEff += s.effectiveness || 0;
+        });
+
+        console.log(`\n👥 By Therapist:`);
+        Object.keys(byTherapist).forEach(name => {
+            const data = byTherapist[name];
+            const avg = (data.totalEff / data.count).toFixed(1);
+            console.log(`   ${name}: ${data.count} sessions, ${avg}/10 avg effectiveness`);
+        });
     }
 
     // Backup and Restore
@@ -2118,6 +2349,58 @@ function main() {
         case 'reminders-status':
         case 'reminders':
             tracker.showReminderStatus();
+            break;
+
+        case 'add-therapist':
+            if (!args[1] || !args[2] || !args[3]) {
+                console.log('Usage: node mental-health-tracker.js add-therapist <name> <specialty> <phone> [email]');
+            } else {
+                tracker.addTherapist(args[1], args[2], args[3], args[4]);
+            }
+            break;
+
+        case 'list-therapists':
+        case 'therapists':
+            tracker.listTherapists();
+            break;
+
+        case 'schedule-session':
+            if (!args[1] || !args[2] || !args[3]) {
+                console.log('Usage: node mental-health-tracker.js schedule-session <therapist-id> <date> <time> [type]');
+                console.log('Example: node mental-health-tracker.js schedule-session 1234567890 "2025-12-01" "14:00" regular');
+            } else {
+                tracker.scheduleSession(args[1], args[2], args[3], args[4] || 'regular');
+            }
+            break;
+
+        case 'list-sessions':
+        case 'sessions':
+            tracker.listSessions(true);
+            break;
+
+        case 'all-sessions':
+            tracker.listSessions(false);
+            break;
+
+        case 'pre-session':
+            if (!args[1] || !args[2] || !args[3]) {
+                console.log('Usage: node mental-health-tracker.js pre-session <session-id> <mood-1-10> "<notes>"');
+            } else {
+                tracker.preSessionPrep(args[1], args[2], args[3]);
+            }
+            break;
+
+        case 'complete-session':
+            if (!args[1] || !args[2] || !args[3] || !args[4]) {
+                console.log('Usage: node mental-health-tracker.js complete-session <session-id> <post-mood> "<notes>" <effectiveness-1-10>');
+            } else {
+                tracker.completeSession(args[1], args[2], args[3], args[4]);
+            }
+            break;
+
+        case 'therapy-analytics':
+        case 'therapy-stats':
+            tracker.therapyAnalytics();
             break;
 
         case 'help':
