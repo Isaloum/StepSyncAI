@@ -3,6 +3,9 @@ const MentalHealthTracker = require('./mental-health-tracker');
 const MedicationTracker = require('./medication-tracker');
 const SleepTracker = require('./sleep-tracker');
 const ExerciseTracker = require('./exercise-tracker');
+const asciichart = require('asciichart');
+const chalk = require('chalk');
+const Table = require('cli-table3');
 
 class DailyDashboard {
     constructor(dataFile = 'dashboard-goals.json') {
@@ -787,7 +790,7 @@ class DailyDashboard {
                 const strength = this.getCorrelationStrength(sleepMood.durationCorrelation);
                 const emoji = this.getCorrelationEmoji(sleepMood.durationCorrelation);
                 console.log(`   ${emoji} Sleep Duration ↔ Mood: ${strength}`);
-                console.log(`      Correlation: ${sleepMood.durationCorrelation.toFixed(3)}`);
+                console.log(`      ${this.createCorrelationBar(sleepMood.durationCorrelation)}`);
                 console.log(`      ${this.interpretSleepDurationCorrelation(sleepMood.durationCorrelation)}\n`);
             }
 
@@ -796,7 +799,7 @@ class DailyDashboard {
                 const strength = this.getCorrelationStrength(sleepMood.qualityCorrelation);
                 const emoji = this.getCorrelationEmoji(sleepMood.qualityCorrelation);
                 console.log(`   ${emoji} Sleep Quality ↔ Mood: ${strength}`);
-                console.log(`      Correlation: ${sleepMood.qualityCorrelation.toFixed(3)}`);
+                console.log(`      ${this.createCorrelationBar(sleepMood.qualityCorrelation)}`);
                 console.log(`      ${this.interpretSleepQualityCorrelation(sleepMood.qualityCorrelation)}\n`);
             }
         } else if (sleepMood && sleepMood.insufficient) {
@@ -814,7 +817,7 @@ class DailyDashboard {
                 const strength = this.getCorrelationStrength(exerciseMood.correlation);
                 const emoji = this.getCorrelationEmoji(exerciseMood.correlation);
                 console.log(`   ${emoji} Exercise Minutes ↔ Mood: ${strength}`);
-                console.log(`      Correlation: ${exerciseMood.correlation.toFixed(3)}\n`);
+                console.log(`      ${this.createCorrelationBar(exerciseMood.correlation)}\n`);
             }
 
             // Compare days with vs without exercise
@@ -846,7 +849,7 @@ class DailyDashboard {
                 const strength = this.getCorrelationStrength(medicationMood.correlation);
                 const emoji = this.getCorrelationEmoji(medicationMood.correlation);
                 console.log(`   ${emoji} Medication Adherence ↔ Mood: ${strength}`);
-                console.log(`      Correlation: ${medicationMood.correlation.toFixed(3)}\n`);
+                console.log(`      ${this.createCorrelationBar(medicationMood.correlation)}\n`);
             }
 
             // Compare full adherence vs no adherence
@@ -898,6 +901,72 @@ class DailyDashboard {
         if (correlation >= -0.1) return '⚪';
         if (correlation >= -0.3) return '🟠';
         return '🔴';
+    }
+
+    createCorrelationBar(correlation, width = 40) {
+        const abs = Math.abs(correlation);
+        const filled = Math.round(abs * width);
+        const empty = width - filled;
+
+        let bar = '';
+        let colorFn;
+
+        // Determine color based on correlation strength
+        if (abs >= 0.7) {
+            colorFn = correlation > 0 ? chalk.green : chalk.red;
+        } else if (abs >= 0.5) {
+            colorFn = correlation > 0 ? chalk.greenBright : chalk.redBright;
+        } else if (abs >= 0.3) {
+            colorFn = chalk.yellow;
+        } else {
+            colorFn = chalk.gray;
+        }
+
+        bar = colorFn('█'.repeat(filled)) + '░'.repeat(empty);
+
+        // Add correlation value with color
+        const emoji = correlation > 0 ? '⬆️' : '⬇️';
+        const sign = correlation > 0 ? '+' : '';
+        return `${emoji} ${bar} ${sign}${correlation.toFixed(3)}`;
+    }
+
+    createWeeklyHeatmap(patterns) {
+        const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+        const table = new Table({
+            head: ['Day', 'Wellness', 'Visual'],
+            colWidths: [12, 10, 40],
+            style: {
+                head: ['cyan', 'bold'],
+                border: ['gray']
+            }
+        });
+
+        daysOrder.forEach(dayName => {
+            const dayData = patterns[dayName];
+            if (dayData && dayData.avgScore !== null) {
+                const score = dayData.avgScore;
+                const emoji = this.getScoreEmoji(score);
+
+                // Create colored bar
+                const barLength = 30;
+                const filled = Math.round((score / 100) * barLength);
+                let colorFn;
+                if (score >= 80) colorFn = chalk.green;
+                else if (score >= 60) colorFn = chalk.yellow;
+                else colorFn = chalk.red;
+
+                const bar = colorFn('█'.repeat(filled)) + chalk.gray('░'.repeat(barLength - filled));
+
+                table.push([
+                    dayName,
+                    `${emoji} ${score.toFixed(1)}%`,
+                    bar
+                ]);
+            }
+        });
+
+        return table.toString();
     }
 
     interpretSleepDurationCorrelation(correlation) {
@@ -1208,54 +1277,26 @@ class DailyDashboard {
         }
 
         const scores = validWeeks.map(w => w.percentage);
-        const maxScore = Math.max(...scores, 100);
-        const minScore = Math.min(...scores, 0);
-        const range = maxScore - minScore || 1;
 
-        const lines = [];
+        // Use asciichart for professional line charts
+        const config = {
+            height: height,
+            colors: [
+                asciichart.green
+            ]
+        };
 
-        // Y-axis and chart
-        for (let y = height; y >= 0; y--) {
-            const value = minScore + (range * y / height);
-            let line = `${value.toFixed(0).padStart(3)} │ `;
+        const chart = asciichart.plot(scores, config);
+        const lines = chart.split('\n');
 
-            for (let x = 0; x < validWeeks.length; x++) {
-                const score = scores[x];
-                const normalizedScore = ((score - minScore) / range) * height;
-
-                if (Math.abs(normalizedScore - y) < 0.5) {
-                    line += '●';
-                } else if (y === 0) {
-                    line += '─';
-                } else {
-                    line += ' ';
-                }
-
-                // Add spacing between points
-                if (x < validWeeks.length - 1) {
-                    // Draw line to next point
-                    const nextScore = scores[x + 1];
-                    const nextNormalized = ((nextScore - minScore) / range) * height;
-
-                    if (Math.abs((normalizedScore + nextNormalized) / 2 - y) < 0.5) {
-                        line += '─';
-                    } else {
-                        line += ' ';
-                    }
-                }
-            }
-
-            lines.push(line);
-        }
-
-        // X-axis
-        const xAxis = '    └' + '─'.repeat(validWeeks.length * 2);
-        lines.push(xAxis);
-
-        // Week labels
-        let labels = '     ';
+        // Add week labels below chart
+        let labels = '     Week: ';
         validWeeks.forEach((week, i) => {
-            labels += `W${week.weekNumber} `;
+            if (i % 2 === 0 || validWeeks.length <= 8) {
+                labels += `${week.weekNumber.toString().padStart(2)} `;
+            } else {
+                labels += '   ';
+            }
         });
         lines.push(labels);
 
@@ -2038,14 +2079,9 @@ Goal types: wellness, mood, sleep-duration, sleep-quality, exercise, medication
             console.log(`🌟 Best Day: ${bestWorst.bestDay.name} (${bestWorst.bestDay.avgScore.toFixed(1)}% avg wellness)`);
             console.log(`😞 Challenging Day: ${bestWorst.worstDay.name} (${bestWorst.worstDay.avgScore.toFixed(1)}% avg wellness)`);
 
-            // Show all days
-            console.log('\n   Weekly Breakdown:');
-            Object.values(insights.patterns)
-                .filter(p => p.avgScore !== null)
-                .forEach(day => {
-                    const bar = this.createProgressBar(day.avgScore, 100, 15);
-                    console.log(`   ${day.name.padEnd(10)} ${bar} ${day.avgScore.toFixed(1)}%`);
-                });
+            // Show heatmap table
+            console.log('\n   Weekly Heatmap:');
+            console.log(this.createWeeklyHeatmap(insights.patterns));
 
             console.log('\n────────────────────────────────────────────────────────────\n');
         }
@@ -2542,6 +2578,355 @@ Goal types: wellness, mood, sleep-duration, sleep-quality, exercise, medication
     }
 
     /**
+     * Export data to interactive HTML report with Chart.js visualizations
+     */
+    exportToHTML(days = 30, filename = null) {
+        const data = this.gatherExportData(days);
+
+        if (!filename) {
+            filename = `wellness-report-${new Date().toISOString().split('T')[0]}.html`;
+        }
+
+        try {
+            // Prepare data for charts
+            const dailyDates = data.dailyRecords.map(r => r.date);
+            const wellnessScores = data.dailyRecords.map(r => r.wellnessScore || 0);
+            const moodRatings = data.dailyRecords.map(r => r.mood?.rating || null);
+            const sleepDurations = data.dailyRecords.map(r => r.sleep?.duration || null);
+            const exerciseMinutes = data.dailyRecords.map(r => r.exercise?.totalMinutes || null);
+
+            // Correlation data for bar chart
+            const correlationLabels = [];
+            const correlationValues = [];
+            const correlationColors = [];
+
+            if (data.correlations && data.correlations.sleepMood) {
+                if (data.correlations.sleepMood.durationCorrelation !== null) {
+                    correlationLabels.push('Sleep Duration → Mood');
+                    correlationValues.push(data.correlations.sleepMood.durationCorrelation);
+                    correlationColors.push(data.correlations.sleepMood.durationCorrelation > 0 ? '#10b981' : '#ef4444');
+                }
+                if (data.correlations.sleepMood.qualityCorrelation !== null) {
+                    correlationLabels.push('Sleep Quality → Mood');
+                    correlationValues.push(data.correlations.sleepMood.qualityCorrelation);
+                    correlationColors.push(data.correlations.sleepMood.qualityCorrelation > 0 ? '#10b981' : '#ef4444');
+                }
+            }
+            if (data.correlations && data.correlations.exerciseMood && data.correlations.exerciseMood.correlation !== null && data.correlations.exerciseMood.correlation !== undefined) {
+                correlationLabels.push('Exercise → Mood');
+                correlationValues.push(data.correlations.exerciseMood.correlation);
+                correlationColors.push(data.correlations.exerciseMood.correlation > 0 ? '#10b981' : '#ef4444');
+            }
+            if (data.correlations && data.correlations.medicationMood && data.correlations.medicationMood.correlation !== null && data.correlations.medicationMood.correlation !== undefined) {
+                correlationLabels.push('Medication → Mood');
+                correlationValues.push(data.correlations.medicationMood.correlation);
+                correlationColors.push(data.correlations.medicationMood.correlation > 0 ? '#10b981' : '#ef4444');
+            }
+
+            // Day of week radar data
+            const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            const dayOfWeekScores = daysOfWeek.map(day => {
+                const pattern = data.insights?.patterns?.[day];
+                return pattern?.avgScore || 0;
+            });
+
+            // Generate HTML
+            const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wellness Report - ${data.exportInfo.startDate} to ${data.exportInfo.endDate}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .card-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .card-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        .chart-container {
+            margin: 40px 0;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .chart-title {
+            font-size: 1.5em;
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        canvas {
+            max-height: 400px;
+        }
+        .insights-section {
+            margin: 40px 0;
+            padding: 30px;
+            background: #f0f4ff;
+            border-radius: 12px;
+        }
+        .insights-title {
+            font-size: 1.5em;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        .insight-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: white;
+            border-left: 4px solid #667eea;
+        }
+        .insight-high { border-left-color: #ef4444; }
+        .insight-medium { border-left-color: #f59e0b; }
+        .insight-positive { border-left-color: #10b981; }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Wellness Report</h1>
+        <div class="subtitle">
+            ${data.exportInfo.startDate} to ${data.exportInfo.endDate}
+            (${data.exportInfo.daysIncluded} days)
+        </div>
+
+        <div class="summary-cards">
+            <div class="card">
+                <div class="card-label">Current Wellness</div>
+                <div class="card-value">${data.summary.currentScore !== undefined && data.summary.currentScore !== null ? data.summary.currentScore.toFixed(1) + '%' : 'N/A'}</div>
+                <div class="card-label">${data.summary.currentScore !== undefined && data.summary.currentScore !== null ? this.getScoreLabel(data.summary.currentScore) : ''}</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Average Mood</div>
+                <div class="card-value">${data.summary.avgMood !== undefined && data.summary.avgMood !== null ? data.summary.avgMood.toFixed(1) : 'N/A'}</div>
+                <div class="card-label">out of 10</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Avg Sleep</div>
+                <div class="card-value">${data.summary.avgSleepDuration !== undefined && data.summary.avgSleepDuration !== null ? data.summary.avgSleepDuration.toFixed(1) : 'N/A'}</div>
+                <div class="card-label">hours/night</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Avg Exercise</div>
+                <div class="card-value">${data.summary.avgExerciseMinutes !== undefined && data.summary.avgExerciseMinutes !== null ? data.summary.avgExerciseMinutes.toFixed(0) : 'N/A'}</div>
+                <div class="card-label">minutes/day</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Medication</div>
+                <div class="card-value">${data.summary.medicationAdherence !== undefined && data.summary.medicationAdherence !== null ? data.summary.medicationAdherence.toFixed(0) + '%' : 'N/A'}</div>
+                <div class="card-label">adherence</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h3 class="chart-title">📈 Wellness Trends (${Math.min(days, 56)} days)</h3>
+            <canvas id="trendsChart"></canvas>
+        </div>
+
+        ${correlationLabels.length > 0 ? `
+        <div class="chart-container">
+            <h3 class="chart-title">🔗 Correlation Analysis</h3>
+            <canvas id="correlationChart"></canvas>
+        </div>
+        ` : ''}
+
+        ${data.insights?.patterns ? `
+        <div class="chart-container">
+            <h3 class="chart-title">📅 Day of Week Patterns</h3>
+            <canvas id="radarChart"></canvas>
+        </div>
+        ` : ''}
+
+        ${data.insights?.suggestions && data.insights.suggestions.length > 0 ? `
+        <div class="insights-section">
+            <h3 class="insights-title">💡 Wellness Insights</h3>
+            ${data.insights.suggestions.map(s => `
+                <div class="insight-item insight-${s.priority}">
+                    ${s.message}
+                </div>
+            `).join('')}
+        </div>
+        ` : ''}
+
+        <div class="footer">
+            Generated on ${new Date().toLocaleString()} | StepSyncAI Health & Wellness Apps
+        </div>
+    </div>
+
+    <script>
+        // Trends Line Chart
+        const trendsCtx = document.getElementById('trendsChart').getContext('2d');
+        new Chart(trendsCtx, {
+            type: 'line',
+            data: {
+                labels: ${JSON.stringify(dailyDates.slice(-Math.min(days, 56)))},
+                datasets: [{
+                    label: 'Wellness Score (%)',
+                    data: ${JSON.stringify(wellnessScores.slice(-Math.min(days, 56)))},
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Mood Rating (×10)',
+                    data: ${JSON.stringify(moodRatings.slice(-Math.min(days, 56)).map(m => m ? m * 10 : null))},
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: true, position: 'top' },
+                    tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: { display: true, text: 'Score (%)' }
+                    },
+                    x: { title: { display: true, text: 'Date' } }
+                }
+            }
+        });
+
+        ${correlationLabels.length > 0 ? `
+        // Correlation Bar Chart
+        const corrCtx = document.getElementById('correlationChart').getContext('2d');
+        new Chart(corrCtx, {
+            type: 'bar',
+            data: {
+                labels: ${JSON.stringify(correlationLabels)},
+                datasets: [{
+                    label: 'Correlation Strength',
+                    data: ${JSON.stringify(correlationValues)},
+                    backgroundColor: ${JSON.stringify(correlationColors)}
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        min: -1,
+                        max: 1,
+                        title: { display: true, text: 'Correlation Coefficient' }
+                    }
+                }
+            }
+        });
+        ` : ''}
+
+        ${data.insights?.patterns ? `
+        // Radar Chart for day of week
+        const radarCtx = document.getElementById('radarChart').getContext('2d');
+        new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+                labels: ${JSON.stringify(daysOfWeek)},
+                datasets: [{
+                    label: 'Average Wellness Score (%)',
+                    data: ${JSON.stringify(dayOfWeekScores)},
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                    pointBackgroundColor: '#667eea'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+        ` : ''}
+    </script>
+</body>
+</html>`;
+
+            fs.writeFileSync(filename, html);
+            console.log(`\n✅ HTML report generated successfully: ${filename}`);
+            console.log(`   Period: ${data.exportInfo.startDate} to ${data.exportInfo.endDate}`);
+            console.log(`   Open the file in your browser to view interactive charts!\n`);
+            return true;
+        } catch (error) {
+            console.error(`\n❌ HTML export failed: ${error.message}\n`);
+            return false;
+        }
+    }
+
+    /**
      * Generate comprehensive text report
      */
     generateReport(days = 30, filename = null) {
@@ -2822,6 +3207,14 @@ if (require.main === module) {
             dashboard.exportToCSV(csvDays, csvFile);
             break;
 
+        case 'export-html':
+        case 'html':
+        case 'web-report':
+            const htmlDays = args[1] ? parseInt(args[1]) : 30;
+            const htmlFile = args[2] || null;
+            dashboard.exportToHTML(htmlDays, htmlFile);
+            break;
+
         case 'report':
         case 'generate-report':
             const reportDays = args[1] ? parseInt(args[1]) : 30;
@@ -2880,6 +3273,11 @@ COMMANDS:
       Export wellness data to CSV format for Excel (default: 30 days)
       Daily records with all wellness metrics
       Example: export-csv 90 wellness.csv
+
+  export-html, html, web-report [days] [filename]
+      Generate interactive HTML report with Chart.js visualizations (default: 30 days)
+      Includes trend charts, correlations, day-of-week patterns, and insights
+      Example: export-html 60 my-report.html
 
   report, generate-report [days] [filename]
       Generate comprehensive wellness report (default: 30 days)

@@ -1,6 +1,6 @@
 # StepSyncAI - Health & Wellness Apps
 
-[![Tests](https://img.shields.io/badge/tests-936%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Tests](https://img.shields.io/badge/tests-942%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Coverage](https://img.shields.io/badge/coverage-87.21%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Branch Coverage](https://img.shields.io/badge/branch%20coverage-71.64%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
@@ -763,7 +763,7 @@ node daily-dashboard.js correlations 60
 
 ### Correlation Analysis 🔗
 
-Discover powerful insights about how different wellness factors affect your mood using statistical correlation analysis.
+Discover powerful insights about how different wellness factors affect your mood using statistical correlation analysis with **enhanced colored visualizations** 🎨.
 
 #### What Correlations Are Analyzed
 
@@ -813,11 +813,11 @@ The dashboard uses **Pearson correlation coefficient** (-1.0 to +1.0):
    Sample Size: 25 days with both sleep and mood data
 
    💚 Sleep Duration ↔ Mood: Moderate to Strong
-      Correlation: 0.612
+      ⬆️ ████████████████████████░░░░░░░░░░░░░░ +0.612
       Getting more sleep strongly improves your mood! 🌟
 
    💚 Sleep Quality ↔ Mood: Strong
-      Correlation: 0.743
+      ⬆️ ████████████████████████████████░░░░░░ +0.743
       Better sleep quality strongly boosts your mood! 🌟
 
 🏃 Exercise → Mood Correlation
@@ -825,7 +825,7 @@ The dashboard uses **Pearson correlation coefficient** (-1.0 to +1.0):
    Sample Size: 30 days with mood data
 
    🟢 Exercise Minutes ↔ Mood: Moderate
-      Correlation: 0.423
+      ⬆️ ████████████████░░░░░░░░░░░░░░░░░░░░░░ +0.423
 
    📊 Mood Comparison:
       With Exercise (18 days): 7.8/10
@@ -837,7 +837,7 @@ The dashboard uses **Pearson correlation coefficient** (-1.0 to +1.0):
    Sample Size: 30 days with mood data
 
    💚 Medication Adherence ↔ Mood: Moderate to Strong
-      Correlation: 0.587
+      ⬆️ ███████████████████████░░░░░░░░░░░░░░░ +0.587
 
    📊 Mood Comparison:
       Full Adherence (22 days): 7.9/10
@@ -866,7 +866,7 @@ The more data you log, the more accurate the correlations become!
 
 ### Wellness Trends & Progress Tracking 📈
 
-Visualize your wellness journey over time with ASCII trend charts and detailed progress analysis. Track improvements, identify declines, and understand which wellness components are changing.
+Visualize your wellness journey over time with **enhanced asciichart line graphs** and detailed progress analysis. Track improvements, identify declines, and understand which wellness components are changing.
 
 #### Quick Start
 
@@ -1387,6 +1387,39 @@ node daily-dashboard.js export-csv 60 wellness-data.csv
 - Sleep Duration (hrs), Sleep Quality, Sleep Notes
 - Exercise Minutes, Exercise Types
 - Medication Taken, Medication Scheduled, Medication Adherence %
+
+**HTML Export** (Interactive Charts & Visualizations) 🆕:
+```bash
+# Generate interactive HTML report (default 30 days)
+node daily-dashboard.js export-html
+
+# Generate 60-day report with custom filename
+node daily-dashboard.js export-html 60 my-wellness-report.html
+
+# Alternative commands
+node daily-dashboard.js html
+node daily-dashboard.js web-report
+```
+
+**What's Included**:
+- 📊 **Interactive Chart.js Visualizations**:
+  - Line chart showing wellness trends and mood ratings over time
+  - Bar chart displaying correlation strength (color-coded: green=positive, red=negative)
+  - Radar chart revealing day-of-week patterns
+- 🎨 **Beautiful Responsive Design**:
+  - Gradient backgrounds and modern UI
+  - Mobile-friendly layout
+  - Print-optimized styling
+- 📈 **Summary Cards**:
+  - Current wellness score with label (Excellent/Great/Good/Fair/Needs Attention)
+  - Average mood, sleep, exercise, and medication adherence
+- 💡 **Wellness Insights**:
+  - Color-coded insights (red=high priority, yellow=medium, green=positive)
+  - Pattern detection and personalized suggestions
+- 🌐 **Self-Contained File**:
+  - Single HTML file with embedded Chart.js from CDN
+  - No external dependencies needed
+  - Easy to share with healthcare providers
 
 **Text Report** (Comprehensive Overview):
 ```bash
