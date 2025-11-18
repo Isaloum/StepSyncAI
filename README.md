@@ -1,6 +1,6 @@
 # StepSyncAI - Health & Wellness Apps
 
-[![Tests](https://img.shields.io/badge/tests-936%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Tests](https://img.shields.io/badge/tests-948%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Coverage](https://img.shields.io/badge/coverage-87.21%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Branch Coverage](https://img.shields.io/badge/branch%20coverage-71.64%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
@@ -1556,6 +1556,172 @@ node daily-dashboard.js export-json 30 "november-2025-wellness.json"
 node daily-dashboard.js export-csv 90 "q4-2025-daily-data.csv"
 node daily-dashboard.js report 30 "monthly-review-nov-2025.txt"
 ```
+
+### Data Visualization 📊
+
+Enhanced terminal visualizations with colors, charts, and graphs to make your wellness data more engaging and easier to understand.
+
+#### Visualization Features
+
+**1. Color-Coded Trend Charts**
+
+The trends display now features beautiful ASCII line charts powered by `asciichart` with colored output:
+
+```bash
+node daily-dashboard.js trends
+```
+
+**Features**:
+- Green line charts showing wellness progression over 8 weeks
+- Automatic scaling and formatting
+- Week-by-week labels
+- Color-coded trend indicators (📈 improving, 📉 declining, ➡️ stable)
+- Component-specific trend analysis
+
+**2. Correlation Strength Visualization**
+
+Visual bars showing the strength and direction of correlations:
+
+```bash
+node daily-dashboard.js correlations
+```
+
+**What You'll See**:
+- Color-coded correlation bars:
+  - 🟢 **Green** = Strong correlation (±0.7+)
+  - 🟡 **Yellow** = Moderate correlation (±0.4+)
+  - 🔵 **Blue** = Weak correlation (±0.2+)
+  - ⚪ **Gray** = Very weak correlation
+- Direction arrows:
+  - ⬆️ Strong positive
+  - ↗️ Moderate positive
+  - ➡️ Weak/neutral
+  - ↘️ Moderate negative
+  - ⬇️ Strong negative
+- Numerical correlation coefficients
+
+**Example Output**:
+```
+🔗 WELLNESS CORRELATIONS ANALYSIS
+
+😴 Sleep → Mood Correlation
+
+   Sleep Duration ↔ Mood:
+   ⬆️ Duration vs Mood              ███████████████████████████░░░░░░░░░░ +0.743
+      Better sleep duration is strongly associated with better mood
+
+   Sleep Quality ↔ Mood:
+   ⬆️ Quality vs Mood               █████████████████████████████░░░░░░░░ +0.812
+      Better sleep quality is strongly associated with better mood
+```
+
+**3. Goal Progress Bars**
+
+Enhanced visual progress bars for goal tracking:
+
+```bash
+node daily-dashboard.js goals
+```
+
+**Features**:
+- Color-coded progress visualization:
+  - 🎉 **Green bar** = 100% complete (Achievement!)
+  - 🌟 **Green bar** = 75-99% (Almost there!)
+  - 💪 **Yellow bar** = 50-74% (Good progress!)
+  - 🎯 **Blue bar** = 25-49% (Getting started)
+  - ⚪ **Gray bar** = 0-24% (Just beginning)
+- Percentage display
+- Current vs Target comparison with colors
+- Days remaining countdown
+
+**Example Output**:
+```
+🎯 Active Goals:
+
+1. 🟢 Improve average mood rating (ID: 1)
+   🌟 [████████████████████████████████░░░░░░░░] 80.0%
+   Current: 7.2/10 / Target: 8.0/10
+   45 days remaining (15 days elapsed)
+   🎯 Milestones reached: 25%, 50%, 75%
+   ✅ On track to achieve!
+```
+
+**4. Day-of-Week Heatmap**
+
+Beautiful table-based heatmap showing wellness patterns by day of week:
+
+```bash
+node daily-dashboard.js insights
+```
+
+**Features**:
+- Color-coded blocks representing wellness scores:
+  - **█** Green = Excellent (75+)
+  - **▓** Yellow = Good (60-74)
+  - **▒** Blue = Fair (40-59)
+  - **░** Gray = Needs Work (<40)
+- Sample count for each day
+- Quick visual pattern recognition
+
+**Example Output**:
+```
+📅 Day of Week Patterns:
+
+   🌟 Best Day: Saturday (85.2% avg wellness)
+   😞 Challenging Day: Monday (58.3% avg wellness)
+
+   Weekly Wellness Heatmap:
+
+╔═══════╤═══════╤═══════╤═══════╤═══════╤═══════╤═══════╗
+║  Mon  │  Tue  │  Wed  │  Thu  │  Fri  │  Sat  │  Sun  ║
+╠═══════╪═══════╪═══════╪═══════╪═══════╪═══════╪═══════╣
+║ ▒ 58  │ ▓ 65  │ ▓ 68  │ ▓ 72  │ ▓ 75  │ █ 85  │ ▓ 70  ║
+║  (4)  │  (4)  │  (4)  │  (3)  │  (4)  │  (2)  │  (2)  ║
+╚═══════╧═══════╧═══════╧═══════╧═══════╧═══════╧═══════╝
+
+   Legend: █ = Excellent (75+) | ▓ = Good (60+) | ▒ = Fair (40+) | ░ = Needs Work (<40)
+```
+
+#### Color Theme
+
+All visualizations use a consistent color scheme:
+- **Cyan** = Headers and titles
+- **Green** = Positive/improving/strong
+- **Yellow** = Moderate/warning
+- **Blue** = Informational/weak
+- **Red** = Negative/declining/critical
+- **Gray** = Neutral/secondary information
+- **Bold** = Important labels and values
+
+#### Visualization Commands Summary
+
+```bash
+# See all visualizations in trends display
+node daily-dashboard.js trends              # Line charts + trend analysis
+
+# Visual correlation strength bars
+node daily-dashboard.js correlations        # Correlation visualizations
+
+# Enhanced goal progress
+node daily-dashboard.js goals               # Color-coded progress bars
+
+# Day-of-week heatmap
+node daily-dashboard.js insights            # Pattern heatmap + insights
+```
+
+#### Technical Details
+
+**Libraries Used**:
+- `asciichart` - High-quality terminal line charts
+- `chalk` - Terminal color support (v4.1.2 for CommonJS compatibility)
+- `cli-table3` - Enhanced table formatting with Unicode borders
+
+**Benefits**:
+- **Better Understanding**: Colors and charts make patterns immediately obvious
+- **Terminal-Friendly**: No web browser required, works in any terminal
+- **Accessibility**: Text-based visualizations work with screen readers
+- **Fast**: Renders instantly in your terminal
+- **Professional**: Publication-quality ASCII charts
 
 ### Tips for Best Results
 
