@@ -1,20 +1,63 @@
 const fs = require('fs');
 const path = require('path');
+const PDFDocument = require('pdfkit');
 const DailyDashboard = require('../daily-dashboard');
 const MentalHealthTracker = require('../mental-health-tracker');
 const MedicationTracker = require('../medication-tracker');
 const SleepTracker = require('../sleep-tracker');
 const ExerciseTracker = require('../exercise-tracker');
 
-// Mock file system
+// Mock file system and PDFKit
 jest.mock('fs');
+jest.mock('pdfkit');
 
 describe('Daily Dashboard', () => {
     let dashboard;
+    let mockDoc;
+    let mockStream;
 
     beforeEach(() => {
         jest.clearAllMocks();
         fs.existsSync.mockReturnValue(false);
+
+        // Mock PDFDocument
+        mockDoc = {
+            fontSize: jest.fn().mockReturnThis(),
+            fillColor: jest.fn().mockReturnThis(),
+            text: jest.fn().mockReturnThis(),
+            moveDown: jest.fn().mockReturnThis(),
+            strokeColor: jest.fn().mockReturnThis(),
+            lineWidth: jest.fn().mockReturnThis(),
+            moveTo: jest.fn().mockReturnThis(),
+            lineTo: jest.fn().mockReturnThis(),
+            stroke: jest.fn().mockReturnThis(),
+            circle: jest.fn().mockReturnThis(),
+            fill: jest.fn().mockReturnThis(),
+            rect: jest.fn().mockReturnThis(),
+            pipe: jest.fn(),
+            end: jest.fn(),
+            addPage: jest.fn().mockReturnThis(),
+            switchToPage: jest.fn().mockReturnThis(),
+            heightOfString: jest.fn().mockReturnValue(20),
+            bufferedPageRange: jest.fn().mockReturnValue({ count: 1 }),
+            y: 100,
+            page: { height: 800, width: 612 }
+        };
+
+        PDFDocument.mockImplementation(() => mockDoc);
+
+        // Mock write stream
+        mockStream = {
+            on: jest.fn((event, callback) => {
+                if (event === 'finish') {
+                    mockStream.finishCallback = callback;
+                }
+                return mockStream;
+            })
+        };
+
+        fs.createWriteStream.mockReturnValue(mockStream);
+
         dashboard = new DailyDashboard();
     });
 
@@ -1917,6 +1960,63 @@ describe('Daily Dashboard', () => {
                 if (htmlFile && fs.existsSync(htmlFile)) {
                     fs.unlinkSync(htmlFile);
                 }
+            });
+        });
+
+        describe('exportToPDF', () => {
+            test('generates PDF report successfully', async () => {
+                // Add sample data
+                dashboard.mentalHealth.data.moodLogs = [
+                    { rating: 7, timestamp: new Date().toISOString(), note: 'Good' },
+                    { rating: 8, timestamp: new Date(Date.now() - 86400000).toISOString(), note: 'Great' }
+                ];
+
+                const pdfFile = path.join(__dirname, 'test-report.pdf');
+                const promise = dashboard.exportToPDF(30, pdfFile);
+
+                // Trigger the finish callback
+                if (mockStream.finishCallback) {
+                    mockStream.finishCallback();
+                }
+
+                const result = await promise;
+
+                expect(result).toBe(pdfFile);
+                expect(mockDoc.end).toHaveBeenCalled();
+                expect(mockDoc.pipe).toHaveBeenCalled();
+            });
+
+            test('uses default filename when not provided', async () => {
+                const promise = dashboard.exportToPDF(30);
+
+                // Trigger the finish callback
+                if (mockStream.finishCallback) {
+                    mockStream.finishCallback();
+                }
+
+                const result = await promise;
+
+                expect(typeof result).toBe('string');
+                expect(result).toMatch(/wellness-report-.*\.pdf/);
+            });
+
+            test('includes PDF header and summary', async () => {
+                dashboard.mentalHealth.data.moodLogs = [
+                    { rating: 8, timestamp: new Date().toISOString() }
+                ];
+
+                const promise = dashboard.exportToPDF(30, 'test.pdf');
+
+                if (mockStream.finishCallback) {
+                    mockStream.finishCallback();
+                }
+
+                await promise;
+
+                // Verify PDF methods were called
+                expect(mockDoc.fontSize).toHaveBeenCalled();
+                expect(mockDoc.text).toHaveBeenCalled();
+                expect(mockDoc.fillColor).toHaveBeenCalled();
             });
         });
 

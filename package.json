@@ -1,6 +1,6 @@
 {
   "name": "stepsyncai-health-apps",
-  "version": "3.10.0",
+  "version": "3.11.0",
   "description": "Health, wellness, and learning apps - Mental health support, medication tracker, and AWS learning",
   "main": "index.js",
   "scripts": {
