@@ -1,6 +1,6 @@
 # StepSyncAI - Health & Wellness Apps
 
-[![Tests](https://img.shields.io/badge/tests-948%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Tests](https://img.shields.io/badge/tests-958%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Coverage](https://img.shields.io/badge/coverage-87.21%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Branch Coverage](https://img.shields.io/badge/branch%20coverage-71.64%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
@@ -1722,6 +1722,80 @@ node daily-dashboard.js insights            # Pattern heatmap + insights
 - **Accessibility**: Text-based visualizations work with screen readers
 - **Fast**: Renders instantly in your terminal
 - **Professional**: Publication-quality ASCII charts
+
+### HTML Export with Interactive Charts 📊🌐
+
+Generate beautiful, interactive HTML reports with Chart.js visualizations that can be viewed in any web browser and easily shared with healthcare providers.
+
+#### Quick Start
+
+```bash
+# Generate interactive HTML report
+node daily-dashboard.js export-html
+
+# Generate HTML report for last 90 days
+node daily-dashboard.js export-html 90
+
+# Custom filename
+node daily-dashboard.js html 30 my-wellness-report.html
+```
+
+#### Features
+
+**Interactive Charts**:
+- **Line Chart** - Wellness trends over time with smooth animations
+- **Bar Chart** - Correlation analysis with color-coded strength indicators
+- **Radar Chart** - Day-of-week patterns visualization
+
+**Responsive Design**:
+- Mobile-friendly layout
+- Print-optimized styling
+- Beautiful gradient backgrounds
+- Hover effects and animations
+
+**Complete Summary**:
+- Overall wellness score card
+- Mood, sleep, exercise, and medication stats
+- Goal progress with visual bars
+- Personalized wellness insights with priority indicators
+
+#### What's Included in the Report
+
+1. **Summary Cards** - 5 stat cards showing key metrics
+2. **Wellness Trends Chart** - Interactive line chart with 8-week progression
+3. **Correlation Analysis** - Color-coded bar chart showing relationships
+4. **Day-of-Week Patterns** - Radar chart highlighting best/worst days
+5. **Goals & Progress** - Visual progress bars for all active goals
+6. **Wellness Insights** - Color-coded suggestions (critical/warning/positive)
+
+#### Example Commands
+
+```bash
+# Doctor appointment report
+node daily-dashboard.js export-html 90 doctor-visit.html
+
+# Monthly review
+node daily-dashboard.js html 30 monthly-review.html
+
+# Insurance documentation
+node daily-dashboard.js web-report 90 insurance-q4.html
+```
+
+#### Technical Details
+
+- **Chart.js 4.4.0** - Professional interactive charts via CDN
+- **Self-contained** - Single HTML file, works offline after first load
+- **Responsive** - Works on desktop, tablet, and mobile
+- **Print-ready** - Optimized CSS for printing
+
+#### Advantages Over Text Reports
+
+- ✅ Interactive charts with tooltips
+- ✅ Beautiful modern design
+- ✅ Easy to share via email/cloud
+- ✅ Print-friendly formatting
+- ✅ Mobile responsive
+- ✅ Professional appearance for healthcare providers
 
 ### Tips for Best Results
 

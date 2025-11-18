@@ -2820,6 +2820,487 @@ Goal types: wellness, mood, sleep-duration, sleep-quality, exercise, medication
             return false;
         }
     }
+
+    /**
+     * Export wellness data as interactive HTML report with charts
+     */
+    exportToHTML(days = 30, filename = null) {
+        const data = this.gatherExportData(days);
+
+        if (!filename) {
+            filename = `wellness-report-${new Date().toISOString().split('T')[0]}.html`;
+        }
+
+        try {
+            const html = this.generateHTMLReport(data);
+            fs.writeFileSync(filename, html);
+            console.log(`\n✅ HTML report generated successfully: ${filename}`);
+            console.log(`   Period: ${data.exportInfo.startDate} to ${data.exportInfo.endDate}`);
+            console.log(`   Open in your browser to view interactive charts\n`);
+            return true;
+        } catch (error) {
+            console.error(`\n❌ HTML report generation failed: ${error.message}`);
+            console.error(`   Stack: ${error.stack}\n`);
+            return false;
+        }
+    }
+
+    /**
+     * Generate HTML content with embedded charts
+     */
+    generateHTMLReport(data) {
+        const trends = data.trends;
+        const correlations = data.correlations;
+        const insights = data.insights;
+        const goals = data.goals;
+
+        // Prepare trend data for Chart.js
+        const trendLabels = trends.weeklyData.map(w => `Week ${w.weekNumber}`);
+        const trendScores = trends.weeklyData.map(w => w.percentage);
+
+        // Prepare component trends
+        const moodTrend = trends.weeklyData.map(w => w.mood || 0);
+        const sleepTrend = trends.weeklyData.map(w => w.sleep || 0);
+        const exerciseTrend = trends.weeklyData.map(w => w.exercise || 0);
+        const medTrend = trends.weeklyData.map(w => w.medication || 0);
+
+        // Prepare correlation data
+        const correlationData = correlations.findings.map(f => ({
+            factor: f.factor,
+            value: f.correlation
+        }));
+
+        // Prepare day-of-week data
+        const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const dayMap = { 0: 'Sun', 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat' };
+        const dayScores = dayLabels.map(day => {
+            const dayNum = Object.keys(dayMap).find(k => dayMap[k] === day);
+            const pattern = insights.patterns[dayNum];
+            return pattern && pattern.avgScore !== null ? pattern.avgScore : 0;
+        });
+
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wellness Report - ${data.exportInfo.startDate} to ${data.exportInfo.endDate}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 40px;
+            background: #f8f9fa;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .stat-card h3 {
+            color: #667eea;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-card .label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .section {
+            padding: 40px;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 30px 0;
+        }
+
+        .goals-list {
+            display: grid;
+            gap: 20px;
+        }
+
+        .goal-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .goal-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            transition: width 0.3s;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .insight-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .insight-card.positive {
+            border-left: 4px solid #28a745;
+        }
+
+        .insight-card.warning {
+            border-left: 4px solid #ffc107;
+        }
+
+        .insight-card.critical {
+            border-left: 4px solid #dc3545;
+        }
+
+        footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9em;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+            }
+            .chart-container {
+                height: 300px;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Wellness Report</h1>
+            <p>Period: ${data.exportInfo.startDate} to ${data.exportInfo.endDate}</p>
+            <p>Generated: ${new Date().toLocaleString()}</p>
+        </header>
+
+        <div class="summary">
+            <div class="stat-card">
+                <h3>Overall Wellness</h3>
+                <div class="value">${Number(data.summary?.averageWellnessScore || 0).toFixed(1)}%</div>
+                <div class="label">Average Score</div>
+            </div>
+            <div class="stat-card">
+                <h3>😊 Mood</h3>
+                <div class="value">${Number(data.summary?.moodStats?.average || 0).toFixed(1)}</div>
+                <div class="label">out of 10</div>
+            </div>
+            <div class="stat-card">
+                <h3>😴 Sleep</h3>
+                <div class="value">${Number(data.summary?.sleepStats?.averageDuration || 0).toFixed(1)}h</div>
+                <div class="label">Avg Duration</div>
+            </div>
+            <div class="stat-card">
+                <h3>🏃 Exercise</h3>
+                <div class="value">${Number(data.summary?.exerciseStats?.totalMinutes || 0)}</div>
+                <div class="label">Total Minutes</div>
+            </div>
+            <div class="stat-card">
+                <h3>💊 Medication</h3>
+                <div class="value">${Number(data.summary?.medicationStats?.adherence || 0).toFixed(1)}%</div>
+                <div class="label">Adherence</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📈 Wellness Trends</h2>
+            <div class="chart-container">
+                <canvas id="trendsChart"></canvas>
+            </div>
+            <p style="text-align: center; color: #666; margin-top: 20px;">
+                <strong>Trend:</strong> ${trends.trend === 'improving' ? '📈 Improving' : trends.trend === 'declining' ? '📉 Declining' : '➡️ Stable'}
+                ${trends.changePercent != null ? ` (${trends.changePercent > 0 ? '+' : ''}${Number(trends.changePercent).toFixed(1)}%)` : ''}
+            </p>
+        </div>
+
+        <div class="section">
+            <h2>🔗 Correlation Analysis</h2>
+            <div class="chart-container">
+                <canvas id="correlationChart"></canvas>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📅 Day-of-Week Patterns</h2>
+            <div class="chart-container">
+                <canvas id="dayOfWeekChart"></canvas>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🏆 Goals & Progress</h2>
+            <div class="goals-list">
+                ${goals.length > 0 ? goals.map(goal => {
+                    const progress = this.checkGoalProgress(goal.id);
+                    if (!progress) return '';
+                    const percentage = progress.progressPercentage;
+                    return `
+                        <div class="goal-card">
+                            <h3>${goal.description}</h3>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${percentage}%">
+                                    ${percentage.toFixed(1)}%
+                                </div>
+                            </div>
+                            <p style="margin-top: 10px; color: #666;">
+                                Current: ${this.formatGoalTarget(goal.type, progress.current.toFixed(1))} /
+                                Target: ${this.formatGoalTarget(goal.type, progress.target)}
+                            </p>
+                            <p style="color: #666;">Target Date: ${goal.targetDate}</p>
+                        </div>
+                    `;
+                }).join('') : '<p style="color: #666;">No active goals set.</p>'}
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>💡 Wellness Insights</h2>
+            <div class="insights-grid">
+                ${insights.suggestions.map(s => {
+                    const type = s.priority === 'high' ? 'critical' :
+                                s.priority === 'medium' ? 'warning' : 'positive';
+                    const emoji = s.priority === 'high' ? '🔴' :
+                                 s.priority === 'medium' ? '🟡' : '✅';
+                    return `
+                        <div class="insight-card ${type}">
+                            <p>${emoji} ${s.message}</p>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+
+        <footer>
+            <p>Generated by StepSyncAI Wellness Dashboard</p>
+            <p>Keep tracking, keep improving! 💪</p>
+        </footer>
+    </div>
+
+    <script>
+        // Trends Chart
+        const trendsCtx = document.getElementById('trendsChart').getContext('2d');
+        new Chart(trendsCtx, {
+            type: 'line',
+            data: {
+                labels: ${JSON.stringify(trendLabels)},
+                datasets: [{
+                    label: 'Overall Wellness',
+                    data: ${JSON.stringify(trendScores)},
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Correlation Chart
+        const corrCtx = document.getElementById('correlationChart').getContext('2d');
+        new Chart(corrCtx, {
+            type: 'bar',
+            data: {
+                labels: ${JSON.stringify(correlationData.map(c => c.factor))},
+                datasets: [{
+                    label: 'Correlation Coefficient',
+                    data: ${JSON.stringify(correlationData.map(c => c.value))},
+                    backgroundColor: function(context) {
+                        const value = context.parsed.y;
+                        if (Math.abs(value) >= 0.7) return 'rgba(40, 167, 69, 0.8)';
+                        if (Math.abs(value) >= 0.4) return 'rgba(255, 193, 7, 0.8)';
+                        return 'rgba(102, 126, 234, 0.8)';
+                    },
+                    borderColor: function(context) {
+                        const value = context.parsed.y;
+                        if (Math.abs(value) >= 0.7) return 'rgb(40, 167, 69)';
+                        if (Math.abs(value) >= 0.4) return 'rgb(255, 193, 7)';
+                        return 'rgb(102, 126, 234)';
+                    },
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        min: -1,
+                        max: 1,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toFixed(2);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Day of Week Chart
+        const dayCtx = document.getElementById('dayOfWeekChart').getContext('2d');
+        new Chart(dayCtx, {
+            type: 'radar',
+            data: {
+                labels: ${JSON.stringify(dayLabels)},
+                datasets: [{
+                    label: 'Wellness Score',
+                    data: ${JSON.stringify(dayScores)},
+                    backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                    borderColor: '#667eea',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#667eea',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#667eea'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            stepSize: 20
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>`;
+    }
 }
 
 // CLI Interface
@@ -2924,6 +3405,14 @@ if (require.main === module) {
             dashboard.generateReport(reportDays, reportFile);
             break;
 
+        case 'export-html':
+        case 'html':
+        case 'web-report':
+            const htmlDays = args[1] ? parseInt(args[1]) : 30;
+            const htmlFile = args[2] || null;
+            dashboard.exportToHTML(htmlDays, htmlFile);
+            break;
+
         case 'help':
         default:
             console.log(`
@@ -2980,6 +3469,11 @@ COMMANDS:
       Generate comprehensive wellness report (default: 30 days)
       Text format with executive summary, goals, insights, and trends
       Example: report 30 monthly-report.txt
+
+  export-html, html, web-report [days] [filename]
+      Generate interactive HTML report with charts (default: 30 days)
+      Beautiful web page with Chart.js visualizations - open in browser
+      Example: export-html 30 wellness-report.html
 
   help
       Show this help message

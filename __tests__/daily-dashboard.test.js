@@ -2014,4 +2014,187 @@ describe('Daily Dashboard', () => {
             });
         });
     });
+
+    describe('HTML Export', () => {
+        let dashboard;
+        let fs;
+
+        beforeAll(() => {
+            // Get the real fs module for HTML export tests
+            fs = jest.requireActual('fs');
+            jest.spyOn(require('fs'), 'writeFileSync').mockImplementation((...args) => fs.writeFileSync(...args));
+            jest.spyOn(require('fs'), 'readFileSync').mockImplementation((...args) => fs.readFileSync(...args));
+            jest.spyOn(require('fs'), 'existsSync').mockImplementation((...args) => fs.existsSync(...args));
+            jest.spyOn(require('fs'), 'unlinkSync').mockImplementation((...args) => fs.unlinkSync(...args));
+        });
+
+        afterAll(() => {
+            jest.restoreAllMocks();
+        });
+
+        beforeEach(() => {
+            dashboard = new DailyDashboard('test-dashboard-html.json');
+            dashboard.mentalHealth.data.moodLogs = [];
+            dashboard.sleep.data.sleepEntries = [];
+            dashboard.exercise.data.exercises = [];
+
+            // Add sample data
+            const today = new Date();
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toISOString();
+
+                dashboard.mentalHealth.data.moodLogs.push({
+                    rating: 7 + i % 3,
+                    notes: `Day ${i} notes`,
+                    timestamp: dateStr
+                });
+
+                dashboard.sleep.data.sleepEntries.push({
+                    duration: '7.5',
+                    quality: 8,
+                    notes: `Sleep ${i}`,
+                    timestamp: dateStr
+                });
+
+                dashboard.exercise.data.exercises.push({
+                    type: 'Running',
+                    duration: 30,
+                    intensity: 'moderate',
+                    timestamp: dateStr,
+                    date: date.toISOString().split('T')[0]
+                });
+            }
+        });
+
+        afterEach(() => {
+            const files = [
+                'test-dashboard-html.json',
+                'test-wellness-report.html'
+            ];
+            files.forEach(file => {
+                if (fs.existsSync(file)) {
+                    fs.unlinkSync(file);
+                }
+            });
+        });
+
+        test('exports HTML report successfully', () => {
+            const filename = 'test-wellness-report.html';
+            const result = dashboard.exportToHTML(7, filename);
+
+            expect(result).toBe(true);
+            expect(fs.existsSync(filename)).toBe(true);
+
+            const content = fs.readFileSync(filename, 'utf8');
+            expect(content).toContain('<!DOCTYPE html>');
+            expect(content).toContain('Wellness Report');
+        });
+
+        test('HTML contains Chart.js script', () => {
+            const filename = 'test-wellness-report.html';
+            dashboard.exportToHTML(7, filename);
+
+            const content = fs.readFileSync(filename, 'utf8');
+            expect(content).toContain('chart.js');
+            expect(content).toContain('Chart(');
+        });
+
+        test('HTML contains all required sections', () => {
+            const filename = 'test-wellness-report.html';
+            dashboard.exportToHTML(7, filename);
+
+            const content = fs.readFileSync(filename, 'utf8');
+            expect(content).toContain('Wellness Trends');
+            expect(content).toContain('Correlation Analysis');
+            expect(content).toContain('Day-of-Week Patterns');
+            expect(content).toContain('Goals & Progress');
+            expect(content).toContain('Wellness Insights');
+        });
+
+        test('HTML contains summary statistics', () => {
+            const filename = 'test-wellness-report.html';
+            dashboard.exportToHTML(7, filename);
+
+            const content = fs.readFileSync(filename, 'utf8');
+            expect(content).toContain('Overall Wellness');
+            expect(content).toContain('Mood');
+            expect(content).toContain('Sleep');
+            expect(content).toContain('Exercise');
+            expect(content).toContain('Medication');
+        });
+
+        test('HTML contains interactive charts', () => {
+            const filename = 'test-wellness-report.html';
+            dashboard.exportToHTML(7, filename);
+
+            const content = fs.readFileSync(filename, 'utf8');
+            expect(content).toContain('trendsChart');
+            expect(content).toContain('correlationChart');
+            expect(content).toContain('dayOfWeekChart');
+        });
+
+        test('HTML has responsive design CSS', () => {
+            const filename = 'test-wellness-report.html';
+            dashboard.exportToHTML(7, filename);
+
+            const content = fs.readFileSync(filename, 'utf8');
+            expect(content).toContain('<style>');
+            expect(content).toContain('grid');
+            expect(content).toContain('@media print');
+        });
+
+        test('HTML export uses default filename when not provided', () => {
+            const result = dashboard.exportToHTML(7);
+            expect(result).toBe(true);
+
+            // Check that a file with today's date was created
+            const today = new Date().toISOString().split('T')[0];
+            const expectedFilename = `wellness-report-${today}.html`;
+            expect(fs.existsSync(expectedFilename)).toBe(true);
+
+            // Clean up
+            if (fs.existsSync(expectedFilename)) {
+                fs.unlinkSync(expectedFilename);
+            }
+        });
+
+        test('generateHTMLReport produces valid HTML structure', () => {
+            const data = dashboard.gatherExportData(7);
+            const html = dashboard.generateHTMLReport(data);
+
+            expect(html).toContain('<!DOCTYPE html>');
+            expect(html).toContain('<html lang="en">');
+            expect(html).toContain('</html>');
+            expect(html).toContain('<head>');
+            expect(html).toContain('</head>');
+            expect(html).toContain('<body>');
+            expect(html).toContain('</body>');
+        });
+
+        test('HTML includes period dates in header', () => {
+            const filename = 'test-wellness-report.html';
+            dashboard.exportToHTML(7, filename);
+
+            const content = fs.readFileSync(filename, 'utf8');
+            expect(content).toContain('Period:');
+            expect(content).toMatch(/\d{4}-\d{2}-\d{2}/); // Date format
+        });
+
+        test('HTML export handles missing data gracefully', () => {
+            dashboard.mentalHealth.data.moodLogs = [];
+            dashboard.sleep.data.sleepEntries = [];
+            dashboard.exercise.data.exercises = [];
+
+            const filename = 'test-wellness-report.html';
+            const result = dashboard.exportToHTML(7, filename);
+
+            expect(result).toBe(true);
+            expect(fs.existsSync(filename)).toBe(true);
+
+            const content = fs.readFileSync(filename, 'utf8');
+            expect(content).toContain('<!DOCTYPE html>');
+        });
+    });
 });
