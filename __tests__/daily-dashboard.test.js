@@ -2018,6 +2018,57 @@ describe('Daily Dashboard', () => {
                 expect(mockDoc.text).toHaveBeenCalled();
                 expect(mockDoc.fillColor).toHaveBeenCalled();
             });
+
+            test('generates PDF with comprehensive wellness data', async () => {
+                // Add comprehensive test data
+                const today = new Date();
+
+                // Add mood data
+                for (let i = 0; i < 30; i++) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    dashboard.mentalHealth.data.moodLogs.push({
+                        rating: 7 + (i % 3),
+                        timestamp: date.toISOString(),
+                        note: 'Test mood'
+                    });
+                }
+
+                // Add goals
+                dashboard.setGoal('wellness', 80, '2025-12-31', 'Reach 80%');
+
+                const promise = dashboard.exportToPDF(30, 'comprehensive-test.pdf');
+
+                if (mockStream.finishCallback) {
+                    mockStream.finishCallback();
+                }
+
+                const result = await promise;
+
+                // Verify all PDF sections were created
+                expect(mockDoc.fontSize).toHaveBeenCalled();
+                expect(mockDoc.text).toHaveBeenCalled();
+                expect(mockDoc.fillColor).toHaveBeenCalled();
+                expect(mockDoc.rect).toHaveBeenCalled();
+                expect(result).toBe('comprehensive-test.pdf');
+            });
+
+            test('exports PDF with minimal data', async () => {
+                // Create dashboard with minimal data
+                const minimalDashboard = new DailyDashboard();
+                minimalDashboard.mentalHealth.data.moodLogs = [
+                    { rating: 7, timestamp: new Date().toISOString() }
+                ];
+
+                const promise = minimalDashboard.exportToPDF(7, 'minimal-test.pdf');
+
+                if (mockStream.finishCallback) {
+                    mockStream.finishCallback();
+                }
+
+                const result = await promise;
+                expect(result).toBe('minimal-test.pdf');
+            });
         });
 
         describe('Visualization Methods', () => {
