@@ -1,4 +1,6 @@
 const fs = require('fs');
+const path = require('path');
+const PDFDocument = require('pdfkit');
 const MentalHealthTracker = require('./mental-health-tracker');
 const MedicationTracker = require('./medication-tracker');
 const SleepTracker = require('./sleep-tracker');
@@ -2927,6 +2929,405 @@ Goal types: wellness, mood, sleep-duration, sleep-quality, exercise, medication
     }
 
     /**
+     * Export data to PDF report with visualizations
+     */
+    exportToPDF(days = 30, filename = null) {
+        return new Promise((resolve, reject) => {
+            try {
+                const data = this.gatherExportData(days);
+
+                if (!filename) {
+                    filename = `wellness-report-${new Date().toISOString().split('T')[0]}.pdf`;
+                }
+
+                // Create PDF document
+                const doc = new PDFDocument({ margin: 50, size: 'LETTER' });
+                const stream = fs.createWriteStream(filename);
+                doc.pipe(stream);
+
+                // Add all sections
+                this.addPDFHeader(doc, data);
+                this.addPDFSummaryCards(doc, data);
+                this.addPDFTrendsChart(doc, data);
+                this.addPDFCorrelationsChart(doc, data);
+                this.addPDFDayOfWeekChart(doc, data);
+                this.addPDFInsights(doc, data);
+                this.addPDFGoals(doc, data);
+                this.addPDFFooter(doc);
+
+                doc.end();
+
+                stream.on('finish', () => {
+                    console.log(`\n✅ PDF report generated successfully: ${filename}`);
+                    console.log(`   Period: ${data.exportInfo.startDate} to ${data.exportInfo.endDate}`);
+                    console.log(`   Open the file to view your wellness report!\n`);
+                    resolve(filename);
+                });
+
+                stream.on('error', (error) => {
+                    console.error(`\n❌ PDF export failed: ${error.message}\n`);
+                    reject(error);
+                });
+
+            } catch (error) {
+                console.error(`\n❌ PDF export failed: ${error.message}\n`);
+                reject(error);
+            }
+        });
+    }
+
+    addPDFHeader(doc, data) {
+        // Title with gradient-like color
+        doc.fontSize(28).fillColor('#667eea').text('Wellness Report', { align: 'center' });
+        doc.moveDown(0.3);
+
+        // Subtitle
+        doc.fontSize(12).fillColor('#666');
+        doc.text(`${data.exportInfo.startDate} to ${data.exportInfo.endDate}`, { align: 'center' });
+        doc.text(`${data.exportInfo.daysIncluded} days`, { align: 'center' });
+        doc.moveDown(1.5);
+    }
+
+    addPDFSummaryCards(doc, data) {
+        doc.fontSize(16).fillColor('#667eea').text('📊 Summary');
+        doc.moveDown(0.5);
+
+        const summary = data.summary;
+        const cardData = [
+            { label: 'Current Wellness', value: summary.currentScore !== undefined && summary.currentScore !== null ? `${summary.currentScore.toFixed(1)}%` : 'N/A', sublabel: summary.currentScore !== undefined ? this.getScoreLabel(summary.currentScore) : '' },
+            { label: 'Average Mood', value: summary.avgMood !== undefined && summary.avgMood !== null ? `${summary.avgMood.toFixed(1)}/10` : 'N/A', sublabel: 'out of 10' },
+            { label: 'Avg Sleep', value: summary.avgSleepDuration !== undefined && summary.avgSleepDuration !== null ? `${summary.avgSleepDuration.toFixed(1)}h` : 'N/A', sublabel: 'hours/night' },
+            { label: 'Avg Exercise', value: summary.avgExerciseMinutes !== undefined && summary.avgExerciseMinutes !== null ? `${summary.avgExerciseMinutes.toFixed(0)}min` : 'N/A', sublabel: 'minutes/day' },
+            { label: 'Medication', value: summary.medicationAdherence !== undefined && summary.medicationAdherence !== null ? `${summary.medicationAdherence.toFixed(0)}%` : 'N/A', sublabel: 'adherence' }
+        ];
+
+        const startX = 50;
+        const cardWidth = 95;
+        const cardHeight = 60;
+        const spacing = 10;
+
+        cardData.forEach((card, i) => {
+            const x = startX + (i * (cardWidth + spacing));
+            const y = doc.y;
+
+            // Card background
+            doc.fillColor('#f8f9fa').rect(x, y, cardWidth, cardHeight).fill();
+
+            // Card border
+            doc.strokeColor('#667eea').lineWidth(1).rect(x, y, cardWidth, cardHeight).stroke();
+
+            // Label
+            doc.fontSize(8).fillColor('#666').text(card.label, x + 5, y + 8, { width: cardWidth - 10, align: 'center' });
+
+            // Value
+            doc.fontSize(16).fillColor('#667eea').text(card.value, x + 5, y + 22, { width: cardWidth - 10, align: 'center' });
+
+            // Sublabel
+            if (card.sublabel) {
+                doc.fontSize(7).fillColor('#999').text(card.sublabel, x + 5, y + 44, { width: cardWidth - 10, align: 'center' });
+            }
+        });
+
+        doc.y += cardHeight + 20;
+        doc.moveDown(1);
+    }
+
+    addPDFTrendsChart(doc, data) {
+        if (!data.trends || !data.trends.overallTrend) return;
+
+        doc.fontSize(16).fillColor('#667eea').text('📈 Wellness Trends');
+        doc.moveDown(0.5);
+
+        const trends = data.trends.overallTrend.weeklyData || [];
+        const validWeeks = trends.filter(w => w.daysWithData > 0);
+
+        if (validWeeks.length === 0) {
+            doc.fontSize(11).fillColor('#999').text('No trend data available', { indent: 20 });
+            doc.moveDown(1);
+            return;
+        }
+
+        // Chart dimensions
+        const chartX = 80;
+        const chartY = doc.y + 10;
+        const chartWidth = 450;
+        const chartHeight = 120;
+
+        // Draw axes
+        doc.strokeColor('#ddd').lineWidth(1);
+        doc.moveTo(chartX, chartY).lineTo(chartX, chartY + chartHeight).stroke(); // Y-axis
+        doc.moveTo(chartX, chartY + chartHeight).lineTo(chartX + chartWidth, chartY + chartHeight).stroke(); // X-axis
+
+        // Y-axis labels (0-100)
+        doc.fontSize(8).fillColor('#999');
+        for (let i = 0; i <= 100; i += 20) {
+            const y = chartY + chartHeight - (i * chartHeight / 100);
+            doc.text(i.toString(), chartX - 25, y - 4);
+            doc.strokeColor('#f0f0f0').moveTo(chartX, y).lineTo(chartX + chartWidth, y).stroke();
+        }
+
+        // Plot wellness trend
+        if (validWeeks.length > 1) {
+            doc.strokeColor('#667eea').lineWidth(2.5);
+            for (let i = 0; i < validWeeks.length - 1; i++) {
+                const x1 = chartX + (i * chartWidth / (validWeeks.length - 1));
+                const y1 = chartY + chartHeight - (validWeeks[i].percentage * chartHeight / 100);
+                const x2 = chartX + ((i + 1) * chartWidth / (validWeeks.length - 1));
+                const y2 = chartY + chartHeight - (validWeeks[i + 1].percentage * chartHeight / 100);
+
+                doc.moveTo(x1, y1).lineTo(x2, y2).stroke();
+            }
+
+            // Plot points
+            doc.fillColor('#667eea');
+            validWeeks.forEach((week, i) => {
+                const x = chartX + (i * chartWidth / (validWeeks.length - 1));
+                const y = chartY + chartHeight - (week.percentage * chartHeight / 100);
+                doc.circle(x, y, 3).fill();
+            });
+        }
+
+        // X-axis labels
+        doc.fontSize(8).fillColor('#999');
+        validWeeks.forEach((week, i) => {
+            if (i % 2 === 0 || validWeeks.length <= 8) {
+                const x = chartX + (i * chartWidth / (validWeeks.length - 1));
+                doc.text(`W${week.weekNumber}`, x - 10, chartY + chartHeight + 5);
+            }
+        });
+
+        doc.y = chartY + chartHeight + 30;
+        doc.moveDown(1);
+    }
+
+    addPDFCorrelationsChart(doc, data) {
+        if (!data.correlations) return;
+
+        // Check if we need a new page
+        if (doc.y > 600) {
+            doc.addPage();
+        }
+
+        doc.fontSize(16).fillColor('#667eea').text('🔗 Correlation Analysis');
+        doc.moveDown(0.5);
+
+        const correlationData = [];
+
+        if (data.correlations.sleepMood) {
+            if (data.correlations.sleepMood.durationCorrelation !== null && data.correlations.sleepMood.durationCorrelation !== undefined) {
+                correlationData.push({ label: 'Sleep Duration → Mood', value: data.correlations.sleepMood.durationCorrelation });
+            }
+            if (data.correlations.sleepMood.qualityCorrelation !== null && data.correlations.sleepMood.qualityCorrelation !== undefined) {
+                correlationData.push({ label: 'Sleep Quality → Mood', value: data.correlations.sleepMood.qualityCorrelation });
+            }
+        }
+        if (data.correlations.exerciseMood && data.correlations.exerciseMood.correlation !== null && data.correlations.exerciseMood.correlation !== undefined) {
+            correlationData.push({ label: 'Exercise → Mood', value: data.correlations.exerciseMood.correlation });
+        }
+        if (data.correlations.medicationMood && data.correlations.medicationMood.correlation !== null && data.correlations.medicationMood.correlation !== undefined) {
+            correlationData.push({ label: 'Medication → Mood', value: data.correlations.medicationMood.correlation });
+        }
+
+        if (correlationData.length === 0) {
+            doc.fontSize(11).fillColor('#999').text('No correlation data available', { indent: 20 });
+            doc.moveDown(1);
+            return;
+        }
+
+        const barHeight = 25;
+        const maxBarWidth = 400;
+        const startX = 130;
+
+        correlationData.forEach((item, i) => {
+            const y = doc.y + (i * (barHeight + 10));
+
+            // Label
+            doc.fontSize(10).fillColor('#333').text(item.label, 50, y + 8);
+
+            // Bar
+            const barWidth = Math.abs(item.value) * maxBarWidth;
+            const barColor = item.value > 0 ? '#10b981' : '#ef4444';
+
+            doc.fillColor(barColor).rect(startX, y, barWidth, barHeight).fill();
+
+            // Value text
+            const sign = item.value > 0 ? '+' : '';
+            doc.fontSize(9).fillColor('#fff').text(`${sign}${item.value.toFixed(3)}`, startX + barWidth - 50, y + 8);
+        });
+
+        doc.y += (correlationData.length * (barHeight + 10)) + 10;
+        doc.moveDown(1);
+    }
+
+    addPDFDayOfWeekChart(doc, data) {
+        if (!data.insights || !data.insights.patterns) return;
+
+        // Check if we need a new page
+        if (doc.y > 600) {
+            doc.addPage();
+        }
+
+        doc.fontSize(16).fillColor('#667eea').text('📅 Day of Week Patterns');
+        doc.moveDown(0.5);
+
+        const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const dayData = daysOrder.map(day => {
+            const pattern = data.insights.patterns[day];
+            return {
+                day: day,
+                score: pattern && pattern.avgScore !== null ? pattern.avgScore : 0
+            };
+        }).filter(d => d.score > 0);
+
+        if (dayData.length === 0) {
+            doc.fontSize(11).fillColor('#999').text('No day-of-week data available', { indent: 20 });
+            doc.moveDown(1);
+            return;
+        }
+
+        const barWidth = 50;
+        const maxBarHeight = 100;
+        const startX = 60;
+        const baseY = doc.y + maxBarHeight + 20;
+
+        dayData.forEach((item, i) => {
+            const x = startX + (i * (barWidth + 15));
+            const barHeight = (item.score / 100) * maxBarHeight;
+            const y = baseY - barHeight;
+
+            // Bar color based on score
+            let barColor = '#ef4444'; // red for low
+            if (item.score >= 80) barColor = '#10b981'; // green for excellent
+            else if (item.score >= 60) barColor = '#f59e0b'; // yellow for good
+
+            // Bar
+            doc.fillColor(barColor).rect(x, y, barWidth, barHeight).fill();
+
+            // Score text
+            doc.fontSize(9).fillColor('#333').text(item.score.toFixed(0) + '%', x, y - 15, { width: barWidth, align: 'center' });
+
+            // Day label
+            doc.fontSize(8).fillColor('#666').text(item.day.substring(0, 3), x, baseY + 5, { width: barWidth, align: 'center' });
+        });
+
+        doc.y = baseY + 30;
+        doc.moveDown(1);
+    }
+
+    addPDFInsights(doc, data) {
+        if (!data.insights || !data.insights.suggestions || data.insights.suggestions.length === 0) return;
+
+        // Check if we need a new page
+        if (doc.y > 650) {
+            doc.addPage();
+        }
+
+        doc.fontSize(16).fillColor('#667eea').text('💡 Wellness Insights');
+        doc.moveDown(0.5);
+
+        const priorityOrder = { high: 1, medium: 2, positive: 3 };
+        const sortedInsights = [...data.insights.suggestions].sort((a, b) =>
+            (priorityOrder[a.priority] || 99) - (priorityOrder[b.priority] || 99)
+        );
+
+        sortedInsights.slice(0, 5).forEach((insight, i) => {
+            const y = doc.y;
+
+            // Priority indicator
+            let emoji = '💡';
+            let borderColor = '#667eea';
+            if (insight.priority === 'high') {
+                emoji = '🔴';
+                borderColor = '#ef4444';
+            } else if (insight.priority === 'medium') {
+                emoji = '🟡';
+                borderColor = '#f59e0b';
+            } else if (insight.priority === 'positive') {
+                emoji = '🟢';
+                borderColor = '#10b981';
+            }
+
+            // Insight box
+            const boxWidth = 500;
+            const boxPadding = 10;
+
+            doc.fontSize(10).fillColor('#333');
+            const text = `${emoji} ${insight.message}`;
+            const textHeight = doc.heightOfString(text, { width: boxWidth - (boxPadding * 2) });
+
+            doc.strokeColor(borderColor).lineWidth(2).rect(50, y, boxWidth, textHeight + (boxPadding * 2)).stroke();
+            doc.fillColor('#333').text(text, 50 + boxPadding, y + boxPadding, { width: boxWidth - (boxPadding * 2) });
+
+            doc.y = y + textHeight + (boxPadding * 2) + 8;
+        });
+
+        doc.moveDown(1);
+    }
+
+    addPDFGoals(doc, data) {
+        if (!data.goals || data.goals.length === 0) return;
+
+        // Check if we need a new page
+        if (doc.y > 650) {
+            doc.addPage();
+        }
+
+        doc.fontSize(16).fillColor('#667eea').text('🎯 Active Goals');
+        doc.moveDown(0.5);
+
+        data.goals.slice(0, 3).forEach((goal, i) => {
+            const progressPercent = goal.progress ? goal.progress.progressPercentage : 0;
+
+            doc.fontSize(11).fillColor('#333').text(`${goal.description}`, { indent: 20 });
+            doc.fontSize(9).fillColor('#666').text(`Target: ${goal.target}${goal.type === 'wellness' || goal.type === 'mood' ? '' : ''} by ${goal.deadline}`, { indent: 20 });
+
+            // Progress bar
+            const barY = doc.y + 5;
+            const barWidth = 400;
+            const barHeight = 12;
+
+            // Background
+            doc.fillColor('#f0f0f0').rect(70, barY, barWidth, barHeight).fill();
+
+            // Progress
+            const progressWidth = (progressPercent / 100) * barWidth;
+            doc.fillColor('#667eea').rect(70, barY, progressWidth, barHeight).fill();
+
+            // Percentage text
+            doc.fontSize(8).fillColor('#333').text(`${progressPercent.toFixed(0)}%`, 70 + barWidth + 10, barY + 2);
+
+            doc.y = barY + barHeight + 10;
+            doc.moveDown(0.5);
+        });
+
+        doc.moveDown(1);
+    }
+
+    addPDFFooter(doc) {
+        const pageCount = doc.bufferedPageRange().count;
+
+        for (let i = 0; i < pageCount; i++) {
+            doc.switchToPage(i);
+
+            // Footer text
+            doc.fontSize(8).fillColor('#999').text(
+                `Generated by StepSyncAI Health & Wellness Apps | ${new Date().toLocaleDateString()}`,
+                50,
+                doc.page.height - 50,
+                { align: 'center', width: doc.page.width - 100 }
+            );
+
+            // Page number
+            doc.text(
+                `Page ${i + 1} of ${pageCount}`,
+                50,
+                doc.page.height - 35,
+                { align: 'center', width: doc.page.width - 100 }
+            );
+        }
+    }
+
+    /**
      * Generate comprehensive text report
      */
     generateReport(days = 30, filename = null) {
@@ -3215,6 +3616,15 @@ if (require.main === module) {
             dashboard.exportToHTML(htmlDays, htmlFile);
             break;
 
+        case 'export-pdf':
+        case 'pdf':
+            const pdfDays = args[1] ? parseInt(args[1]) : 30;
+            const pdfFile = args[2] || null;
+            dashboard.exportToPDF(pdfDays, pdfFile).catch(err => {
+                console.error('PDF generation failed:', err.message);
+            });
+            break;
+
         case 'report':
         case 'generate-report':
             const reportDays = args[1] ? parseInt(args[1]) : 30;
@@ -3278,6 +3688,12 @@ COMMANDS:
       Generate interactive HTML report with Chart.js visualizations (default: 30 days)
       Includes trend charts, correlations, day-of-week patterns, and insights
       Example: export-html 60 my-report.html
+
+  export-pdf, pdf [days] [filename]
+      Generate PDF report with visualizations and charts (default: 30 days)
+      Includes summary cards, wellness trends, correlations, and insights
+      Professional format for sharing with healthcare providers
+      Example: export-pdf 60 my-wellness.pdf
 
   report, generate-report [days] [filename]
       Generate comprehensive wellness report (default: 30 days)

@@ -112,6 +112,10 @@ jobs:
         node -c mental-health-tracker.js
         node -c medication-tracker.js
         node -c aws-for-kids.js
+        node -c daily-dashboard.js
+        node -c sleep-tracker.js
+        node -c exercise-tracker.js
+        node -c reminder-service.js
         node -c index.js
 
   security:
@@ -165,8 +169,8 @@ jobs:
     - name: Verify coverage thresholds
       run: |
         echo "✅ All quality gates passed!"
-        echo "- Tests: 579 passing"
+        echo "- Tests: 945 passing"
         echo "- Lint: Passing"
-        echo "- Coverage: 85.5%+ (exceeds 82% threshold)"
-        echo "- Functions: 92.5%+ (exceeds 90% threshold)"
-        echo "- Branches: 68%+ (exceeds 65% threshold)"
+        echo "- Coverage: 87.21%+ (exceeds 82% threshold)"
+        echo "- Functions: 95.66%+ (exceeds 90% threshold)"
+        echo "- Branches: 71.64%+ (exceeds 65% threshold)"

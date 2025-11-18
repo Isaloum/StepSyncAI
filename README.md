@@ -1,6 +1,6 @@
 # StepSyncAI - Health & Wellness Apps
 
-[![Tests](https://img.shields.io/badge/tests-942%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Tests](https://img.shields.io/badge/tests-945%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Coverage](https://img.shields.io/badge/coverage-87.21%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Branch Coverage](https://img.shields.io/badge/branch%20coverage-71.64%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
@@ -233,6 +233,61 @@ node mental-health-tracker.js export-pdf ./reports
 - 📋 Comprehensive progress reviews
 - 📈 Visual tracking of your wellness journey
 - 🎓 Certification readiness assessment (AWS)
+</details>
+
+<details>
+<summary><b>Generate Professional PDF Reports from Dashboard</b></summary>
+
+```bash
+# Generate comprehensive PDF report with visualizations (default 30 days)
+node daily-dashboard.js export-pdf
+
+# Generate 60-day report with custom filename
+node daily-dashboard.js export-pdf 60 my-wellness-dashboard.pdf
+
+# Alternative command
+node daily-dashboard.js pdf
+```
+
+**What's Included**:
+- 📊 **Professional Summary Cards**:
+  - Current wellness score with color-coded status
+  - Average mood, sleep duration/quality, exercise minutes, medication adherence
+  - Visual progress indicators for each metric
+- 📈 **Multi-Line Wellness Trends Chart**:
+  - Wellness score progression over time
+  - Mood ratings overlay for correlation
+  - Color-coded lines (purple for wellness, green for mood)
+  - Professional Chart.js-style visualization
+- 🔗 **Correlation Analysis Bar Chart**:
+  - Sleep duration, sleep quality, exercise, and medication correlations with mood
+  - Color-coded bars: green (positive), red (negative)
+  - Correlation strength indicators
+- 📅 **Day-of-Week Performance Chart**:
+  - Average wellness score for each day of the week
+  - Identifies best and worst days
+  - Helps pattern recognition for weekly planning
+- 💡 **Wellness Insights**:
+  - High-priority actionable recommendations (red)
+  - Medium-priority suggestions (yellow)
+  - Positive reinforcement and achievements (green)
+  - Pattern-based personalized advice
+- 🏆 **Goals & Milestones**:
+  - Active goals with progress bars
+  - On-track indicators
+  - Recently achieved goals
+- 🎨 **Professional Layout**:
+  - Multi-page PDF with automatic page breaks
+  - Page numbers on every page
+  - Consistent branding and formatting
+  - Print-ready for healthcare providers
+
+**Perfect for:**
+- 🏥 Bringing to doctor/therapist appointments with visual data
+- 📋 Insurance documentation with comprehensive metrics
+- 📈 Quarterly wellness reviews with stakeholders
+- 💼 Professional health tracking and reporting
+- 🎯 Demonstrating wellness progress with evidence-based charts
 </details>
 
 ### 📊 Statistics Summary
@@ -1420,6 +1475,33 @@ node daily-dashboard.js web-report
   - Single HTML file with embedded Chart.js from CDN
   - No external dependencies needed
   - Easy to share with healthcare providers
+
+**PDF Export** (Professional Reports with Charts) 🆕:
+```bash
+# Generate professional PDF report (default 30 days)
+node daily-dashboard.js export-pdf
+
+# Generate 60-day report with custom filename
+node daily-dashboard.js export-pdf 60 wellness-report.pdf
+
+# Alternative command
+node daily-dashboard.js pdf
+```
+
+**What's Included**:
+- 📊 **Summary Cards**: Wellness score, mood, sleep, exercise, medication with visual indicators
+- 📈 **Wellness Trends Chart**: Multi-line chart showing wellness score and mood over time
+- 🔗 **Correlation Bar Chart**: Color-coded analysis of sleep, exercise, medication impact on mood
+- 📅 **Day-of-Week Chart**: Column chart revealing weekly performance patterns
+- 💡 **Wellness Insights**: Color-coded recommendations (red/yellow/green priority levels)
+- 🏆 **Goals Progress**: Active and achieved goals with progress bars
+- 🎨 **Professional Layout**: Multi-page PDF with page numbers, automatic breaks, print-ready formatting
+
+**Perfect for:**
+- 🏥 Healthcare provider appointments with visual evidence
+- 📋 Insurance documentation and claims
+- 📊 Professional wellness reporting
+- 💼 Quarterly reviews and progress tracking
 
 **Text Report** (Comprehensive Overview):
 ```bash
