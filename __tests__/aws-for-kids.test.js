@@ -859,5 +859,406 @@ describe('AWSForKids', () => {
         expect(trend).toContain('Insufficient data');
       });
     });
+
+    describe('Gamification System', () => {
+      beforeEach(() => {
+        app.data.badges = [];
+        app.data.achievements = [];
+        app.data.points = 0;
+        app.data.level = 1;
+        app.data.quizScores = [];
+        app.data.studyStreak = {
+          current: 0,
+          longest: 0,
+          lastStudyDate: null
+        };
+      });
+
+      describe('updateStreak', () => {
+        test('should initialize streak on first study', () => {
+          app.updateStreak();
+
+          expect(app.data.studyStreak.current).toBe(1);
+          expect(app.data.studyStreak.longest).toBe(1);
+          expect(app.data.studyStreak.lastStudyDate).toBeTruthy();
+        });
+
+        test('should not increment streak on same day', () => {
+          app.updateStreak();
+          const firstStreak = app.data.studyStreak.current;
+
+          app.updateStreak();
+
+          expect(app.data.studyStreak.current).toBe(firstStreak);
+        });
+
+        test('should increment streak on consecutive day', () => {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          app.data.studyStreak.lastStudyDate = yesterday.toDateString();
+          app.data.studyStreak.current = 1;
+          app.data.studyStreak.longest = 1;
+
+          app.updateStreak();
+
+          expect(app.data.studyStreak.current).toBe(2);
+          expect(app.data.studyStreak.longest).toBe(2);
+        });
+
+        test('should reset streak if day missed', () => {
+          const twoDaysAgo = new Date();
+          twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+          app.data.studyStreak.lastStudyDate = twoDaysAgo.toDateString();
+          app.data.studyStreak.current = 5;
+          app.data.studyStreak.longest = 5;
+
+          app.updateStreak();
+
+          expect(app.data.studyStreak.current).toBe(1);
+          expect(app.data.studyStreak.longest).toBe(5); // Longest stays
+        });
+
+        test('should unlock 3-day streak achievement', () => {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          app.data.studyStreak.lastStudyDate = yesterday.toDateString();
+          app.data.studyStreak.current = 2;
+
+          app.updateStreak();
+
+          const achievement = app.data.achievements.find(a => a.id === 'streak_3');
+          expect(achievement).toBeDefined();
+          expect(achievement.title).toContain('3-Day Streak');
+        });
+
+        test('should unlock 7-day streak achievement', () => {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          app.data.studyStreak.lastStudyDate = yesterday.toDateString();
+          app.data.studyStreak.current = 6;
+
+          app.updateStreak();
+
+          const achievement = app.data.achievements.find(a => a.id === 'streak_7');
+          expect(achievement).toBeDefined();
+          expect(achievement.title).toContain('Week Warrior');
+        });
+
+        test('should unlock 30-day streak achievement', () => {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          app.data.studyStreak.lastStudyDate = yesterday.toDateString();
+          app.data.studyStreak.current = 29;
+
+          app.updateStreak();
+
+          const achievement = app.data.achievements.find(a => a.id === 'streak_30');
+          expect(achievement).toBeDefined();
+          expect(achievement.title).toContain('Monthly Master');
+        });
+      });
+
+      describe('awardPoints', () => {
+        test('should add points to total', () => {
+          app.awardPoints(100, 'Test reason');
+
+          expect(app.data.points).toBe(100);
+        });
+
+        test('should trigger level up at 1000 points', () => {
+          app.data.points = 950;
+
+          app.awardPoints(100, 'Test');
+
+          expect(app.data.level).toBe(2);
+          expect(app.data.points).toBe(1150); // 950 + 100 (awarded) + 100 (level-up achievement bonus)
+        });
+
+        test('should create level-up achievement', () => {
+          app.data.points = 950;
+
+          app.awardPoints(100, 'Test');
+
+          const achievement = app.data.achievements.find(a => a.id === 'level_2');
+          expect(achievement).toBeDefined();
+          expect(achievement.title).toContain('Level 2');
+        });
+
+        test('should not level up below threshold', () => {
+          app.awardPoints(500, 'Test');
+
+          expect(app.data.level).toBe(1);
+        });
+
+        test('should handle multiple level ups', () => {
+          app.awardPoints(2500, 'Big bonus');
+
+          expect(app.data.level).toBe(3);
+        });
+      });
+
+      describe('unlockBadge', () => {
+        test('should create badge for topic', () => {
+          app.unlockBadge('ec2', 'EC2');
+
+          expect(app.data.badges.length).toBe(1);
+          expect(app.data.badges[0].id).toBe('ec2');
+          expect(app.data.badges[0].name).toBe('EC2 Expert');
+        });
+
+        test('should award 100 points for badge', () => {
+          app.unlockBadge('s3', 'S3');
+
+          expect(app.data.points).toBe(100);
+        });
+
+        test('should not duplicate badges', () => {
+          app.unlockBadge('lambda', 'Lambda');
+          const initialPoints = app.data.points;
+
+          app.unlockBadge('lambda', 'Lambda');
+
+          expect(app.data.badges.length).toBe(1);
+          expect(app.data.points).toBe(initialPoints); // No extra points
+        });
+
+        test('should assign correct icon to topic', () => {
+          app.unlockBadge('ec2', 'EC2');
+
+          expect(app.data.badges[0].icon).toBe('🖥️');
+        });
+
+        test('should have timestamp', () => {
+          app.unlockBadge('vpc', 'VPC');
+
+          expect(app.data.badges[0].earnedAt).toBeTruthy();
+        });
+      });
+
+      describe('unlockAchievement', () => {
+        test('should create new achievement', () => {
+          app.unlockAchievement('test_1', 'Test Achievement', 'Test description', 50);
+
+          expect(app.data.achievements.length).toBe(1);
+          expect(app.data.achievements[0].title).toBe('Test Achievement');
+          expect(app.data.achievements[0].points).toBe(50);
+        });
+
+        test('should add points when unlocked', () => {
+          app.unlockAchievement('test_2', 'Test 2', 'Description', 75);
+
+          expect(app.data.points).toBe(75);
+        });
+
+        test('should not duplicate achievements', () => {
+          app.unlockAchievement('test_3', 'Test 3', 'Desc', 100);
+          const initialPoints = app.data.points;
+
+          app.unlockAchievement('test_3', 'Test 3', 'Desc', 100);
+
+          expect(app.data.achievements.length).toBe(1);
+          expect(app.data.points).toBe(initialPoints);
+        });
+
+        test('should have timestamp', () => {
+          app.unlockAchievement('test_4', 'Test 4', 'Desc', 25);
+
+          expect(app.data.achievements[0].unlockedAt).toBeTruthy();
+        });
+      });
+
+      describe('checkAchievements', () => {
+        test('should unlock first quiz achievement', () => {
+          app.data.quizScores = [{score: 5, total: 10, timestamp: new Date().toISOString()}];
+
+          app.checkAchievements();
+
+          const achievement = app.data.achievements.find(a => a.id === 'first_quiz');
+          expect(achievement).toBeDefined();
+        });
+
+        test('should unlock quiz enthusiast at 10 quizzes', () => {
+          app.data.quizScores = Array(10).fill({score: 5, total: 10, timestamp: new Date().toISOString()});
+
+          app.checkAchievements();
+
+          const achievement = app.data.achievements.find(a => a.id === 'quiz_10');
+          expect(achievement).toBeDefined();
+        });
+
+        test('should unlock quiz master at 50 quizzes', () => {
+          app.data.quizScores = Array(50).fill({score: 5, total: 10, timestamp: new Date().toISOString()});
+
+          app.checkAchievements();
+
+          const achievement = app.data.achievements.find(a => a.id === 'quiz_50');
+          expect(achievement).toBeDefined();
+        });
+
+        test('should unlock getting started at 5 topics', () => {
+          app.data.completedLessons = ['ec2', 's3', 'lambda', 'vpc', 'iam'];
+
+          app.checkAchievements();
+
+          const achievement = app.data.achievements.find(a => a.id === 'topics_5');
+          expect(achievement).toBeDefined();
+        });
+
+        test('should unlock intermediate at 10 topics', () => {
+          app.data.completedLessons = Array(10).fill('topic');
+
+          app.checkAchievements();
+
+          const achievement = app.data.achievements.find(a => a.id === 'topics_10');
+          expect(achievement).toBeDefined();
+        });
+
+        test('should unlock AWS expert when all topics completed', () => {
+          const totalTopics = Object.keys(app.concepts).length;
+          app.data.completedLessons = Array(totalTopics).fill('topic');
+
+          app.checkAchievements();
+
+          const achievement = app.data.achievements.find(a => a.id === 'all_topics');
+          expect(achievement).toBeDefined();
+        });
+
+        test('should unlock perfect score achievement', () => {
+          app.data.quizScores = [{score: 10, total: 10, timestamp: new Date().toISOString()}];
+
+          app.checkAchievements();
+
+          const achievement = app.data.achievements.find(a => a.id === 'perfect_quiz');
+          expect(achievement).toBeDefined();
+        });
+
+        test('should unlock high average achievement', () => {
+          app.data.quizScores = [
+            {score: 9, total: 10, timestamp: new Date().toISOString()},
+            {score: 10, total: 10, timestamp: new Date().toISOString()},
+            {score: 9, total: 10, timestamp: new Date().toISOString()},
+            {score: 10, total: 10, timestamp: new Date().toISOString()},
+            {score: 9, total: 10, timestamp: new Date().toISOString()}
+          ];
+
+          app.checkAchievements();
+
+          const achievement = app.data.achievements.find(a => a.id === 'high_avg');
+          expect(achievement).toBeDefined();
+        });
+
+        test('should not unlock high average with low scores', () => {
+          app.data.quizScores = Array(5).fill({score: 6, total: 10, timestamp: new Date().toISOString()});
+
+          app.checkAchievements();
+
+          const achievement = app.data.achievements.find(a => a.id === 'high_avg');
+          expect(achievement).toBeUndefined();
+        });
+      });
+
+      describe('calculateAverageQuizScore', () => {
+        test('should return 0 for no quizzes', () => {
+          const avg = app.calculateAverageQuizScore();
+
+          expect(avg).toBe(0);
+        });
+
+        test('should calculate correct average', () => {
+          app.data.quizScores = [
+            {score: 8, total: 10, timestamp: new Date().toISOString()},
+            {score: 6, total: 10, timestamp: new Date().toISOString()}
+          ];
+
+          const avg = app.calculateAverageQuizScore();
+
+          expect(avg).toBe(70); // (8+6)/(10+10) * 100
+        });
+
+        test('should handle perfect scores', () => {
+          app.data.quizScores = [
+            {score: 10, total: 10, timestamp: new Date().toISOString()},
+            {score: 10, total: 10, timestamp: new Date().toISOString()}
+          ];
+
+          const avg = app.calculateAverageQuizScore();
+
+          expect(avg).toBe(100);
+        });
+      });
+
+      describe('showGamificationStats', () => {
+        test('should display level and points', () => {
+          app.data.level = 2;
+          app.data.points = 1500;
+
+          app.showGamificationStats();
+
+          expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Level 2'));
+          expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('1500'));
+        });
+
+        test('should display streak information', () => {
+          app.data.studyStreak.current = 5;
+          app.data.studyStreak.longest = 10;
+
+          app.showGamificationStats();
+
+          const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+          expect(output).toContain('5 day');
+          expect(output).toContain('10 day');
+        });
+
+        test('should display badges', () => {
+          app.data.badges = [
+            {id: 'ec2', name: 'EC2 Expert', icon: '🖥️', earnedAt: new Date().toISOString()}
+          ];
+
+          app.showGamificationStats();
+
+          const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+          expect(output).toContain('EC2 Expert');
+        });
+
+        test('should display achievements', () => {
+          app.data.achievements = [
+            {id: 'test', title: 'Test Achievement', points: 50, unlockedAt: new Date().toISOString()}
+          ];
+
+          app.showGamificationStats();
+
+          const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+          expect(output).toContain('Test Achievement');
+        });
+
+        test('should show message when no badges', () => {
+          app.showGamificationStats();
+
+          const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+          expect(output).toContain('Complete topics to earn badges');
+        });
+
+        test('should show message when no achievements', () => {
+          app.showGamificationStats();
+
+          const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+          expect(output).toContain('Keep learning to unlock achievements');
+        });
+      });
+
+      describe('getTopicIcon', () => {
+        test('should return correct icon for ec2', () => {
+          expect(app.getTopicIcon('ec2')).toBe('🖥️');
+        });
+
+        test('should return correct icon for s3', () => {
+          expect(app.getTopicIcon('s3')).toBe('🗄️');
+        });
+
+        test('should return default icon for unknown topic', () => {
+          expect(app.getTopicIcon('unknown')).toBe('🎓');
+        });
+      });
+    });
   });
 });
