@@ -169,8 +169,8 @@ jobs:
     - name: Verify coverage thresholds
       run: |
         echo "✅ All quality gates passed!"
-        echo "- Tests: 976 passing"
+        echo "- Tests: 1063 passing"
         echo "- Lint: Passing"
-        echo "- Coverage: 79.46%+ (exceeds 79% threshold)"
-        echo "- Functions: 91.72%+ (exceeds 90% threshold)"
-        echo "- Branches: 62.9%+ (exceeds 62% threshold)"
+        echo "- Coverage: 82.99%+ (exceeds 82% threshold)"
+        echo "- Functions: 95.19%+ (exceeds 95% threshold)"
+        echo "- Branches: 66.1%+ (exceeds 66% threshold)"

@@ -945,4 +945,354 @@ describe('MentalHealthTracker', () => {
       expect(consoleErrorSpy).toHaveBeenCalled();
     });
   });
+
+  describe('Therapy Session Manager', () => {
+    beforeEach(() => {
+      tracker.data.therapists = [];
+      tracker.data.therapySessions = [];
+    });
+
+    describe('addTherapist', () => {
+      test('should add therapist successfully', () => {
+        const therapist = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234', 'dr.smith@example.com');
+
+        expect(therapist).toBeTruthy();
+        expect(therapist.name).toBe('Dr. Smith');
+        expect(therapist.specialty).toBe('CBT');
+        expect(therapist.phone).toBe('555-1234');
+        expect(therapist.email).toBe('dr.smith@example.com');
+        expect(therapist.id).toBeTruthy();
+        expect(therapist.addedAt).toBeTruthy();
+        expect(tracker.data.therapists).toHaveLength(1);
+      });
+
+      test('should add therapist without email', () => {
+        const therapist = tracker.addTherapist('Dr. Jones', 'EMDR', '555-5678');
+
+        expect(therapist).toBeTruthy();
+        expect(therapist.name).toBe('Dr. Jones');
+        expect(therapist.email).toBeUndefined();
+      });
+
+      test('should return null when saveData fails', () => {
+        fs.writeFileSync.mockImplementation(() => {
+          throw new Error('Write error');
+        });
+
+        const therapist = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
+
+        expect(therapist).toBeNull();
+        expect(consoleErrorSpy).toHaveBeenCalled();
+      });
+
+      test('should log success message with email', () => {
+        tracker.addTherapist('Dr. Smith', 'CBT', '555-1234', 'test@example.com');
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Therapist added successfully'));
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Email:'));
+      });
+    });
+
+    describe('scheduleSession', () => {
+      let therapist;
+
+      beforeEach(async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        therapist = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
+      });
+
+      test('should schedule session successfully', async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const session = tracker.scheduleSession(therapist.id, '2024-12-25', '14:00', 'intake');
+
+        expect(session).toBeTruthy();
+        expect(session.therapistId).toBe(therapist.id);
+        expect(session.therapistName).toBe('Dr. Smith');
+        expect(session.date).toBe('2024-12-25');
+        expect(session.time).toBe('14:00');
+        expect(session.type).toBe('intake');
+        expect(session.status).toBe('scheduled');
+        expect(session.preSessionMood).toBeNull();
+        expect(session.postSessionMood).toBeNull();
+        expect(session.id).toBeTruthy();
+        expect(tracker.data.therapySessions).toHaveLength(1);
+      });
+
+      test('should use default type "regular"', async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const session = tracker.scheduleSession(therapist.id, '2024-12-25', '14:00');
+
+        expect(session.type).toBe('regular');
+      });
+
+      test('should return false for non-existent therapist', () => {
+        const result = tracker.scheduleSession(99999, '2024-12-25', '14:00');
+
+        expect(result).toBe(false);
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Therapist not found'));
+      });
+
+      test('should return null when saveData fails', async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        fs.writeFileSync.mockImplementation(() => {
+          throw new Error('Write error');
+        });
+
+        const session = tracker.scheduleSession(therapist.id, '2024-12-25', '14:00');
+
+        expect(session).toBeNull();
+      });
+
+      test('should log session details on success', async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        tracker.scheduleSession(therapist.id, '2024-12-25', '14:00', 'followup');
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Therapy session scheduled'));
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('followup'));
+      });
+    });
+
+    describe('listTherapists', () => {
+      test('should show message when no therapists', () => {
+        tracker.listTherapists();
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No therapists added yet'));
+      });
+
+      test('should list all therapists', async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        tracker.addTherapist('Dr. Smith', 'CBT', '555-1234', 'smith@example.com');
+        await new Promise(resolve => setTimeout(resolve, 5));
+        tracker.addTherapist('Dr. Jones', 'EMDR', '555-5678');
+
+        tracker.listTherapists();
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Your Therapists'));
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Dr. Smith'));
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Dr. Jones'));
+      });
+    });
+
+    describe('listSessions', () => {
+      test('should show message when no sessions', () => {
+        tracker.listSessions();
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No therapy sessions found'));
+      });
+
+      test('should list upcoming sessions only', async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const therapist = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const session1 = tracker.scheduleSession(therapist.id, '2024-12-25', '14:00');
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const session2 = tracker.scheduleSession(therapist.id, '2024-12-26', '15:00');
+
+        // Mark one as completed
+        tracker.data.therapySessions[0].status = 'completed';
+
+        tracker.listSessions(true);
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Upcoming Therapy Sessions'));
+      });
+
+      test('should list all sessions when upcoming=false', async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const therapist = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
+        await new Promise(resolve => setTimeout(resolve, 5));
+        tracker.scheduleSession(therapist.id, '2024-12-25', '14:00');
+
+        tracker.listSessions(false);
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('All Therapy Sessions'));
+      });
+    });
+
+    describe('preSessionPrep', () => {
+      let session;
+
+      beforeEach(async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const therapist = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
+        await new Promise(resolve => setTimeout(resolve, 5));
+        session = tracker.scheduleSession(therapist.id, '2024-12-25', '14:00');
+      });
+
+      test('should save pre-session prep successfully', () => {
+        const result = tracker.preSessionPrep(session.id, 5, 'Feeling anxious about work');
+
+        expect(result).toBe(true);
+        const updated = tracker.data.therapySessions.find(s => s.id === session.id);
+        expect(updated.preSessionMood).toBe(5);
+        expect(updated.preSessionNotes).toBe('Feeling anxious about work');
+      });
+
+      test('should return false for non-existent session', () => {
+        const result = tracker.preSessionPrep(99999, 5, 'Notes');
+
+        expect(result).toBe(false);
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Session not found'));
+      });
+
+      test('should show average mood when mood entries exist', () => {
+        tracker.data.moodEntries = [
+          { rating: 6 }, { rating: 7 }, { rating: 5 }
+        ];
+
+        tracker.preSessionPrep(session.id, 5, 'Notes');
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('average mood'));
+      });
+
+      test('should return false when saveData fails', () => {
+        fs.writeFileSync.mockImplementation(() => {
+          throw new Error('Write error');
+        });
+
+        const result = tracker.preSessionPrep(session.id, 5, 'Notes');
+
+        expect(result).toBe(false);
+      });
+    });
+
+    describe('completeSession', () => {
+      let session;
+
+      beforeEach(async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const therapist = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
+        await new Promise(resolve => setTimeout(resolve, 5));
+        session = tracker.scheduleSession(therapist.id, '2024-12-25', '14:00');
+      });
+
+      test('should mark session as complete', () => {
+        const result = tracker.completeSession(session.id, 7, 'Session went well', 9);
+
+        expect(result).toBe(true);
+        const updated = tracker.data.therapySessions.find(s => s.id === session.id);
+        expect(updated.status).toBe('completed');
+        expect(updated.postSessionMood).toBe(7);
+        expect(updated.postSessionNotes).toBe('Session went well');
+        expect(updated.effectiveness).toBe(9);
+        expect(updated.completedAt).toBeTruthy();
+      });
+
+      test('should show mood improvement when pre-session mood exists', () => {
+        tracker.data.therapySessions.find(s => s.id === session.id).preSessionMood = 4;
+
+        tracker.completeSession(session.id, 7, 'Better now', 8);
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Mood improved by 3'));
+      });
+
+      test('should show mood decrease', () => {
+        tracker.data.therapySessions.find(s => s.id === session.id).preSessionMood = 8;
+
+        tracker.completeSession(session.id, 5, 'Difficult session', 7);
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Mood decreased by 3'));
+      });
+
+      test('should show mood stayed same', () => {
+        tracker.data.therapySessions.find(s => s.id === session.id).preSessionMood = 6;
+
+        tracker.completeSession(session.id, 6, 'Same mood', 7);
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Mood stayed the same'));
+      });
+
+      test('should return false for non-existent session', () => {
+        const result = tracker.completeSession(99999, 7, 'Notes', 8);
+
+        expect(result).toBe(false);
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Session not found'));
+      });
+
+      test('should return false when saveData fails', () => {
+        fs.writeFileSync.mockImplementation(() => {
+          throw new Error('Write error');
+        });
+
+        const result = tracker.completeSession(session.id, 7, 'Notes', 8);
+
+        expect(result).toBe(false);
+      });
+    });
+
+    describe('therapyAnalytics', () => {
+      test('should show message when no completed sessions', () => {
+        tracker.therapyAnalytics();
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No completed therapy sessions'));
+      });
+
+      test('should display analytics for completed sessions', async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const therapist = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const session1 = tracker.scheduleSession(therapist.id, '2024-12-20', '14:00');
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const session2 = tracker.scheduleSession(therapist.id, '2024-12-21', '14:00');
+
+        // Complete sessions
+        tracker.completeSession(session1.id, 7, 'Good', 8);
+        tracker.completeSession(session2.id, 8, 'Great', 9);
+
+        tracker.therapyAnalytics();
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Therapy Session Analytics'));
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Total Sessions: 2'));
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Completed: 2'));
+      });
+
+      test('should calculate average effectiveness', async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const therapist = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const session = tracker.scheduleSession(therapist.id, '2024-12-20', '14:00');
+
+        tracker.completeSession(session.id, 7, 'Good', 8);
+
+        tracker.therapyAnalytics();
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Average Effectiveness: 8.0/10'));
+      });
+
+      test('should show mood impact when pre and post mood exist', async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const therapist = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const session = tracker.scheduleSession(therapist.id, '2024-12-20', '14:00');
+
+        tracker.preSessionPrep(session.id, 4, 'Anxious');
+        tracker.completeSession(session.id, 7, 'Better', 8);
+
+        tracker.therapyAnalytics();
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Mood Impact'));
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Average mood change'));
+      });
+
+      test('should show stats by therapist', async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const therapist1 = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const therapist2 = tracker.addTherapist('Dr. Jones', 'EMDR', '555-5678');
+
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const session1 = tracker.scheduleSession(therapist1.id, '2024-12-20', '14:00');
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const session2 = tracker.scheduleSession(therapist2.id, '2024-12-21', '14:00');
+
+        tracker.completeSession(session1.id, 7, 'Good', 8);
+        tracker.completeSession(session2.id, 8, 'Great', 9);
+
+        tracker.therapyAnalytics();
+
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('By Therapist'));
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Dr. Smith'));
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Dr. Jones'));
+      });
+    });
+  });
 });

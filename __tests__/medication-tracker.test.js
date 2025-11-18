@@ -1265,6 +1265,200 @@ describe('MedicationTracker', () => {
         const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
         expect(output).toContain('Days remaining: 30');
       });
+
+      test('should return false when saveData fails', () => {
+        fs.writeFileSync.mockImplementation(() => {
+          throw new Error('Write error');
+        });
+
+        const result = tracker.refillMedication(medication.id, 30);
+
+        expect(result).toBe(false);
+        expect(consoleErrorSpy).toHaveBeenCalled();
+      });
+    });
+
+    describe('Edge Cases and Additional Frequencies', () => {
+      test('should calculate days for three-times-daily medication', async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const med = tracker.addMedication('Med3x', '100mg', 'three-times-daily', '08:00,14:00,20:00');
+        tracker.setRefillInfo(med.id, 90, 1);
+        const updated = tracker.data.medications.find(m => m.id === med.id);
+
+        const days = tracker.calculateDaysRemaining(updated);
+
+        expect(days).toBe(30); // 90 pills / 3 per day = 30 days
+      });
+
+      test('should calculate days for four-times-daily medication', async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const med = tracker.addMedication('Med4x', '50mg', 'four-times-daily', '08:00,12:00,16:00,20:00');
+        tracker.setRefillInfo(med.id, 80, 1);
+        const updated = tracker.data.medications.find(m => m.id === med.id);
+
+        const days = tracker.calculateDaysRemaining(updated);
+
+        expect(days).toBe(20); // 80 pills / 4 per day = 20 days
+      });
+
+      test('should calculate days for every-other-day medication', async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const med = tracker.addMedication('MedAlt', '25mg', 'every-other-day', '08:00');
+        tracker.setRefillInfo(med.id, 15, 1);
+        const updated = tracker.data.medications.find(m => m.id === med.id);
+
+        const days = tracker.calculateDaysRemaining(updated);
+
+        expect(days).toBe(30); // 15 pills / 0.5 per day = 30 days
+      });
+
+      test('should handle exactly at refill threshold', () => {
+        tracker.setRefillInfo(medication.id, 7, 1, 7); // Exactly 7 days remaining
+        const med = tracker.data.medications.find(m => m.id === medication.id);
+
+        const result = tracker.checkRefillAlert(med);
+
+        expect(result).toBe(true);
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('REFILL REMINDER'));
+      });
+
+      test('should handle just above threshold (no alert)', () => {
+        tracker.setRefillInfo(medication.id, 8, 1, 7); // 8 days remaining, threshold is 7
+        const med = tracker.data.medications.find(m => m.id === medication.id);
+
+        const result = tracker.checkRefillAlert(med);
+
+        expect(result).toBe(false);
+      });
+
+      test('should handle large pill counts', () => {
+        tracker.setRefillInfo(medication.id, 365, 1); // Year supply
+        const med = tracker.data.medications.find(m => m.id === medication.id);
+
+        const days = tracker.calculateDaysRemaining(med);
+
+        expect(days).toBe(365);
+      });
+
+      test('should handle fractional days (floor rounding)', async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const med = tracker.addMedication('MedFrac', '100mg', 'three-times-daily', '08:00,14:00,20:00');
+        tracker.setRefillInfo(med.id, 100, 1); // 100 / 3 = 33.33 days
+        const updated = tracker.data.medications.find(m => m.id === med.id);
+
+        const days = tracker.calculateDaysRemaining(updated);
+
+        expect(days).toBe(33); // Should floor to 33
+      });
+
+      test('should handle multiple pills per dose with weekly frequency', async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const med = tracker.addMedication('MedWeekly', '50mg', 'weekly', '08:00');
+        tracker.setRefillInfo(med.id, 12, 3); // 3 pills per dose, taken weekly
+        const updated = tracker.data.medications.find(m => m.id === med.id);
+
+        const days = tracker.calculateDaysRemaining(updated);
+
+        expect(days).toBe(28); // 12 pills / (3 pills/dose * 1/7 doses/day) = 28 days
+      });
+    });
+
+    describe('setRefillInfo Error Handling', () => {
+      test('should return false when saveData fails', () => {
+        fs.writeFileSync.mockImplementation(() => {
+          throw new Error('Write error');
+        });
+
+        const result = tracker.setRefillInfo(medication.id, 90, 1, 7);
+
+        expect(result).toBe(false);
+        expect(consoleErrorSpy).toHaveBeenCalled();
+      });
+    });
+
+    describe('Refill Workflow Scenarios', () => {
+      test('should handle complete workflow: setup → take → low → refill', async () => {
+        // Setup refill tracking
+        tracker.setRefillInfo(medication.id, 10, 1, 7);
+
+        // Take medication multiple times until low
+        for (let i = 0; i < 6; i++) {
+          tracker.markAsTaken(medication.id);
+        }
+
+        let med = tracker.data.medications.find(m => m.id === medication.id);
+        expect(med.pillCount).toBe(4); // Should trigger alert
+
+        // Refill
+        tracker.refillMedication(medication.id, 90);
+
+        med = tracker.data.medications.find(m => m.id === medication.id);
+        expect(med.pillCount).toBe(94);
+      });
+
+      test('should handle refilling when completely out', () => {
+        tracker.setRefillInfo(medication.id, 1, 1, 7);
+        tracker.markAsTaken(medication.id); // Out of pills
+
+        const med = tracker.data.medications.find(m => m.id === medication.id);
+        expect(med.pillCount).toBe(0);
+
+        tracker.refillMedication(medication.id, 90);
+        const refilled = tracker.data.medications.find(m => m.id === medication.id);
+        expect(refilled.pillCount).toBe(90);
+      });
+
+      test('should track multiple medications with different refill status', async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const med2 = tracker.addMedication('Med2', '50mg', 'daily', '08:00');
+        await new Promise(resolve => setTimeout(resolve, 5));
+        const med3 = tracker.addMedication('Med3', '25mg', 'daily', '08:00');
+
+        tracker.setRefillInfo(medication.id, 0, 1, 7); // OUT
+        tracker.setRefillInfo(med2.id, 5, 1, 7); // LOW
+        tracker.setRefillInfo(med3.id, 30, 1, 7); // OK
+
+        tracker.showRefillStatus();
+
+        const output = consoleLogSpy.mock.calls.map(call => call.join(' ')).join('\n');
+        expect(output).toContain('1 out of stock');
+        expect(output).toContain('1 low');
+        expect(output).toContain('1 OK');
+      });
+    });
+
+    describe('updatePillCount Boundary Tests', () => {
+      test('should handle zero pill count', () => {
+        tracker.setRefillInfo(medication.id, 0, 1, 7);
+
+        const result = tracker.updatePillCount(medication.id, -1);
+
+        expect(result).toBe(true);
+        const med = tracker.data.medications.find(m => m.id === medication.id);
+        expect(med.pillCount).toBe(0); // Can't go below 0
+      });
+
+      test('should handle adding to zero pill count', () => {
+        tracker.setRefillInfo(medication.id, 0, 1, 7);
+
+        tracker.updatePillCount(medication.id, 50);
+
+        const med = tracker.data.medications.find(m => m.id === medication.id);
+        expect(med.pillCount).toBe(50);
+      });
+
+      test('should return false when saveData fails', () => {
+        tracker.setRefillInfo(medication.id, 50, 1, 7);
+
+        fs.writeFileSync.mockImplementation(() => {
+          throw new Error('Write error');
+        });
+
+        const result = tracker.updatePillCount(medication.id, 10);
+
+        expect(result).toBe(false);
+        expect(consoleErrorSpy).toHaveBeenCalled();
+      });
     });
   });
 });
