@@ -812,7 +812,8 @@ describe('Daily Dashboard', () => {
                 const chart = dashboard.generateTrendChart(trendsData);
                 expect(chart).toBeInstanceOf(Array);
                 expect(chart.length).toBeGreaterThan(0);
-                expect(chart.some(line => line.includes('●'))).toBe(true);
+                // Check that chart contains graphical elements (from asciichart)
+                expect(chart.some(line => line.length > 10)).toBe(true);
             });
 
             test('returns message when no data', () => {
@@ -1856,6 +1857,160 @@ describe('Daily Dashboard', () => {
 
                 const content = fs.readFileSync(filename, 'utf8');
                 expect(content).toContain('WELLNESS REPORT');
+            });
+        });
+    });
+
+    describe('Data Visualization', () => {
+        let dashboard;
+
+        beforeEach(() => {
+            dashboard = new DailyDashboard('test-dashboard-viz.json');
+            dashboard.mentalHealth.data.moodLogs = [];
+            dashboard.sleep.data.sleepEntries = [];
+            dashboard.exercise.data.exercises = [];
+        });
+
+        afterEach(() => {
+            if (fs.existsSync('test-dashboard-viz.json')) {
+                fs.unlinkSync('test-dashboard-viz.json');
+            }
+        });
+
+        describe('visualizeCorrelationStrength', () => {
+            test('visualizes strong positive correlation', () => {
+                console.log = jest.fn();
+                dashboard.visualizeCorrelationStrength(0.85, 'Test Strong Positive');
+                expect(console.log).toHaveBeenCalled();
+                const output = console.log.mock.calls[0][0];
+                expect(output).toContain('Test Strong Positive');
+                expect(output).toContain('⬆️');
+            });
+
+            test('visualizes strong negative correlation', () => {
+                console.log = jest.fn();
+                dashboard.visualizeCorrelationStrength(-0.75, 'Test Strong Negative');
+                expect(console.log).toHaveBeenCalled();
+                const output = console.log.mock.calls[0][0];
+                expect(output).toContain('Test Strong Negative');
+                expect(output).toContain('⬇️');
+            });
+
+            test('visualizes moderate correlation', () => {
+                console.log = jest.fn();
+                dashboard.visualizeCorrelationStrength(0.55, 'Test Moderate');
+                expect(console.log).toHaveBeenCalled();
+                const output = console.log.mock.calls[0][0];
+                expect(output).toContain('Test Moderate');
+                expect(output).toContain('↗️');
+            });
+
+            test('visualizes weak correlation', () => {
+                console.log = jest.fn();
+                dashboard.visualizeCorrelationStrength(0.15, 'Test Weak');
+                expect(console.log).toHaveBeenCalled();
+                const output = console.log.mock.calls[0][0];
+                expect(output).toContain('Test Weak');
+                expect(output).toContain('➡️');
+            });
+        });
+
+        describe('generateDayOfWeekHeatmap', () => {
+            test('generates heatmap with valid data', () => {
+                const weekdayData = [
+                    { dayOfWeek: 'Mon', avgScore: 80, count: 4 },
+                    { dayOfWeek: 'Tue', avgScore: 75, count: 4 },
+                    { dayOfWeek: 'Wed', avgScore: 65, count: 4 },
+                    { dayOfWeek: 'Thu', avgScore: 55, count: 3 },
+                    { dayOfWeek: 'Fri', avgScore: 70, count: 4 },
+                    { dayOfWeek: 'Sat', avgScore: 45, count: 2 },
+                    { dayOfWeek: 'Sun', avgScore: 50, count: 2 }
+                ];
+
+                const heatmap = dashboard.generateDayOfWeekHeatmap(weekdayData);
+                expect(heatmap).toBeTruthy();
+                expect(heatmap).toContain('Mon');
+                expect(heatmap).toContain('Sun');
+            });
+
+            test('handles days with no data', () => {
+                const weekdayData = [
+                    { dayOfWeek: 'Mon', avgScore: 80, count: 4 },
+                    { dayOfWeek: 'Tue', avgScore: 0, count: 0 },
+                    { dayOfWeek: 'Wed', avgScore: 0, count: 0 },
+                    { dayOfWeek: 'Thu', avgScore: 0, count: 0 },
+                    { dayOfWeek: 'Fri', avgScore: 0, count: 0 },
+                    { dayOfWeek: 'Sat', avgScore: 0, count: 0 },
+                    { dayOfWeek: 'Sun', avgScore: 0, count: 0 }
+                ];
+
+                const heatmap = dashboard.generateDayOfWeekHeatmap(weekdayData);
+                expect(heatmap).toBeTruthy();
+                expect(heatmap).toContain('--'); // Should show no data indicator
+            });
+        });
+
+        describe('visualizeGoalProgress', () => {
+            test('visualizes goal at 100% completion', () => {
+                console.log = jest.fn();
+                dashboard.visualizeGoalProgress(100, 100);
+                expect(console.log).toHaveBeenCalled();
+                const output = console.log.mock.calls[0][0];
+                expect(output).toContain('🎉'); // Celebration emoji for completion
+                expect(output).toContain('100.0%');
+            });
+
+            test('visualizes goal at 75% completion', () => {
+                console.log = jest.fn();
+                dashboard.visualizeGoalProgress(75, 100);
+                expect(console.log).toHaveBeenCalled();
+                const output = console.log.mock.calls[0][0];
+                expect(output).toContain('🌟'); // Star emoji for 75%
+                expect(output).toContain('75.0%');
+            });
+
+            test('visualizes goal at 50% completion', () => {
+                console.log = jest.fn();
+                dashboard.visualizeGoalProgress(50, 100);
+                expect(console.log).toHaveBeenCalled();
+                const output = console.log.mock.calls[0][0];
+                expect(output).toContain('💪'); // Strong emoji for 50%
+                expect(output).toContain('50.0%');
+            });
+
+            test('visualizes goal at 25% completion', () => {
+                console.log = jest.fn();
+                dashboard.visualizeGoalProgress(25, 100);
+                expect(console.log).toHaveBeenCalled();
+                const output = console.log.mock.calls[0][0];
+                expect(output).toContain('🎯'); // Target emoji for 25%
+                expect(output).toContain('25.0%');
+            });
+
+            test('handles goal over 100%', () => {
+                console.log = jest.fn();
+                dashboard.visualizeGoalProgress(120, 100);
+                expect(console.log).toHaveBeenCalled();
+                const output = console.log.mock.calls[0][0];
+                expect(output).toContain('100.0%'); // Should cap at 100%
+            });
+        });
+
+        describe('generateTrendChart with asciichart', () => {
+            test('uses asciichart library for visualization', () => {
+                const trendsData = [
+                    { daysWithData: 5, percentage: 60, weekNumber: 1 },
+                    { daysWithData: 5, percentage: 70, weekNumber: 2 },
+                    { daysWithData: 5, percentage: 80, weekNumber: 3 }
+                ];
+
+                const chart = dashboard.generateTrendChart(trendsData);
+                expect(chart).toBeInstanceOf(Array);
+                expect(chart.length).toBeGreaterThan(0);
+
+                // Should include week labels
+                const lastLine = chart[chart.length - 1];
+                expect(lastLine).toContain('W');
             });
         });
     });

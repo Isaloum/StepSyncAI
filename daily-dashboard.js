@@ -3,6 +3,9 @@ const MentalHealthTracker = require('./mental-health-tracker');
 const MedicationTracker = require('./medication-tracker');
 const SleepTracker = require('./sleep-tracker');
 const ExerciseTracker = require('./exercise-tracker');
+const asciichart = require('asciichart');
+const chalk = require('chalk');
+const Table = require('cli-table3');
 
 class DailyDashboard {
     constructor(dataFile = 'dashboard-goals.json') {
@@ -767,11 +770,11 @@ class DailyDashboard {
     }
 
     showCorrelations(days = 30) {
-        console.log('\n╔════════════════════════════════════════════════════════════╗');
-        console.log('║         🔗 WELLNESS CORRELATIONS ANALYSIS                  ║');
-        console.log('╚════════════════════════════════════════════════════════════╝\n');
+        console.log(chalk.cyan('\n╔════════════════════════════════════════════════════════════╗'));
+        console.log(chalk.cyan('║         🔗 WELLNESS CORRELATIONS ANALYSIS                  ║'));
+        console.log(chalk.cyan('╚════════════════════════════════════════════════════════════╝\n'));
 
-        console.log(`📊 Analyzing patterns over the last ${days} days...\n`);
+        console.log(chalk.bold(`📊 Analyzing patterns over the last ${days} days...\n`));
 
         let hasAnyData = false;
 
@@ -784,20 +787,16 @@ class DailyDashboard {
 
             // Duration correlation
             if (sleepMood.durationCorrelation !== null) {
-                const strength = this.getCorrelationStrength(sleepMood.durationCorrelation);
-                const emoji = this.getCorrelationEmoji(sleepMood.durationCorrelation);
-                console.log(`   ${emoji} Sleep Duration ↔ Mood: ${strength}`);
-                console.log(`      Correlation: ${sleepMood.durationCorrelation.toFixed(3)}`);
-                console.log(`      ${this.interpretSleepDurationCorrelation(sleepMood.durationCorrelation)}\n`);
+                console.log(chalk.bold('\n   Sleep Duration ↔ Mood:'));
+                this.visualizeCorrelationStrength(sleepMood.durationCorrelation, 'Duration vs Mood');
+                console.log(chalk.gray(`      ${this.interpretSleepDurationCorrelation(sleepMood.durationCorrelation)}\n`));
             }
 
             // Quality correlation
             if (sleepMood.qualityCorrelation !== null) {
-                const strength = this.getCorrelationStrength(sleepMood.qualityCorrelation);
-                const emoji = this.getCorrelationEmoji(sleepMood.qualityCorrelation);
-                console.log(`   ${emoji} Sleep Quality ↔ Mood: ${strength}`);
-                console.log(`      Correlation: ${sleepMood.qualityCorrelation.toFixed(3)}`);
-                console.log(`      ${this.interpretSleepQualityCorrelation(sleepMood.qualityCorrelation)}\n`);
+                console.log(chalk.bold('   Sleep Quality ↔ Mood:'));
+                this.visualizeCorrelationStrength(sleepMood.qualityCorrelation, 'Quality vs Mood');
+                console.log(chalk.gray(`      ${this.interpretSleepQualityCorrelation(sleepMood.qualityCorrelation)}\n`));
             }
         } else if (sleepMood && sleepMood.insufficient) {
             console.log(`😴 Sleep → Mood: Insufficient data (${sleepMood.count} days, need 3+)\n`);
@@ -811,10 +810,9 @@ class DailyDashboard {
             console.log(`   Sample Size: ${exerciseMood.sampleSize} days with mood data\n`);
 
             if (exerciseMood.correlation !== null) {
-                const strength = this.getCorrelationStrength(exerciseMood.correlation);
-                const emoji = this.getCorrelationEmoji(exerciseMood.correlation);
-                console.log(`   ${emoji} Exercise Minutes ↔ Mood: ${strength}`);
-                console.log(`      Correlation: ${exerciseMood.correlation.toFixed(3)}\n`);
+                console.log(chalk.bold('\n   Exercise Minutes ↔ Mood:'));
+                this.visualizeCorrelationStrength(exerciseMood.correlation, 'Exercise vs Mood');
+                console.log('');
             }
 
             // Compare days with vs without exercise
@@ -843,10 +841,9 @@ class DailyDashboard {
             console.log(`   Sample Size: ${medicationMood.sampleSize} days with mood data\n`);
 
             if (medicationMood.correlation !== null) {
-                const strength = this.getCorrelationStrength(medicationMood.correlation);
-                const emoji = this.getCorrelationEmoji(medicationMood.correlation);
-                console.log(`   ${emoji} Medication Adherence ↔ Mood: ${strength}`);
-                console.log(`      Correlation: ${medicationMood.correlation.toFixed(3)}\n`);
+                console.log(chalk.bold('\n   Medication Adherence ↔ Mood:'));
+                this.visualizeCorrelationStrength(medicationMood.correlation, 'Medication vs Mood');
+                console.log('');
             }
 
             // Compare full adherence vs no adherence
@@ -1208,78 +1205,163 @@ class DailyDashboard {
         }
 
         const scores = validWeeks.map(w => w.percentage);
-        const maxScore = Math.max(...scores, 100);
-        const minScore = Math.min(...scores, 0);
-        const range = maxScore - minScore || 1;
 
-        const lines = [];
+        // Use asciichart for better visualization
+        const config = {
+            height: height,
+            colors: [
+                asciichart.green
+            ],
+            format: (x) => `${x.toFixed(1)}%`.padStart(7)
+        };
 
-        // Y-axis and chart
-        for (let y = height; y >= 0; y--) {
-            const value = minScore + (range * y / height);
-            let line = `${value.toFixed(0).padStart(3)} │ `;
+        const chart = asciichart.plot(scores, config);
+        const lines = chart.split('\n');
 
-            for (let x = 0; x < validWeeks.length; x++) {
-                const score = scores[x];
-                const normalizedScore = ((score - minScore) / range) * height;
-
-                if (Math.abs(normalizedScore - y) < 0.5) {
-                    line += '●';
-                } else if (y === 0) {
-                    line += '─';
-                } else {
-                    line += ' ';
-                }
-
-                // Add spacing between points
-                if (x < validWeeks.length - 1) {
-                    // Draw line to next point
-                    const nextScore = scores[x + 1];
-                    const nextNormalized = ((nextScore - minScore) / range) * height;
-
-                    if (Math.abs((normalizedScore + nextNormalized) / 2 - y) < 0.5) {
-                        line += '─';
-                    } else {
-                        line += ' ';
-                    }
-                }
-            }
-
-            lines.push(line);
-        }
-
-        // X-axis
-        const xAxis = '    └' + '─'.repeat(validWeeks.length * 2);
-        lines.push(xAxis);
-
-        // Week labels
-        let labels = '     ';
+        // Add week labels
+        let labels = '        ';
         validWeeks.forEach((week, i) => {
-            labels += `W${week.weekNumber} `;
+            if (i % 2 === 0 || validWeeks.length < 10) {
+                labels += `W${week.weekNumber}`.padEnd(scores.length > 10 ? 3 : 4);
+            }
         });
         lines.push(labels);
 
         return lines;
     }
 
+    /**
+     * Visualize correlation strength with a colored bar
+     */
+    visualizeCorrelationStrength(correlation, label, width = 40) {
+        const absCorr = Math.abs(correlation);
+        const filled = Math.round(absCorr * width);
+        const empty = width - filled;
+
+        let color = chalk.gray;
+        let arrow = '➡️';
+
+        if (absCorr >= 0.7) {
+            color = chalk.green;
+            arrow = correlation > 0 ? '⬆️' : '⬇️';
+        } else if (absCorr >= 0.4) {
+            color = chalk.yellow;
+            arrow = correlation > 0 ? '↗️' : '↘️';
+        } else if (absCorr >= 0.2) {
+            color = chalk.blue;
+        }
+
+        const bar = color('█'.repeat(filled)) + chalk.gray('░'.repeat(empty));
+        const sign = correlation >= 0 ? '+' : '';
+        const corrText = `${sign}${correlation.toFixed(3)}`;
+
+        console.log(`   ${arrow} ${label.padEnd(30)} ${bar} ${color(corrText)}`);
+    }
+
+    /**
+     * Create a mini heatmap for day-of-week patterns
+     */
+    generateDayOfWeekHeatmap(weekdayData) {
+        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const table = new Table({
+            head: days.map(d => chalk.cyan(d)),
+            chars: {
+                'top': '═', 'top-mid': '╤', 'top-left': '╔', 'top-right': '╗',
+                'bottom': '═', 'bottom-mid': '╧', 'bottom-left': '╚', 'bottom-right': '╝',
+                'left': '║', 'left-mid': '╟', 'mid': '─', 'mid-mid': '┼',
+                'right': '║', 'right-mid': '╢', 'middle': '│'
+            }
+        });
+
+        // Create score row
+        const scoreRow = days.map(day => {
+            const data = weekdayData.find(d => d.dayOfWeek === day);
+            if (!data || data.count === 0) return chalk.gray('--');
+
+            const score = data.avgScore;
+            let color = chalk.gray;
+            let block = '░';
+
+            if (score >= 75) {
+                color = chalk.green;
+                block = '█';
+            } else if (score >= 60) {
+                color = chalk.yellow;
+                block = '▓';
+            } else if (score >= 40) {
+                color = chalk.blue;
+                block = '▒';
+            }
+
+            return color(`${block} ${score.toFixed(0)}`);
+        });
+
+        table.push(scoreRow);
+
+        // Create count row
+        const countRow = days.map(day => {
+            const data = weekdayData.find(d => d.dayOfWeek === day);
+            if (!data || data.count === 0) return chalk.gray('(0)');
+            return chalk.gray(`(${data.count})`);
+        });
+
+        table.push(countRow);
+
+        return table.toString();
+    }
+
+    /**
+     * Create a visual progress bar for goals
+     */
+    visualizeGoalProgress(current, target, width = 40) {
+        const percentage = Math.min((current / target) * 100, 100);
+        const filled = Math.round((percentage / 100) * width);
+        const empty = width - filled;
+
+        let color = chalk.gray;
+        let emoji = '🎯';
+
+        if (percentage >= 100) {
+            color = chalk.green;
+            emoji = '🎉';
+        } else if (percentage >= 75) {
+            color = chalk.green;
+            emoji = '🌟';
+        } else if (percentage >= 50) {
+            color = chalk.yellow;
+            emoji = '💪';
+        } else if (percentage >= 25) {
+            color = chalk.blue;
+            emoji = '🎯';
+        }
+
+        const bar = color('█'.repeat(filled)) + chalk.gray('░'.repeat(empty));
+        const percText = `${percentage.toFixed(1)}%`;
+
+        console.log(`   ${emoji} [${bar}] ${color(percText)}`);
+    }
+
     showTrends(weeks = 8) {
-        console.log('\n╔════════════════════════════════════════════════════════════╗');
-        console.log('║         📈 WELLNESS TRENDS & PROGRESS                      ║');
-        console.log('╚════════════════════════════════════════════════════════════╝\n');
+        console.log(chalk.cyan('\n╔════════════════════════════════════════════════════════════╗'));
+        console.log(chalk.cyan('║         📈 WELLNESS TRENDS & PROGRESS                      ║'));
+        console.log(chalk.cyan('╚════════════════════════════════════════════════════════════╝\n'));
 
         const trendsData = this.getTrendsData(weeks);
         const validWeeks = trendsData.filter(w => w.daysWithData > 0);
 
         if (validWeeks.length === 0) {
-            console.log('📭 No wellness data available yet.\n');
+            console.log(chalk.yellow('📭 No wellness data available yet.\n'));
             console.log('Start tracking your wellness to see trends over time!\n');
             return;
         }
 
         // Overall Trend Analysis
         const trendAnalysis = this.analyzeWellnessTrend(trendsData);
-        console.log('📊 Overall Trend:\n');
-        console.log(`   ${trendAnalysis.emoji} ${trendAnalysis.message}\n`);
+        console.log(chalk.bold('📊 Overall Trend:\n'));
+
+        const trendColor = trendAnalysis.trend === 'improving' ? chalk.green :
+                           trendAnalysis.trend === 'declining' ? chalk.red : chalk.yellow;
+        console.log(`   ${trendColor(trendAnalysis.emoji + ' ' + trendAnalysis.message)}\n`);
 
         if (trendAnalysis.trend !== 'insufficient') {
             // Current vs Previous comparison
@@ -1698,22 +1780,21 @@ Goal types: wellness, mood, sleep-duration, sleep-quality, exercise, medication
 
         // Display active goals
         if (activeGoals.length > 0) {
-            console.log('🎯 Active Goals:\n');
+            console.log(chalk.bold('🎯 Active Goals:\n'));
 
             activeGoals.forEach((goal, index) => {
                 const progress = this.checkGoalProgress(goal.id);
                 if (!progress) return;
 
-                const progressBar = this.createProgressBar(progress.current, progress.target, 30);
                 const daysText = progress.daysRemaining === 1 ? 'day' : 'days';
                 const statusEmoji = progress.achieved ? '✅' :
                                    progress.onTrack === true ? '🟢' :
                                    progress.onTrack === false ? '🔴' : '🟡';
 
-                console.log(`${index + 1}. ${statusEmoji} ${goal.description} (ID: ${goal.id})`);
-                console.log(`   ${progressBar} ${progress.progressPercentage.toFixed(1)}%`);
-                console.log(`   Current: ${this.formatGoalTarget(goal.type, progress.current.toFixed(1))} / Target: ${this.formatGoalTarget(goal.type, progress.target)}`);
-                console.log(`   ${progress.daysRemaining} ${daysText} remaining (${progress.daysElapsed} days elapsed)`);
+                console.log(chalk.bold(`${index + 1}. ${statusEmoji} ${goal.description}`) + chalk.gray(` (ID: ${goal.id})`));
+                this.visualizeGoalProgress(progress.current, progress.target);
+                console.log(`   ${chalk.cyan('Current:')} ${this.formatGoalTarget(goal.type, progress.current.toFixed(1))} ${chalk.gray('/')} ${chalk.green('Target:')} ${this.formatGoalTarget(goal.type, progress.target)}`);
+                console.log(`   ${chalk.gray(`${progress.daysRemaining} ${daysText} remaining (${progress.daysElapsed} days elapsed)`)}`);
 
                 // Show milestone progress
                 const milestones = Object.entries(goal.milestones)
@@ -2034,20 +2115,34 @@ Goal types: wellness, mood, sleep-duration, sleep-quality, exercise, medication
         // Weekly patterns
         const bestWorst = this.findBestWorstDays(insights.patterns);
         if (bestWorst) {
-            console.log('📅 Day of Week Patterns:\n');
-            console.log(`🌟 Best Day: ${bestWorst.bestDay.name} (${bestWorst.bestDay.avgScore.toFixed(1)}% avg wellness)`);
-            console.log(`😞 Challenging Day: ${bestWorst.worstDay.name} (${bestWorst.worstDay.avgScore.toFixed(1)}% avg wellness)`);
+            console.log(chalk.bold('📅 Day of Week Patterns:\n'));
+            console.log(`   ${chalk.green('🌟 Best Day:')} ${bestWorst.bestDay.name} (${bestWorst.bestDay.avgScore.toFixed(1)}% avg wellness)`);
+            console.log(`   ${chalk.yellow('😞 Challenging Day:')} ${bestWorst.worstDay.name} (${bestWorst.worstDay.avgScore.toFixed(1)}% avg wellness)\n`);
 
-            // Show all days
-            console.log('\n   Weekly Breakdown:');
-            Object.values(insights.patterns)
-                .filter(p => p.avgScore !== null)
-                .forEach(day => {
-                    const bar = this.createProgressBar(day.avgScore, 100, 15);
-                    console.log(`   ${day.name.padEnd(10)} ${bar} ${day.avgScore.toFixed(1)}%`);
-                });
+            // Convert patterns to heatmap format
+            const dayMap = { 0: 'Sun', 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat' };
+            const heatmapData = Object.entries(insights.patterns).map(([dayNum, data]) => ({
+                dayOfWeek: dayMap[dayNum],
+                avgScore: data.avgScore || 0,
+                count: data.dataPoints || 0
+            }));
 
-            console.log('\n────────────────────────────────────────────────────────────\n');
+            // Reorder to start from Monday
+            const reordered = [
+                heatmapData[1], // Mon
+                heatmapData[2], // Tue
+                heatmapData[3], // Wed
+                heatmapData[4], // Thu
+                heatmapData[5], // Fri
+                heatmapData[6], // Sat
+                heatmapData[0]  // Sun
+            ];
+
+            console.log(chalk.bold('   Weekly Wellness Heatmap:\n'));
+            console.log(this.generateDayOfWeekHeatmap(reordered));
+            console.log(chalk.gray('   Legend: █ = Excellent (75+) | ▓ = Good (60+) | ▒ = Fair (40+) | ░ = Needs Work (<40)\n'));
+
+            console.log('────────────────────────────────────────────────────────────\n');
         }
 
         // Consistency tracking
