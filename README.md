@@ -1,6 +1,6 @@
 # StepSyncAI - Health & Wellness Apps
 
-[![Tests](https://img.shields.io/badge/tests-823%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Tests](https://img.shields.io/badge/tests-936%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Coverage](https://img.shields.io/badge/coverage-87.21%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Branch Coverage](https://img.shields.io/badge/branch%20coverage-71.64%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
@@ -752,6 +752,811 @@ node daily-dashboard.js weekly
 - Use recommendations to focus improvement efforts
 - Celebrate wins when scores improve
 
+**Discover Correlations**
+```bash
+# Analyze how sleep, exercise, and medication affect your mood
+node daily-dashboard.js correlations
+
+# Analyze last 60 days
+node daily-dashboard.js correlations 60
+```
+
+### Correlation Analysis 🔗
+
+Discover powerful insights about how different wellness factors affect your mood using statistical correlation analysis.
+
+#### What Correlations Are Analyzed
+
+**😴 Sleep → Mood**
+- **Sleep Duration**: Does getting more/less sleep affect your mood?
+- **Sleep Quality**: Does better sleep quality boost your mood?
+- Shows correlation strength and interpretation
+- Example: "Getting more sleep strongly improves your mood! 🌟"
+
+**🏃 Exercise → Mood**
+- How does physical activity impact your emotional state?
+- Compares mood on exercise days vs. non-exercise days
+- Shows average mood difference
+- Example: "You feel 1.5 points better on days you exercise!"
+
+**💊 Medication → Mood**
+- Does medication adherence correlate with mood improvements?
+- Compares full adherence vs. no adherence days
+- Helps validate medication effectiveness
+- Example: "You feel 2.0 points better with full medication adherence!"
+
+#### Understanding Correlation Results
+
+The dashboard uses **Pearson correlation coefficient** (-1.0 to +1.0):
+
+| Correlation | Strength | Meaning | Emoji |
+|-------------|----------|---------|-------|
+| 0.7 to 1.0 | Strong | Factors move together strongly | 💚 |
+| 0.5 to 0.7 | Moderate to Strong | Clear relationship | 💚 🟢 |
+| 0.3 to 0.5 | Moderate | Some relationship | 🟢 |
+| 0.1 to 0.3 | Weak | Slight relationship | 🟡 |
+| -0.1 to 0.1 | Very Weak | No clear relationship | ⚪ |
+| -0.3 to -0.1 | Weak Negative | Inverse relationship | 🟠 |
+| -1.0 to -0.3 | Moderate to Strong Negative | Factors move opposite | 🔴 |
+
+#### Example Correlation Output
+
+```
+╔════════════════════════════════════════════════════════════╗
+║         🔗 WELLNESS CORRELATIONS ANALYSIS                  ║
+╚════════════════════════════════════════════════════════════╝
+
+📊 Analyzing patterns over the last 30 days...
+
+😴 Sleep → Mood Correlation
+
+   Sample Size: 25 days with both sleep and mood data
+
+   💚 Sleep Duration ↔ Mood: Moderate to Strong
+      Correlation: 0.612
+      Getting more sleep strongly improves your mood! 🌟
+
+   💚 Sleep Quality ↔ Mood: Strong
+      Correlation: 0.743
+      Better sleep quality strongly boosts your mood! 🌟
+
+🏃 Exercise → Mood Correlation
+
+   Sample Size: 30 days with mood data
+
+   🟢 Exercise Minutes ↔ Mood: Moderate
+      Correlation: 0.423
+
+   📊 Mood Comparison:
+      With Exercise (18 days): 7.8/10
+      Without Exercise (12 days): 6.5/10
+      💚 You feel 1.3 points better on days you exercise!
+
+💊 Medication Adherence → Mood Correlation
+
+   Sample Size: 30 days with mood data
+
+   💚 Medication Adherence ↔ Mood: Moderate to Strong
+      Correlation: 0.587
+
+   📊 Mood Comparison:
+      Full Adherence (22 days): 7.9/10
+      No Adherence (3 days): 5.8/10
+      💚 You feel 2.1 points better with full medication adherence!
+
+────────────────────────────────────────────────────────────
+
+💡 Understanding Correlations:
+
+   • Strong positive (0.7+): These factors move together
+   • Moderate positive (0.3-0.7): Some relationship exists
+   • Weak (0-0.3): Little to no relationship
+   • Negative: Inverse relationship
+
+   Keep logging data to strengthen these insights!
+```
+
+#### Data Requirements
+
+- **Minimum**: 3 days with matching data for each correlation type
+- **Recommended**: 30+ days for reliable patterns
+- **Best**: 60+ days for strong statistical confidence
+
+The more data you log, the more accurate the correlations become!
+
+### Wellness Trends & Progress Tracking 📈
+
+Visualize your wellness journey over time with ASCII trend charts and detailed progress analysis. Track improvements, identify declines, and understand which wellness components are changing.
+
+#### Quick Start
+
+```bash
+# View 8-week wellness trend (default)
+node daily-dashboard.js trends
+
+# View 4-week trend
+node daily-dashboard.js trends 4
+
+# Alternative commands
+node daily-dashboard.js trend
+node daily-dashboard.js progress
+```
+
+#### What's Analyzed
+
+**Overall Wellness Trend**
+- Tracks your wellness score week by week
+- Identifies if you're improving ⬆️, declining ⬇️, or stable ➡️
+- Compares recent weeks to earlier weeks using moving averages
+- Shows percentage change over time
+
+**Component Trends** (Individual tracking for each):
+- 🧠 **Mood**: Average mood ratings over time
+- 😴 **Sleep**: Sleep quality and duration patterns
+- 🏃 **Exercise**: Physical activity levels
+- 💊 **Medication**: Adherence rate changes
+
+**Best & Worst Weeks**
+- Highlights your highest scoring week
+- Identifies your lowest scoring week
+- Helps you understand what worked (or didn't)
+
+#### Understanding Trend Types
+
+| Trend | Symbol | Meaning |
+|-------|--------|---------|
+| **Improving** | ⬆️ | Wellness score increasing over time |
+| **Declining** | ⬇️ | Wellness score decreasing - actionable suggestions provided |
+| **Stable** | ➡️ | Wellness score consistent (within 5% variation) |
+| **Insufficient** | ℹ️ | Less than 2 weeks of data - keep logging! |
+
+#### ASCII Trend Chart
+
+The dashboard generates visual charts showing your progress:
+
+```
+Week 1  ●
+Week 2   ●─
+Week 3     ●─
+Week 4       ●─
+Week 5         ●
+```
+
+- Each `●` represents your wellness score for that week
+- Lines (`─`) connect consecutive weeks
+- Higher position = better score
+- Shows 8 weeks by default (customizable)
+
+#### Example Trends Output
+
+```
+╔════════════════════════════════════════════════════════════╗
+║        📈 WELLNESS TRENDS & PROGRESS (8 Weeks)             ║
+╚════════════════════════════════════════════════════════════╝
+
+Overall Trend: ⬆️ Improving
+Your wellness is trending upward! Recent weeks average 15.2%
+higher than earlier weeks.
+
+Current Week: 78.5% (Good)
+Previous Week: 72.0% (Good)
+Change: +6.5% ⬆️
+
+────────────────────────────────────────────────────────────
+
+📊 8-Week Wellness Trend Chart:
+
+100% ┤
+ 90% ┤
+ 80% ┤                                         ●
+ 70% ┤                             ●─────────●─┘
+ 60% ┤                   ●───────●─┘
+ 50% ┤         ●───────●─┘
+ 40% ┤   ●───●─┘
+ 30% ┤ ●─┘
+ 20% ┤
+ 10% ┤
+  0% ┤
+     └─────────────────────────────────────────────
+     Week  1    2    3    4    5    6    7    8
+
+────────────────────────────────────────────────────────────
+
+📊 Component Trends:
+
+  🧠 Mood: Stable ➡️
+     Current: 8.0/10  |  Previous: 7.8/10  |  Change: +0.2
+
+  😴 Sleep: Improving ⬆️
+     Current: 8.5h, 8.2/10  |  Previous: 7.2h, 7.0/10
+
+  🏃 Exercise: Improving ⬆️
+     Current: 28 min/day  |  Previous: 20 min/day  |  +8 min
+
+  💊 Medication: Declining ⬇️
+     Current: 75%  |  Previous: 85%  |  -10%
+
+────────────────────────────────────────────────────────────
+
+🏆 Best Week: Week 8 (78.5%)
+😞 Worst Week: Week 1 (45.0%)
+
+Total Progress: +33.5 percentage points! 🎉
+
+────────────────────────────────────────────────────────────
+
+💡 Recommendations:
+
+  ✅ Great progress! You've improved by 15.2% over recent weeks.
+
+  🟡 Focus on medication adherence - it's declined by 10%.
+     Your medication tracker shows missed doses. Set reminders
+     to stay consistent.
+
+  🌟 Your sleep improvements are contributing to better overall
+     wellness. Keep maintaining good sleep hygiene!
+```
+
+#### Smart Decline Suggestions
+
+When trends show decline, the dashboard identifies which component needs attention most:
+
+- **Mood declining**: Suggests journaling, therapy, coping strategies
+- **Sleep declining**: Recommends consistent sleep schedule, reviewing sleep hygiene
+- **Exercise declining**: Encourages returning to 30-minute daily goal
+- **Medication declining**: Reminds to set reminders and track adherence
+
+#### Data Requirements
+
+- **Minimum**: 1 week of data (shows limited trends)
+- **Good**: 2+ weeks of data (identifies trend direction)
+- **Best**: 4-8+ weeks (reliable trend analysis and predictions)
+
+The dashboard calculates weekly scores by averaging daily wellness scores across each 7-day period.
+
+#### How It Works
+
+1. **Weekly Aggregation**: Divides your history into 7-day weeks
+2. **Score Calculation**: Computes average wellness score for each week
+3. **Trend Analysis**: Compares recent 50% of weeks to earlier 50%
+4. **Visualization**: Generates ASCII chart showing the progression
+5. **Component Analysis**: Tracks each wellness component individually
+6. **Recommendations**: Provides actionable suggestions based on trends
+
+### Goal Setting & Milestones 🏆
+
+Set wellness targets and track your progress toward achieving them. The dashboard provides intelligent goal tracking with progress bars, on-track indicators, and milestone celebrations.
+
+#### Quick Start
+
+```bash
+# View all goals
+node daily-dashboard.js goals
+
+# Set a wellness goal (reach 80% by end of year)
+node daily-dashboard.js set-goal wellness 80 2025-12-31
+
+# Set an exercise goal (30 min/day by summer)
+node daily-dashboard.js set-goal exercise 30 2025-06-30
+
+# Check specific goal progress
+node daily-dashboard.js goal-progress 1
+
+# Delete a goal
+node daily-dashboard.js delete-goal 1
+```
+
+#### Goal Types
+
+| Type | Target Range | Example |
+|------|--------------|---------|
+| **wellness** | 0-100% | Overall wellness score target |
+| **mood** | 1-10 | Average daily mood rating |
+| **sleep-duration** | hours | Average sleep duration (e.g., 8h) |
+| **sleep-quality** | 1-10 | Average sleep quality rating |
+| **exercise** | minutes/day | Daily exercise target (e.g., 30 min) |
+| **medication** | 0-100% | Medication adherence rate |
+
+#### What's Tracked
+
+**Progress Metrics**:
+- Current value vs. target
+- Progress percentage (0-100%)
+- Days remaining until target date
+- Days elapsed since goal creation
+- On-track status (based on trends)
+
+**Milestone Detection** (Automatic):
+- 25% progress
+- 50% progress (halfway!)
+- 75% progress (almost there!)
+- 100% - Goal achieved! 🎉
+
+**On-Track Analysis**:
+- 🟢 **On Track**: Making good progress, likely to achieve goal
+- 🔴 **Behind Schedule**: Need to increase effort
+- 🟡 **Uncertain**: Not enough data to determine
+
+#### Example Goals Display
+
+```
+╔════════════════════════════════════════════════════════════╗
+║              🏆 WELLNESS GOALS & MILESTONES                ║
+╚════════════════════════════════════════════════════════════╝
+
+🎯 Active Goals:
+
+1. 🟢 Reach 80% overall wellness score (ID: 1)
+   [████████████████░░░░░░░░░░░░░░] 55.0%
+   Current: 44.0% / Target: 80%
+   25 days remaining (15 days elapsed)
+   🎯 Milestones reached: 25%, 50%
+   ✅ On track to achieve!
+
+2. 🔴 Exercise 30 minutes per day (ID: 2)
+   [████████░░░░░░░░░░░░░░░░░░░░] 28.3%
+   Current: 8.5 min/day / Target: 30 min/day
+   45 days remaining (5 days elapsed)
+   ⚠️  Behind schedule - increase effort!
+
+3. ✅ Maintain average mood of 8/10 (ID: 3)
+   [████████████████████████████████] 106.3%
+   Current: 8.5/10 / Target: 8/10
+   60 days remaining (10 days elapsed)
+   🎯 Milestones reached: 25%, 50%, 75%, 100%
+
+
+🏆 Recently Achieved Goals:
+
+1. ✅ Average 7 hours of sleep per night
+   Achieved: 2025-11-01
+
+2. ✅ Reach 70% overall wellness score
+   Achieved: 2025-10-15
+
+────────────────────────────────────────────────────────────
+
+📊 Summary: 3 active, 2 achieved
+```
+
+#### Smart Features
+
+**Automatic Status Updates**:
+- Goals automatically marked as "achieved" when reaching 100%
+- Expired goals detected when target date passes
+- Milestones celebrated as you reach them
+
+**Trend-Based Predictions**:
+- Uses your wellness trends to predict if you'll achieve the goal
+- Factors in current trajectory and time remaining
+- Suggests course corrections if falling behind
+
+**Progress Tracking**:
+- Real-time progress calculation based on latest data
+- Beautiful progress bars showing visual progress
+- Days remaining countdown
+
+#### Creating Effective Goals
+
+**SMART Goal Examples**:
+
+```bash
+# Specific & Measurable: Reach 80% wellness
+node daily-dashboard.js set-goal wellness 80 2025-12-31 "End year strong"
+
+# Achievable: Improve mood gradually
+node daily-dashboard.js set-goal mood 7.5 2025-06-30 "Feel happier"
+
+# Realistic: Increase exercise moderately
+node daily-dashboard.js set-goal exercise 25 2025-03-31 "Build habit"
+
+# Time-bound: Summer sleep goal
+node daily-dashboard.js set-goal sleep-duration 8 2025-06-21 "Better rest"
+```
+
+**Tips for Success**:
+1. **Start Small**: Set achievable targets, then increase
+2. **Be Specific**: Choose exact numbers and dates
+3. **Track Progress**: Check `goal-progress` weekly
+4. **Stay Consistent**: Log data daily for accurate tracking
+5. **Celebrate**: Acknowledge milestones and achievements!
+
+#### Goal Management
+
+**View All Goals**:
+```bash
+node daily-dashboard.js goals
+```
+
+**Check Specific Goal**:
+```bash
+node daily-dashboard.js goal-progress 1
+```
+Shows detailed progress including on-track status and estimated completion.
+
+**Delete a Goal**:
+```bash
+node daily-dashboard.js delete-goal 1
+```
+Removes a goal you no longer want to track.
+
+### Wellness Insights & Pattern Detection 💡
+
+Get AI-like pattern detection across all wellness metrics with weekly insights reports and personalized predictions based on your unique data patterns.
+
+#### Quick Start
+
+```bash
+# Get 30-day insights report (default)
+node daily-dashboard.js insights
+
+# Analyze last 60 days
+node daily-dashboard.js insights 60
+
+# Alternative commands
+node daily-dashboard.js insight
+node daily-dashboard.js patterns
+```
+
+#### What's Analyzed
+
+**📅 Day of Week Patterns**:
+- Identifies your best and worst days of the week
+- Shows average wellness score for each day
+- Reveals which days tend to be challenging
+- Example: "Mondays average 55% wellness, Saturdays 85%"
+
+**📈 Tracking Consistency**:
+- Measures how consistently you log data
+- Separate tracking for mood, sleep, and exercise
+- Overall consistency percentage
+- Encourages daily logging for better insights
+
+**🔥 Current Streaks**:
+- Tracks consecutive days of logging
+- Separate streaks for mood, sleep, exercise
+- Celebrates week-long+ streaks
+- Motivates consistency
+
+**💡 Predictive Suggestions**:
+- Day-based: Extra self-care for challenging days
+- Consistency: Encouragement to log more frequently
+- Trend-based: Warnings if wellness declining
+- Positive reinforcement for improvements
+
+**📊 Trend Integration**:
+- Uses your wellness trends for predictions
+- Identifies improving/declining patterns
+- Suggests course corrections
+
+#### Example Insights Output
+
+```
+╔════════════════════════════════════════════════════════════╗
+║              💡 WELLNESS INSIGHTS & PATTERNS               ║
+╚════════════════════════════════════════════════════════════╝
+
+📊 Analysis Period: Last 30 days
+
+Current Wellness: 😊 72.3% - Good
+Weekly Change: ⬆️ +5.2%
+
+────────────────────────────────────────────────────────────
+
+📅 Day of Week Patterns:
+
+🌟 Best Day: Saturday (85.2% avg wellness)
+😞 Challenging Day: Monday (55.8% avg wellness)
+
+   Weekly Breakdown:
+   Sunday     [███████████████░] 80.5%
+   Monday     [███████░░░░░░░░░] 55.8%
+   Tuesday    [██████████░░░░░░] 65.0%
+   Wednesday  [███████████░░░░░] 68.5%
+   Thursday   [████████████░░░░] 72.0%
+   Friday     [██████████████░░] 78.5%
+   Saturday   [████████████████] 85.2%
+
+────────────────────────────────────────────────────────────
+
+📈 Tracking Consistency:
+
+   Mood Logging:     [████████████████░░░░] 80%
+   Sleep Logging:    [██████████████░░░░░░] 70%
+   Exercise Logging: [█████████░░░░░░░░░░░] 45%
+   Overall:          65% of data logged
+
+────────────────────────────────────────────────────────────
+
+🔥 Current Streaks:
+
+   🧠 Mood: 12 days 🌟
+   😴 Sleep: 8 days 🌟
+   🏃 Exercise: 4 days
+
+   🎉 Week-long streak! Consistency is key to wellness!
+
+────────────────────────────────────────────────────────────
+
+💡 Personalized Insights:
+
+   🔴 Mondays tend to be challenging (55.8% wellness). Plan extra self-care on Mondays.
+   🟡 Exercise logged only 45% of days. Even 10 minutes counts!
+   ✅ Saturdays are your best days (85.2% wellness)! What makes Saturdays great? Replicate that.
+   ✅ Wellness improving by 5.2%! Keep up the momentum!
+
+────────────────────────────────────────────────────────────
+
+📊 Trend: ⬆️ Improving
+   Recent weeks 8.3% higher than earlier weeks
+```
+
+#### Types of Insights Generated
+
+**Temporal Insights** (Day-Based):
+- High Priority 🔴: Challenging days < 50% wellness
+- Positive ✅: Best days > 70% wellness
+- Helps you plan around difficult days
+
+**Consistency Insights**:
+- Medium Priority 🟡: Logging < 50% of days
+- Encourages daily tracking
+- "You're logging mood only 45% of days. Daily tracking reveals better patterns."
+
+**Trend Insights**:
+- High Priority 🔴: Wellness declining
+- Positive ✅: Wellness improving
+- Includes percentage change
+- Provides specific suggestions
+
+#### Use Cases
+
+**Weekly Review**:
+```bash
+# Every Sunday, check insights
+node daily-dashboard.js insights
+```
+
+**Pattern Discovery**:
+- "Why do I feel worse on Mondays?"
+- "Which days should I schedule important tasks?"
+- "Am I tracking consistently enough?"
+
+**Motivation**:
+- Celebrate streaks
+- See improvement trends
+- Get positive reinforcement
+
+**Course Correction**:
+- Warnings about declining trends
+- Reminders to log more consistently
+- Suggestions for challenging days
+
+### Export & Reporting 📄
+
+Export your wellness data for backup, sharing with healthcare providers, or external analysis. Generate comprehensive reports combining all your wellness metrics, insights, trends, and correlations.
+
+#### Quick Start
+
+```bash
+# Export to JSON (complete data with insights)
+node daily-dashboard.js export
+
+# Export to CSV (daily records for Excel)
+node daily-dashboard.js export-csv
+
+# Generate comprehensive text report
+node daily-dashboard.js report
+```
+
+#### Export Formats
+
+**JSON Export** (Complete Data Backup):
+```bash
+# Export last 30 days (default)
+node daily-dashboard.js export-json
+
+# Export last 90 days with custom filename
+node daily-dashboard.js export-json 90 my-wellness-data.json
+
+# Alternative command
+node daily-dashboard.js export
+```
+
+**What's Included**:
+- Export metadata (dates, period)
+- Daily records (mood, sleep, exercise, medication, wellness scores)
+- Summary statistics (averages, totals, adherence rates)
+- Active and achieved goals
+- Wellness insights (patterns, streaks, suggestions)
+- Trend analysis (overall and component trends)
+- Correlation findings (sleep, exercise, medication impacts)
+
+**CSV Export** (Excel-Compatible):
+```bash
+# Export last 30 days to CSV
+node daily-dashboard.js export-csv
+
+# Export last 60 days with custom filename
+node daily-dashboard.js export-csv 60 wellness-data.csv
+```
+
+**CSV Columns**:
+- Date, Day of Week, Wellness Score
+- Mood Rating, Mood Notes
+- Sleep Duration (hrs), Sleep Quality, Sleep Notes
+- Exercise Minutes, Exercise Types
+- Medication Taken, Medication Scheduled, Medication Adherence %
+
+**Text Report** (Comprehensive Overview):
+```bash
+# Generate 30-day report (default)
+node daily-dashboard.js report
+
+# Generate 90-day report with custom filename
+node daily-dashboard.js report 90 quarterly-wellness-report.txt
+
+# Alternative command
+node daily-dashboard.js generate-report
+```
+
+**Report Sections**:
+- Executive Summary (averages and key metrics)
+- Goals & Milestones (progress and achievements)
+- Wellness Insights & Patterns (day-of-week, consistency, streaks)
+- Correlation Analysis (factor relationships)
+- Wellness Trends (overall and component trends)
+
+#### Example Report Output
+
+```
+═══════════════════════════════════════════════════════════
+              WELLNESS REPORT
+═══════════════════════════════════════════════════════════
+
+Report Generated: Monday, November 18, 2025, 10:30 AM
+Period: 2025-10-19 to 2025-11-18
+Days Analyzed: 30
+
+───────────────────────────────────────────────────────────
+EXECUTIVE SUMMARY
+───────────────────────────────────────────────────────────
+
+Average Wellness Score: 72.5/100
+Mood Average: 7.2/10 (27 entries)
+Sleep Duration: 7.8 hours avg (25 nights)
+Sleep Quality: 8.1/10
+Exercise: 22.5 min/day avg (18 active days)
+Medication Adherence: 88.3%
+
+───────────────────────────────────────────────────────────
+GOALS & MILESTONES
+───────────────────────────────────────────────────────────
+
+Active Goals: 2
+  • Reach 80% overall wellness score
+    Progress: 90.6% (72.5/80)
+    Target Date: 2025-12-31
+    Status: ✅ On Track
+
+  • Maintain average mood of 8/10
+    Progress: 90.0% (7.2/8.0)
+    Target Date: 2025-12-31
+    Status: 🟡 Uncertain
+
+Achieved Goals: 1
+  ✅ Average 7 hours of sleep per night
+     Achieved: 2025-11-01
+
+───────────────────────────────────────────────────────────
+WELLNESS INSIGHTS & PATTERNS
+───────────────────────────────────────────────────────────
+
+Day-of-Week Patterns:
+  Best Day: Saturday (avg score: 85.2)
+  Worst Day: Monday (avg score: 58.3)
+
+Logging Consistency:
+  Mood: 90.0%
+  Sleep: 83.3%
+  Exercise: 60.0%
+  Overall: 77.8%
+
+Current Streaks:
+  🎯 Mood tracking: 12 days
+  😴 Sleep logging: 8 days
+  💪 Exercise: 4 days
+
+AI Suggestions:
+  High Priority:
+    🔴 Mondays tend to be challenging. Plan extra self-care.
+  Medium Priority:
+    🟡 Exercise logged only 60% of days. Even 10 minutes counts!
+  Positive Trends:
+    ✅ Saturdays are your best days! Replicate that.
+    ✅ Wellness improving by 5.2%! Keep momentum!
+
+───────────────────────────────────────────────────────────
+CORRELATION ANALYSIS
+───────────────────────────────────────────────────────────
+
+• Sleep Duration: Better sleep improves mood
+  Correlation: 0.612 (Moderate to Strong)
+• Sleep Quality: Better sleep quality boosts mood strongly
+  Correlation: 0.743 (Strong)
+• Exercise: Mood is 1.3 points higher on exercise days
+  Correlation: 0.423 (Moderate)
+
+───────────────────────────────────────────────────────────
+WELLNESS TRENDS
+───────────────────────────────────────────────────────────
+
+Overall Trend: ⬆️ IMPROVING
+Weekly Change: +5.2%
+
+Component Trends:
+  Mood: 📈 improving
+  Sleep: ➡️ stable
+  Exercise: 📈 improving
+  Medication: ➡️ stable
+
+═══════════════════════════════════════════════════════════
+End of Report
+═══════════════════════════════════════════════════════════
+```
+
+#### Use Cases
+
+**Healthcare Provider Sharing**:
+```bash
+# Generate comprehensive report for doctor appointment
+node daily-dashboard.js report 90 doctor-visit-nov-2025.txt
+```
+Share detailed wellness data with your therapist, doctor, or psychiatrist.
+
+**Data Backup**:
+```bash
+# Monthly JSON backup
+node daily-dashboard.js export-json 30 backup-nov-2025.json
+```
+Keep backups of your wellness data for safekeeping.
+
+**Excel Analysis**:
+```bash
+# Export to CSV for custom analysis
+node daily-dashboard.js export-csv 90 wellness-q4-2025.csv
+```
+Open in Excel/Google Sheets for custom charts and pivot tables.
+
+**Insurance Documentation**:
+```bash
+# Generate quarterly wellness report
+node daily-dashboard.js report 90 insurance-q4-2025.txt
+```
+Provide evidence of wellness management for insurance claims.
+
+**Progress Reviews**:
+```bash
+# Monthly wellness review
+node daily-dashboard.js report 30 monthly-review.txt
+```
+Review your monthly progress and share with accountability partners.
+
+#### File Naming
+
+**Default Filenames** (auto-generated with today's date):
+- JSON: `wellness-export-2025-11-18.json`
+- CSV: `wellness-export-2025-11-18.csv`
+- Report: `wellness-report-2025-11-18.txt`
+
+**Custom Filenames**:
+```bash
+# Use descriptive names for easy organization
+node daily-dashboard.js export-json 30 "november-2025-wellness.json"
+node daily-dashboard.js export-csv 90 "q4-2025-daily-data.csv"
+node daily-dashboard.js report 30 "monthly-review-nov-2025.txt"
+```
+
 ### Tips for Best Results
 
 1. **Log Consistently**: The more data you track, the better insights
@@ -1191,12 +1996,16 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## 📈 Project Status
 
-**Version**: 3.5.0
+**Version**: 3.9.0
 **Status**: ✅ Active Development
 **Test Coverage**: 87.21%+ ⭐
 **Branch Coverage**: 71.64% ⭐ **MILESTONE ACHIEVED!** (3 modules at 70%+: Mental Health 70.75%, Medication 72.94%, Reminder 94.44% 🎯)
-**Tests**: 823 passing 🎉
+**Tests**: 920 passing 🎉
 **Latest Features**:
+- 💡 **Wellness Insights** - AI-like pattern detection, best/worst days, streaks, predictive suggestions (NEW!)
+- 🏆 **Goal Setting & Milestones** - Set wellness targets, track progress, celebrate achievements
+- 📈 **Wellness Trends** - Visualize 8-week progress with ASCII charts & trend analysis
+- 🔗 **Correlation Analysis** - Discover how sleep, exercise & medication affect mood
 - 📊 **Daily Dashboard** - Unified wellness overview with scoring system
 - 😴 **Sleep Tracker** - Monitor sleep quality and patterns
 - 🏃 **Exercise Tracker** - Track physical activity and fitness goals
