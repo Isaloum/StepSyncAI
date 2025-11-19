@@ -6,6 +6,7 @@ const MedicationTracker = require('./medication-tracker');
 const SleepTracker = require('./sleep-tracker');
 const ExerciseTracker = require('./exercise-tracker');
 const ValidationUtils = require('./validation-utils');
+const { PerformanceCache, DateUtils, ArrayUtils } = require('./performance-cache');
 const asciichart = require('asciichart');
 const chalk = require('chalk');
 const Table = require('cli-table3');
@@ -18,6 +19,7 @@ class DailyDashboard {
         this.medication = null;
         this.sleep = null;
         this.exercise = null;
+        this.cache = new PerformanceCache(100, 300000); // 100 entries, 5min TTL
         this.loadTrackers();
     }
 
