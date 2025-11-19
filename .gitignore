@@ -6,6 +6,34 @@ test-aws-learning-progress.json
 mental-health-data.json
 test-mental-health-data.json
 
+# Health tracker data files
+sleep-data.json
+test-sleep.json
+exercise-data.json
+test-exercise.json
+daily-dashboard-data.json
+test-dashboard.json
+
+# Exported health data (but not package files)
+*-export.json
+wellness-*.json
+wellness-*.html
+wellness-*.pdf
+*-report.pdf
+*-report.html
+*-report.txt
+*-export.csv
+test-*.json
+test-*.pdf
+test-*.html
+test-*.csv
+
+# Keep these JSON files
+!package.json
+!package-lock.json
+!jest.config.json
+!tsconfig.json
+
 # Node modules
 node_modules/
 

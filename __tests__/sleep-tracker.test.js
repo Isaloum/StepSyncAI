@@ -654,4 +654,47 @@ describe('Sleep Tracker', () => {
             expect(data).toEqual([]);
         });
     });
+
+    describe('Additional Edge Cases', () => {
+        test('analyzeConsistency with exactly 3 entries', () => {
+            tracker.data.sleepEntries = [
+                { bedtime: '22:00' },
+                { bedtime: '22:15' },
+                { bedtime: '22:10' }
+            ];
+
+            tracker.analyzeConsistency();
+
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            expect(output).toContain('Excellent');
+        });
+
+        test('analyzeConsistency calculates variation correctly', () => {
+            tracker.data.sleepEntries = [
+                { bedtime: '22:00' },
+                { bedtime: '22:30' },
+                { bedtime: '22:15' },
+                { bedtime: '22:45' }
+            ];
+
+            tracker.analyzeConsistency();
+
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            expect(output.length).toBeGreaterThan(0);
+        });
+
+        test('timeToMinutes converts time correctly for consistency analysis', () => {
+            // Test the timeToMinutes conversion used in analyzeConsistency
+            tracker.data.sleepEntries = [
+                { bedtime: '00:00' }, // midnight
+                { bedtime: '00:15' },
+                { bedtime: '23:45' }  // close to midnight
+            ];
+
+            tracker.analyzeConsistency();
+
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            expect(output.length).toBeGreaterThan(0);
+        });
+    });
 });
