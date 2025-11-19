@@ -3760,6 +3760,16 @@ if (require.main === module) {
             dashboard.generateReport(reportDays, reportFile);
             break;
 
+        case 'import':
+        case 'import-json':
+            if (args.length < 2) {
+                console.error('❌ Usage: node daily-dashboard.js import <filename>');
+                console.error('   Example: node daily-dashboard.js import wellness-export-2025-11-19.json');
+                process.exit(1);
+            }
+            dashboard.importFromJSON(args[1]);
+            break;
+
         case 'help':
         default:
             console.log(`
@@ -3827,6 +3837,12 @@ COMMANDS:
       Generate comprehensive wellness report (default: 30 days)
       Text format with executive summary, goals, insights, and trends
       Example: report 30 monthly-report.txt
+
+  import, import-json <filename>
+      Import wellness data from a previously exported JSON file
+      Merges data with existing records (skips duplicates based on timestamps)
+      Imports mood logs, sleep entries, exercise sessions, and goals
+      Example: import wellness-export-2025-11-19.json
 
   help
       Show this help message

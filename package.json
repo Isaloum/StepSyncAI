@@ -4,6 +4,7 @@
   "description": "Health, wellness, and learning apps - Mental health support, medication tracker, and AWS learning",
   "main": "index.js",
   "scripts": {
+    "setup": "node setup.js",
     "mental": "node mental-health-tracker.js",
     "med": "node medication-tracker.js",
     "aws": "node aws-for-kids.js",
