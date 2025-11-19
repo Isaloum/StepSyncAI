@@ -1245,12 +1245,16 @@ describe('MedicationTracker', () => {
       });
 
       test('should return false when refill tracking not enabled', async () => {
-        // Wait 1ms to ensure different timestamp
-        await new Promise(resolve => setTimeout(resolve, 1));
+        // Wait to ensure different timestamp from beforeEach medication
+        await new Promise(resolve => setTimeout(resolve, 5));
         const med2 = tracker.addMedication('Med2', '50mg', 'daily', '08:00');
+
+        // Clear console logs from addMedication
+        consoleLogSpy.mockClear();
 
         // Verify pillCount is undefined
         const foundMed = tracker.data.medications.find(m => m.id === med2.id);
+        expect(foundMed).toBeDefined();
         expect(foundMed.pillCount).toBeUndefined();
 
         const result = tracker.refillMedication(med2.id, 90);
