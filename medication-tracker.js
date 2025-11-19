@@ -126,21 +126,29 @@ class MedicationTracker {
             ? [...activeMeds.map(m => m.name), newMedName]
             : activeMeds.map(m => m.name);
 
+        // PERFORMANCE: Build interaction lookup Map for O(1) access instead of O(n) find()
+        // This reduces overall complexity from O(n³) to O(n²)
+        const interactionMap = new Map();
+        this.interactions.forEach(inter => {
+            const drug1 = this.normalizeDrugName(inter.drug1);
+            const drug2 = this.normalizeDrugName(inter.drug2);
+
+            // Store both directions for bidirectional lookup
+            const key1 = `${drug1}::${drug2}`;
+            const key2 = `${drug2}::${drug1}`;
+            interactionMap.set(key1, inter);
+            interactionMap.set(key2, inter);
+        });
+
         // Check all pairs of medications
         for (let i = 0; i < medsToCheck.length; i++) {
             for (let j = i + 1; j < medsToCheck.length; j++) {
                 const med1 = this.normalizeDrugName(medsToCheck[i]);
                 const med2 = this.normalizeDrugName(medsToCheck[j]);
 
-                // Check both directions (drug1-drug2 and drug2-drug1)
-                const interaction = this.interactions.find(inter => {
-                    const interDrug1 = this.normalizeDrugName(inter.drug1);
-                    const interDrug2 = this.normalizeDrugName(inter.drug2);
-                    return (
-                        (med1 === interDrug1 && med2 === interDrug2) ||
-                        (med1 === interDrug2 && med2 === interDrug1)
-                    );
-                });
+                // PERFORMANCE: O(1) Map lookup instead of O(n) find()
+                const lookupKey = `${med1}::${med2}`;
+                const interaction = interactionMap.get(lookupKey);
 
                 if (interaction) {
                     foundInteractions.push({

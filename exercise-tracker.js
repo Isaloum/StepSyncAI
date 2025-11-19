@@ -150,22 +150,27 @@ class ExerciseTracker {
             return null;
         }
 
-        const totalMinutes = recentExercises.reduce((sum, ex) => sum + ex.duration, 0);
-        const avgMinutes = totalMinutes / recentExercises.length;
-        const daysWithExercise = new Set(recentExercises.map(ex => ex.date)).size;
-
-        // Count by intensity
-        const intensityCounts = {
-            low: recentExercises.filter(ex => ex.intensity === 'low').length,
-            moderate: recentExercises.filter(ex => ex.intensity === 'moderate').length,
-            high: recentExercises.filter(ex => ex.intensity === 'high').length
-        };
-
-        // Most common exercise type
+        // PERFORMANCE: Single-pass statistics calculation (6+ iterations → 1)
+        const uniqueDates = new Set();
+        const intensityCounts = { low: 0, moderate: 0, high: 0 };
         const typeCounts = {};
+        let totalMinutes = 0;
+
         recentExercises.forEach(ex => {
+            totalMinutes += ex.duration;
+            uniqueDates.add(ex.date);
+
+            // Count intensity
+            if (ex.intensity in intensityCounts) {
+                intensityCounts[ex.intensity]++;
+            }
+
+            // Count exercise types
             typeCounts[ex.type] = (typeCounts[ex.type] || 0) + 1;
         });
+
+        const avgMinutes = totalMinutes / recentExercises.length;
+        const daysWithExercise = uniqueDates.size;
         const mostCommon = Object.entries(typeCounts)
             .sort(([,a], [,b]) => b - a)[0];
 

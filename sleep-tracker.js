@@ -144,20 +144,31 @@ class SleepTracker {
         const entries = this.data.sleepEntries;
         const totalEntries = entries.length;
 
-        // Calculate averages
-        const avgDuration = (entries.reduce((sum, e) => sum + e.duration, 0) / totalEntries).toFixed(1);
-        const avgQuality = (entries.reduce((sum, e) => sum + e.quality, 0) / totalEntries).toFixed(1);
-
-        // Find best and worst nights
-        const bestNight = entries.reduce((best, e) => e.quality > best.quality ? e : best);
-        const worstNight = entries.reduce((worst, e) => e.quality < worst.quality ? e : worst);
-
-        // Calculate sleep debt (assuming 8 hours target)
+        // PERFORMANCE: Single-pass statistics calculation (5 iterations → 1)
         const targetHours = 8;
-        const totalSleepDebt = entries.reduce((debt, e) => {
+        let totalDuration = 0;
+        let totalQuality = 0;
+        let totalSleepDebt = 0;
+        let bestNight = entries[0];
+        let worstNight = entries[0];
+
+        entries.forEach(e => {
+            totalDuration += e.duration;
+            totalQuality += e.quality;
+
+            // Calculate sleep debt
             const deficit = targetHours - e.duration;
-            return debt + (deficit > 0 ? deficit : 0);
-        }, 0);
+            if (deficit > 0) {
+                totalSleepDebt += deficit;
+            }
+
+            // Track best and worst nights
+            if (e.quality > bestNight.quality) bestNight = e;
+            if (e.quality < worstNight.quality) worstNight = e;
+        });
+
+        const avgDuration = (totalDuration / totalEntries).toFixed(1);
+        const avgQuality = (totalQuality / totalEntries).toFixed(1);
 
         // Last 7 days
         const sevenDaysAgo = new Date();
@@ -289,9 +300,20 @@ class SleepTracker {
     analyzeDurationPatterns() {
         const entries = this.data.sleepEntries;
 
-        const shortSleep = entries.filter(e => e.duration < 6).length;
-        const optimalSleep = entries.filter(e => e.duration >= 7 && e.duration <= 9).length;
-        const longSleep = entries.filter(e => e.duration > 9).length;
+        // PERFORMANCE: Single-pass duration categorization (3 iterations → 1)
+        let shortSleep = 0;
+        let optimalSleep = 0;
+        let longSleep = 0;
+
+        entries.forEach(e => {
+            if (e.duration < 6) {
+                shortSleep++;
+            } else if (e.duration >= 7 && e.duration <= 9) {
+                optimalSleep++;
+            } else if (e.duration > 9) {
+                longSleep++;
+            }
+        });
 
         console.log('\n⏰ Sleep Duration Patterns:');
         const total = entries.length;
