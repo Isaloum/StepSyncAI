@@ -32,7 +32,7 @@
         "branches": 64,
         "functions": 93,
         "lines": 81,
-        "statements": 82
+        "statements": 81
       }
     },
     "testMatch": [

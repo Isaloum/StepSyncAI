@@ -5,6 +5,7 @@ const MentalHealthTracker = require('./mental-health-tracker');
 const MedicationTracker = require('./medication-tracker');
 const SleepTracker = require('./sleep-tracker');
 const ExerciseTracker = require('./exercise-tracker');
+const ValidationUtils = require('./validation-utils');
 const asciichart = require('asciichart');
 const chalk = require('chalk');
 const Table = require('cli-table3');
@@ -2524,126 +2525,196 @@ Goal types: wellness, mood, sleep-duration, sleep-quality, exercise, medication
      * @returns {boolean} - Success status
      */
     importFromJSON(filename) {
-        try {
-            if (!fs.existsSync(filename)) {
-                console.error(`\n❌ Import failed: File not found: ${filename}\n`);
-                return false;
-            }
+        // Use ValidationUtils for safe file reading and JSON parsing
+        const importedData = ValidationUtils.readJSONFile(filename, { maxSizeMB: 10 });
 
-            const rawData = fs.readFileSync(filename, 'utf8');
-            const importedData = JSON.parse(rawData);
+        if (!importedData) {
+            return false; // Error already logged by ValidationUtils
+        }
 
-            // Validate imported data structure
-            if (!importedData.exportInfo || !importedData.dailyRecords) {
-                console.error(`\n❌ Import failed: Invalid data format\n`);
-                return false;
-            }
-
-            let importCount = 0;
-
-            // Import mood logs
-            if (this.mentalHealth && importedData.dailyRecords) {
-                importedData.dailyRecords.forEach(record => {
-                    if (record.mood && record.mood.rating) {
-                        // Check if entry already exists
-                        const exists = this.mentalHealth.data.moodLogs.some(
-                            log => log.timestamp === record.mood.timestamp
-                        );
-                        if (!exists) {
-                            this.mentalHealth.data.moodLogs.push({
-                                rating: record.mood.rating,
-                                note: record.mood.notes || '',
-                                timestamp: record.mood.timestamp
-                            });
-                            importCount++;
-                        }
-                    }
-                });
-                this.mentalHealth.saveData();
-            }
-
-            // Import sleep entries
-            if (this.sleep && importedData.dailyRecords) {
-                importedData.dailyRecords.forEach(record => {
-                    if (record.sleep && record.sleep.duration) {
-                        const exists = this.sleep.data.sleepEntries.some(
-                            entry => entry.timestamp === record.sleep.timestamp
-                        );
-                        if (!exists) {
-                            this.sleep.data.sleepEntries.push({
-                                id: this.sleep.data.sleepEntries.length + 1,
-                                date: record.date,
-                                bedtime: record.sleep.bedtime || '22:00',
-                                wakeTime: record.sleep.wakeTime || '06:00',
-                                duration: record.sleep.duration,
-                                quality: record.sleep.quality || 7,
-                                notes: record.sleep.notes || '',
-                                timestamp: record.sleep.timestamp
-                            });
-                            importCount++;
-                        }
-                    }
-                });
-                this.sleep.saveData();
-            }
-
-            // Import exercise logs
-            if (this.exercise && importedData.dailyRecords) {
-                importedData.dailyRecords.forEach(record => {
-                    if (record.exercise && record.exercise.sessions) {
-                        record.exercise.sessions.forEach(session => {
-                            const exists = this.exercise.data.exercises.some(
-                                ex => ex.timestamp === session.timestamp
-                            );
-                            if (!exists) {
-                                this.exercise.data.exercises.push({
-                                    id: this.exercise.data.exercises.length + 1,
-                                    date: record.date,
-                                    type: session.type,
-                                    duration: session.duration,
-                                    intensity: session.intensity || 'moderate',
-                                    notes: session.notes || '',
-                                    timestamp: session.timestamp
-                                });
-                                importCount++;
-                            }
-                        });
-                    }
-                });
-                this.exercise.saveData();
-            }
-
-            // Import goals
-            if (importedData.goals && importedData.goals.length > 0) {
-                importedData.goals.forEach(goal => {
-                    const exists = this.data.goals.some(g =>
-                        g.type === goal.type && g.description === goal.description
-                    );
-                    if (!exists) {
-                        this.data.goals.push({
-                            id: this.data.nextGoalId++,
-                            type: goal.type,
-                            target: goal.target,
-                            targetDate: goal.targetDate,
-                            description: goal.description,
-                            progress: goal.progress || 0,
-                            createdDate: goal.createdDate || new Date().toISOString()
-                        });
-                        importCount++;
-                    }
-                });
-                this.saveData();
-            }
-
-            console.log(`\n✅ Data imported successfully from: ${filename}`);
-            console.log(`   Period: ${importedData.exportInfo.startDate} to ${importedData.exportInfo.endDate}`);
-            console.log(`   Records imported: ${importCount}`);
-            console.log(`   Duplicates skipped: Records with matching timestamps were not imported\n`);
-            return true;
-        } catch (error) {
-            console.error(`\n❌ Import failed: ${error.message}\n`);
+        // Validate imported data structure
+        const validation = ValidationUtils.validateImportedData(importedData);
+        if (!validation.isValid) {
+            console.error(`\n❌ Import failed: Invalid data format\n`);
+            validation.errors.forEach(err => console.error(`   • ${err}`));
+            console.log(`\n💡 Tip: Ensure the file was exported from StepSyncAI\n`);
             return false;
         }
+
+        let importCount = 0;
+        let skipCount = 0;
+        let errorCount = 0;
+
+        // Import mood logs
+        if (this.mentalHealth && importedData.dailyRecords) {
+            importedData.dailyRecords.forEach(record => {
+                if (record.mood && record.mood.rating) {
+                    // Validate mood rating
+                    const rating = ValidationUtils.parseInteger(record.mood.rating, {
+                        min: 1,
+                        max: 10,
+                        fieldName: 'mood rating'
+                    });
+
+                    if (rating === null) {
+                        errorCount++;
+                        return;
+                    }
+
+                    // Check if entry already exists
+                    const exists = this.mentalHealth.data.moodLogs.some(
+                        log => log.timestamp === record.mood.timestamp
+                    );
+
+                    if (!exists) {
+                        this.mentalHealth.data.moodLogs.push({
+                            rating: rating,
+                            note: record.mood.notes || '',
+                            timestamp: record.mood.timestamp
+                        });
+                        importCount++;
+                    } else {
+                        skipCount++;
+                    }
+                }
+            });
+            this.mentalHealth.saveData();
+        }
+
+        // Import sleep entries
+        if (this.sleep && importedData.dailyRecords) {
+            importedData.dailyRecords.forEach(record => {
+                if (record.sleep && record.sleep.duration) {
+                    // Validate sleep duration
+                    const duration = ValidationUtils.parseFloat(record.sleep.duration, {
+                        min: 0,
+                        max: 24,
+                        fieldName: 'sleep duration'
+                    });
+
+                    // Validate sleep quality
+                    const quality = ValidationUtils.parseInteger(record.sleep.quality || 7, {
+                        min: 1,
+                        max: 10,
+                        fieldName: 'sleep quality'
+                    });
+
+                    if (duration === null || quality === null) {
+                        errorCount++;
+                        return;
+                    }
+
+                    const exists = this.sleep.data.sleepEntries.some(
+                        entry => entry.timestamp === record.sleep.timestamp
+                    );
+
+                    if (!exists) {
+                        this.sleep.data.sleepEntries.push({
+                            id: this.sleep.data.sleepEntries.length + 1,
+                            date: record.date,
+                            bedtime: record.sleep.bedtime || '22:00',
+                            wakeTime: record.sleep.wakeTime || '06:00',
+                            duration: duration,
+                            quality: quality,
+                            notes: record.sleep.notes || '',
+                            timestamp: record.sleep.timestamp
+                        });
+                        importCount++;
+                    } else {
+                        skipCount++;
+                    }
+                }
+            });
+            this.sleep.saveData();
+        }
+
+        // Import exercise logs
+        if (this.exercise && importedData.dailyRecords) {
+            importedData.dailyRecords.forEach(record => {
+                if (record.exercise && record.exercise.sessions) {
+                    record.exercise.sessions.forEach(session => {
+                        // Validate exercise duration
+                        const duration = ValidationUtils.parseInteger(session.duration, {
+                            min: 0,
+                            max: 600,
+                            fieldName: 'exercise duration'
+                        });
+
+                        if (duration === null) {
+                            errorCount++;
+                            return;
+                        }
+
+                        const exists = this.exercise.data.exercises.some(
+                            ex => ex.timestamp === session.timestamp
+                        );
+
+                        if (!exists) {
+                            this.exercise.data.exercises.push({
+                                id: this.exercise.data.exercises.length + 1,
+                                date: record.date,
+                                type: session.type,
+                                duration: duration,
+                                intensity: session.intensity || 'moderate',
+                                notes: session.notes || '',
+                                timestamp: session.timestamp
+                            });
+                            importCount++;
+                        } else {
+                            skipCount++;
+                        }
+                    });
+                }
+            });
+            this.exercise.saveData();
+        }
+
+        // Import goals
+        if (importedData.goals && importedData.goals.length > 0) {
+            importedData.goals.forEach(goal => {
+                // Validate goal target
+                const target = ValidationUtils.parseInteger(goal.target, {
+                    min: 1,
+                    max: 10000,
+                    fieldName: 'goal target'
+                });
+
+                if (target === null) {
+                    errorCount++;
+                    return;
+                }
+
+                const exists = this.data.goals.some(g =>
+                    g.type === goal.type && g.description === goal.description
+                );
+
+                if (!exists) {
+                    this.data.goals.push({
+                        id: this.data.nextGoalId++,
+                        type: goal.type,
+                        target: target,
+                        targetDate: goal.targetDate,
+                        description: goal.description,
+                        progress: goal.progress || 0,
+                        createdDate: goal.createdDate || new Date().toISOString()
+                    });
+                    importCount++;
+                } else {
+                    skipCount++;
+                }
+            });
+            this.saveData();
+        }
+
+        console.log(`\n✅ Data imported successfully from: ${filename}`);
+        console.log(`   Period: ${importedData.exportInfo.startDate} to ${importedData.exportInfo.endDate}`);
+        console.log(`   Records imported: ${importCount}`);
+        console.log(`   Duplicates skipped: ${skipCount}`);
+        if (errorCount > 0) {
+            console.log(`   ⚠️  Invalid records skipped: ${errorCount}`);
+        }
+        console.log();
+        return true;
     }
 
     /**

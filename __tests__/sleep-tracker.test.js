@@ -126,7 +126,7 @@ describe('Sleep Tracker', () => {
             const entry = tracker.logSleep(null, '06:00', 7);
 
             expect(entry).toBeNull();
-            expect(consoleErrorSpy).toHaveBeenCalledWith('Error: Bedtime and wake time are required');
+            expect(consoleErrorSpy).toHaveBeenCalledWith('\n❌ Error: Bedtime and wake time are required');
         });
 
         test('rejects missing wake time', () => {
@@ -140,7 +140,7 @@ describe('Sleep Tracker', () => {
             const entry = tracker.logSleep('25:00', '06:00', 7);
 
             expect(entry).toBeNull();
-            expect(consoleErrorSpy).toHaveBeenCalledWith('Error: Invalid time format. Use HH:MM (e.g., 22:30)');
+            expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Invalid bedtime: "25:00" must be in HH:MM format (e.g., 09:30 or 14:45)');
         });
 
         test('validates time format - rejects invalid wake time', () => {
@@ -159,7 +159,7 @@ describe('Sleep Tracker', () => {
             const entry = tracker.logSleep('22:00', '06:00', 0);
 
             expect(entry).toBeNull();
-            expect(consoleErrorSpy).toHaveBeenCalledWith('Error: Sleep quality must be between 1-10');
+            expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Invalid sleep quality: 0 is below minimum allowed value (1)');
         });
 
         test('validates quality - rejects value above 10', () => {

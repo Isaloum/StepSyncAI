@@ -1,4 +1,5 @@
 const fs = require('fs');
+const ValidationUtils = require('./validation-utils');
 
 class ExerciseTracker {
     constructor(dataFile = 'exercise-data.json') {
@@ -31,22 +32,36 @@ class ExerciseTracker {
     }
 
     logExercise(type, duration, intensity = 'moderate', notes = '') {
-        // Validate inputs
-        if (!type || type.trim() === '') {
-            console.error('❌ Error: Exercise type is required');
+        // Validate exercise type using ValidationUtils
+        const validatedType = ValidationUtils.validateString(type, {
+            minLength: 1,
+            maxLength: 100,
+            fieldName: 'exercise type'
+        });
+
+        if (!validatedType) {
+            console.log('💡 Example: node exercise-tracker.js log "Running" 30 high\n');
             return false;
         }
 
-        const durationNum = parseFloat(duration);
-        if (isNaN(durationNum) || durationNum <= 0) {
-            console.error('❌ Error: Duration must be a positive number (in minutes)');
+        // Validate duration using ValidationUtils
+        const durationNum = ValidationUtils.parseFloat(duration, {
+            min: 1,
+            max: 600,
+            fieldName: 'duration'
+        });
+
+        if (durationNum === null) {
+            console.log('💡 Duration should be in minutes (e.g., 30 for 30 minutes)\n');
             return false;
         }
 
+        // Validate intensity
         const validIntensities = ['low', 'moderate', 'high'];
         const intensityLower = intensity.toLowerCase();
         if (!validIntensities.includes(intensityLower)) {
-            console.error('❌ Error: Intensity must be low, moderate, or high');
+            console.error('❌ Invalid intensity: Intensity must be low, moderate, or high');
+            console.log('💡 Example: node exercise-tracker.js log "Yoga" 45 low\n');
             return false;
         }
 
@@ -54,10 +69,10 @@ class ExerciseTracker {
             id: Date.now(),
             date: new Date().toISOString().split('T')[0],
             timestamp: new Date().toISOString(),
-            type: type.trim(),
+            type: validatedType,
             duration: durationNum,
             intensity: intensityLower,
-            notes: notes.trim()
+            notes: notes ? notes.trim() : ''
         };
 
         this.data.exercises.push(exercise);
@@ -224,12 +239,22 @@ if (require.main === module) {
             break;
 
         case 'history':
-            const days = args[1] ? parseInt(args[1]) : 7;
+            const days = ValidationUtils.parseInteger(args[1], {
+                min: 1,
+                max: 365,
+                default: 7,
+                fieldName: 'days'
+            });
             tracker.getHistory(days);
             break;
 
         case 'stats':
-            const statsDays = args[1] ? parseInt(args[1]) : 30;
+            const statsDays = ValidationUtils.parseInteger(args[1], {
+                min: 1,
+                max: 365,
+                default: 30,
+                fieldName: 'days'
+            });
             tracker.getStats(statsDays);
             break;
 
