@@ -2519,6 +2519,134 @@ Goal types: wellness, mood, sleep-duration, sleep-quality, exercise, medication
     }
 
     /**
+     * Import data from JSON file
+     * @param {string} filename - Path to the JSON file to import
+     * @returns {boolean} - Success status
+     */
+    importFromJSON(filename) {
+        try {
+            if (!fs.existsSync(filename)) {
+                console.error(`\n❌ Import failed: File not found: ${filename}\n`);
+                return false;
+            }
+
+            const rawData = fs.readFileSync(filename, 'utf8');
+            const importedData = JSON.parse(rawData);
+
+            // Validate imported data structure
+            if (!importedData.exportInfo || !importedData.dailyRecords) {
+                console.error(`\n❌ Import failed: Invalid data format\n`);
+                return false;
+            }
+
+            let importCount = 0;
+
+            // Import mood logs
+            if (this.mentalHealth && importedData.dailyRecords) {
+                importedData.dailyRecords.forEach(record => {
+                    if (record.mood && record.mood.rating) {
+                        // Check if entry already exists
+                        const exists = this.mentalHealth.data.moodLogs.some(
+                            log => log.timestamp === record.mood.timestamp
+                        );
+                        if (!exists) {
+                            this.mentalHealth.data.moodLogs.push({
+                                rating: record.mood.rating,
+                                note: record.mood.notes || '',
+                                timestamp: record.mood.timestamp
+                            });
+                            importCount++;
+                        }
+                    }
+                });
+                this.mentalHealth.saveData();
+            }
+
+            // Import sleep entries
+            if (this.sleep && importedData.dailyRecords) {
+                importedData.dailyRecords.forEach(record => {
+                    if (record.sleep && record.sleep.duration) {
+                        const exists = this.sleep.data.sleepEntries.some(
+                            entry => entry.timestamp === record.sleep.timestamp
+                        );
+                        if (!exists) {
+                            this.sleep.data.sleepEntries.push({
+                                id: this.sleep.data.sleepEntries.length + 1,
+                                date: record.date,
+                                bedtime: record.sleep.bedtime || '22:00',
+                                wakeTime: record.sleep.wakeTime || '06:00',
+                                duration: record.sleep.duration,
+                                quality: record.sleep.quality || 7,
+                                notes: record.sleep.notes || '',
+                                timestamp: record.sleep.timestamp
+                            });
+                            importCount++;
+                        }
+                    }
+                });
+                this.sleep.saveData();
+            }
+
+            // Import exercise logs
+            if (this.exercise && importedData.dailyRecords) {
+                importedData.dailyRecords.forEach(record => {
+                    if (record.exercise && record.exercise.sessions) {
+                        record.exercise.sessions.forEach(session => {
+                            const exists = this.exercise.data.exercises.some(
+                                ex => ex.timestamp === session.timestamp
+                            );
+                            if (!exists) {
+                                this.exercise.data.exercises.push({
+                                    id: this.exercise.data.exercises.length + 1,
+                                    date: record.date,
+                                    type: session.type,
+                                    duration: session.duration,
+                                    intensity: session.intensity || 'moderate',
+                                    notes: session.notes || '',
+                                    timestamp: session.timestamp
+                                });
+                                importCount++;
+                            }
+                        });
+                    }
+                });
+                this.exercise.saveData();
+            }
+
+            // Import goals
+            if (importedData.goals && importedData.goals.length > 0) {
+                importedData.goals.forEach(goal => {
+                    const exists = this.data.goals.some(g =>
+                        g.type === goal.type && g.description === goal.description
+                    );
+                    if (!exists) {
+                        this.data.goals.push({
+                            id: this.data.nextGoalId++,
+                            type: goal.type,
+                            target: goal.target,
+                            targetDate: goal.targetDate,
+                            description: goal.description,
+                            progress: goal.progress || 0,
+                            createdDate: goal.createdDate || new Date().toISOString()
+                        });
+                        importCount++;
+                    }
+                });
+                this.saveData();
+            }
+
+            console.log(`\n✅ Data imported successfully from: ${filename}`);
+            console.log(`   Period: ${importedData.exportInfo.startDate} to ${importedData.exportInfo.endDate}`);
+            console.log(`   Records imported: ${importCount}`);
+            console.log(`   Duplicates skipped: Records with matching timestamps were not imported\n`);
+            return true;
+        } catch (error) {
+            console.error(`\n❌ Import failed: ${error.message}\n`);
+            return false;
+        }
+    }
+
+    /**
      * Export data to CSV file
      */
     exportToCSV(days = 30, filename = null) {
@@ -3632,6 +3760,16 @@ if (require.main === module) {
             dashboard.generateReport(reportDays, reportFile);
             break;
 
+        case 'import':
+        case 'import-json':
+            if (args.length < 2) {
+                console.error('❌ Usage: node daily-dashboard.js import <filename>');
+                console.error('   Example: node daily-dashboard.js import wellness-export-2025-11-19.json');
+                process.exit(1);
+            }
+            dashboard.importFromJSON(args[1]);
+            break;
+
         case 'help':
         default:
             console.log(`
@@ -3699,6 +3837,12 @@ COMMANDS:
       Generate comprehensive wellness report (default: 30 days)
       Text format with executive summary, goals, insights, and trends
       Example: report 30 monthly-report.txt
+
+  import, import-json <filename>
+      Import wellness data from a previously exported JSON file
+      Merges data with existing records (skips duplicates based on timestamps)
+      Imports mood logs, sleep entries, exercise sessions, and goals
+      Example: import wellness-export-2025-11-19.json
 
   help
       Show this help message

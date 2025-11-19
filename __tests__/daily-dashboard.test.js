@@ -2071,6 +2071,7 @@ describe('Daily Dashboard', () => {
             });
         });
 
+
         describe('Visualization Methods', () => {
             test('createCorrelationBar generates colored bars', () => {
                 const bar1 = dashboard.createCorrelationBar(0.75);
@@ -2115,5 +2116,6 @@ describe('Daily Dashboard', () => {
                 expect(typeof heatmap).toBe('string');
             });
         });
+
     });
 });
