@@ -2094,6 +2094,426 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ---
 
+## ❓ FAQ & Troubleshooting
+
+<details>
+<summary><strong>How do I get started?</strong></summary>
+
+1. Clone the repository: `git clone https://github.com/Isaloum/StepSyncAI.git`
+2. Install dependencies: `npm install`
+3. Start with any tracker:
+   ```bash
+   node mental-health-tracker.js help
+   node medication-tracker.js help
+   node sleep-tracker.js help
+   node exercise-tracker.js help
+   node aws-for-kids.js help
+   node daily-dashboard.js help
+   ```
+4. Use the `help` command for each app to learn all available commands
+</details>
+
+<details>
+<summary><strong>Where is my data stored?</strong></summary>
+
+All data is stored locally in JSON files in the project directory:
+- `mental-health-data.json` - Mental health tracking data
+- `medications.json` - Medication tracking data
+- `sleep-data.json` - Sleep tracking data
+- `exercise-data.json` - Exercise tracking data
+- `aws-learning-progress.json` - AWS learning progress
+- `dashboard-goals.json` - Wellness goals and milestones
+- `reminders-config.json` - Reminder settings
+
+**Privacy**: Your data never leaves your computer. No cloud sync, no external APIs.
+</details>
+
+<details>
+<summary><strong>How do I backup my data?</strong></summary>
+
+Each app has built-in backup functionality:
+
+```bash
+# Mental Health Tracker
+node mental-health-tracker.js backup
+
+# Medication Tracker
+node medication-tracker.js backup
+
+# AWS For Kids
+node aws-for-kids.js backup
+
+# Sleep Tracker
+node sleep-tracker.js backup
+
+# Exercise Tracker
+node exercise-tracker.js backup
+```
+
+Backups are stored in the `./backups` directory with timestamps.
+
+You can also manually copy the JSON data files to a safe location.
+</details>
+
+<details>
+<summary><strong>How do I restore from a backup?</strong></summary>
+
+1. List available backups:
+   ```bash
+   node mental-health-tracker.js list-backups
+   ```
+
+2. Restore from a specific backup:
+   ```bash
+   node mental-health-tracker.js restore mental-health-backup-2024-11-19T10-30-00.json
+   ```
+
+**Safety**: The app automatically creates a safety backup of your current data before restoring.
+</details>
+
+<details>
+<summary><strong>How do I export my data to Excel?</strong></summary>
+
+Use the CSV export feature:
+
+```bash
+# Mental Health (exports 6 CSV files)
+node mental-health-tracker.js export
+
+# Medication (exports 2 CSV files)
+node medication-tracker.js export
+
+# AWS For Kids (exports 3 CSV files)
+node aws-for-kids.js export
+
+# Sleep Tracker (exports 1 CSV file)
+node sleep-tracker.js export
+
+# Exercise Tracker (exports 1 CSV file)
+node exercise-tracker.js export
+
+# Daily Dashboard (exports multiple formats)
+node daily-dashboard.js export-csv
+```
+
+Files are saved in the `./exports` directory and can be opened in Excel, Google Sheets, or any spreadsheet software.
+</details>
+
+<details>
+<summary><strong>Can I use this on multiple computers?</strong></summary>
+
+Yes! You have several options:
+
+1. **Manual Sync**: Copy the JSON data files between computers
+2. **Git**: Commit your data files to a private Git repository
+3. **Cloud Backup**: Store backups in Dropbox, Google Drive, or iCloud
+4. **USB Drive**: Keep data files on a USB drive
+
+**Note**: There's no built-in cloud sync, so you'll need to manually manage data transfer.
+</details>
+
+<details>
+<summary><strong>Error: "Cannot find module" when running commands</strong></summary>
+
+Make sure you've installed dependencies:
+
+```bash
+npm install
+```
+
+If the issue persists, try:
+
+```bash
+rm -rf node_modules package-lock.json
+npm install
+```
+</details>
+
+<details>
+<summary><strong>Reminder notifications aren't working</strong></summary>
+
+1. Check if the reminder service is running:
+   ```bash
+   node reminder-service.js start
+   ```
+
+2. Verify your reminder configuration:
+   ```bash
+   node reminder-service.js status
+   ```
+
+3. Check the `reminders-config.json` file for correct settings
+
+4. On macOS, ensure terminal-notifier is installed:
+   ```bash
+   brew install terminal-notifier
+   ```
+
+5. On Linux, ensure notify-send is available (usually pre-installed)
+</details>
+
+<details>
+<summary><strong>Can multiple people use this on the same computer?</strong></summary>
+
+Currently, StepSyncAI is designed for single-user use. If multiple people need to use it:
+
+**Option 1 - Separate Project Folders**:
+```bash
+# Person 1
+cd ~/StepSyncAI-person1
+git clone https://github.com/Isaloum/StepSyncAI.git .
+
+# Person 2
+cd ~/StepSyncAI-person2
+git clone https://github.com/Isaloum/StepSyncAI.git .
+```
+
+**Option 2 - Manual Data Swapping**:
+1. Person 1: `node mental-health-tracker.js backup`
+2. Switch data files
+3. Person 2 uses the app
+4. Restore Person 1's backup when done
+
+**Note**: Multi-user authentication is not currently supported (see roadmap for future features).
+</details>
+
+<details>
+<summary><strong>How do I update to the latest version?</strong></summary>
+
+1. Backup your data first:
+   ```bash
+   node mental-health-tracker.js backup
+   node medication-tracker.js backup
+   node aws-for-kids.js backup
+   node sleep-tracker.js backup
+   node exercise-tracker.js backup
+   ```
+
+2. Pull latest changes:
+   ```bash
+   git pull origin main
+   ```
+
+3. Update dependencies:
+   ```bash
+   npm install
+   ```
+
+4. Verify everything works:
+   ```bash
+   npm test
+   ```
+
+Your data files are preserved during updates.
+</details>
+
+<details>
+<summary><strong>Tests are failing after I made changes</strong></summary>
+
+1. Run the full test suite to see what's broken:
+   ```bash
+   npm test
+   ```
+
+2. Check coverage:
+   ```bash
+   npm run test:coverage
+   ```
+
+3. Run linting:
+   ```bash
+   npm run lint
+   ```
+
+4. If you modified core functionality, you may need to update tests
+5. Check the [CONTRIBUTING.md](CONTRIBUTING.md) guide for testing best practices
+</details>
+
+<details>
+<summary><strong>How do I contribute to this project?</strong></summary>
+
+1. Read [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines
+2. Fork the repository
+3. Create a feature branch
+4. Make your changes
+5. Add tests (maintain 80%+ coverage)
+6. Submit a Pull Request
+
+See the contributing guide for detailed instructions.
+</details>
+
+<details>
+<summary><strong>Is my health data secure?</strong></summary>
+
+**Privacy**:
+- ✅ All data stored locally on your computer
+- ✅ No cloud sync or external API calls
+- ✅ No telemetry or tracking
+- ✅ No user accounts or authentication needed
+
+**Security Recommendations**:
+- 📁 Store data files in an encrypted folder (FileVault on macOS, BitLocker on Windows)
+- 🔒 Use whole-disk encryption
+- 💾 Create regular backups
+- 🔐 Set file permissions to restrict access (see next question)
+
+**Note**: While data is stored locally, the files are **not encrypted by default**. Consider using OS-level encryption for sensitive health data.
+</details>
+
+<details>
+<summary><strong>How do I set secure file permissions on my data files?</strong></summary>
+
+**On macOS/Linux**:
+
+```bash
+# Make data files readable/writable only by you
+chmod 600 *.json
+
+# Or for specific files:
+chmod 600 mental-health-data.json
+chmod 600 medications.json
+chmod 600 sleep-data.json
+chmod 600 exercise-data.json
+chmod 600 aws-learning-progress.json
+chmod 600 dashboard-goals.json
+chmod 600 reminders-config.json
+```
+
+**On Windows**:
+
+1. Right-click the JSON file → Properties
+2. Security tab → Advanced
+3. Disable inheritance
+4. Remove all users except your account
+5. Grant yourself Full Control
+6. Apply changes
+
+**Automate** (macOS/Linux):
+
+Add to your shell profile (.bashrc, .zshrc):
+
+```bash
+alias secure-health-data='chmod 600 ~/path/to/StepSyncAI/*.json'
+```
+</details>
+
+<details>
+<summary><strong>Can I use this for my family/patients?</strong></summary>
+
+**Personal/Family Use**: Yes! Each family member should have their own installation or use separate project folders.
+
+**Clinical Use**: Not recommended. StepSyncAI is designed for personal tracking, not clinical use. It lacks:
+- HIPAA compliance
+- Audit logging
+- Multi-user authentication
+- Data encryption at rest
+- Access controls
+- Clinical decision support
+
+**Recommendation**: Use for personal wellness tracking only. Always consult healthcare professionals for medical decisions.
+</details>
+
+<details>
+<summary><strong>What's the difference between the trackers and the Dashboard?</strong></summary>
+
+**Individual Trackers** (Mental Health, Medication, Sleep, Exercise):
+- Focused on specific health aspect
+- Deep data entry and tracking
+- Specialized features (e.g., drug interactions, symptom clustering)
+- Detailed insights for that domain
+
+**Daily Dashboard**:
+- Aggregates data from all trackers
+- Provides unified wellness score
+- Cross-tracker correlations (e.g., how sleep affects mood)
+- High-level overview and trends
+- Goal setting and progress tracking
+
+**Best Practice**: Use individual trackers for daily logging, and the Dashboard for weekly/monthly reviews.
+</details>
+
+<details>
+<summary><strong>How accurate is the AWS For Kids exam preparation?</strong></summary>
+
+**Content Coverage**:
+- ✅ 21 core AWS concepts covered
+- ✅ Kid-friendly explanations for complex topics
+- ✅ Focuses on Cloud Practitioner level
+
+**Limitations**:
+- ❌ Not comprehensive for the full exam (65 questions)
+- ❌ No official AWS certification
+- ❌ Best used as supplementary study material
+
+**Recommendation**: Use AWS For Kids to build foundational knowledge, then complement with:
+- Official AWS Cloud Practitioner Study Guide
+- AWS training courses
+- Practice exams from AWS
+</details>
+
+<details>
+<summary><strong>The app says "out of pills" but I still have medication</strong></summary>
+
+This happens when the pill count tracker gets out of sync with reality. To fix:
+
+1. Count your actual pills
+2. Update the refill information:
+   ```bash
+   node medication-tracker.js refill <medication-id> <actual-pill-count>
+   ```
+
+Or set up fresh refill tracking:
+```bash
+node medication-tracker.js set-refill-info <medication-id> <pill-count> <pills-per-dose> <alert-threshold>
+```
+
+Example:
+```bash
+node medication-tracker.js set-refill-info 1 60 1 7
+```
+
+This sets medication ID 1 to 60 pills, 1 pill per dose, alert when ≤7 days remaining.
+</details>
+
+<details>
+<summary><strong>My sleep duration is calculating incorrectly</strong></summary>
+
+**Overnight Sleep**: The app handles overnight sleep automatically. For example:
+- Bedtime: `23:00` (11 PM)
+- Wake time: `07:00` (7 AM)
+- Duration: 8 hours ✓
+
+**24-Hour Format**: Make sure you're using 24-hour time format:
+- ✅ Correct: `23:00` for 11 PM
+- ❌ Wrong: `11:00` (this means 11 AM)
+
+**Format**: Use `HH:MM` format:
+- ✅ `08:30` (8:30 AM)
+- ✅ `20:15` (8:15 PM)
+- ❌ `8:30` (missing leading zero)
+</details>
+
+<details>
+<summary><strong>How do I delete old entries/data?</strong></summary>
+
+Currently, there's no built-in "delete" command. To remove old data:
+
+**Option 1 - Manual JSON Editing**:
+1. Create a backup first: `node <tracker>.js backup`
+2. Open the JSON file (e.g., `mental-health-data.json`)
+3. Carefully edit the array to remove unwanted entries
+4. Save and verify: `node <tracker>.js stats`
+
+**Option 2 - Start Fresh**:
+1. Backup existing data: `node <tracker>.js backup`
+2. Rename or delete the JSON file
+3. Start tracking from scratch
+
+**Caution**: Manual JSON editing can corrupt your data. Always backup first!
+</details>
+
+---
+
 ## 🆘 Support & Resources
 
 ### Mental Health Resources

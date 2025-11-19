@@ -398,6 +398,136 @@ class SleepTracker {
             timestamp: entry.timestamp
         }));
     }
+
+    // Backup and Restore
+    createBackup(backupDir = './backups') {
+        try {
+            if (!fs.existsSync(backupDir)) {
+                fs.mkdirSync(backupDir, { recursive: true });
+            }
+
+            if (!fs.existsSync(this.dataFile)) {
+                console.log('\n⚠️  No data file found to backup.');
+                return false;
+            }
+
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const backupFilename = `sleep-backup-${timestamp}.json`;
+            const backupPath = path.join(backupDir, backupFilename);
+
+            const data = fs.readFileSync(this.dataFile);
+            fs.writeFileSync(backupPath, data);
+
+            console.log(`\n✓ Backup created successfully!`);
+            console.log(`  Location: ${backupPath}`);
+            console.log(`  Time: ${new Date().toLocaleString()}`);
+            return true;
+        } catch (error) {
+            console.error('Error creating backup:', error.message);
+            return false;
+        }
+    }
+
+    listBackups(backupDir = './backups') {
+        try {
+            if (!fs.existsSync(backupDir)) {
+                console.log('\n📁 No backups directory found.');
+                return;
+            }
+
+            const files = fs.readdirSync(backupDir)
+                .filter(f => f.startsWith('sleep-backup-') && f.endsWith('.json'))
+                .sort()
+                .reverse();
+
+            if (files.length === 0) {
+                console.log('\n📁 No backups found.');
+                return;
+            }
+
+            console.log('\n📁 Available Sleep Backups:');
+            console.log('═'.repeat(60));
+            files.forEach((file, index) => {
+                const filePath = path.join(backupDir, file);
+                const stats = fs.statSync(filePath);
+                const size = (stats.size / 1024).toFixed(2);
+                const date = stats.mtime.toLocaleString();
+                console.log(`${index + 1}. ${file}`);
+                console.log(`   Created: ${date}`);
+                console.log(`   Size: ${size} KB`);
+            });
+        } catch (error) {
+            console.error('Error listing backups:', error.message);
+        }
+    }
+
+    restoreFromBackup(backupFile, backupDir = './backups') {
+        try {
+            const backupPath = path.join(backupDir, backupFile);
+
+            if (!fs.existsSync(backupPath)) {
+                console.log('\n❌ Backup file not found.');
+                return false;
+            }
+
+            // Safety backup of current data
+            if (fs.existsSync(this.dataFile)) {
+                const preRestoreBackup = `sleep-pre-restore-${Date.now()}.json`;
+                fs.copyFileSync(this.dataFile, path.join(backupDir, preRestoreBackup));
+                console.log(`\n💾 Current data backed up to: ${preRestoreBackup}`);
+            }
+
+            const backupData = fs.readFileSync(backupPath);
+            fs.writeFileSync(this.dataFile, backupData);
+            this.data = this.loadData();
+
+            console.log(`\n✓ Data restored successfully from backup!`);
+            console.log(`  Source: ${backupFile}`);
+            console.log(`  Time: ${new Date().toLocaleString()}`);
+            return true;
+        } catch (error) {
+            console.error('Error restoring backup:', error.message);
+            return false;
+        }
+    }
+
+    // Data Export
+    exportToCSV(outputDir = './exports') {
+        try {
+            if (!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir, { recursive: true });
+            }
+
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const filename = `sleep-export-${timestamp}.csv`;
+
+            if (this.data.sleepEntries.length === 0) {
+                console.log('\n⚠️  No sleep data to export.');
+                return false;
+            }
+
+            const csvContent = this.generateSleepCSV();
+            fs.writeFileSync(path.join(outputDir, filename), csvContent);
+
+            console.log(`\n✓ Sleep data exported successfully!`);
+            console.log(`  Location: ${outputDir}/${filename}`);
+            console.log(`  Entries: ${this.data.sleepEntries.length}`);
+            return true;
+        } catch (error) {
+            console.error('Error exporting data:', error.message);
+            return false;
+        }
+    }
+
+    generateSleepCSV() {
+        const headers = 'Date,Bedtime,Wake Time,Duration (hours),Quality (1-10),Notes,Timestamp\n';
+        const rows = this.data.sleepEntries.map(entry => {
+            const notes = (entry.notes || '').replace(/"/g, '""');
+            const date = entry.date || new Date(entry.timestamp).toISOString().split('T')[0];
+            return `"${date}","${entry.bedtime}","${entry.wakeTime}",${entry.duration},${entry.quality},"${notes}","${entry.timestamp}"`;
+        }).join('\n');
+        return headers + rows;
+    }
 }
 
 // CLI Interface
@@ -431,6 +561,30 @@ if (require.main === module) {
             tracker.getInsights();
             break;
 
+        case 'backup':
+            tracker.createBackup();
+            break;
+
+        case 'list-backups':
+            tracker.listBackups();
+            break;
+
+        case 'restore':
+            const backupFile = args[1];
+            if (!backupFile) {
+                console.log('\n❌ Error: Please specify a backup file to restore.');
+                console.log('Usage: node sleep-tracker.js restore <backup-filename>');
+                console.log('Use "list-backups" to see available backups.');
+            } else {
+                tracker.restoreFromBackup(backupFile);
+            }
+            break;
+
+        case 'export':
+        case 'export-csv':
+            tracker.exportToCSV();
+            break;
+
         case 'help':
         default:
             console.log('\n💤 Sleep Tracker - Track your sleep for better health');
@@ -452,12 +606,26 @@ if (require.main === module) {
             console.log('  insights / analyze');
             console.log('      Discover patterns in your sleep data');
             console.log('');
+            console.log('  backup');
+            console.log('      Create a backup of your sleep data');
+            console.log('');
+            console.log('  list-backups');
+            console.log('      List all available backups');
+            console.log('');
+            console.log('  restore <backup-filename>');
+            console.log('      Restore data from a backup');
+            console.log('      Example: node sleep-tracker.js restore sleep-backup-2024-11-19T10-30-00.json');
+            console.log('');
+            console.log('  export / export-csv');
+            console.log('      Export sleep data to CSV format');
+            console.log('');
             console.log('  help');
             console.log('      Show this help message');
             console.log('\n💡 Tips:');
             console.log('   - Most adults need 7-9 hours of sleep');
             console.log('   - Consistent sleep schedule improves sleep quality');
             console.log('   - Track regularly to identify patterns');
+            console.log('   - Create regular backups of your data');
             console.log('═'.repeat(60));
             break;
     }

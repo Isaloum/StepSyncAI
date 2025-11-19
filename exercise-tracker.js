@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 
 class ExerciseTracker {
     constructor(dataFile = 'exercise-data.json') {
@@ -206,6 +207,137 @@ class ExerciseTracker {
             workoutCount: recentExercises.length
         };
     }
+
+    // Backup and Restore
+    createBackup(backupDir = './backups') {
+        try {
+            if (!fs.existsSync(backupDir)) {
+                fs.mkdirSync(backupDir, { recursive: true });
+            }
+
+            if (!fs.existsSync(this.dataFile)) {
+                console.log('\n⚠️  No data file found to backup.');
+                return false;
+            }
+
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const backupFilename = `exercise-backup-${timestamp}.json`;
+            const backupPath = path.join(backupDir, backupFilename);
+
+            const data = fs.readFileSync(this.dataFile);
+            fs.writeFileSync(backupPath, data);
+
+            console.log(`\n✓ Backup created successfully!`);
+            console.log(`  Location: ${backupPath}`);
+            console.log(`  Time: ${new Date().toLocaleString()}`);
+            return true;
+        } catch (error) {
+            console.error('Error creating backup:', error.message);
+            return false;
+        }
+    }
+
+    listBackups(backupDir = './backups') {
+        try {
+            if (!fs.existsSync(backupDir)) {
+                console.log('\n📁 No backups directory found.');
+                return;
+            }
+
+            const files = fs.readdirSync(backupDir)
+                .filter(f => f.startsWith('exercise-backup-') && f.endsWith('.json'))
+                .sort()
+                .reverse();
+
+            if (files.length === 0) {
+                console.log('\n📁 No backups found.');
+                return;
+            }
+
+            console.log('\n📁 Available Exercise Backups:');
+            console.log('═'.repeat(60));
+            files.forEach((file, index) => {
+                const filePath = path.join(backupDir, file);
+                const stats = fs.statSync(filePath);
+                const size = (stats.size / 1024).toFixed(2);
+                const date = stats.mtime.toLocaleString();
+                console.log(`${index + 1}. ${file}`);
+                console.log(`   Created: ${date}`);
+                console.log(`   Size: ${size} KB`);
+            });
+        } catch (error) {
+            console.error('Error listing backups:', error.message);
+        }
+    }
+
+    restoreFromBackup(backupFile, backupDir = './backups') {
+        try {
+            const backupPath = path.join(backupDir, backupFile);
+
+            if (!fs.existsSync(backupPath)) {
+                console.log('\n❌ Backup file not found.');
+                return false;
+            }
+
+            // Safety backup of current data
+            if (fs.existsSync(this.dataFile)) {
+                const preRestoreBackup = `exercise-pre-restore-${Date.now()}.json`;
+                fs.copyFileSync(this.dataFile, path.join(backupDir, preRestoreBackup));
+                console.log(`\n💾 Current data backed up to: ${preRestoreBackup}`);
+            }
+
+            const backupData = fs.readFileSync(backupPath);
+            fs.writeFileSync(this.dataFile, backupData);
+            this.data = this.loadData();
+
+            console.log(`\n✓ Data restored successfully from backup!`);
+            console.log(`  Source: ${backupFile}`);
+            console.log(`  Time: ${new Date().toLocaleString()}`);
+            return true;
+        } catch (error) {
+            console.error('Error restoring backup:', error.message);
+            return false;
+        }
+    }
+
+    // Data Export
+    exportToCSV(outputDir = './exports') {
+        try {
+            if (!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir, { recursive: true });
+            }
+
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const filename = `exercise-export-${timestamp}.csv`;
+
+            if (this.data.exercises.length === 0) {
+                console.log('\n⚠️  No exercise data to export.');
+                return false;
+            }
+
+            const csvContent = this.generateExerciseCSV();
+            fs.writeFileSync(path.join(outputDir, filename), csvContent);
+
+            console.log(`\n✓ Exercise data exported successfully!`);
+            console.log(`  Location: ${outputDir}/${filename}`);
+            console.log(`  Entries: ${this.data.exercises.length}`);
+            return true;
+        } catch (error) {
+            console.error('Error exporting data:', error.message);
+            return false;
+        }
+    }
+
+    generateExerciseCSV() {
+        const headers = 'Date,Type,Duration (minutes),Intensity,Notes,Timestamp\n';
+        const rows = this.data.exercises.map(ex => {
+            const type = (ex.type || '').replace(/"/g, '""');
+            const notes = (ex.notes || '').replace(/"/g, '""');
+            const date = ex.date || new Date(ex.timestamp).toISOString().split('T')[0];
+            return `"${date}","${type}",${ex.duration},"${ex.intensity}","${notes}","${ex.timestamp}"`;
+        }).join('\n');
+        return headers + rows;
+    }
 }
 
 // CLI Interface
@@ -243,6 +375,30 @@ if (require.main === module) {
             }
             break;
 
+        case 'backup':
+            tracker.createBackup();
+            break;
+
+        case 'list-backups':
+            tracker.listBackups();
+            break;
+
+        case 'restore':
+            const backupFile = args[1];
+            if (!backupFile) {
+                console.log('\n❌ Error: Please specify a backup file to restore.');
+                console.log('Usage: node exercise-tracker.js restore <backup-filename>');
+                console.log('Use "list-backups" to see available backups.');
+            } else {
+                tracker.restoreFromBackup(backupFile);
+            }
+            break;
+
+        case 'export':
+        case 'export-csv':
+            tracker.exportToCSV();
+            break;
+
         case 'help':
         default:
             console.log(`
@@ -269,6 +425,22 @@ COMMANDS:
       View today's total exercise minutes
       Example: node exercise-tracker.js today
 
+  backup
+      Create a backup of your exercise data
+      Example: node exercise-tracker.js backup
+
+  list-backups
+      List all available backups
+      Example: node exercise-tracker.js list-backups
+
+  restore <backup-filename>
+      Restore data from a backup
+      Example: node exercise-tracker.js restore exercise-backup-2024-11-19T10-30-00.json
+
+  export / export-csv
+      Export exercise data to CSV format
+      Example: node exercise-tracker.js export
+
   help
       Show this help message
 
@@ -277,6 +449,8 @@ EXAMPLES:
   node exercise-tracker.js log "Cycling" 60 moderate
   node exercise-tracker.js history
   node exercise-tracker.js stats
+  node exercise-tracker.js backup
+  node exercise-tracker.js export
             `);
             break;
     }
