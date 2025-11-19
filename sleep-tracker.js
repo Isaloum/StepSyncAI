@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const ValidationUtils = require('./validation-utils');
 
 class SleepTracker {
     constructor(dataFile = 'sleep-data.json') {
@@ -52,21 +53,26 @@ class SleepTracker {
     logSleep(bedtime, wakeTime, quality, notes = '') {
         // Validate inputs
         if (!bedtime || !wakeTime) {
-            console.error('Error: Bedtime and wake time are required');
+            console.error('\n❌ Error: Bedtime and wake time are required');
+            console.log('💡 Usage: node sleep-tracker.js log <bedtime> <wakeTime> <quality> [notes]\n');
             return null;
         }
 
-        // Validate time format (HH:MM)
-        const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-        if (!timeRegex.test(bedtime) || !timeRegex.test(wakeTime)) {
-            console.error('Error: Invalid time format. Use HH:MM (e.g., 22:30)');
+        // Validate time format using ValidationUtils
+        if (!ValidationUtils.validateTime(bedtime, 'bedtime') || !ValidationUtils.validateTime(wakeTime, 'wake time')) {
+            console.log('💡 Example: node sleep-tracker.js log 22:30 06:30 8 "Good sleep"\n');
             return null;
         }
 
-        // Validate quality (1-10)
-        const qualityNum = parseInt(quality);
-        if (isNaN(qualityNum) || qualityNum < 1 || qualityNum > 10) {
-            console.error('Error: Sleep quality must be between 1-10');
+        // Validate quality using ValidationUtils
+        const qualityNum = ValidationUtils.parseInteger(quality, {
+            min: 1,
+            max: 10,
+            fieldName: 'sleep quality'
+        });
+
+        if (qualityNum === null) {
+            console.log('💡 Quality should be a number from 1 (terrible) to 10 (perfect)\n');
             return null;
         }
 
@@ -422,7 +428,12 @@ if (require.main === module) {
             break;
 
         case 'history':
-            const days = args[1] ? parseInt(args[1]) : 7;
+            const days = ValidationUtils.parseInteger(args[1], {
+                min: 1,
+                max: 365,
+                default: 7,
+                fieldName: 'days'
+            });
             tracker.getHistory(days);
             break;
 

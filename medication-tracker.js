@@ -3,6 +3,7 @@ const path = require('path');
 const ChartUtils = require('./chart-utils');
 const PDFDocument = require('pdfkit');
 const ReminderService = require('./reminder-service');
+const ValidationUtils = require('./validation-utils');
 
 class MedicationTracker {
     constructor(dataFile = 'medications.json') {
@@ -668,16 +669,53 @@ class MedicationTracker {
     // ==================== REFILL TRACKING SYSTEM ====================
 
     setRefillInfo(medicationId, pillCount, pillsPerDose = 1, refillThreshold = 7) {
-        const medication = this.data.medications.find(m => m.id === parseInt(medicationId));
+        // Validate medication ID
+        const medId = ValidationUtils.parseInteger(medicationId, {
+            min: 1,
+            fieldName: 'medication ID'
+        });
+
+        if (medId === null) {
+            return false;
+        }
+
+        const medication = this.data.medications.find(m => m.id === medId);
 
         if (!medication) {
             console.log('❌ Medication not found!');
             return false;
         }
 
-        medication.pillCount = parseInt(pillCount);
-        medication.pillsPerDose = parseInt(pillsPerDose);
-        medication.refillThreshold = parseInt(refillThreshold); // Days of supply threshold
+        // Validate pill count
+        const validatedPillCount = ValidationUtils.parseInteger(pillCount, {
+            min: 0,
+            max: 10000,
+            fieldName: 'pill count'
+        });
+
+        // Validate pills per dose
+        const validatedPillsPerDose = ValidationUtils.parseInteger(pillsPerDose, {
+            min: 1,
+            max: 100,
+            default: 1,
+            fieldName: 'pills per dose'
+        });
+
+        // Validate refill threshold
+        const validatedRefillThreshold = ValidationUtils.parseInteger(refillThreshold, {
+            min: 1,
+            max: 365,
+            default: 7,
+            fieldName: 'refill threshold'
+        });
+
+        if (validatedPillCount === null || validatedPillsPerDose === null || validatedRefillThreshold === null) {
+            return false;
+        }
+
+        medication.pillCount = validatedPillCount;
+        medication.pillsPerDose = validatedPillsPerDose;
+        medication.refillThreshold = validatedRefillThreshold; // Days of supply threshold
 
         if (this.saveData()) {
             console.log(`✅ Refill tracking enabled for "${medication.name}"`);
@@ -1347,8 +1385,13 @@ function main() {
 
         case 'history':
             const medId = args[1] || null;
-            const days = args[2] || 7;
-            tracker.getHistory(medId, parseInt(days));
+            const days = ValidationUtils.parseInteger(args[2], {
+                min: 1,
+                max: 365,
+                default: 7,
+                fieldName: 'days'
+            });
+            tracker.getHistory(medId, days);
             break;
 
         case 'remove':
@@ -1360,7 +1403,12 @@ function main() {
             break;
 
         case 'adherence':
-            const adherenceDays = args[1] ? parseInt(args[1]) : 30;
+            const adherenceDays = ValidationUtils.parseInteger(args[1], {
+                min: 1,
+                max: 365,
+                default: 30,
+                fieldName: 'days'
+            });
             tracker.visualizeAdherence(adherenceDays);
             break;
 
@@ -1415,8 +1463,9 @@ function main() {
                 console.log('Usage: node medication-tracker.js set-refill <medication-id> <pill-count> [pills-per-dose] [refill-threshold-days]');
                 console.log('Example: node medication-tracker.js set-refill 1234567890 90 1 7');
             } else {
-                const pillsPerDose = args[3] ? parseInt(args[3]) : 1;
-                const threshold = args[4] ? parseInt(args[4]) : 7;
+                // setRefillInfo now handles validation internally
+                const pillsPerDose = args[3] || 1;
+                const threshold = args[4] || 7;
                 tracker.setRefillInfo(args[1], args[2], pillsPerDose, threshold);
             }
             break;
