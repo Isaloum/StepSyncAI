@@ -8,6 +8,11 @@
     "mental": "node mental-health-tracker.js",
     "med": "node medication-tracker.js",
     "aws": "node aws-for-kids.js",
+    "backup": "node backup-cli.js",
+    "backup:create": "node backup-cli.js create",
+    "backup:list": "node backup-cli.js list",
+    "backup:restore": "node backup-cli.js restore",
+    "backup:stats": "node backup-cli.js stats",
     "test": "jest",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch"
