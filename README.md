@@ -1,8 +1,8 @@
 # StepSyncAI - Health & Wellness Apps
 
-[![Tests](https://img.shields.io/badge/tests-1063%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
-[![Coverage](https://img.shields.io/badge/coverage-82.99%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
-[![Branch Coverage](https://img.shields.io/badge/branch%20coverage-66.1%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Tests](https://img.shields.io/badge/tests-1103%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Coverage](https://img.shields.io/badge/coverage-83.05%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Branch Coverage](https://img.shields.io/badge/branch%20coverage-66.26%25-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
