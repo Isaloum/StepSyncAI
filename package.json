@@ -13,6 +13,11 @@
     "backup:list": "node backup-cli.js list",
     "backup:restore": "node backup-cli.js restore",
     "backup:stats": "node backup-cli.js stats",
+    "analytics": "node analytics-cli.js",
+    "analytics:dashboard": "node analytics-cli.js dashboard",
+    "analytics:correlations": "node analytics-cli.js correlations",
+    "analytics:trends": "node analytics-cli.js trends",
+    "analytics:predict": "node analytics-cli.js predict",
     "test": "jest",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch"
