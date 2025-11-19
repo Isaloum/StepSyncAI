@@ -33,7 +33,9 @@ class DailyDashboard {
         return {
             goals: [],
             achievedGoals: [],
-            nextGoalId: 1
+            nextGoalId: 1,
+            goalStreaks: {}, // Track consecutive days meeting goals
+            goalTemplates: this.getDefaultGoalTemplates()
         };
     }
 
@@ -1547,6 +1549,224 @@ class DailyDashboard {
         return formats[type] || target.toString();
     }
 
+    // ==================== GOAL TEMPLATES ====================
+
+    getDefaultGoalTemplates() {
+        return {
+            'beginner-sleep': {
+                name: 'Better Sleep - Beginner',
+                type: 'sleep-duration',
+                target: 7,
+                duration: 30, // days
+                description: 'Average 7 hours of sleep per night',
+                tips: [
+                    'Set a consistent bedtime',
+                    'Avoid screens 1 hour before bed',
+                    'Keep bedroom cool and dark'
+                ],
+                difficulty: 'beginner'
+            },
+            'intermediate-sleep': {
+                name: 'Quality Sleep - Intermediate',
+                type: 'sleep-quality',
+                target: 8,
+                duration: 60,
+                description: 'Achieve 8/10 sleep quality',
+                tips: [
+                    'Practice relaxation before bed',
+                    'Limit caffeine after 2 PM',
+                    'Exercise regularly but not before bed'
+                ],
+                difficulty: 'intermediate'
+            },
+            'beginner-exercise': {
+                name: 'Daily Activity - Beginner',
+                type: 'exercise',
+                target: 20,
+                duration: 30,
+                description: 'Exercise 20 minutes per day',
+                tips: [
+                    'Start with walking',
+                    'Take the stairs',
+                    'Do light stretching'
+                ],
+                difficulty: 'beginner'
+            },
+            'intermediate-exercise': {
+                name: 'Active Lifestyle - Intermediate',
+                type: 'exercise',
+                target: 30,
+                duration: 60,
+                description: 'Exercise 30 minutes per day',
+                tips: [
+                    'Mix cardio and strength training',
+                    'Find activities you enjoy',
+                    'Exercise with a friend for accountability'
+                ],
+                difficulty: 'intermediate'
+            },
+            'advanced-exercise': {
+                name: 'Fitness Enthusiast - Advanced',
+                type: 'exercise',
+                target: 60,
+                duration: 90,
+                description: 'Exercise 60 minutes per day',
+                tips: [
+                    'Follow a structured program',
+                    'Track your performance',
+                    'Allow rest days for recovery'
+                ],
+                difficulty: 'advanced'
+            },
+            'beginner-mood': {
+                name: 'Mood Improvement - Beginner',
+                type: 'mood',
+                target: 6,
+                duration: 30,
+                description: 'Maintain average mood of 6/10',
+                tips: [
+                    'Practice gratitude daily',
+                    'Connect with loved ones',
+                    'Spend time in nature'
+                ],
+                difficulty: 'beginner'
+            },
+            'intermediate-mood': {
+                name: 'Emotional Wellness - Intermediate',
+                type: 'mood',
+                target: 7,
+                duration: 60,
+                description: 'Maintain average mood of 7/10',
+                tips: [
+                    'Use mood tracking to identify patterns',
+                    'Practice stress management techniques',
+                    'Engage in hobbies you love'
+                ],
+                difficulty: 'intermediate'
+            },
+            'medication-adherence': {
+                name: 'Medication Consistency',
+                type: 'medication',
+                target: 90,
+                duration: 30,
+                description: 'Maintain 90% medication adherence',
+                tips: [
+                    'Set daily reminders',
+                    'Use a pill organizer',
+                    'Take medications at the same time daily'
+                ],
+                difficulty: 'beginner'
+            },
+            'overall-wellness': {
+                name: 'Holistic Wellness',
+                type: 'wellness',
+                target: 75,
+                duration: 90,
+                description: 'Reach 75% overall wellness score',
+                tips: [
+                    'Balance all wellness areas',
+                    'Track progress regularly',
+                    'Celebrate small wins'
+                ],
+                difficulty: 'intermediate'
+            }
+        };
+    }
+
+    getGoalTemplates() {
+        if (!this.data.goalTemplates) {
+            this.data.goalTemplates = this.getDefaultGoalTemplates();
+        }
+        return this.data.goalTemplates;
+    }
+
+    createGoalFromTemplate(templateKey, customTargetDate = null) {
+        const templates = this.getGoalTemplates();
+        const template = templates[templateKey];
+
+        if (!template) {
+            console.error(`❌ Template '${templateKey}' not found`);
+            console.log('\n💡 Available templates:');
+            this.listGoalTemplates();
+            return null;
+        }
+
+        // Calculate target date based on template duration
+        const targetDate = customTargetDate || this.calculateTargetDate(template.duration);
+
+        const goal = this.setGoal(
+            template.type,
+            template.target,
+            targetDate,
+            template.description
+        );
+
+        if (goal) {
+            // Add template-specific fields
+            goal.template = templateKey;
+            goal.difficulty = template.difficulty;
+            goal.tips = template.tips;
+            goal.streak = 0;
+            goal.bestStreak = 0;
+            goal.dailyProgress = []; // Track daily achievements
+
+            this.saveData();
+
+            console.log(`\n💡 Tips for success:`);
+            template.tips.forEach((tip, i) => {
+                console.log(`   ${i + 1}. ${tip}`);
+            });
+        }
+
+        return goal;
+    }
+
+    calculateTargetDate(daysFromNow) {
+        const date = new Date();
+        date.setDate(date.getDate() + daysFromNow);
+        return date.toISOString().split('T')[0];
+    }
+
+    listGoalTemplates() {
+        const templates = this.getGoalTemplates();
+
+        console.log(`
+╔════════════════════════════════════════════════════════════╗
+║              📋 GOAL TEMPLATES LIBRARY                     ║
+╚════════════════════════════════════════════════════════════╝
+`);
+
+        const grouped = {
+            beginner: [],
+            intermediate: [],
+            advanced: []
+        };
+
+        Object.entries(templates).forEach(([key, template]) => {
+            grouped[template.difficulty].push({ key, ...template });
+        });
+
+        ['beginner', 'intermediate', 'advanced'].forEach(difficulty => {
+            if (grouped[difficulty].length > 0) {
+                const emoji = difficulty === 'beginner' ? '🌱' :
+                             difficulty === 'intermediate' ? '🌿' : '🌳';
+                console.log(`\n${emoji} ${difficulty.toUpperCase()} GOALS:\n`);
+
+                grouped[difficulty].forEach(template => {
+                    console.log(`  ${template.key}`);
+                    console.log(`    ${template.name}`);
+                    console.log(`    Target: ${this.formatGoalTarget(template.type, template.target)} in ${template.duration} days`);
+                    console.log(`    ${template.description}`);
+                    console.log('');
+                });
+            }
+        });
+
+        console.log('────────────────────────────────────────────────────────────');
+        console.log('\n💡 Usage: node daily-dashboard.js create-from-template <template-key>');
+        console.log('   Example: node daily-dashboard.js create-from-template beginner-sleep\n');
+    }
+
     getActiveGoals() {
         return this.data.goals.filter(goal => goal.status === 'active');
     }
@@ -1680,12 +1900,12 @@ class DailyDashboard {
                 updated = true;
             }
 
-            // Check milestones
+            // Check milestones with enhanced celebrations
             ['25', '50', '75', '100'].forEach(milestone => {
                 if (progress.progressPercentage >= parseInt(milestone) && !goal.milestones[milestone]) {
                     goal.milestones[milestone] = true;
                     if (milestone !== '100') {
-                        console.log(`🎯 Milestone ${milestone}% reached for: ${goal.description}`);
+                        this.celebrateMilestone(goal, parseInt(milestone));
                         updated = true;
                     }
                 }
@@ -1712,6 +1932,272 @@ class DailyDashboard {
 
         console.log(`✅ Goal deleted: ${goal.description}`);
         return true;
+    }
+
+    // ==================== MILESTONE CELEBRATIONS ====================
+
+    celebrateMilestone(goal, percentage) {
+        const celebrations = {
+            25: {
+                message: 'Great start! You\'re 1/4 of the way there!',
+                art: `
+    ╔═══════════════════════════════╗
+    ║   🎯 25% MILESTONE REACHED!   ║
+    ╚═══════════════════════════════╝
+`,
+                tip: 'Keep the momentum going!'
+            },
+            50: {
+                message: 'Halfway there! You\'re doing amazing!',
+                art: `
+    ╔═══════════════════════════════╗
+    ║   🌟 HALFWAY TO YOUR GOAL!    ║
+    ║          50% DONE!             ║
+    ╚═══════════════════════════════╝
+`,
+                tip: 'The hardest part is behind you!'
+            },
+            75: {
+                message: 'So close! The finish line is in sight!',
+                art: `
+    ╔═══════════════════════════════╗
+    ║   🚀 75% MILESTONE REACHED!   ║
+    ║    YOU\'RE ALMOST THERE!       ║
+    ╚═══════════════════════════════╝
+`,
+                tip: 'One final push to victory!'
+            }
+        };
+
+        const celebration = celebrations[percentage];
+        if (celebration) {
+            console.log(celebration.art);
+            console.log(`   Goal: ${goal.description}`);
+            console.log(`   ${celebration.message}`);
+            console.log(`   💡 ${celebration.tip}\n`);
+        }
+    }
+
+    // ==================== STREAK TRACKING ====================
+
+    updateGoalStreak(goalId) {
+        const goal = this.getGoalById(goalId);
+        if (!goal) return null;
+
+        const today = new Date().toISOString().split('T')[0];
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+        // Initialize streak fields if missing
+        if (goal.streak === undefined) goal.streak = 0;
+        if (goal.bestStreak === undefined) goal.bestStreak = 0;
+        if (!goal.dailyProgress) goal.dailyProgress = [];
+
+        // Check if already logged today
+        const todayLog = goal.dailyProgress.find(log => log.date === today);
+        if (todayLog) {
+            return { message: 'Already logged today', streak: goal.streak };
+        }
+
+        // Check progress for today
+        const progress = this.checkGoalProgress(goalId);
+        if (!progress) return null;
+
+        const metGoalToday = this.checkDailyGoalMet(goal, progress);
+
+        // Log daily progress
+        goal.dailyProgress.push({
+            date: today,
+            met: metGoalToday,
+            value: progress.current
+        });
+
+        // Update streak
+        const yesterdayLog = goal.dailyProgress.find(log => log.date === yesterdayStr);
+
+        if (metGoalToday) {
+            if (yesterdayLog && yesterdayLog.met) {
+                // Continue streak
+                goal.streak++;
+            } else {
+                // Start new streak
+                goal.streak = 1;
+            }
+
+            // Update best streak
+            if (goal.streak > goal.bestStreak) {
+                goal.bestStreak = goal.streak;
+            }
+
+            // Celebrate streak milestones
+            if (goal.streak === 7) {
+                console.log(`\n🔥 WOW! 7-day streak for: ${goal.description}!\n`);
+            } else if (goal.streak === 30) {
+                console.log(`\n🏆 AMAZING! 30-day streak for: ${goal.description}!\n`);
+            } else if (goal.streak % 10 === 0 && goal.streak > 0) {
+                console.log(`\n✨ ${goal.streak}-day streak! Keep it up!\n`);
+            }
+        } else {
+            // Goal not met, streak broken
+            if (goal.streak > 0) {
+                console.log(`\n💔 Streak broken. Previous streak: ${goal.streak} days. Best: ${goal.bestStreak} days.\n`);
+            }
+            goal.streak = 0;
+        }
+
+        this.saveData();
+
+        return {
+            met: metGoalToday,
+            streak: goal.streak,
+            bestStreak: goal.bestStreak
+        };
+    }
+
+    checkDailyGoalMet(goal, progress) {
+        // Determine if today's performance meets the goal criteria
+        switch (goal.type) {
+            case 'exercise':
+                // For exercise, check if today's minutes >= target
+                const todayExercise = this.getTodayExercise();
+                return todayExercise >= goal.target;
+
+            case 'sleep-duration':
+                // For sleep, check last night's sleep
+                const lastSleep = this.getLastSleepEntry();
+                return lastSleep && lastSleep.duration >= goal.target;
+
+            case 'sleep-quality':
+                const lastSleepQ = this.getLastSleepEntry();
+                return lastSleepQ && lastSleepQ.quality >= goal.target;
+
+            case 'mood':
+                // For mood, check if today's mood >= target
+                const todayMood = this.getTodayMood();
+                return todayMood && todayMood >= goal.target;
+
+            case 'medication':
+                // For medication, check today's adherence
+                const todayAdherence = this.getTodayMedicationAdherence();
+                return todayAdherence >= goal.target;
+
+            case 'wellness':
+                // For overall wellness, check if current score >= target
+                return progress.current >= goal.target;
+
+            default:
+                return false;
+        }
+    }
+
+    getTodayExercise() {
+        if (!this.exercise) return 0;
+        const today = new Date().toISOString().split('T')[0];
+        const todayExercises = this.exercise.data.exercises.filter(ex => ex.date === today);
+        return todayExercises.reduce((sum, ex) => sum + ex.duration, 0);
+    }
+
+    getLastSleepEntry() {
+        if (!this.sleep || !this.sleep.data.sleepEntries.length) return null;
+        const entries = this.sleep.data.sleepEntries;
+        return entries[entries.length - 1];
+    }
+
+    getTodayMood() {
+        if (!this.mentalHealth) return null;
+        const today = new Date().toISOString().split('T')[0];
+        const todayLogs = this.mentalHealth.data.moodLogs.filter(log =>
+            log.timestamp && log.timestamp.startsWith(today)
+        );
+        if (todayLogs.length === 0) return null;
+        const avg = todayLogs.reduce((sum, log) => sum + log.rating, 0) / todayLogs.length;
+        return avg;
+    }
+
+    getTodayMedicationAdherence() {
+        if (!this.medication) return 0;
+        const today = new Date().toISOString().split('T')[0];
+        const todayRecords = this.medication.data.history.filter(record =>
+            record.timestamp && record.timestamp.startsWith(today)
+        );
+
+        if (todayRecords.length === 0) return 100; // No medications scheduled
+
+        const taken = todayRecords.filter(r => r.taken).length;
+        return (taken / todayRecords.length) * 100;
+    }
+
+    // ==================== GOAL ANALYTICS ====================
+
+    getGoalAnalytics() {
+        const allGoals = this.data.goals;
+        const achieved = this.data.achievedGoals || [];
+        const active = allGoals.filter(g => g.status === 'active');
+        const expired = allGoals.filter(g => g.status === 'expired');
+
+        const totalGoals = allGoals.length + achieved.length;
+        const successRate = totalGoals > 0 ? (achieved.length / totalGoals) * 100 : 0;
+
+        // Calculate average completion time
+        const completionTimes = achieved
+            .filter(g => g.achievedDate && g.createdDate)
+            .map(g => {
+                const created = new Date(g.createdDate);
+                const completed = new Date(g.achievedDate);
+                return (completed - created) / (1000 * 60 * 60 * 24); // days
+            });
+
+        const avgCompletionTime = completionTimes.length > 0
+            ? completionTimes.reduce((sum, time) => sum + time, 0) / completionTimes.length
+            : 0;
+
+        // Find best streaks
+        const bestStreaks = allGoals
+            .filter(g => g.bestStreak && g.bestStreak > 0)
+            .map(g => ({ goal: g.description, streak: g.bestStreak }))
+            .sort((a, b) => b.streak - a.streak)
+            .slice(0, 5);
+
+        return {
+            total: totalGoals,
+            active: active.length,
+            achieved: achieved.length,
+            expired: expired.length,
+            successRate: successRate.toFixed(1),
+            avgCompletionTime: avgCompletionTime.toFixed(1),
+            bestStreaks
+        };
+    }
+
+    showGoalAnalytics() {
+        const analytics = this.getGoalAnalytics();
+
+        console.log(`
+╔════════════════════════════════════════════════════════════╗
+║              📊 GOAL ANALYTICS & INSIGHTS                  ║
+╚════════════════════════════════════════════════════════════╝
+`);
+
+        console.log('📈 Overall Statistics:\n');
+        console.log(`   Total Goals Set: ${analytics.total}`);
+        console.log(`   ✅ Achieved: ${analytics.achieved}`);
+        console.log(`   🎯 Active: ${analytics.active}`);
+        console.log(`   ⏰ Expired: ${analytics.expired}`);
+        console.log(`   Success Rate: ${analytics.successRate}%`);
+
+        if (analytics.achieved > 0) {
+            console.log(`   Average Time to Complete: ${analytics.avgCompletionTime} days`);
+        }
+
+        if (analytics.bestStreaks.length > 0) {
+            console.log('\n\n🔥 Best Streaks:\n');
+            analytics.bestStreaks.forEach((item, i) => {
+                console.log(`   ${i + 1}. ${item.streak} days - ${item.goal}`);
+            });
+        }
+
+        console.log('\n────────────────────────────────────────────────────────────\n');
     }
 
     showGoals() {
@@ -1766,6 +2252,13 @@ Goal types: wellness, mood, sleep-duration, sleep-quality, exercise, medication
                     .join(', ');
                 if (milestones) {
                     console.log(`   🎯 Milestones reached: ${milestones}`);
+                }
+
+                // Show streak information
+                if (goal.streak !== undefined && goal.streak > 0) {
+                    console.log(`   🔥 Current streak: ${goal.streak} days (Best: ${goal.bestStreak || goal.streak} days)`);
+                } else if (goal.bestStreak && goal.bestStreak > 0) {
+                    console.log(`   🏅 Best streak: ${goal.bestStreak} days`);
                 }
 
                 // Show on-track status
@@ -3785,6 +4278,42 @@ if (require.main === module) {
                 console.log(`   On Track: ${progress.onTrack === true ? '✅ Yes' : progress.onTrack === false ? '❌ No' : '🟡 Uncertain'}`);
                 console.log('');
             }
+            break;
+
+        case 'goal-templates':
+        case 'templates':
+            dashboard.listGoalTemplates();
+            break;
+
+        case 'create-from-template':
+        case 'from-template':
+            if (args.length < 2) {
+                console.error('❌ Usage: node daily-dashboard.js create-from-template <template-key> [target-date]');
+                console.log('\n💡 List available templates with: node daily-dashboard.js goal-templates');
+                process.exit(1);
+            }
+            dashboard.createGoalFromTemplate(args[1], args[2]);
+            break;
+
+        case 'update-streak':
+        case 'streak':
+            if (args.length < 2) {
+                console.error('❌ Usage: node daily-dashboard.js update-streak <goal-id>');
+                process.exit(1);
+            }
+            const streakResult = dashboard.updateGoalStreak(parseInt(args[1]));
+            if (streakResult) {
+                const goal = dashboard.getGoalById(parseInt(args[1]));
+                console.log(`\n🔥 Streak Update for: ${goal.description}`);
+                console.log(`   Daily Goal Met Today: ${streakResult.met ? '✅ Yes' : '❌ No'}`);
+                console.log(`   Current Streak: ${streakResult.streak} days`);
+                console.log(`   Best Streak: ${streakResult.bestStreak} days\n`);
+            }
+            break;
+
+        case 'goal-analytics':
+        case 'analytics':
+            dashboard.showGoalAnalytics();
             break;
 
         case 'insights':
