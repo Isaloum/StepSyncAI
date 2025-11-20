@@ -39,6 +39,11 @@
     "goals:progress": "node goal-cli.js progress",
     "goals:stats": "node goal-cli.js stats",
     "goals:achievements": "node goal-cli.js achievements",
+    "auto": "node automation-cli.js",
+    "auto:start": "node automation-cli.js start",
+    "auto:status": "node automation-cli.js status",
+    "auto:summary": "node automation-cli.js summary",
+    "auto:workflows": "node automation-cli.js workflows",
     "test": "jest",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch"
