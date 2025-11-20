@@ -116,6 +116,11 @@ jobs:
         node -c sleep-tracker.js
         node -c exercise-tracker.js
         node -c reminder-service.js
+        node -c backup-cli.js
+        node -c backup-manager.js
+        node -c performance-cache.js
+        node -c validation-utils.js
+        node -c chart-utils.js
         node -c index.js
 
   security:
