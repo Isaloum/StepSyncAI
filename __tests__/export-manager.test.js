@@ -11,10 +11,26 @@ describe('ExportManager', () => {
     const testDataDir = path.join(__dirname, 'test-export-data');
 
     beforeEach(() => {
-        // Create test directory
-        if (!fs.existsSync(testDataDir)) {
-            fs.mkdirSync(testDataDir, { recursive: true });
+        // Clean up test directory first to ensure fresh start
+        if (fs.existsSync(testDataDir)) {
+            fs.rmSync(testDataDir, { recursive: true, force: true });
         }
+
+        // Clean up default tracker data files
+        const trackerFiles = [
+            'mental-health-data.json',
+            'medications.json',  // MedicationTracker uses this filename
+            'sleep-data.json',
+            'exercise-data.json'
+        ];
+        trackerFiles.forEach(file => {
+            if (fs.existsSync(file)) {
+                fs.unlinkSync(file);
+            }
+        });
+
+        // Create test directory
+        fs.mkdirSync(testDataDir, { recursive: true });
 
         const dataFile = path.join(testDataDir, 'test-dashboard.json');
         dashboard = new DailyDashboard(dataFile);
@@ -52,22 +68,21 @@ describe('ExportManager', () => {
     afterEach(() => {
         // Clean up test files
         if (fs.existsSync(testDataDir)) {
-            const files = fs.readdirSync(testDataDir);
-            files.forEach(file => {
-                const filePath = path.join(testDataDir, file);
-                if (fs.lstatSync(filePath).isDirectory()) {
-                    // Remove directory contents
-                    const subFiles = fs.readdirSync(filePath);
-                    subFiles.forEach(subFile => {
-                        fs.unlinkSync(path.join(filePath, subFile));
-                    });
-                    fs.rmdirSync(filePath);
-                } else {
-                    fs.unlinkSync(filePath);
-                }
-            });
-            fs.rmdirSync(testDataDir);
+            fs.rmSync(testDataDir, { recursive: true, force: true });
         }
+
+        // Clean up tracker data files
+        const trackerFiles = [
+            'mental-health-data.json',
+            'medications.json',  // MedicationTracker uses this filename
+            'sleep-data.json',
+            'exercise-data.json'
+        ];
+        trackerFiles.forEach(file => {
+            if (fs.existsSync(file)) {
+                fs.unlinkSync(file);
+            }
+        });
     });
 
     describe('CSV Export', () => {
@@ -102,6 +117,10 @@ describe('ExportManager', () => {
         });
 
         test('should throw error when no data available', () => {
+            // Clean up tracker files to ensure truly empty dashboard
+            const trackerFiles = ['mental-health-data.json', 'medications.json', 'sleep-data.json', 'exercise-data.json'];
+            trackerFiles.forEach(file => { if (fs.existsSync(file)) fs.unlinkSync(file); });
+
             // Create empty dashboard
             const emptyDataFile = path.join(testDataDir, 'empty-dashboard.json');
             const emptyDashboard = new DailyDashboard(emptyDataFile);
@@ -207,6 +226,10 @@ describe('ExportManager', () => {
         });
 
         test('should throw error when no data available', () => {
+            // Clean up tracker files to ensure truly empty dashboard
+            const trackerFiles = ['mental-health-data.json', 'medications.json', 'sleep-data.json', 'exercise-data.json'];
+            trackerFiles.forEach(file => { if (fs.existsSync(file)) fs.unlinkSync(file); });
+
             const emptyDataFile = path.join(testDataDir, 'empty-json-dashboard.json');
             const emptyDashboard = new DailyDashboard(emptyDataFile);
             const emptyExportsDir = path.join(testDataDir, 'empty-json-exports');
@@ -249,8 +272,18 @@ describe('ExportManager', () => {
         });
 
         test('should throw error when no medications available', () => {
+            // Clean up tracker files to ensure no medications
+            const trackerFiles = ['mental-health-data.json', 'medications.json', 'sleep-data.json', 'exercise-data.json'];
+            trackerFiles.forEach(file => { if (fs.existsSync(file)) fs.unlinkSync(file); });
+
+            // Create fresh dashboard with no medications
+            const emptyDataFile = path.join(testDataDir, 'no-meds-dashboard.json');
+            const emptyDashboard = new DailyDashboard(emptyDataFile);
+            const emptyExportsDir = path.join(testDataDir, 'no-meds-exports');
+            const emptyExportManager = new ExportManager(emptyDashboard, emptyExportsDir);
+
             expect(() => {
-                exportManager.exportMedicationsToCSV();
+                emptyExportManager.exportMedicationsToCSV();
             }).toThrow('No medication data to export');
         });
 
@@ -328,6 +361,10 @@ describe('ExportManager', () => {
         test('should import data from JSON file', () => {
             // First export data
             const exportPath = exportManager.exportToJSON({ days: 30 });
+
+            // Clean up tracker files so new dashboard starts empty
+            const trackerFiles = ['mental-health-data.json', 'medications.json', 'sleep-data.json', 'exercise-data.json'];
+            trackerFiles.forEach(file => { if (fs.existsSync(file)) fs.unlinkSync(file); });
 
             // Create new dashboard
             const newDataFile = path.join(testDataDir, 'import-test-dashboard.json');
