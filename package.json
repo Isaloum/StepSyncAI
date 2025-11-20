@@ -26,6 +26,13 @@
     "reminders:exercise": "node reminder-cli.js exercise",
     "reminders:sleep": "node reminder-cli.js sleep",
     "reminders:stats": "node reminder-cli.js stats",
+    "viz": "node visualization-cli.js",
+    "viz:report": "node visualization-cli.js report",
+    "viz:export-csv": "node visualization-cli.js export-csv",
+    "viz:export-json": "node visualization-cli.js export-json",
+    "viz:chart": "node visualization-cli.js chart mood",
+    "viz:heatmap": "node visualization-cli.js heatmap",
+    "viz:summary": "node visualization-cli.js summary",
     "test": "jest",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch"
