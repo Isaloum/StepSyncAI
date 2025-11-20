@@ -446,6 +446,14 @@ class AnalyticsEngine {
     }
 
     /**
+     * Generate comprehensive analytics report
+     * Alias for generateReport for compatibility with export-manager
+     */
+    generateComprehensiveReport(days = 30) {
+        return this.generateReport(days);
+    }
+
+    /**
      * Display analytics dashboard
      */
     displayDashboard(days = 30) {

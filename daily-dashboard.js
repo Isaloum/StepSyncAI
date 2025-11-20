@@ -4227,6 +4227,275 @@ Goal types: wellness, mood, sleep-duration, sleep-quality, exercise, medication
             return false;
         }
     }
+
+    /**
+     * Get all entries as an array of entry objects
+     * This provides a unified interface for analytics and export features
+     */
+    getAllEntries() {
+        const entries = [];
+
+        // Get all mood logs
+        if (this.mentalHealth && this.mentalHealth.data.moodLogs) {
+            const moodsByDate = {};
+            this.mentalHealth.data.moodLogs.forEach(log => {
+                const date = log.timestamp.split('T')[0];
+                if (!moodsByDate[date]) {
+                    moodsByDate[date] = [];
+                }
+                moodsByDate[date].push(log);
+            });
+
+            // Create entries for each date
+            Object.keys(moodsByDate).forEach(date => {
+                const logs = moodsByDate[date];
+                const avgMood = logs.reduce((sum, log) => sum + log.mood, 0) / logs.length;
+
+                entries.push({
+                    date,
+                    mood: Math.round(avgMood),
+                    notes: logs[0].notes || ''
+                });
+            });
+        }
+
+        // Add sleep data
+        if (this.sleep && this.sleep.data.sleepLogs) {
+            this.sleep.data.sleepLogs.forEach(log => {
+                const date = log.date;
+                let entry = entries.find(e => e.date === date);
+
+                if (!entry) {
+                    entry = { date };
+                    entries.push(entry);
+                }
+
+                entry.sleep_hours = log.duration;
+                entry.sleep_quality = log.quality;
+            });
+        }
+
+        // Add exercise data
+        if (this.exercise && this.exercise.data.exercises) {
+            const exerciseByDate = {};
+            this.exercise.data.exercises.forEach(ex => {
+                const date = ex.date;
+                if (!exerciseByDate[date]) {
+                    exerciseByDate[date] = 0;
+                }
+                exerciseByDate[date] += ex.duration;
+            });
+
+            Object.keys(exerciseByDate).forEach(date => {
+                let entry = entries.find(e => e.date === date);
+
+                if (!entry) {
+                    entry = { date };
+                    entries.push(entry);
+                }
+
+                entry.exercise_minutes = exerciseByDate[date];
+            });
+        }
+
+        // Sort by date
+        entries.sort((a, b) => a.date.localeCompare(b.date));
+
+        return entries;
+    }
+
+    /**
+     * Get a specific entry by date
+     */
+    getEntry(date) {
+        const entries = this.getAllEntries();
+        return entries.find(e => e.date === date) || null;
+    }
+
+    /**
+     * Add or update an entry
+     * This method allows programmatic addition of wellness data
+     */
+    addEntry(entryData) {
+        const { date, mood, sleep_hours, sleep_quality, exercise_minutes, notes } = entryData;
+
+        if (!date) {
+            throw new Error('Date is required for entry');
+        }
+
+        // Add mood if provided
+        if (mood !== undefined && this.mentalHealth) {
+            // Ensure data structure exists
+            if (!this.mentalHealth.data) {
+                this.mentalHealth.data = { moodLogs: [] };
+            }
+            if (!this.mentalHealth.data.moodLogs) {
+                this.mentalHealth.data.moodLogs = [];
+            }
+
+            const timestamp = `${date}T12:00:00`;
+            const existingMoodIndex = this.mentalHealth.data.moodLogs.findIndex(
+                log => log.timestamp.startsWith(date)
+            );
+
+            if (existingMoodIndex >= 0) {
+                // Update existing
+                this.mentalHealth.data.moodLogs[existingMoodIndex].mood = mood;
+                if (notes) this.mentalHealth.data.moodLogs[existingMoodIndex].notes = notes;
+            } else {
+                // Add new
+                this.mentalHealth.data.moodLogs.push({
+                    timestamp,
+                    mood,
+                    notes: notes || '',
+                    triggers: [],
+                    symptoms: []
+                });
+            }
+            if (this.mentalHealth.saveData) {
+                this.mentalHealth.saveData();
+            }
+        }
+
+        // Add sleep if provided
+        if ((sleep_hours !== undefined || sleep_quality !== undefined) && this.sleep) {
+            // Ensure data structure exists
+            if (!this.sleep.data) {
+                this.sleep.data = { sleepLogs: [] };
+            }
+            if (!this.sleep.data.sleepLogs) {
+                this.sleep.data.sleepLogs = [];
+            }
+
+            const existingSleepIndex = this.sleep.data.sleepLogs.findIndex(
+                log => log.date === date
+            );
+
+            if (existingSleepIndex >= 0) {
+                // Update existing
+                if (sleep_hours !== undefined) {
+                    this.sleep.data.sleepLogs[existingSleepIndex].duration = sleep_hours;
+                }
+                if (sleep_quality !== undefined) {
+                    this.sleep.data.sleepLogs[existingSleepIndex].quality = sleep_quality;
+                }
+            } else {
+                // Add new
+                this.sleep.data.sleepLogs.push({
+                    date,
+                    bedtime: '22:00',
+                    wakeTime: '06:00',
+                    duration: sleep_hours || 8,
+                    quality: sleep_quality || 7,
+                    notes: ''
+                });
+            }
+            if (this.sleep.saveData) {
+                this.sleep.saveData();
+            }
+        }
+
+        // Add exercise if provided
+        if (exercise_minutes !== undefined && this.exercise) {
+            // Ensure data structure exists
+            if (!this.exercise.data) {
+                this.exercise.data = { exercises: [] };
+            }
+            if (!this.exercise.data.exercises) {
+                this.exercise.data.exercises = [];
+            }
+
+            const existingExercise = this.exercise.data.exercises.find(
+                ex => ex.date === date
+            );
+
+            if (existingExercise) {
+                // Update existing
+                existingExercise.duration = exercise_minutes;
+            } else {
+                // Add new
+                this.exercise.data.exercises.push({
+                    date,
+                    type: 'General',
+                    duration: exercise_minutes,
+                    intensity: 'moderate',
+                    notes: ''
+                });
+            }
+            if (this.exercise.saveData) {
+                this.exercise.saveData();
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Get all medications from medication tracker
+     */
+    getAllMedications() {
+        if (!this.medication || !this.medication.data.medications) {
+            return [];
+        }
+        return this.medication.data.medications;
+    }
+
+    /**
+     * Add or update a medication
+     */
+    addMedication(medicationData) {
+        if (!this.medication) {
+            return false;
+        }
+
+        // Ensure data structure exists
+        if (!this.medication.data) {
+            this.medication.data = { medications: [] };
+        }
+        if (!this.medication.data.medications) {
+            this.medication.data.medications = [];
+        }
+
+        const {
+            name,
+            dosage,
+            frequency,
+            prescribedBy,
+            startDate,
+            endDate,
+            notes,
+            sideEffects
+        } = medicationData;
+
+        // Check if medication already exists
+        const existingIndex = this.medication.data.medications.findIndex(
+            med => med.name === name && med.dosage === dosage
+        );
+
+        if (existingIndex >= 0) {
+            // Update existing medication
+            Object.assign(this.medication.data.medications[existingIndex], medicationData);
+        } else {
+            // Add new medication
+            this.medication.data.medications.push({
+                name,
+                dosage,
+                frequency,
+                prescribedBy: prescribedBy || '',
+                startDate: startDate || new Date().toISOString().split('T')[0],
+                endDate: endDate || null,
+                notes: notes || '',
+                sideEffects: sideEffects || [],
+                active: true
+            });
+        }
+
+        if (this.medication.saveData) {
+            this.medication.saveData();
+        }
+
+        return true;
+    }
 }
 
 // CLI Interface
