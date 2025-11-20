@@ -33,6 +33,12 @@
     "viz:chart": "node visualization-cli.js chart mood",
     "viz:heatmap": "node visualization-cli.js heatmap",
     "viz:summary": "node visualization-cli.js summary",
+    "goals": "node goal-cli.js",
+    "goals:list": "node goal-cli.js list",
+    "goals:create": "node goal-cli.js create",
+    "goals:progress": "node goal-cli.js progress",
+    "goals:stats": "node goal-cli.js stats",
+    "goals:achievements": "node goal-cli.js achievements",
     "test": "jest",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch"
