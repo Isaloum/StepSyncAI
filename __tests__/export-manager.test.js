@@ -433,19 +433,18 @@ describe('ExportManager', () => {
             expect(exports.length).toBe(0);
         });
 
-        test('should sort exports by creation date (newest first)', () => {
+        test('should sort exports by creation date (newest first)', async () => {
             exportManager.exportToCSV({ filename: 'first.csv' });
 
             // Wait a bit to ensure different timestamps
-            setTimeout(() => {
-                exportManager.exportToJSON({ filename: 'second.json' });
+            await new Promise(resolve => setTimeout(resolve, 100));
+            exportManager.exportToJSON({ filename: 'second.json' });
 
-                const exports = exportManager.listExports();
+            const exports = exportManager.listExports();
 
-                if (exports.length >= 2) {
-                    expect(exports[0].created >= exports[1].created).toBe(true);
-                }
-            }, 100);
+            if (exports.length >= 2) {
+                expect(exports[0].created >= exports[1].created).toBe(true);
+            }
         });
     });
 
