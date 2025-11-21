@@ -448,21 +448,26 @@ describe('Sleep Tracker', () => {
         });
 
         test('shows most recent entries first', () => {
-            const old = new Date('2025-11-14');
-            const recent = new Date('2025-11-16');
+            // Use dates within the last 7 days to ensure they're not filtered out
+            const today = new Date();
+            const twoDaysAgo = new Date(today);
+            twoDaysAgo.setDate(today.getDate() - 2);
+            const fourDaysAgo = new Date(today);
+            fourDaysAgo.setDate(today.getDate() - 4);
 
             tracker.data.sleepEntries = [
-                { date: old.toISOString().split('T')[0], bedtime: '22:00', wakeTime: '06:00', duration: 8, quality: 7, timestamp: old.toISOString() },
-                { date: recent.toISOString().split('T')[0], bedtime: '22:00', wakeTime: '06:00', duration: 8, quality: 8, timestamp: recent.toISOString() }
+                { date: fourDaysAgo.toISOString().split('T')[0], bedtime: '22:00', wakeTime: '06:00', duration: 8, quality: 7, timestamp: fourDaysAgo.toISOString() },
+                { date: twoDaysAgo.toISOString().split('T')[0], bedtime: '22:00', wakeTime: '06:00', duration: 8, quality: 8, timestamp: twoDaysAgo.toISOString() }
             ];
 
             tracker.getHistory(7);
 
             const calls = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
-            const oldIndex = calls.indexOf(old.toISOString().split('T')[0]);
-            const recentIndex = calls.indexOf(recent.toISOString().split('T')[0]);
+            const fourDaysAgoIndex = calls.indexOf(fourDaysAgo.toISOString().split('T')[0]);
+            const twoDaysAgoIndex = calls.indexOf(twoDaysAgo.toISOString().split('T')[0]);
 
-            expect(recentIndex).toBeLessThan(oldIndex);
+            // More recent entry (2 days ago) should appear before older entry (4 days ago)
+            expect(twoDaysAgoIndex).toBeLessThan(fourDaysAgoIndex);
         });
     });
 
