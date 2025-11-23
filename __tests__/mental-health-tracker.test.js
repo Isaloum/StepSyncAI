@@ -996,18 +996,11 @@ describe('MentalHealthTracker', () => {
     describe('scheduleSession', () => {
       let therapist;
 
-      beforeEach(async () => {
-        await new Promise(resolve => setTimeout(resolve, 10));
+      beforeEach(() => {
         therapist = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
       });
 
-      test('should schedule session successfully', async () => {
-        await new Promise(resolve => setTimeout(resolve, 50));
-
-        // Ensure therapist exists
-        expect(therapist).toBeDefined();
-        expect(therapist.id).toBeDefined();
-
+      test('should schedule session successfully', () => {
         const session = tracker.scheduleSession(therapist.id, '2024-12-25', '14:00', 'intake');
 
         expect(session).toBeTruthy();
@@ -1025,8 +1018,7 @@ describe('MentalHealthTracker', () => {
         expect(tracker.data.therapySessions).toHaveLength(1);
       });
 
-      test('should use default type "regular"', async () => {
-        await new Promise(resolve => setTimeout(resolve, 10));
+      test('should use default type "regular"', () => {
         const session = tracker.scheduleSession(therapist.id, '2024-12-25', '14:00');
 
         expect(session.type).toBe('regular');
@@ -1039,8 +1031,7 @@ describe('MentalHealthTracker', () => {
         expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Therapist not found'));
       });
 
-      test('should return null when saveData fails', async () => {
-        await new Promise(resolve => setTimeout(resolve, 10));
+      test('should return null when saveData fails', () => {
         fs.writeFileSync.mockImplementation(() => {
           throw new Error('Write error');
         });
@@ -1050,8 +1041,7 @@ describe('MentalHealthTracker', () => {
         expect(session).toBeNull();
       });
 
-      test('should log session details on success', async () => {
-        await new Promise(resolve => setTimeout(resolve, 10));
+      test('should log session details on success', () => {
         tracker.scheduleSession(therapist.id, '2024-12-25', '14:00', 'followup');
 
         expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Therapy session scheduled'));
