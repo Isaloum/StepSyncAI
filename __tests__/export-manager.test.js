@@ -9,6 +9,7 @@ describe('ExportManager', () => {
     let analytics;
     let exportManager;
     const testDataDir = path.join(__dirname, 'test-export-data');
+    const testExportsDir = path.join(testDataDir, 'exports');
 
     beforeEach(() => {
         // Clean up test directory first to ensure fresh start
@@ -36,8 +37,7 @@ describe('ExportManager', () => {
         dashboard = new DailyDashboard(dataFile);
         analytics = new AnalyticsEngine(dashboard);
 
-        const exportsDir = path.join(testDataDir, 'exports');
-        exportManager = new ExportManager(dashboard, exportsDir);
+        exportManager = new ExportManager(dashboard, testExportsDir);
 
         // Add some test data
         dashboard.addEntry({
@@ -438,17 +438,31 @@ describe('ExportManager', () => {
         });
 
         test('should sort exports by creation date (newest first)', async () => {
+            // Clean exports directory first to ensure only our files exist
+            if (fs.existsSync(testExportsDir)) {
+                const files = fs.readdirSync(testExportsDir);
+                files.forEach(file => {
+                    fs.unlinkSync(path.join(testExportsDir, file));
+                });
+            }
+
             exportManager.exportToCSV({ filename: 'first.csv' });
 
-            // Wait a bit to ensure different timestamps
-            await new Promise(resolve => setTimeout(resolve, 100));
+            // Wait to ensure different timestamps (increased for CI environments)
+            await new Promise(resolve => setTimeout(resolve, 1100));
             exportManager.exportToJSON({ filename: 'second.json' });
 
             const exports = exportManager.listExports();
 
-            if (exports.length >= 2) {
-                expect(exports[0].created >= exports[1].created).toBe(true);
-            }
+            // Should have exactly 2 files
+            expect(exports.length).toBe(2);
+
+            // Newest (second.json) should be first
+            expect(exports[0].filename).toBe('second.json');
+            expect(exports[1].filename).toBe('first.csv');
+
+            // Verify timestamp ordering
+            expect(exports[0].created >= exports[1].created).toBe(true);
         });
     });
 
