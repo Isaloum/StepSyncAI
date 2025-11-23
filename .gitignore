@@ -50,3 +50,7 @@ backups/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Cleanup scripts (temporary)
+cleanup-merged-branches.sh
+BRANCH_CLEANUP_GUIDE.md
