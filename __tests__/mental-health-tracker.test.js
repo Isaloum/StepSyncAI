@@ -1002,10 +1002,17 @@ describe('MentalHealthTracker', () => {
       });
 
       test('should schedule session successfully', async () => {
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise(resolve => setTimeout(resolve, 50));
+
+        // Ensure therapist exists
+        expect(therapist).toBeDefined();
+        expect(therapist.id).toBeDefined();
+
         const session = tracker.scheduleSession(therapist.id, '2024-12-25', '14:00', 'intake');
 
         expect(session).toBeTruthy();
+        expect(session).not.toBeNull();
+        expect(session).not.toBe(false);
         expect(session.therapistId).toBe(therapist.id);
         expect(session.therapistName).toBe('Dr. Smith');
         expect(session.date).toBe('2024-12-25');
