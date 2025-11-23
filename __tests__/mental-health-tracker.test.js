@@ -1081,10 +1081,8 @@ describe('MentalHealthTracker', () => {
         expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('No therapists added yet'));
       });
 
-      test('should list all therapists', async () => {
-        await new Promise(resolve => setTimeout(resolve, 10));
+      test('should list all therapists', () => {
         tracker.addTherapist('Dr. Smith', 'CBT', '555-1234', 'smith@example.com');
-        await new Promise(resolve => setTimeout(resolve, 10));
         tracker.addTherapist('Dr. Jones', 'EMDR', '555-5678');
 
         tracker.listTherapists();
