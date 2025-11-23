@@ -997,15 +997,26 @@ describe('MentalHealthTracker', () => {
       let therapist;
 
       beforeEach(() => {
+        // Reset mock to ensure writeFileSync works
+        fs.writeFileSync.mockImplementation(() => {});
         therapist = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
       });
 
       test('should schedule session successfully', () => {
+        // Verify therapist was created properly
+        expect(therapist).not.toBeNull();
+        expect(therapist).toBeDefined();
+        expect(typeof therapist.id).toBe('number');
+
         const session = tracker.scheduleSession(therapist.id, '2024-12-25', '14:00', 'intake');
 
+        // Main assertion - session should exist
         expect(session).toBeTruthy();
-        expect(session).not.toBeNull();
-        expect(session).not.toBe(false);
+
+        if (!session) {
+          throw new Error('scheduleSession returned falsy value');
+        }
+
         expect(session.therapistId).toBe(therapist.id);
         expect(session.therapistName).toBe('Dr. Smith');
         expect(session.date).toBe('2024-12-25');
