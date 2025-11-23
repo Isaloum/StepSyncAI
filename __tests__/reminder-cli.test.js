@@ -128,22 +128,14 @@ describe('ReminderCLI', () => {
         });
     });
 
-    describe('listReminders', () => {
-        test('calls displayReminders', () => {
-            cli.listReminders();
-
-            expect(mockManager.displayReminders).toHaveBeenCalled();
-        });
-    });
-
-    describe('checkReminders', () => {
+    describe('checkDueReminders', () => {
         test('displays message when no due reminders', () => {
-            cli.checkReminders();
+            cli.checkDueReminders();
 
             expect(mockManager.getDueReminders).toHaveBeenCalled();
             expect(consoleLogSpy).toHaveBeenCalled();
             const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
-            expect(output).toContain('No due reminders');
+            expect(output).toContain('No reminders due right now');
         });
 
         test('displays due reminders and marks them', () => {
@@ -152,7 +144,7 @@ describe('ReminderCLI', () => {
                 { id: 'r2', title: 'Reminder 2', time: '14:00' }
             ]);
 
-            cli.checkReminders();
+            cli.checkDueReminders();
 
             expect(mockManager.getDueReminders).toHaveBeenCalled();
             expect(mockManager.markAsShown).toHaveBeenCalledWith('r1');
@@ -160,17 +152,18 @@ describe('ReminderCLI', () => {
         });
     });
 
-    describe('createReminder', () => {
+    describe('createInteractive', () => {
         beforeEach(() => {
             cli.prompt = jest.fn()
+                .mockResolvedValueOnce('custom')           // type
                 .mockResolvedValueOnce('Test Reminder')    // title
-                .mockResolvedValueOnce('daily')            // frequency
+                .mockResolvedValueOnce('Test notes')       // message
                 .mockResolvedValueOnce('09:00')            // time
-                .mockResolvedValueOnce('Test notes');      // notes
+                .mockResolvedValueOnce('daily');           // days
         });
 
         test('creates reminder with prompts', async () => {
-            await cli.createReminder();
+            await cli.createInteractive();
 
             expect(cli.prompt).toHaveBeenCalled();
             expect(mockManager.createReminder).toHaveBeenCalled();
@@ -180,10 +173,10 @@ describe('ReminderCLI', () => {
     describe('createMedicationReminder', () => {
         beforeEach(() => {
             cli.prompt = jest.fn()
-                .mockResolvedValueOnce('Aspirin')        // medication name
+                .mockResolvedValueOnce('Aspirin')        // name
+                .mockResolvedValueOnce('500mg')          // dosage
                 .mockResolvedValueOnce('09:00')          // time
-                .mockResolvedValueOnce('daily')          // frequency
-                .mockResolvedValueOnce('With food');     // notes
+                .mockResolvedValueOnce('daily');         // frequency
         });
 
         test('creates medication reminder', async () => {
@@ -215,8 +208,7 @@ describe('ReminderCLI', () => {
         beforeEach(() => {
             cli.prompt = jest.fn()
                 .mockResolvedValueOnce('22:00')           // bedtime
-                .mockResolvedValueOnce('daily')           // frequency
-                .mockResolvedValueOnce('Wind down');      // notes
+                .mockResolvedValueOnce('06:00');          // wakeup
         });
 
         test('creates sleep reminder', async () => {
