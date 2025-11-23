@@ -997,12 +997,12 @@ describe('MentalHealthTracker', () => {
       let therapist;
 
       beforeEach(async () => {
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         therapist = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
       });
 
       test('should schedule session successfully', async () => {
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         const session = tracker.scheduleSession(therapist.id, '2024-12-25', '14:00', 'intake');
 
         expect(session).toBeTruthy();
@@ -1019,7 +1019,7 @@ describe('MentalHealthTracker', () => {
       });
 
       test('should use default type "regular"', async () => {
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         const session = tracker.scheduleSession(therapist.id, '2024-12-25', '14:00');
 
         expect(session.type).toBe('regular');
@@ -1033,7 +1033,7 @@ describe('MentalHealthTracker', () => {
       });
 
       test('should return null when saveData fails', async () => {
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         fs.writeFileSync.mockImplementation(() => {
           throw new Error('Write error');
         });
@@ -1044,7 +1044,7 @@ describe('MentalHealthTracker', () => {
       });
 
       test('should log session details on success', async () => {
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         tracker.scheduleSession(therapist.id, '2024-12-25', '14:00', 'followup');
 
         expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Therapy session scheduled'));
@@ -1060,9 +1060,9 @@ describe('MentalHealthTracker', () => {
       });
 
       test('should list all therapists', async () => {
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         tracker.addTherapist('Dr. Smith', 'CBT', '555-1234', 'smith@example.com');
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         tracker.addTherapist('Dr. Jones', 'EMDR', '555-5678');
 
         tracker.listTherapists();
@@ -1081,11 +1081,11 @@ describe('MentalHealthTracker', () => {
       });
 
       test('should list upcoming sessions only', async () => {
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         const therapist = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         const session1 = tracker.scheduleSession(therapist.id, '2024-12-25', '14:00');
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         const session2 = tracker.scheduleSession(therapist.id, '2024-12-26', '15:00');
 
         // Mark one as completed
@@ -1097,9 +1097,9 @@ describe('MentalHealthTracker', () => {
       });
 
       test('should list all sessions when upcoming=false', async () => {
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         const therapist = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         tracker.scheduleSession(therapist.id, '2024-12-25', '14:00');
 
         tracker.listSessions(false);
@@ -1112,9 +1112,9 @@ describe('MentalHealthTracker', () => {
       let session;
 
       beforeEach(async () => {
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         const therapist = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         session = tracker.scheduleSession(therapist.id, '2024-12-25', '14:00');
       });
 
@@ -1159,9 +1159,9 @@ describe('MentalHealthTracker', () => {
       let session;
 
       beforeEach(async () => {
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         const therapist = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         session = tracker.scheduleSession(therapist.id, '2024-12-25', '14:00');
       });
 
@@ -1227,11 +1227,11 @@ describe('MentalHealthTracker', () => {
       });
 
       test('should display analytics for completed sessions', async () => {
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         const therapist = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         const session1 = tracker.scheduleSession(therapist.id, '2024-12-20', '14:00');
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         const session2 = tracker.scheduleSession(therapist.id, '2024-12-21', '14:00');
 
         // Complete sessions
@@ -1246,9 +1246,9 @@ describe('MentalHealthTracker', () => {
       });
 
       test('should calculate average effectiveness', async () => {
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         const therapist = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         const session = tracker.scheduleSession(therapist.id, '2024-12-20', '14:00');
 
         tracker.completeSession(session.id, 7, 'Good', 8);
@@ -1259,9 +1259,9 @@ describe('MentalHealthTracker', () => {
       });
 
       test('should show mood impact when pre and post mood exist', async () => {
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         const therapist = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         const session = tracker.scheduleSession(therapist.id, '2024-12-20', '14:00');
 
         tracker.preSessionPrep(session.id, 4, 'Anxious');
@@ -1274,14 +1274,14 @@ describe('MentalHealthTracker', () => {
       });
 
       test('should show stats by therapist', async () => {
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         const therapist1 = tracker.addTherapist('Dr. Smith', 'CBT', '555-1234');
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         const therapist2 = tracker.addTherapist('Dr. Jones', 'EMDR', '555-5678');
 
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         const session1 = tracker.scheduleSession(therapist1.id, '2024-12-20', '14:00');
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise(resolve => setTimeout(resolve, 10));
         const session2 = tracker.scheduleSession(therapist2.id, '2024-12-21', '14:00');
 
         tracker.completeSession(session1.id, 7, 'Good', 8);
