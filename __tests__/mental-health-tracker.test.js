@@ -4,6 +4,20 @@ const MentalHealthTracker = require('../mental-health-tracker');
 // Mock fs module
 jest.mock('fs');
 
+// Mock ReminderService to prevent it from using the mocked fs module
+jest.mock('../reminder-service', () => {
+  return jest.fn().mockImplementation(() => {
+    return {
+      scheduledJobs: new Map(),
+      loadConfig: jest.fn(),
+      saveConfig: jest.fn(),
+      scheduleReminder: jest.fn(),
+      cancelReminder: jest.fn(),
+      listReminders: jest.fn()
+    };
+  });
+});
+
 describe('MentalHealthTracker', () => {
   let tracker;
   let consoleLogSpy;
