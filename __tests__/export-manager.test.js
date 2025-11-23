@@ -79,8 +79,12 @@ describe('ExportManager', () => {
             'exercise-data.json'
         ];
         trackerFiles.forEach(file => {
-            if (fs.existsSync(file)) {
-                fs.unlinkSync(file);
+            try {
+                if (fs.existsSync(file)) {
+                    fs.unlinkSync(file);
+                }
+            } catch (error) {
+                // File may have been deleted by another test, ignore
             }
         });
     });
