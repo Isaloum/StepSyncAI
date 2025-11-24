@@ -1,7 +1,6 @@
 const cron = require('node-cron');
 const notifier = require('node-notifier');
 const fs = require('fs');
-const path = require('path');
 
 class ReminderService {
     constructor(configFile = 'reminders-config.json') {

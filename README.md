@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A comprehensive collection of personal health management and learning tools designed to support recovery, wellness, daily health tracking, and professional development.
-# Classic protection test
+
 ## 📦 Apps Included
 
 1. **🧠 Mental Health Tracker** - Comprehensive PTSD/trauma recovery support tool
