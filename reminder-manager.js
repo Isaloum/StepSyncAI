@@ -107,7 +107,7 @@ class ReminderManager {
         this.reminders.push(reminder);
         this.saveReminders();
 
-        console.log(`\n✅ Reminder created successfully!`);
+        console.log('\n✅ Reminder created successfully!');
         console.log(`   ID: ${reminder.id}`);
         console.log(`   Type: ${reminder.type}`);
         console.log(`   Time: ${reminder.time}`);
@@ -339,7 +339,7 @@ class ReminderManager {
         });
 
         this.saveReminders();
-        console.log(`✅ Reminder dismissed`);
+        console.log('✅ Reminder dismissed');
         return reminder;
     }
 

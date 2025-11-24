@@ -9,6 +9,11 @@ class MentalHealthTracker {
         this.dataFile = dataFile;
         this.data = this.loadData();
         this.reminderService = new ReminderService();
+        this.idCounter = Date.now();
+    }
+
+    generateId() {
+        return ++this.idCounter;
     }
 
     loadData() {
@@ -119,7 +124,7 @@ class MentalHealthTracker {
 
     addTherapist(name, specialty, phone, email) {
         const therapist = {
-            id: Date.now(),
+            id: this.generateId(),
             name,
             specialty,
             phone,
@@ -149,7 +154,7 @@ class MentalHealthTracker {
         }
 
         const session = {
-            id: Date.now(),
+            id: this.generateId(),
             therapistId: therapist.id,
             therapistName: therapist.name,
             date,
@@ -284,7 +289,7 @@ class MentalHealthTracker {
                 } else if (moodChange < 0) {
                     console.log(`   📉 Mood decreased by ${Math.abs(moodChange)} points`);
                 } else {
-                    console.log(`   ➡️  Mood stayed the same`);
+                    console.log('   ➡️  Mood stayed the same');
                 }
             }
 
@@ -321,7 +326,7 @@ class MentalHealthTracker {
             );
             const avgImprovement = (totalImprovement / sessionsWithMood.length).toFixed(1);
 
-            console.log(`\n📈 Mood Impact:`);
+            console.log('\n📈 Mood Impact:');
             console.log(`   Average mood change per session: ${avgImprovement > 0 ? '+' : ''}${avgImprovement} points`);
             console.log(`   Sessions tracked: ${sessionsWithMood.length}`);
         }
@@ -336,7 +341,7 @@ class MentalHealthTracker {
             byTherapist[s.therapistName].totalEff += s.effectiveness || 0;
         });
 
-        console.log(`\n👥 By Therapist:`);
+        console.log('\n👥 By Therapist:');
         Object.keys(byTherapist).forEach(name => {
             const data = byTherapist[name];
             const avg = (data.totalEff / data.count).toFixed(1);
@@ -366,7 +371,7 @@ class MentalHealthTracker {
             const data = fs.readFileSync(this.dataFile);
             fs.writeFileSync(backupPath, data);
 
-            console.log(`\n✓ Backup created successfully!`);
+            console.log('\n✓ Backup created successfully!');
             console.log(`  Location: ${backupPath}`);
             console.log(`  Time: ${new Date().toLocaleString()}`);
             return true;
@@ -432,7 +437,7 @@ class MentalHealthTracker {
             // Reload data
             this.data = this.loadData();
 
-            console.log(`\n✓ Data restored successfully from backup!`);
+            console.log('\n✓ Data restored successfully from backup!');
             console.log(`  Source: ${backupFile}`);
             console.log(`  Time: ${new Date().toLocaleString()}`);
             return true;
@@ -640,7 +645,7 @@ class MentalHealthTracker {
                 doc.end();
 
                 stream.on('finish', () => {
-                    console.log(`\n✓ PDF report generated successfully!`);
+                    console.log('\n✓ PDF report generated successfully!');
                     console.log(`  Location: ${filepath}`);
                     resolve(filepath);
                 });
@@ -877,7 +882,7 @@ class MentalHealthTracker {
         }
 
         const entry = {
-            id: Date.now(),
+            id: this.generateId(),
             rating: parseInt(rating),
             note: note,
             timestamp: new Date().toISOString()
@@ -936,7 +941,7 @@ class MentalHealthTracker {
     // Journal Entries
     addJournal(content, type = 'general') {
         const entry = {
-            id: Date.now(),
+            id: this.generateId(),
             type: type, // 'general', 'incident', 'therapy', 'progress'
             content: content,
             timestamp: new Date().toISOString()
@@ -966,7 +971,7 @@ class MentalHealthTracker {
         }
 
         if (entries.length === 0) {
-            console.log(`\nNo journal entries found.`);
+            console.log('\nNo journal entries found.');
             return;
         }
 
@@ -1000,7 +1005,7 @@ class MentalHealthTracker {
         }
 
         const entry = {
-            id: Date.now(),
+            id: this.generateId(),
             type: symptomType,
             severity: parseInt(severity),
             note: note,
@@ -1061,7 +1066,7 @@ class MentalHealthTracker {
     // Trigger Management
     addTrigger(description, intensity = 5) {
         const trigger = {
-            id: Date.now(),
+            id: this.generateId(),
             description: description,
             intensity: parseInt(intensity),
             occurrences: 1,
@@ -1123,7 +1128,7 @@ class MentalHealthTracker {
     // Coping Strategies
     addCopingStrategy(name, description, effectiveness = null) {
         const strategy = {
-            id: Date.now(),
+            id: this.generateId(),
             name: name,
             description: description,
             effectiveness: effectiveness, // Will be rated over time
@@ -1208,7 +1213,7 @@ class MentalHealthTracker {
     // Emergency Contacts
     addEmergencyContact(name, relationship, phone, notes = '') {
         const contact = {
-            id: Date.now(),
+            id: this.generateId(),
             name: name,
             relationship: relationship,
             phone: phone,
@@ -1251,7 +1256,7 @@ class MentalHealthTracker {
     // Goals and Progress
     addGoal(description, targetDate = null) {
         const goal = {
-            id: Date.now(),
+            id: this.generateId(),
             description: description,
             targetDate: targetDate,
             completed: false,
@@ -1289,7 +1294,7 @@ class MentalHealthTracker {
     }
 
     listGoals(showCompleted = false) {
-        let goals = showCompleted
+        const goals = showCompleted
             ? this.data.goals
             : this.data.goals.filter(g => !g.completed);
 

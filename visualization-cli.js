@@ -147,7 +147,7 @@ EXAMPLES:
      */
     exportMedications() {
         try {
-            console.log(`\n💾 Exporting medications to CSV...`);
+            console.log('\n💾 Exporting medications to CSV...');
             this.exportManager.exportMedicationsToCSV();
         } catch (error) {
             console.error(`❌ Error exporting medications: ${error.message}`);
@@ -159,7 +159,7 @@ EXAMPLES:
      */
     exportAnalytics(days = 30) {
         try {
-            console.log(`\n💾 Exporting analytics summary...`);
+            console.log('\n💾 Exporting analytics summary...');
             this.exportManager.exportAnalyticsSummary(this.analytics, { days });
         } catch (error) {
             console.error(`❌ Error exporting analytics: ${error.message}`);
@@ -171,7 +171,7 @@ EXAMPLES:
      */
     exportAll() {
         try {
-            console.log(`\n💾 Creating complete backup...`);
+            console.log('\n💾 Creating complete backup...');
             this.exportManager.exportCompleteBackup();
         } catch (error) {
             console.error(`❌ Error creating backup: ${error.message}`);
@@ -264,7 +264,7 @@ EXAMPLES:
         const min = Math.min(...data);
         const max = Math.max(...data);
 
-        console.log(`\n📈 Statistics:`);
+        console.log('\n📈 Statistics:');
         console.log(`   Average: ${avg.toFixed(1)} ${unit}`);
         console.log(`   Range: ${min} - ${max} ${unit}`);
         console.log(`   Data points: ${data.length}`);
@@ -418,7 +418,7 @@ EXAMPLES:
         console.log('\n📊 Export Statistics\n');
         console.log('═'.repeat(60));
 
-        console.log(`\n📁 Overview:`);
+        console.log('\n📁 Overview:');
         console.log(`   Total files: ${stats.totalFiles}`);
         console.log(`   Total size: ${stats.totalSize}`);
 
@@ -430,7 +430,7 @@ EXAMPLES:
         }
 
         if (Object.keys(stats.byType).length > 0) {
-            console.log(`\n📋 By Type:`);
+            console.log('\n📋 By Type:');
             Object.entries(stats.byType).forEach(([type, count]) => {
                 console.log(`   ${type}: ${count} file(s)`);
             });
@@ -454,7 +454,7 @@ EXAMPLES:
         console.log('═'.repeat(70));
 
         // Overall statistics
-        console.log(`\n📈 Overview:`);
+        console.log('\n📈 Overview:');
         console.log(`   Total entries: ${entries.length}`);
         console.log(`   Date range: ${entries[0].date} to ${entries[entries.length - 1].date}`);
         console.log(`   Tracking consistency: ${((entries.length / days) * 100).toFixed(0)}%`);

@@ -5,6 +5,11 @@ class ExerciseTracker {
     constructor(dataFile = 'exercise-data.json') {
         this.dataFile = dataFile;
         this.data = this.loadData();
+        this.idCounter = Date.now();
+    }
+
+    generateId() {
+        return ++this.idCounter;
     }
 
     loadData() {
@@ -66,7 +71,7 @@ class ExerciseTracker {
         }
 
         const exercise = {
-            id: Date.now(),
+            id: this.generateId(),
             date: new Date().toISOString().split('T')[0],
             timestamp: new Date().toISOString(),
             type: validatedType,
@@ -78,7 +83,7 @@ class ExerciseTracker {
         this.data.exercises.push(exercise);
         this.saveData();
 
-        console.log(`\n✅ Exercise logged successfully!`);
+        console.log('\n✅ Exercise logged successfully!');
         console.log(`📝 ${type} for ${durationNum} minutes (${intensityLower} intensity)`);
 
         // Provide feedback
@@ -189,7 +194,7 @@ class ExerciseTracker {
         console.log(`Total Minutes: ${stats.totalMinutes} min`);
         console.log(`Average per Session: ${stats.avgMinutes.toFixed(1)} min`);
         console.log(`Days Active: ${stats.daysWithExercise} / ${days}`);
-        console.log(`\nIntensity Breakdown:`);
+        console.log('\nIntensity Breakdown:');
         console.log(`  🚶 Low: ${intensityCounts.low}`);
         console.log(`  🏃 Moderate: ${intensityCounts.moderate}`);
         console.log(`  💨 High: ${intensityCounts.high}`);

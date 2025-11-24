@@ -55,7 +55,7 @@ class ExportManager {
 
         fs.writeFileSync(filepath, csv, 'utf-8');
 
-        console.log(`\n✅ Data exported to CSV successfully!`);
+        console.log('\n✅ Data exported to CSV successfully!');
         console.log(`   Location: ${filepath}`);
         console.log(`   Entries: ${entries.length}`);
         console.log(`   File size: ${this.getFileSize(filepath)}`);
@@ -155,7 +155,7 @@ class ExportManager {
 
         fs.writeFileSync(filepath, jsonContent, 'utf-8');
 
-        console.log(`\n✅ Data exported to JSON successfully!`);
+        console.log('\n✅ Data exported to JSON successfully!');
         console.log(`   Location: ${filepath}`);
         console.log(`   Entries: ${entries.length}`);
         console.log(`   File size: ${this.getFileSize(filepath)}`);
@@ -198,7 +198,7 @@ class ExportManager {
 
         fs.writeFileSync(filepath, csv, 'utf-8');
 
-        console.log(`\n✅ Medication data exported to CSV successfully!`);
+        console.log('\n✅ Medication data exported to CSV successfully!');
         console.log(`   Location: ${filepath}`);
         console.log(`   Medications: ${medications.length}`);
 
@@ -236,7 +236,7 @@ class ExportManager {
 
         fs.writeFileSync(filepath, JSON.stringify(summary, null, 2), 'utf-8');
 
-        console.log(`\n✅ Analytics summary exported successfully!`);
+        console.log('\n✅ Analytics summary exported successfully!');
         console.log(`   Location: ${filepath}`);
         console.log(`   Insights: ${report.insights.length}`);
 
@@ -269,7 +269,7 @@ class ExportManager {
 
         fs.writeFileSync(filepath, JSON.stringify(backup, null, 2), 'utf-8');
 
-        console.log(`\n✅ Complete backup exported successfully!`);
+        console.log('\n✅ Complete backup exported successfully!');
         console.log(`   Location: ${filepath}`);
         console.log(`   Total entries: ${backup.entries.length}`);
         console.log(`   Total medications: ${backup.medications.length}`);
@@ -312,7 +312,7 @@ class ExportManager {
             }
         });
 
-        console.log(`\n✅ Import completed!`);
+        console.log('\n✅ Import completed!');
         console.log(`   Entries imported: ${imported}`);
         console.log(`   Entries skipped (duplicates): ${data.entries.length - imported}`);
 

@@ -182,14 +182,14 @@ class ValidationUtils {
         const { maxSizeMB = 10 } = options;
 
         if (!filename || typeof filename !== 'string') {
-            console.error(`\n❌ Invalid filename: Path is required\n`);
+            console.error('\n❌ Invalid filename: Path is required\n');
             return null;
         }
 
         // Check if file exists
         if (!fs.existsSync(filename)) {
             console.error(`\n❌ File not found: ${filename}\n`);
-            console.log(`💡 Tip: Check the file path and try again\n`);
+            console.log('💡 Tip: Check the file path and try again\n');
             return null;
         }
 
@@ -214,10 +214,10 @@ class ValidationUtils {
         } catch (error) {
             if (error.code === 'EACCES') {
                 console.error(`\n❌ Permission denied: Cannot read ${filename}\n`);
-                console.log(`💡 Tip: Check file permissions\n`);
+                console.log('💡 Tip: Check file permissions\n');
             } else if (error instanceof SyntaxError) {
                 console.error(`\n❌ Invalid JSON format in ${filename}\n`);
-                console.log(`💡 Tip: Validate your JSON file at jsonlint.com\n`);
+                console.log('💡 Tip: Validate your JSON file at jsonlint.com\n');
             } else if (error.code === 'ENOENT') {
                 console.error(`\n❌ File not found: ${filename}\n`);
             } else {
@@ -235,12 +235,12 @@ class ValidationUtils {
      */
     static writeJSONFile(filename, data) {
         if (!filename || typeof filename !== 'string') {
-            console.error(`\n❌ Invalid filename: Path is required\n`);
+            console.error('\n❌ Invalid filename: Path is required\n');
             return false;
         }
 
         if (!data || typeof data !== 'object') {
-            console.error(`\n❌ Invalid data: Object is required\n`);
+            console.error('\n❌ Invalid data: Object is required\n');
             return false;
         }
 
@@ -252,10 +252,10 @@ class ValidationUtils {
         } catch (error) {
             if (error.code === 'EACCES') {
                 console.error(`\n❌ Permission denied: Cannot write to ${filename}\n`);
-                console.log(`💡 Tip: Check file and directory permissions\n`);
+                console.log('💡 Tip: Check file and directory permissions\n');
             } else if (error.code === 'ENOSPC') {
                 console.error(`\n❌ Disk full: Not enough space to write ${filename}\n`);
-                console.log(`💡 Tip: Free up disk space and try again\n`);
+                console.log('💡 Tip: Free up disk space and try again\n');
             } else {
                 console.error(`\n❌ Error writing file: ${error.message}\n`);
             }

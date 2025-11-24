@@ -95,7 +95,7 @@ async function main() {
                 console.log(`Moving Average: ${trends.movingAverage?.toFixed(1)}%`);
 
                 if (trends.prediction) {
-                    console.log(`\n7-Day Forecast:`);
+                    console.log('\n7-Day Forecast:');
                     trends.prediction.forEach((pred, i) => {
                         console.log(`   Day ${i + 1}: ${pred.toFixed(1)}%`);
                     });

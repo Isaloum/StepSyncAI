@@ -137,7 +137,7 @@ NOTE: The automation system runs scheduled tasks in the background.
         console.log('\n🤖 Automation System Status\n');
         console.log('═'.repeat(60));
 
-        console.log(`\n📊 Overview:`);
+        console.log('\n📊 Overview:');
         console.log(`   Status: ${status.enabled ? '✅ Running' : '⏸️  Stopped'}`);
         console.log(`   Scheduled Tasks: ${status.scheduledTasks}`);
         console.log(`   Total Workflows: ${status.workflows}`);

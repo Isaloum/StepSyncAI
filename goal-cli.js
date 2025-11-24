@@ -268,19 +268,19 @@ EXAMPLES:
         console.log('\n📊 Goal Statistics\n');
         console.log('═'.repeat(60));
 
-        console.log(`\n📋 Overview:`);
+        console.log('\n📋 Overview:');
         console.log(`   Total Goals: ${stats.total}`);
         console.log(`   Active: ${stats.active}`);
         console.log(`   Completed: ${stats.completed}`);
         console.log(`   Archived: ${stats.archived}`);
         console.log(`   Average Completion: ${stats.averageCompletion}%`);
 
-        console.log(`\n🔥 Streaks:`);
+        console.log('\n🔥 Streaks:');
         console.log(`   Longest Streak: ${stats.longestStreak} days`);
         console.log(`   Total Active Streaks: ${stats.totalStreak} days`);
 
         if (Object.keys(stats.byType).length > 0) {
-            console.log(`\n📊 By Type:`);
+            console.log('\n📊 By Type:');
             Object.entries(stats.byType).forEach(([type, count]) => {
                 const emoji = this.goalManager.getGoalEmoji(type);
                 console.log(`   ${emoji} ${type}: ${count} goal(s)`);

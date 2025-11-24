@@ -313,12 +313,12 @@ EXAMPLES:
         console.log('\n📊 Reminder Compliance Statistics\n');
         console.log('═'.repeat(60));
 
-        console.log(`\n📋 Overview:`);
+        console.log('\n📋 Overview:');
         console.log(`   Total reminders: ${stats.total}`);
         console.log(`   Enabled: ${stats.enabled}`);
         console.log(`   Disabled: ${stats.total - stats.enabled}`);
 
-        console.log(`\n📊 By Type:`);
+        console.log('\n📊 By Type:');
         Object.entries(stats.byType).forEach(([type, count]) => {
             const emoji = {
                 medication: '💊',
@@ -331,7 +331,7 @@ EXAMPLES:
 
         const complianceEntries = Object.entries(stats.compliance);
         if (complianceEntries.length > 0) {
-            console.log(`\n✅ Compliance Rates:`);
+            console.log('\n✅ Compliance Rates:');
             complianceEntries.forEach(([id, data]) => {
                 const emoji = {
                     medication: '💊',
@@ -346,7 +346,7 @@ EXAMPLES:
                 console.log(`      Compliance: ${data.complianceRate}%`);
             });
         } else {
-            console.log(`\n   No compliance data yet. Reminders need to be shown first.`);
+            console.log('\n   No compliance data yet. Reminders need to be shown first.');
         }
 
         console.log('\n' + '═'.repeat(60));
