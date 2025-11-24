@@ -504,7 +504,7 @@ class AnalyticsEngine {
             console.log(`Trend: ${report.trends.wellness.trend}`);
 
             if (report.trends.wellness.prediction) {
-                console.log(`\n7-Day Forecast:`);
+                console.log('\n7-Day Forecast:');
                 report.trends.wellness.prediction.slice(0, 3).forEach((pred, i) => {
                     console.log(`   Day ${i + 1}: ${pred.toFixed(1)}%`);
                 });

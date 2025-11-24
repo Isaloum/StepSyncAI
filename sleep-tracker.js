@@ -38,7 +38,7 @@ class SleepTracker {
         const [wakeHour, wakeMin] = wakeTime.split(':').map(Number);
 
         // Convert to minutes from midnight
-        let bedMinutes = bedHour * 60 + bedMin;
+        const bedMinutes = bedHour * 60 + bedMin;
         let wakeMinutes = wakeHour * 60 + wakeMin;
 
         // Handle overnight sleep (bedtime is before midnight, wake time is after)
@@ -181,12 +181,12 @@ class SleepTracker {
         console.log('\n📊 Sleep Statistics');
         console.log('═'.repeat(60));
         console.log(`\nTotal Nights Tracked: ${totalEntries}`);
-        console.log(`\n⏰ Duration:`);
+        console.log('\n⏰ Duration:');
         console.log(`   Average: ${avgDuration} hours`);
         console.log(`   Last 7 Days: ${avgRecentDuration} hours`);
-        console.log(`   Target: 7-9 hours`);
+        console.log('   Target: 7-9 hours');
 
-        console.log(`\n💤 Quality:`);
+        console.log('\n💤 Quality:');
         console.log(`   Average: ${avgQuality}/10`);
 
         console.log(`\n📈 Best Night: ${bestNight.date}`);
@@ -195,7 +195,7 @@ class SleepTracker {
         console.log(`\n📉 Most Restless Night: ${worstNight.date}`);
         console.log(`   Quality: ${worstNight.quality}/10, Duration: ${worstNight.duration}h`);
 
-        console.log(`\n😴 Sleep Debt:`);
+        console.log('\n😴 Sleep Debt:');
         console.log(`   Total accumulated: ${totalSleepDebt.toFixed(1)} hours`);
         console.log(`   (Based on ${targetHours}h/night target)`);
 
@@ -223,14 +223,14 @@ class SleepTracker {
         const variance = bedtimeMinutes.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / bedtimeMinutes.length;
         const stdDev = Math.sqrt(variance);
 
-        console.log(`\n🕐 Schedule Consistency:`);
+        console.log('\n🕐 Schedule Consistency:');
         if (stdDev < 30) {
-            console.log(`   ✓ Excellent! Your bedtime varies by less than 30 minutes.`);
+            console.log('   ✓ Excellent! Your bedtime varies by less than 30 minutes.');
         } else if (stdDev < 60) {
             console.log(`   👍 Good! Your bedtime varies by about ${Math.floor(stdDev)} minutes.`);
         } else {
             console.log(`   ⚠️  Inconsistent. Your bedtime varies by ${Math.floor(stdDev)} minutes.`);
-            console.log(`   💡 Try to maintain a consistent sleep schedule for better sleep quality.`);
+            console.log('   💡 Try to maintain a consistent sleep schedule for better sleep quality.');
         }
     }
 
@@ -371,7 +371,7 @@ class SleepTracker {
 
         if (poorNights.length > 0) {
             const avgPoorDuration = poorNights.reduce((sum, e) => sum + e.duration, 0) / poorNights.length;
-            console.log(`\n   On nights with poor sleep (quality <5):`);
+            console.log('\n   On nights with poor sleep (quality <5):');
             console.log(`   Average duration: ${avgPoorDuration.toFixed(1)}h`);
         }
     }

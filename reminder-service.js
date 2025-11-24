@@ -232,7 +232,7 @@ class ReminderService {
 
         console.log('\n💊 Medication Reminders:');
         if (this.config.medication.enabled) {
-            console.log(`   Status: ✓ Enabled`);
+            console.log('   Status: ✓ Enabled');
             console.log(`   Active reminders: ${this.config.medication.reminders.length}`);
             this.config.medication.reminders.forEach(r => {
                 console.log(`   • ${r.name} at ${r.time}`);
@@ -243,7 +243,7 @@ class ReminderService {
 
         console.log('\n🧠 Mental Health Reminders:');
         if (this.config.mentalHealth.enabled) {
-            console.log(`   Status: ✓ Enabled`);
+            console.log('   Status: ✓ Enabled');
             console.log(`   Journal prompt: ${this.config.mentalHealth.journalTime}`);
             console.log(`   Daily check-in: ${this.config.mentalHealth.checkInTime}`);
         } else {
@@ -252,7 +252,7 @@ class ReminderService {
 
         console.log('\n☁️  AWS Study Reminders:');
         if (this.config.aws.enabled) {
-            console.log(`   Status: ✓ Enabled`);
+            console.log('   Status: ✓ Enabled');
             console.log(`   Study time: ${this.config.aws.studyTime}`);
         } else {
             console.log('   Status: ✗ Disabled');

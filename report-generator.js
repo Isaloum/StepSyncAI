@@ -68,7 +68,7 @@ class ReportGenerator {
         // Finalize PDF
         doc.end();
 
-        console.log(`\n✅ PDF Report generated successfully!`);
+        console.log('\n✅ PDF Report generated successfully!');
         console.log(`   Location: ${filepath}`);
         console.log(`   File size: ${this.getFileSize(filepath)}`);
 

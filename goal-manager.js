@@ -154,7 +154,7 @@ class GoalManager {
         this.goals.push(goal);
         this.saveGoals();
 
-        console.log(`\n✅ Goal created successfully!`);
+        console.log('\n✅ Goal created successfully!');
         console.log(`   ${this.getGoalEmoji(type)} ${title}`);
         console.log(`   Target: ${this.formatTarget(target, type)}`);
         console.log(`   Duration: ${duration} days`);
@@ -369,7 +369,7 @@ class GoalManager {
         this.achievements.push(achievement);
         this.saveAchievements();
 
-        console.log(`\n🏆 Achievement Unlocked!`);
+        console.log('\n🏆 Achievement Unlocked!');
         console.log(`   ${achievement.badge} ${achievement.title}`);
         console.log(`   Max Streak: ${achievement.stats.maxStreak} days 🔥`);
 

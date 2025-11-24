@@ -515,7 +515,7 @@ class DailyDashboard {
 
         if (wellnessScore.breakdown.mood) {
             const mb = wellnessScore.breakdown.mood;
-            console.log(`  🧠 Mood:`);
+            console.log('  🧠 Mood:');
             console.log(`     Score: ${mb.score}/${mb.max}`);
             console.log(`     Average: ${mb.data.avgMood.toFixed(1)}/10`);
             console.log(`     Entries: ${mb.data.entryCount}\n`);
@@ -523,7 +523,7 @@ class DailyDashboard {
 
         if (wellnessScore.breakdown.sleep) {
             const sb = wellnessScore.breakdown.sleep;
-            console.log(`  😴 Sleep:`);
+            console.log('  😴 Sleep:');
             console.log(`     Score: ${sb.score}/${sb.max}`);
             console.log(`     Duration: ${sb.data.avgDuration.toFixed(1)}h/night`);
             console.log(`     Quality: ${sb.data.avgQuality.toFixed(1)}/10`);
@@ -532,7 +532,7 @@ class DailyDashboard {
 
         if (wellnessScore.breakdown.exercise) {
             const eb = wellnessScore.breakdown.exercise;
-            console.log(`  🏃 Exercise:`);
+            console.log('  🏃 Exercise:');
             console.log(`     Score: ${eb.score}/${eb.max}`);
             console.log(`     Avg: ${eb.data.avgMinutes.toFixed(0)} min/day`);
             console.log(`     Total: ${eb.data.totalMinutes} min`);
@@ -541,7 +541,7 @@ class DailyDashboard {
 
         if (wellnessScore.breakdown.medication) {
             const medb = wellnessScore.breakdown.medication;
-            console.log(`  💊 Medication:`);
+            console.log('  💊 Medication:');
             console.log(`     Score: ${medb.score}/${medb.max}`);
             console.log(`     Adherence: ${medb.data.adherenceRate.toFixed(1)}%`);
             console.log(`     Active Meds: ${medb.data.activeMedications}\n`);
@@ -851,7 +851,7 @@ class DailyDashboard {
 
             // Compare days with vs without exercise
             if (exerciseMood.avgMoodWithExercise !== null && exerciseMood.avgMoodWithoutExercise !== null) {
-                console.log(`   📊 Mood Comparison:`);
+                console.log('   📊 Mood Comparison:');
                 console.log(`      With Exercise (${exerciseMood.daysWithExercise} days): ${exerciseMood.avgMoodWithExercise.toFixed(1)}/10`);
                 console.log(`      Without Exercise (${exerciseMood.daysWithoutExercise} days): ${exerciseMood.avgMoodWithoutExercise.toFixed(1)}/10`);
 
@@ -860,7 +860,7 @@ class DailyDashboard {
                 } else if (exerciseMood.moodDifference < 0) {
                     console.log(`      ⚠️  Your mood is ${Math.abs(exerciseMood.moodDifference).toFixed(1)} points lower on exercise days.\n`);
                 } else {
-                    console.log(`      ➡️  Exercise doesn't show a clear mood impact yet.\n`);
+                    console.log('      ➡️  Exercise doesn\'t show a clear mood impact yet.\n');
                 }
             }
         } else if (exerciseMood && exerciseMood.insufficient) {
@@ -883,7 +883,7 @@ class DailyDashboard {
 
             // Compare full adherence vs no adherence
             if (medicationMood.avgMoodFullAdherence !== null && medicationMood.avgMoodNoAdherence !== null) {
-                console.log(`   📊 Mood Comparison:`);
+                console.log('   📊 Mood Comparison:');
                 console.log(`      Full Adherence (${medicationMood.daysFullAdherence} days): ${medicationMood.avgMoodFullAdherence.toFixed(1)}/10`);
                 console.log(`      No Adherence (${medicationMood.daysNoAdherence} days): ${medicationMood.avgMoodNoAdherence.toFixed(1)}/10`);
 
@@ -892,7 +892,7 @@ class DailyDashboard {
                 } else if (medicationMood.moodDifference < 0) {
                     console.log(`      ⚠️  Your mood is ${Math.abs(medicationMood.moodDifference).toFixed(1)} points lower with full adherence.\n`);
                 } else {
-                    console.log(`      ➡️  Medication adherence doesn't show a clear mood impact yet.\n`);
+                    console.log('      ➡️  Medication adherence doesn\'t show a clear mood impact yet.\n');
                 }
             }
         } else if (medicationMood && medicationMood.insufficient) {
@@ -1736,7 +1736,7 @@ class DailyDashboard {
 
             this.saveData();
 
-            console.log(`\n💡 Tips for success:`);
+            console.log('\n💡 Tips for success:');
             template.tips.forEach((tip, i) => {
                 console.log(`   ${i + 1}. ${tip}`);
             });
@@ -2287,9 +2287,9 @@ Goal types: wellness, mood, sleep-duration, sleep-quality, exercise, medication
 
                 // Show on-track status
                 if (progress.onTrack === true) {
-                    console.log(`   ✅ On track to achieve!`);
+                    console.log('   ✅ On track to achieve!');
                 } else if (progress.onTrack === false) {
-                    console.log(`   ⚠️  Behind schedule - increase effort!`);
+                    console.log('   ⚠️  Behind schedule - increase effort!');
                 }
 
                 console.log('');
@@ -3052,9 +3052,9 @@ Goal types: wellness, mood, sleep-duration, sleep-quality, exercise, medication
         // Validate imported data structure
         const validation = ValidationUtils.validateImportedData(importedData);
         if (!validation.isValid) {
-            console.error(`\n❌ Import failed: Invalid data format\n`);
+            console.error('\n❌ Import failed: Invalid data format\n');
             validation.errors.forEach(err => console.error(`   • ${err}`));
-            console.log(`\n💡 Tip: Ensure the file was exported from StepSyncAI\n`);
+            console.log('\n💡 Tip: Ensure the file was exported from StepSyncAI\n');
             return false;
         }
 
@@ -3636,7 +3636,7 @@ Goal types: wellness, mood, sleep-duration, sleep-quality, exercise, medication
             fs.writeFileSync(filename, html);
             console.log(`\n✅ HTML report generated successfully: ${filename}`);
             console.log(`   Period: ${data.exportInfo.startDate} to ${data.exportInfo.endDate}`);
-            console.log(`   Open the file in your browser to view interactive charts!\n`);
+            console.log('   Open the file in your browser to view interactive charts!\n');
             return true;
         } catch (error) {
             console.error(`\n❌ HTML export failed: ${error.message}\n`);
@@ -3676,7 +3676,7 @@ Goal types: wellness, mood, sleep-duration, sleep-quality, exercise, medication
                 stream.on('finish', () => {
                     console.log(`\n✅ PDF report generated successfully: ${filename}`);
                     console.log(`   Period: ${data.exportInfo.startDate} to ${data.exportInfo.endDate}`);
-                    console.log(`   Open the file to view your wellness report!\n`);
+                    console.log('   Open the file to view your wellness report!\n');
                     resolve(filename);
                 });
 

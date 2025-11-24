@@ -96,11 +96,11 @@ class AWSForKids {
         console.log('\n🏆 Exam Readiness:');
         console.log(`   Overall score: ${examReadiness}/100`);
         if (examReadiness >= 80) {
-            console.log(`   Status: Ready to schedule exam! 🎉`);
+            console.log('   Status: Ready to schedule exam! 🎉');
         } else if (examReadiness >= 60) {
-            console.log(`   Status: Almost there, keep practicing! ⚠️`);
+            console.log('   Status: Almost there, keep practicing! ⚠️');
         } else {
-            console.log(`   Status: Keep studying, you're making progress! 📚`);
+            console.log('   Status: Keep studying, you\'re making progress! 📚');
         }
 
         console.log('\n📊 Breakdown:');
@@ -279,7 +279,7 @@ class AWSForKids {
         console.log(`   ${pointsToNextLevel} points needed`);
 
         // Streaks
-        console.log(`\n🔥 Study Streak`);
+        console.log('\n🔥 Study Streak');
         console.log(`   Current: ${this.data.studyStreak.current} day${this.data.studyStreak.current !== 1 ? 's' : ''}`);
         console.log(`   Longest: ${this.data.studyStreak.longest} day${this.data.studyStreak.longest !== 1 ? 's' : ''}`);
 
@@ -293,7 +293,7 @@ class AWSForKids {
                 console.log(`   ... and ${this.data.badges.length - 5} more`);
             }
         } else {
-            console.log(`   Complete topics to earn badges!`);
+            console.log('   Complete topics to earn badges!');
         }
 
         // Achievements
@@ -306,7 +306,7 @@ class AWSForKids {
                 console.log(`   ... and ${this.data.achievements.length - 5} more`);
             }
         } else {
-            console.log(`   Keep learning to unlock achievements!`);
+            console.log('   Keep learning to unlock achievements!');
         }
 
         console.log('\n' + '═'.repeat(60));
@@ -331,7 +331,7 @@ class AWSForKids {
             const data = fs.readFileSync(this.dataFile);
             fs.writeFileSync(backupPath, data);
 
-            console.log(`\n✓ Backup created successfully!`);
+            console.log('\n✓ Backup created successfully!');
             console.log(`  Location: ${backupPath}`);
             console.log(`  Time: ${new Date().toLocaleString()}`);
             return true;
@@ -393,7 +393,7 @@ class AWSForKids {
             fs.writeFileSync(this.dataFile, backupData);
             this.data = this.loadData();
 
-            console.log(`\n✓ Data restored successfully from backup!`);
+            console.log('\n✓ Data restored successfully from backup!');
             console.log(`  Source: ${backupFile}`);
             console.log(`  Time: ${new Date().toLocaleString()}`);
             return true;
@@ -521,7 +521,7 @@ class AWSForKids {
                 doc.end();
 
                 stream.on('finish', () => {
-                    console.log(`\n✓ PDF report generated successfully!`);
+                    console.log('\n✓ PDF report generated successfully!');
                     console.log(`  Location: ${filepath}`);
                     resolve(filepath);
                 });
@@ -1293,171 +1293,171 @@ Shared: Patch management, configuration management, awareness & training`,
 
         this.quizQuestions = [
             {
-                question: "What does EC2 stand for?",
+                question: 'What does EC2 stand for?',
                 options: [
-                    "Elastic Cloud Computer",
-                    "Elastic Compute Cloud",
-                    "Electronic Computer Cloud",
-                    "Easy Compute Cloud"
+                    'Elastic Cloud Computer',
+                    'Elastic Compute Cloud',
+                    'Electronic Computer Cloud',
+                    'Easy Compute Cloud'
                 ],
                 correct: 1,
-                explanation: "EC2 stands for Elastic Compute Cloud - it provides resizable compute capacity in the cloud."
+                explanation: 'EC2 stands for Elastic Compute Cloud - it provides resizable compute capacity in the cloud.'
             },
             {
                 question: "Which AWS service is like a 'magical toy box that never gets full'?",
-                options: ["EC2", "S3", "RDS", "Lambda"],
+                options: ['EC2', 'S3', 'RDS', 'Lambda'],
                 correct: 1,
-                explanation: "S3 (Simple Storage Service) can store unlimited amounts of data, like a toy box that never gets full!"
+                explanation: 'S3 (Simple Storage Service) can store unlimited amounts of data, like a toy box that never gets full!'
             },
             {
-                question: "What is the purpose of IAM in AWS?",
+                question: 'What is the purpose of IAM in AWS?',
                 options: [
-                    "To store files",
-                    "To run computers",
-                    "To control who can access what",
-                    "To monitor applications"
+                    'To store files',
+                    'To run computers',
+                    'To control who can access what',
+                    'To monitor applications'
                 ],
                 correct: 2,
-                explanation: "IAM (Identity and Access Management) controls who can access what in AWS - like giving keys to rooms!"
+                explanation: 'IAM (Identity and Access Management) controls who can access what in AWS - like giving keys to rooms!'
             },
             {
-                question: "Which pricing model offers up to 90% savings but instances can be terminated?",
-                options: ["On-Demand", "Reserved", "Spot", "Savings Plans"],
+                question: 'Which pricing model offers up to 90% savings but instances can be terminated?',
+                options: ['On-Demand', 'Reserved', 'Spot', 'Savings Plans'],
                 correct: 2,
-                explanation: "Spot Instances offer up to 90% savings but can be terminated when AWS needs the capacity back."
+                explanation: 'Spot Instances offer up to 90% savings but can be terminated when AWS needs the capacity back.'
             },
             {
                 question: "Which service is 'serverless' and runs code only when needed?",
-                options: ["EC2", "Lambda", "RDS", "EBS"],
+                options: ['EC2', 'Lambda', 'RDS', 'EBS'],
                 correct: 1,
-                explanation: "Lambda is serverless - it runs your code only when triggered, like magical helpers that appear when needed!"
+                explanation: 'Lambda is serverless - it runs your code only when triggered, like magical helpers that appear when needed!'
             },
             {
-                question: "What is the durability of S3 Standard storage?",
+                question: 'What is the durability of S3 Standard storage?',
                 options: [
-                    "99.9%",
-                    "99.99%",
-                    "99.999999999% (11 nines)",
-                    "100%"
+                    '99.9%',
+                    '99.99%',
+                    '99.999999999% (11 nines)',
+                    '100%'
                 ],
                 correct: 2,
-                explanation: "S3 Standard offers 99.999999999% (11 nines) durability, meaning your data is extremely safe!"
+                explanation: 'S3 Standard offers 99.999999999% (11 nines) durability, meaning your data is extremely safe!'
             },
             {
                 question: "Which service acts like 'security cameras watching everything'?",
-                options: ["IAM", "CloudWatch", "CloudFront", "Route 53"],
+                options: ['IAM', 'CloudWatch', 'CloudFront', 'Route 53'],
                 correct: 1,
-                explanation: "CloudWatch monitors your AWS resources and applications, like security cameras watching everything!"
+                explanation: 'CloudWatch monitors your AWS resources and applications, like security cameras watching everything!'
             },
             {
-                question: "In the Shared Responsibility Model, who is responsible for physical security of data centers?",
+                question: 'In the Shared Responsibility Model, who is responsible for physical security of data centers?',
                 options: [
-                    "Customer",
-                    "AWS",
-                    "Both",
-                    "Third-party vendors"
+                    'Customer',
+                    'AWS',
+                    'Both',
+                    'Third-party vendors'
                 ],
                 correct: 1,
-                explanation: "AWS is responsible for security OF the cloud, including physical security of data centers."
+                explanation: 'AWS is responsible for security OF the cloud, including physical security of data centers.'
             },
             {
-                question: "What does a VPC provide in AWS?",
+                question: 'What does a VPC provide in AWS?',
                 options: [
-                    "Virtual Private Cloud - your isolated network",
-                    "Very Powerful Computer",
-                    "Verified Personal Code",
-                    "Virtual Processing Center"
+                    'Virtual Private Cloud - your isolated network',
+                    'Very Powerful Computer',
+                    'Verified Personal Code',
+                    'Virtual Processing Center'
                 ],
                 correct: 0,
-                explanation: "VPC (Virtual Private Cloud) gives you an isolated network in AWS - like your own private playground!"
+                explanation: 'VPC (Virtual Private Cloud) gives you an isolated network in AWS - like your own private playground!'
             },
             {
-                question: "Which service would you use to distribute content globally for faster access?",
-                options: ["S3", "CloudFront", "Route 53", "Lambda"],
+                question: 'Which service would you use to distribute content globally for faster access?',
+                options: ['S3', 'CloudFront', 'Route 53', 'Lambda'],
                 correct: 1,
-                explanation: "CloudFront is a CDN that caches content at edge locations worldwide for faster access."
+                explanation: 'CloudFront is a CDN that caches content at edge locations worldwide for faster access.'
             },
             {
-                question: "What is the main benefit of Auto Scaling?",
+                question: 'What is the main benefit of Auto Scaling?',
                 options: [
-                    "Cheaper storage",
-                    "Better security",
-                    "Automatically adjusts capacity based on demand",
-                    "Faster internet"
+                    'Cheaper storage',
+                    'Better security',
+                    'Automatically adjusts capacity based on demand',
+                    'Faster internet'
                 ],
                 correct: 2,
-                explanation: "Auto Scaling automatically adds or removes EC2 instances based on demand - like calling friends to help when needed!"
+                explanation: 'Auto Scaling automatically adds or removes EC2 instances based on demand - like calling friends to help when needed!'
             },
             {
-                question: "Which database service is best for fast NoSQL operations?",
-                options: ["RDS", "DynamoDB", "ElastiCache", "S3"],
+                question: 'Which database service is best for fast NoSQL operations?',
+                options: ['RDS', 'DynamoDB', 'ElastiCache', 'S3'],
                 correct: 1,
-                explanation: "DynamoDB is a fully managed NoSQL database with single-digit millisecond latency."
+                explanation: 'DynamoDB is a fully managed NoSQL database with single-digit millisecond latency.'
             },
             {
-                question: "What does ELB do?",
+                question: 'What does ELB do?',
                 options: [
-                    "Stores data",
-                    "Distributes traffic across multiple targets",
-                    "Monitors resources",
-                    "Provides DNS services"
+                    'Stores data',
+                    'Distributes traffic across multiple targets',
+                    'Monitors resources',
+                    'Provides DNS services'
                 ],
                 correct: 1,
-                explanation: "ELB (Elastic Load Balancer) distributes traffic across multiple targets - like dividing kids into groups!"
+                explanation: 'ELB (Elastic Load Balancer) distributes traffic across multiple targets - like dividing kids into groups!'
             },
             {
-                question: "How many pillars are in the Well-Architected Framework?",
-                options: ["4", "5", "6", "7"],
+                question: 'How many pillars are in the Well-Architected Framework?',
+                options: ['4', '5', '6', '7'],
                 correct: 2,
-                explanation: "There are 6 pillars: Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization, and Sustainability."
+                explanation: 'There are 6 pillars: Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization, and Sustainability.'
             },
             {
-                question: "Which support plan includes a Technical Account Manager (TAM)?",
-                options: ["Basic", "Developer", "Business", "Enterprise"],
+                question: 'Which support plan includes a Technical Account Manager (TAM)?',
+                options: ['Basic', 'Developer', 'Business', 'Enterprise'],
                 correct: 3,
-                explanation: "Only the Enterprise support plan includes a dedicated Technical Account Manager (TAM)."
+                explanation: 'Only the Enterprise support plan includes a dedicated Technical Account Manager (TAM).'
             },
             {
-                question: "What is CloudFormation used for?",
+                question: 'What is CloudFormation used for?',
                 options: [
-                    "Monitoring clouds",
-                    "Infrastructure as Code",
-                    "Content delivery",
-                    "Database management"
+                    'Monitoring clouds',
+                    'Infrastructure as Code',
+                    'Content delivery',
+                    'Database management'
                 ],
                 correct: 1,
-                explanation: "CloudFormation is Infrastructure as Code - like LEGO instructions for building cloud resources!"
+                explanation: 'CloudFormation is Infrastructure as Code - like LEGO instructions for building cloud resources!'
             },
             {
-                question: "Which service is used for pub/sub messaging (one to many)?",
-                options: ["SQS", "SNS", "Lambda", "CloudWatch"],
+                question: 'Which service is used for pub/sub messaging (one to many)?',
+                options: ['SQS', 'SNS', 'Lambda', 'CloudWatch'],
                 correct: 1,
-                explanation: "SNS (Simple Notification Service) sends one message to many subscribers - like a loudspeaker!"
+                explanation: 'SNS (Simple Notification Service) sends one message to many subscribers - like a loudspeaker!'
             },
             {
-                question: "What type of storage is EBS?",
+                question: 'What type of storage is EBS?',
                 options: [
-                    "Object storage",
-                    "Block storage",
-                    "File storage",
-                    "Archive storage"
+                    'Object storage',
+                    'Block storage',
+                    'File storage',
+                    'Archive storage'
                 ],
                 correct: 1,
-                explanation: "EBS (Elastic Block Store) provides block storage for EC2 instances - like a backpack for your computer!"
+                explanation: 'EBS (Elastic Block Store) provides block storage for EC2 instances - like a backpack for your computer!'
             },
             {
-                question: "Which pricing option requires a 1 or 3 year commitment?",
-                options: ["On-Demand", "Reserved", "Spot", "Free Tier"],
+                question: 'Which pricing option requires a 1 or 3 year commitment?',
+                options: ['On-Demand', 'Reserved', 'Spot', 'Free Tier'],
                 correct: 1,
-                explanation: "Reserved Instances require a 1 or 3 year commitment in exchange for significant savings (up to 75%)."
+                explanation: 'Reserved Instances require a 1 or 3 year commitment in exchange for significant savings (up to 75%).'
             },
             {
-                question: "In the Shared Responsibility Model, who is responsible for customer data?",
+                question: 'In the Shared Responsibility Model, who is responsible for customer data?',
                 options: [
-                    "AWS",
-                    "Customer",
-                    "Both",
-                    "It depends on the service"
+                    'AWS',
+                    'Customer',
+                    'Both',
+                    'It depends on the service'
                 ],
                 correct: 1,
                 explanation: "Customers are always responsible for their own data - it's part of security IN the cloud."
@@ -1476,9 +1476,9 @@ Shared: Patch management, configuration management, awareness & training`,
         console.log('\n' + '═'.repeat(70));
         console.log(`${concept.emoji}  ${concept.name}`);
         console.log('═'.repeat(70));
-        console.log(`\n📖 SIMPLE EXPLANATION:`);
+        console.log('\n📖 SIMPLE EXPLANATION:');
         console.log(concept.simple);
-        console.log(`\n🎈 DETAILED EXPLANATION:`);
+        console.log('\n🎈 DETAILED EXPLANATION:');
         console.log(concept.explanation);
         console.log(`\n📊 Category: ${concept.category}`);
         console.log(`⚠️  Exam Importance: ${concept.examWeight}`);
@@ -1561,7 +1561,7 @@ Shared: Patch management, configuration management, awareness & training`,
             if (currentQ >= selectedQuestions.length) {
                 const percentage = (score / numQuestions * 100).toFixed(1);
                 console.log('\n' + '═'.repeat(70));
-                console.log(`🎉 QUIZ COMPLETE!`);
+                console.log('🎉 QUIZ COMPLETE!');
                 console.log(`Score: ${score}/${numQuestions} (${percentage}%)`);
 
                 if (percentage >= 70) {
@@ -1639,7 +1639,7 @@ Shared: Patch management, configuration management, awareness & training`,
 
         // Quiz history
         if (this.data.quizScores.length > 0) {
-            console.log(`\n🎯 Quiz History (Last 5):`);
+            console.log('\n🎯 Quiz History (Last 5):');
             console.log('─'.repeat(70));
             const recent = this.data.quizScores.slice(-5).reverse();
             recent.forEach((quiz, idx) => {
@@ -1652,18 +1652,18 @@ Shared: Patch management, configuration management, awareness & training`,
         }
 
         // Recommendations
-        console.log(`\n💡 Next Steps:`);
+        console.log('\n💡 Next Steps:');
         if (completedTopics < totalTopics) {
             console.log(`   - Complete ${totalTopics - completedTopics} remaining topics`);
         }
         if (this.data.quizScores.length === 0) {
-            console.log(`   - Take your first practice quiz!`);
+            console.log('   - Take your first practice quiz!');
         } else {
             const lastScore = this.data.quizScores[this.data.quizScores.length - 1];
             if (lastScore.percentage < 70) {
-                console.log(`   - Review topics and retake quizzes (aim for 70%+)`);
+                console.log('   - Review topics and retake quizzes (aim for 70%+)');
             } else {
-                console.log(`   - Keep practicing! You're doing great!`);
+                console.log('   - Keep practicing! You\'re doing great!');
             }
         }
 

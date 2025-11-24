@@ -11,6 +11,11 @@ class MedicationTracker {
         this.data = this.loadData();
         this.reminderService = new ReminderService();
         this.interactions = this.loadInteractions();
+        this.idCounter = Date.now();
+    }
+
+    generateId() {
+        return ++this.idCounter;
     }
 
     loadInteractions() {
@@ -202,7 +207,7 @@ class MedicationTracker {
             const data = fs.readFileSync(this.dataFile);
             fs.writeFileSync(backupPath, data);
 
-            console.log(`\n✓ Backup created successfully!`);
+            console.log('\n✓ Backup created successfully!');
             console.log(`  Location: ${backupPath}`);
             console.log(`  Time: ${new Date().toLocaleString()}`);
             return true;
@@ -264,7 +269,7 @@ class MedicationTracker {
             fs.writeFileSync(this.dataFile, backupData);
             this.data = this.loadData();
 
-            console.log(`\n✓ Data restored successfully from backup!`);
+            console.log('\n✓ Data restored successfully from backup!');
             console.log(`  Source: ${backupFile}`);
             console.log(`  Time: ${new Date().toLocaleString()}`);
             return true;
@@ -395,7 +400,7 @@ class MedicationTracker {
                 doc.end();
 
                 stream.on('finish', () => {
-                    console.log(`\n✓ PDF report generated successfully!`);
+                    console.log('\n✓ PDF report generated successfully!');
                     console.log(`  Location: ${filepath}`);
                     resolve(filepath);
                 });
@@ -569,7 +574,7 @@ class MedicationTracker {
         const interactions = this.checkInteractions(name, false); // Don't display yet
 
         const medication = {
-            id: Date.now(),
+            id: this.generateId(),
             name: name,
             dosage: dosage,
             frequency: frequency, // e.g., 'daily', 'twice-daily', 'weekly'
@@ -581,7 +586,7 @@ class MedicationTracker {
         this.data.medications.push(medication);
 
         if (this.saveData()) {
-            console.log(`✓ Medication added successfully!`);
+            console.log('✓ Medication added successfully!');
             console.log(`  Name: ${name}`);
             console.log(`  Dosage: ${dosage}`);
             console.log(`  Frequency: ${frequency}`);
@@ -787,13 +792,13 @@ class MedicationTracker {
 
         if (daysRemaining === 0) {
             console.log(`\n🔴 CRITICAL: "${medication.name}" is OUT OF PILLS!`);
-            console.log(`   ⚕️  Refill immediately!`);
+            console.log('   ⚕️  Refill immediately!');
             return true;
         } else if (daysRemaining <= threshold) {
             console.log(`\n🟡 REFILL REMINDER: "${medication.name}"`);
             console.log(`   💊 ${medication.pillCount} pills remaining`);
             console.log(`   📅 ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} of supply left`);
-            console.log(`   ⚕️  Time to refill!`);
+            console.log('   ⚕️  Time to refill!');
             return true;
         }
 
@@ -825,9 +830,9 @@ class MedicationTracker {
             console.log(`   📅 Days remaining: ${daysRemaining}`);
 
             if (daysRemaining === 0) {
-                console.log(`   ⚠️  OUT OF PILLS - Refill immediately!`);
+                console.log('   ⚠️  OUT OF PILLS - Refill immediately!');
             } else if (daysRemaining <= (med.refillThreshold || 7)) {
-                console.log(`   ⚠️  Low supply - Time to refill!`);
+                console.log('   ⚠️  Low supply - Time to refill!');
             }
         });
 
