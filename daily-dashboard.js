@@ -54,25 +54,25 @@ class DailyDashboard {
     loadTrackers() {
         try {
             this.mentalHealth = new MentalHealthTracker();
-        } catch (error) {
+        } catch (_error) {
             console.log('⚠️  Mental Health Tracker not available');
         }
 
         try {
             this.medication = new MedicationTracker();
-        } catch (error) {
+        } catch (_error) {
             console.log('⚠️  Medication Tracker not available');
         }
 
         try {
             this.sleep = new SleepTracker();
-        } catch (error) {
+        } catch (_error) {
             console.log('⚠️  Sleep Tracker not available');
         }
 
         try {
             this.exercise = new ExerciseTracker();
-        } catch (error) {
+        } catch (_error) {
             console.log('⚠️  Exercise Tracker not available');
         }
     }

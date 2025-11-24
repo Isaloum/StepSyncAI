@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 const readline = require('readline');
-const fs = require('fs');
 const chalk = require('chalk');
 
 const rl = readline.createInterface({
