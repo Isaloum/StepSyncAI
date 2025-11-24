@@ -331,4 +331,182 @@ describe('AnalyticsEngine', () => {
             expect(Array.isArray(report.insights)).toBe(true);
         });
     });
+
+    describe('Optimal Time Detection', () => {
+        test('should find optimal exercise time based on historical data', () => {
+            // Add exercise data at consistent times (18:00)
+            const today = new Date();
+            for (let i = 0; i < 15; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                date.setHours(18, 0, 0, 0);
+
+                mockDashboard.exerciseTracker.data.exercises.push({
+                    timestamp: date.toISOString(),
+                    duration: 30,
+                    type: 'running',
+                    intensity: 'high'
+                });
+            }
+
+            const result = analytics.findOptimalTimeForActivity('exercise', 30);
+
+            expect(result.success).toBe(true);
+            expect(result.optimalHour).toBe(18);
+            expect(result.optimalTime).toBe('18:00');
+            expect(result.confidence).toBeGreaterThan(0);
+            expect(result.sampleSize).toBe(15);
+        });
+
+        test('should return default when insufficient data', () => {
+            // Only 2 data points (need at least 3)
+            const today = new Date();
+            for (let i = 0; i < 2; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+
+                mockDashboard.exerciseTracker.data.exercises.push({
+                    timestamp: date.toISOString(),
+                    duration: 30,
+                    type: 'running',
+                    intensity: 'moderate'
+                });
+            }
+
+            const result = analytics.findOptimalTimeForActivity('exercise', 30);
+
+            expect(result.success).toBe(false);
+            expect(result.message).toContain('at least 3 days');
+            expect(result.defaultTime).toBe('18:00');
+        });
+
+        test('should find optimal medication time from adherence history', () => {
+            // Mock medication tracker with adherence data
+            mockDashboard.medication = {
+                data: {
+                    adherenceHistory: []
+                }
+            };
+
+            const today = new Date();
+            for (let i = 0; i < 10; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                date.setHours(8, 0, 0, 0);
+
+                mockDashboard.medication.data.adherenceHistory.push({
+                    taken: true,
+                    takenAt: date.toISOString()
+                });
+            }
+
+            const result = analytics.findOptimalTimeForActivity('medication', 30);
+
+            expect(result.success).toBe(true);
+            expect(result.optimalHour).toBe(8);
+            expect(result.optimalTime).toBe('08:00');
+        });
+
+        test('should find optimal sleep time from bedtime patterns', () => {
+            // Add sleep data with consistent bedtimes
+            const today = new Date();
+            for (let i = 0; i < 20; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+
+                mockDashboard.sleepTracker.data.sleepEntries.push({
+                    timestamp: date.toISOString(),
+                    bedtime: '22:00',
+                    quality: 8,
+                    duration: 7.5
+                });
+            }
+
+            const result = analytics.findOptimalTimeForActivity('sleep', 30);
+
+            expect(result.success).toBe(true);
+            expect(result.optimalHour).toBe(22);
+            expect(result.optimalTime).toBe('22:00');
+            expect(result.confidence).toBeGreaterThan(50);
+        });
+
+        test('should weight by quality when finding optimal time', () => {
+            // Add exercise data with varying quality
+            const today = new Date();
+
+            // 5 exercises at 17:00 with low intensity
+            for (let i = 0; i < 5; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                date.setHours(17, 0, 0, 0);
+
+                mockDashboard.exerciseTracker.data.exercises.push({
+                    timestamp: date.toISOString(),
+                    duration: 30,
+                    type: 'walking',
+                    intensity: 'low'
+                });
+            }
+
+            // 3 exercises at 18:00 with high intensity (should win due to quality)
+            for (let i = 0; i < 3; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i - 5);
+                date.setHours(18, 0, 0, 0);
+
+                mockDashboard.exerciseTracker.data.exercises.push({
+                    timestamp: date.toISOString(),
+                    duration: 45,
+                    type: 'running',
+                    intensity: 'high'
+                });
+            }
+
+            const result = analytics.findOptimalTimeForActivity('exercise', 30);
+
+            expect(result.success).toBe(true);
+            // 18:00 should win because: 3 * 3 (high intensity) = 9 vs 5 * 1 (low intensity) = 5
+            expect(result.optimalHour).toBe(18);
+        });
+
+        test('should cache optimal time results', () => {
+            // Add data
+            const today = new Date();
+            for (let i = 0; i < 5; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                date.setHours(18, 0, 0, 0);
+
+                mockDashboard.exerciseTracker.data.exercises.push({
+                    timestamp: date.toISOString(),
+                    duration: 30,
+                    type: 'running',
+                    intensity: 'moderate'
+                });
+            }
+
+            // First call
+            const result1 = analytics.findOptimalTimeForActivity('exercise', 30);
+
+            // Modify data
+            mockDashboard.exerciseTracker.data.exercises = [];
+
+            // Second call should return cached result
+            const result2 = analytics.findOptimalTimeForActivity('exercise', 30);
+
+            expect(result1).toEqual(result2);
+            expect(result2.success).toBe(true);
+        });
+
+        test('should handle errors gracefully', () => {
+            // Corrupt dashboard data
+            mockDashboard.exerciseTracker = { data: null };
+
+            const result = analytics.findOptimalTimeForActivity('exercise', 30);
+
+            expect(result.success).toBe(false);
+            expect(result.message).toContain('Error');
+            expect(result.defaultTime).toBeDefined();
+        });
+    });
 });

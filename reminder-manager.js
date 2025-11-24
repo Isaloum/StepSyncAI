@@ -497,7 +497,7 @@ class ReminderManager {
      *
      * @param {string} type - Reminder type (exercise, sleep, etc.)
      * @param {Object} analytics - AnalyticsEngine instance (optional)
-     * @returns {string} Suggested time in HH:mm format
+     * @returns {Object} Suggested time and confidence data
      */
     suggestOptimalTime(type, analytics = null) {
         // Default suggestions based on type
@@ -508,9 +508,41 @@ class ReminderManager {
             custom: '12:00'
         };
 
-        // TODO: Integrate with analytics engine to find patterns
-        // For now, return default times
-        return defaults[type] || defaults.custom;
+        // If analytics engine provided, use it to find optimal time based on patterns
+        if (analytics && typeof analytics.findOptimalTimeForActivity === 'function') {
+            try {
+                const result = analytics.findOptimalTimeForActivity(type, 30);
+
+                if (result.success) {
+                    return {
+                        time: result.optimalTime,
+                        confidence: result.confidence,
+                        source: 'analytics',
+                        message: result.message,
+                        sampleSize: result.sampleSize
+                    };
+                }
+
+                // Analytics didn't have enough data, return default with explanation
+                return {
+                    time: result.defaultTime || defaults[type] || defaults.custom,
+                    confidence: 0,
+                    source: 'default',
+                    message: result.message || 'Using default time - not enough historical data yet'
+                };
+            } catch (error) {
+                // Analytics failed, fall back to defaults
+                console.log('⚠️  Analytics unavailable, using default time');
+            }
+        }
+
+        // No analytics provided or analytics failed - return default
+        return {
+            time: defaults[type] || defaults.custom,
+            confidence: 0,
+            source: 'default',
+            message: 'Using default time (analytics not available)'
+        };
     }
 
     /**
