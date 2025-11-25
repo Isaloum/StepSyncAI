@@ -534,6 +534,134 @@ class AnalyticsEngine {
 
         console.log('\n' + '═'.repeat(65));
     }
+
+    /**
+     * Find optimal time for activity based on historical patterns
+     * Analyzes when user typically performs activities successfully
+     * @param {string} type - Type of activity ('exercise', 'medication', 'sleep')
+     * @param {number} days - Number of days to analyze (default: 30)
+     * @returns {object} Optimal time and confidence data
+     */
+    findOptimalTimeForActivity(type, days = 30) {
+        const cacheKey = this.cache.generateKey('optimal-time', type, days);
+        const cached = this.cache.get(cacheKey);
+        if (cached) return cached;
+
+        let timeData = [];
+
+        try {
+            if (type === 'exercise' && this.dashboard.exerciseTracker) {
+                // Get exercise data
+                const exercises = this.dashboard.exerciseTracker.data.exercises || [];
+                const cutoff = new Date();
+                cutoff.setDate(cutoff.getDate() - days);
+
+                timeData = exercises
+                    .filter(ex => new Date(ex.timestamp) >= cutoff)
+                    .map(ex => {
+                        const hour = new Date(ex.timestamp).getHours();
+                        return { hour, quality: ex.intensity === 'high' ? 3 : ex.intensity === 'medium' ? 2 : 1 };
+                    });
+
+            } else if (type === 'medication' && this.dashboard.medication) {
+                // Get medication adherence data
+                const history = this.dashboard.medication.data.adherenceHistory || [];
+                const cutoff = new Date();
+                cutoff.setDate(cutoff.getDate() - days);
+
+                timeData = history
+                    .filter(h => h.taken && new Date(h.takenAt) >= cutoff)
+                    .map(h => {
+                        const hour = new Date(h.takenAt).getHours();
+                        return { hour, quality: 1 }; // Successfully taken = quality 1
+                    });
+
+            } else if (type === 'sleep' && this.dashboard.sleepTracker) {
+                // Get sleep data - find when user typically goes to bed
+                const sleepEntries = this.dashboard.sleepTracker.data.sleepEntries || [];
+                const cutoff = new Date();
+                cutoff.setDate(cutoff.getDate() - days);
+
+                timeData = sleepEntries
+                    .filter(entry => new Date(entry.timestamp) >= cutoff && entry.quality)
+                    .map(entry => {
+                        const bedtime = entry.bedtime || '22:00';
+                        const [hour] = bedtime.split(':').map(Number);
+                        return { hour, quality: entry.quality };
+                    });
+            }
+
+            // Analyze time patterns
+            if (timeData.length < 3) {
+                return {
+                    success: false,
+                    message: 'Need at least 3 days of data to suggest optimal time',
+                    defaultTime: this.getDefaultTime(type)
+                };
+            }
+
+            // Group by hour and calculate weighted scores
+            const hourStats = {};
+            timeData.forEach(({ hour, quality }) => {
+                if (!hourStats[hour]) {
+                    hourStats[hour] = { count: 0, totalQuality: 0 };
+                }
+                hourStats[hour].count++;
+                hourStats[hour].totalQuality += quality;
+            });
+
+            // Find hour with highest frequency and quality
+            let bestHour = null;
+            let bestScore = 0;
+
+            Object.entries(hourStats).forEach(([hour, stats]) => {
+                // Score = frequency * average quality
+                const avgQuality = stats.totalQuality / stats.count;
+                const score = stats.count * avgQuality;
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestHour = parseInt(hour);
+                }
+            });
+
+            const confidence = Math.min((timeData.length / 30) * 100, 100); // Max confidence at 30 days
+
+            const result = {
+                success: true,
+                optimalHour: bestHour,
+                optimalTime: `${String(bestHour).padStart(2, '0')}:00`,
+                confidence: Math.round(confidence),
+                sampleSize: timeData.length,
+                message: `Based on ${timeData.length} days of data, ${String(bestHour).padStart(2, '0')}:00 appears to be your most consistent time`
+            };
+
+            this.cache.set(cacheKey, result);
+            return result;
+
+        } catch (error) {
+            return {
+                success: false,
+                message: 'Error analyzing activity patterns',
+                defaultTime: this.getDefaultTime(type)
+            };
+        }
+    }
+
+    /**
+     * Get default time for activity type
+     * @param {string} type - Activity type
+     * @returns {string} Default time in HH:mm format
+     */
+    getDefaultTime(type) {
+        const defaults = {
+            medication: '08:00',
+            exercise: '18:00',
+            sleep: '22:00',
+            custom: '12:00'
+        };
+        return defaults[type] || defaults.custom;
+    }
 }
 
 module.exports = AnalyticsEngine;
