@@ -2,11 +2,6 @@
 
 const BackupManager = require('./backup-manager');
 
-const backup = new BackupManager();
-
-const command = process.argv[2];
-const args = process.argv.slice(3);
-
 function showHelp() {
     console.log(`
 ╔═══════════════════════════════════════════════════════════════╗
@@ -62,12 +57,14 @@ function parseArgs(args) {
     return options;
 }
 
-async function main() {
+function runCommand(command, args, backupManager) {
+    const backup = backupManager || new BackupManager();
+
     switch (command) {
         case 'create': {
             const options = parseArgs(args);
             const result = backup.createBackup(options);
-            process.exit(result.success ? 0 : 1);
+            return result.success ? 0 : 1;
         }
 
         case 'list': {
@@ -76,7 +73,7 @@ async function main() {
 
             if (backups.length === 0) {
                 console.log('\n📭 No backups found.');
-                process.exit(0);
+                return 0;
             }
 
             console.log('\n📦 Available Backups:\n');
@@ -97,25 +94,25 @@ async function main() {
             });
 
             console.log('═'.repeat(80));
-            process.exit(0);
+            return 0;
         }
 
         case 'restore': {
             if (!args[0]) {
                 console.error('❌ Error: Backup ID required');
                 console.log('Usage: node backup-cli.js restore <backup-id>');
-                process.exit(1);
+                return 1;
             }
 
             const result = backup.restore(args[0]);
-            process.exit(result.success ? 0 : 1);
+            return result.success ? 0 : 1;
         }
 
         case 'verify': {
             if (!args[0]) {
                 console.error('❌ Error: Backup ID required');
                 console.log('Usage: node backup-cli.js verify <backup-id>');
-                process.exit(1);
+                return 1;
             }
 
             const result = backup.verifyBackup(args[0]);
@@ -130,40 +127,40 @@ async function main() {
                 result.errors.forEach(err => console.log(`   - ${err}`));
             }
 
-            process.exit(result.valid ? 0 : 1);
+            return result.valid ? 0 : 1;
         }
 
         case 'delete': {
             if (!args[0]) {
                 console.error('❌ Error: Backup ID required');
                 console.log('Usage: node backup-cli.js delete <backup-id>');
-                process.exit(1);
+                return 1;
             }
 
             const result = backup.deleteBackup(args[0]);
-            process.exit(result.success ? 0 : 1);
+            return result.success ? 0 : 1;
         }
 
         case 'export': {
             if (!args[0] || !args[1]) {
                 console.error('❌ Error: Backup ID and destination path required');
                 console.log('Usage: node backup-cli.js export <backup-id> <destination-path>');
-                process.exit(1);
+                return 1;
             }
 
             const result = backup.exportBackup(args[0], args[1]);
-            process.exit(result.success ? 0 : 1);
+            return result.success ? 0 : 1;
         }
 
         case 'import': {
             if (!args[0]) {
                 console.error('❌ Error: Source path required');
                 console.log('Usage: node backup-cli.js import <source-path>');
-                process.exit(1);
+                return 1;
             }
 
             const result = backup.importBackup(args[0]);
-            process.exit(result.success ? 0 : 1);
+            return result.success ? 0 : 1;
         }
 
         case 'stats': {
@@ -182,7 +179,7 @@ async function main() {
                 console.log(`Newest backup:     ${new Date(stats.newestBackup).toLocaleString()}`);
             }
             console.log('═'.repeat(60));
-            process.exit(0);
+            return 0;
         }
 
         case 'schedule': {
@@ -190,7 +187,7 @@ async function main() {
                 console.error('❌ Error: Cron schedule required');
                 console.log('Usage: node backup-cli.js schedule <cron-expression>');
                 console.log('Example: node backup-cli.js schedule "0 2 * * *"  # Daily at 2 AM');
-                process.exit(1);
+                return 1;
             }
 
             backup.scheduleBackups(args[0]);
@@ -202,12 +199,12 @@ async function main() {
                 console.log('\n👋 Scheduler stopped.');
                 process.exit(0);
             });
-            break;
+            return 0;
         }
 
         case 'cleanup': {
             backup.cleanupOldBackups();
-            process.exit(0);
+            return 0;
         }
 
         case 'help':
@@ -215,11 +212,24 @@ async function main() {
         case '-h':
         default:
             showHelp();
-            process.exit(0);
+            return 0;
     }
 }
 
-main().catch(error => {
-    console.error('❌ Unexpected error:', error.message);
-    process.exit(1);
-});
+async function main() {
+    const command = process.argv[2];
+    const args = process.argv.slice(3);
+    const exitCode = runCommand(command, args);
+    process.exit(exitCode);
+}
+
+// Export for testing
+module.exports = { runCommand, showHelp, parseArgs };
+
+// Run if executed directly
+if (require.main === module) {
+    main().catch(error => {
+        console.error('❌ Unexpected error:', error.message);
+        process.exit(1);
+    });
+}
