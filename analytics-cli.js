@@ -3,9 +3,6 @@
 const DailyDashboard = require('./daily-dashboard');
 const AnalyticsEngine = require('./analytics-engine');
 
-const command = process.argv[2];
-const args = process.argv.slice(3);
-
 function showHelp() {
     console.log(`
 ╔═══════════════════════════════════════════════════════════════╗
@@ -34,7 +31,7 @@ DEFAULT:
 `);
 }
 
-async function main() {
+async function runCommand(command, args) {
     const days = parseInt(args[0]) || 30;
     const dashboard = new DailyDashboard();
     const analytics = new AnalyticsEngine(dashboard);
@@ -274,7 +271,19 @@ async function main() {
     }
 }
 
-main().catch(error => {
-    console.error('❌ Error:', error.message);
-    process.exit(1);
-});
+async function main() {
+    const command = process.argv[2];
+    const args = process.argv.slice(3);
+    await runCommand(command, args);
+}
+
+// Export for testing
+module.exports = { runCommand, showHelp };
+
+// Run if executed directly
+if (require.main === module) {
+    main().catch(error => {
+        console.error('❌ Error:', error.message);
+        process.exit(1);
+    });
+}
