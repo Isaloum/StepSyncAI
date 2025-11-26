@@ -185,6 +185,7 @@ describe('BackupManager', () => {
             expect(restoreResult.filesRestored).toContain('__tests__/test-data.json');
 
             // Verify file was restored
+            expect(fs.existsSync(testDataFile)).toBe(true);
             const restoredData = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
             expect(restoredData.test).toBe('data');
         });
