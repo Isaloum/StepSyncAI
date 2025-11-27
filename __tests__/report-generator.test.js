@@ -18,7 +18,29 @@ describe('ReportGenerator', () => {
     });
 
     beforeEach(() => {
-        dashboard = new DailyDashboard();
+        const testDataFile = path.join(__dirname, 'test-dashboard-data.json');
+        dashboard = new DailyDashboard(testDataFile);
+        // Clear any existing data to ensure clean state
+        dashboard.data = {
+            goals: [],
+            achievedGoals: [],
+            nextGoalId: 1,
+            goalStreaks: {},
+            goalTemplates: dashboard.data.goalTemplates
+        };
+        // Clear tracker data to ensure clean state
+        if (dashboard.mentalHealth) {
+            dashboard.mentalHealth.data = { moodLogs: [], journalEntries: [] };
+        }
+        if (dashboard.sleep) {
+            dashboard.sleep.data = { sleepLogs: [] };
+        }
+        if (dashboard.exercise) {
+            dashboard.exercise.data = { exercises: [] };
+        }
+        if (dashboard.medication) {
+            dashboard.medication.data = { medications: [], logs: [] };
+        }
         analytics = new AnalyticsEngine(dashboard);
         reportGen = new ReportGenerator(dashboard, analytics, reportsDir);
     });
@@ -26,6 +48,10 @@ describe('ReportGenerator', () => {
     afterAll(() => {
         if (fs.existsSync(reportsDir)) {
             fs.rmSync(reportsDir, { recursive: true, force: true });
+        }
+        const testDataFile = path.join(__dirname, 'test-dashboard-data.json');
+        if (fs.existsSync(testDataFile)) {
+            fs.unlinkSync(testDataFile);
         }
     });
 

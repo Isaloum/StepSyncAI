@@ -21,8 +21,12 @@ beforeEach(() => {
         'wellness-dashboard.json'
     ];
     testFiles.forEach(file => {
-        if (fs.existsSync(file)) {
-            fs.unlinkSync(file);
+        try {
+            if (fs.existsSync(file)) {
+                fs.unlinkSync(file);
+            }
+        } catch (error) {
+            // Ignore errors if file was already deleted
         }
     });
 });
