@@ -50,11 +50,13 @@ describe('AutomationManager', () => {
         mockReminderManager = {
             getDueReminders: jest.fn(() => []),
             markAsShown: jest.fn(),
-            getGoalEmoji: jest.fn(() => '💊')
+            getGoalEmoji: jest.fn(() => '💊'),
+            getReminders: jest.fn(() => [])
         };
 
         mockGoalManager = {
-            updateAllGoals: jest.fn(() => [])
+            updateAllGoals: jest.fn(() => []),
+            getGoals: jest.fn(() => [])
         };
 
         mockReportGenerator = {
@@ -556,6 +558,457 @@ describe('AutomationManager', () => {
 
             const output = consoleSpy.mock.calls.flat().join(' ');
             expect(output).toContain('No workflows configured');
+        });
+
+        test('should show enabled status correctly', () => {
+            automationManager.addWorkflow({
+                name: 'Enabled Flow',
+                condition: () => true,
+                action: () => {},
+                enabled: true
+            });
+
+            automationManager.addWorkflow({
+                name: 'Disabled Flow',
+                condition: () => true,
+                action: () => {},
+                enabled: false
+            });
+
+            consoleSpy.mockClear();
+            automationManager.listWorkflows();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('✅ Enabled Flow');
+            expect(output).toContain('⏸️ Disabled Flow');
+        });
+
+        test('should display trigger count and last triggered time', () => {
+            automationManager.enabled = true;
+            automationManager.addWorkflow({
+                name: 'Test',
+                condition: () => true,
+                action: () => {}
+            });
+
+            automationManager.executeWorkflows();
+
+            consoleSpy.mockClear();
+            automationManager.listWorkflows();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('Triggered: 1 times');
+            expect(output).toContain('Last:');
+        });
+    });
+
+    describe('addSmartReminder', () => {
+        test('should add low_sleep workflow with default threshold', () => {
+            automationManager.addSmartReminder({
+                type: 'low_sleep'
+            });
+
+            expect(automationManager.workflows.length).toBe(1);
+            expect(automationManager.workflows[0].name).toBe('Low Sleep Alert');
+        });
+
+        test('should add low_sleep workflow with custom threshold', () => {
+            automationManager.addSmartReminder({
+                type: 'low_sleep',
+                threshold: 5,
+                message: 'Sleep more!'
+            });
+
+            expect(automationManager.workflows.length).toBe(1);
+            expect(automationManager.workflows[0].name).toBe('Low Sleep Alert');
+        });
+
+        test('should trigger low_sleep alert when sleep is low', () => {
+            mockDashboard.getAllEntries.mockReturnValue([
+                { date: '2025-01-01', sleep_hours: 4 },
+                { date: '2025-01-02', sleep_hours: 5 },
+                { date: '2025-01-03', sleep_hours: 4 }
+            ]);
+
+            automationManager.enabled = true;
+            automationManager.addSmartReminder({
+                type: 'low_sleep',
+                threshold: 6
+            });
+
+            consoleSpy.mockClear();
+            automationManager.executeWorkflows();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('Low sleep detected');
+        });
+
+        test('should not trigger low_sleep alert when sleep is sufficient', () => {
+            mockDashboard.getAllEntries.mockReturnValue([
+                { date: '2025-01-01', sleep_hours: 8 },
+                { date: '2025-01-02', sleep_hours: 7 },
+                { date: '2025-01-03', sleep_hours: 8 }
+            ]);
+
+            automationManager.enabled = true;
+            automationManager.addSmartReminder({
+                type: 'low_sleep',
+                threshold: 6
+            });
+
+            consoleSpy.mockClear();
+            automationManager.executeWorkflows();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).not.toContain('Low sleep detected');
+        });
+
+        test('should use custom message for low_sleep', () => {
+            mockDashboard.getAllEntries.mockReturnValue([
+                { date: '2025-01-01', sleep_hours: 4 },
+                { date: '2025-01-02', sleep_hours: 4 },
+                { date: '2025-01-03', sleep_hours: 4 }
+            ]);
+
+            automationManager.enabled = true;
+            automationManager.addSmartReminder({
+                type: 'low_sleep',
+                threshold: 6,
+                message: 'Custom sleep message'
+            });
+
+            consoleSpy.mockClear();
+            automationManager.executeWorkflows();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('Custom sleep message');
+        });
+
+        test('should handle entries without sleep data', () => {
+            mockDashboard.getAllEntries.mockReturnValue([
+                { date: '2025-01-01', mood: 7 },
+                { date: '2025-01-02', mood: 8 },
+                { date: '2025-01-03', exercise_minutes: 30 }
+            ]);
+
+            automationManager.enabled = true;
+            automationManager.addSmartReminder({
+                type: 'low_sleep',
+                threshold: 6
+            });
+
+            consoleSpy.mockClear();
+            automationManager.executeWorkflows();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('Low sleep detected'); // avg = 0 < threshold
+        });
+
+        test('should add goal_at_risk workflow', () => {
+            automationManager.addSmartReminder({
+                type: 'goal_at_risk'
+            });
+
+            expect(automationManager.workflows.length).toBe(1);
+            expect(automationManager.workflows[0].name).toBe('Goal At Risk Alert');
+        });
+
+        test('should trigger goal_at_risk alert when goal is behind', () => {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 10);
+
+            mockGoalManager.getGoals.mockReturnValue([
+                {
+                    endDate: tomorrow.toISOString(),
+                    duration: 30,
+                    progress: {
+                        percentage: 10
+                    }
+                }
+            ]);
+
+            automationManager.enabled = true;
+            automationManager.addSmartReminder({
+                type: 'goal_at_risk'
+            });
+
+            consoleSpy.mockClear();
+            automationManager.executeWorkflows();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('goals are falling behind');
+        });
+
+        test('should not trigger goal_at_risk when goals on track', () => {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 10);
+
+            mockGoalManager.getGoals.mockReturnValue([
+                {
+                    endDate: tomorrow.toISOString(),
+                    duration: 10,
+                    progress: {
+                        percentage: 90
+                    }
+                }
+            ]);
+
+            automationManager.enabled = true;
+            automationManager.addSmartReminder({
+                type: 'goal_at_risk'
+            });
+
+            consoleSpy.mockClear();
+            automationManager.executeWorkflows();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).not.toContain('goals are falling behind');
+        });
+
+        test('should use custom message for goal_at_risk', () => {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 10);
+
+            mockGoalManager.getGoals.mockReturnValue([
+                {
+                    endDate: tomorrow.toISOString(),
+                    duration: 30,
+                    progress: {
+                        percentage: 10
+                    }
+                }
+            ]);
+
+            automationManager.enabled = true;
+            automationManager.addSmartReminder({
+                type: 'goal_at_risk',
+                message: 'Custom motivation message'
+            });
+
+            consoleSpy.mockClear();
+            automationManager.executeWorkflows();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('Custom motivation message');
+        });
+
+        test('should not trigger goal_at_risk when no active goals', () => {
+            mockGoalManager.getGoals.mockReturnValue([]);
+
+            automationManager.enabled = true;
+            automationManager.addSmartReminder({
+                type: 'goal_at_risk'
+            });
+
+            consoleSpy.mockClear();
+            automationManager.executeWorkflows();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).not.toContain('goals are falling behind');
+        });
+
+        test('should handle goals with past end dates', () => {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            mockGoalManager.getGoals.mockReturnValue([
+                {
+                    endDate: yesterday.toISOString(),
+                    duration: 30,
+                    progress: {
+                        percentage: 50
+                    }
+                }
+            ]);
+
+            automationManager.enabled = true;
+            automationManager.addSmartReminder({
+                type: 'goal_at_risk'
+            });
+
+            consoleSpy.mockClear();
+            automationManager.executeWorkflows();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).not.toContain('goals are falling behind'); // daysLeft <= 0
+        });
+    });
+
+    describe('generateDailySummary', () => {
+        test('should show warning when no data for today', () => {
+            mockDashboard.getEntry.mockReturnValue(null);
+
+            consoleSpy.mockClear();
+            automationManager.generateDailySummary();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('Daily Summary');
+            expect(output).toContain('No data logged for today yet');
+        });
+
+        test('should display mood when present', () => {
+            mockDashboard.getEntry.mockReturnValue({ mood: 8 });
+            mockGoalManager.getGoals.mockReturnValue([]);
+            mockReminderManager.getReminders.mockReturnValue([]);
+
+            consoleSpy.mockClear();
+            automationManager.generateDailySummary();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('Mood: 8/10');
+        });
+
+        test('should display sleep when present', () => {
+            mockDashboard.getEntry.mockReturnValue({ sleep_hours: 7.5 });
+            mockGoalManager.getGoals.mockReturnValue([]);
+            mockReminderManager.getReminders.mockReturnValue([]);
+
+            consoleSpy.mockClear();
+            automationManager.generateDailySummary();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('Sleep: 7.5 hours');
+        });
+
+        test('should display exercise when present', () => {
+            mockDashboard.getEntry.mockReturnValue({ exercise_minutes: 30 });
+            mockGoalManager.getGoals.mockReturnValue([]);
+            mockReminderManager.getReminders.mockReturnValue([]);
+
+            consoleSpy.mockClear();
+            automationManager.generateDailySummary();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('Exercise: 30 minutes');
+        });
+
+        test('should display all wellness data when present', () => {
+            mockDashboard.getEntry.mockReturnValue({
+                mood: 9,
+                sleep_hours: 8,
+                exercise_minutes: 45
+            });
+            mockGoalManager.getGoals.mockReturnValue([]);
+            mockReminderManager.getReminders.mockReturnValue([]);
+
+            consoleSpy.mockClear();
+            automationManager.generateDailySummary();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('Mood: 9/10');
+            expect(output).toContain('Sleep: 8 hours');
+            expect(output).toContain('Exercise: 45 minutes');
+        });
+
+        test('should display active goals when present', () => {
+            mockDashboard.getEntry.mockReturnValue({ mood: 8 });
+            mockGoalManager.getGoals.mockReturnValue([
+                {
+                    title: 'Test Goal',
+                    progress: {
+                        percentage: 75,
+                        streak: 5
+                    }
+                }
+            ]);
+            mockReminderManager.getReminders.mockReturnValue([]);
+
+            consoleSpy.mockClear();
+            automationManager.generateDailySummary();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('Goal Progress:');
+            expect(output).toContain('Test Goal');
+            expect(output).toContain('75%');
+            expect(output).toContain('Streak: 5');
+        });
+
+        test('should not display goal section when no active goals', () => {
+            mockDashboard.getEntry.mockReturnValue({ mood: 8 });
+            mockGoalManager.getGoals.mockReturnValue([]);
+            mockReminderManager.getReminders.mockReturnValue([]);
+
+            consoleSpy.mockClear();
+            automationManager.generateDailySummary();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).not.toContain('Goal Progress:');
+        });
+
+        test('should display active reminders when present', () => {
+            mockDashboard.getEntry.mockReturnValue({ mood: 8 });
+            mockGoalManager.getGoals.mockReturnValue([]);
+            mockReminderManager.getReminders.mockReturnValue([
+                { time: '09:00', title: 'Morning reminder' },
+                { time: '14:00', title: 'Afternoon reminder' }
+            ]);
+
+            consoleSpy.mockClear();
+            automationManager.generateDailySummary();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('Active Reminders:');
+            expect(output).toContain('Morning reminder');
+            expect(output).toContain('Afternoon reminder');
+        });
+
+        test('should limit reminders display to 3', () => {
+            mockDashboard.getEntry.mockReturnValue({ mood: 8 });
+            mockGoalManager.getGoals.mockReturnValue([]);
+            mockReminderManager.getReminders.mockReturnValue([
+                { time: '09:00', title: 'Reminder 1' },
+                { time: '10:00', title: 'Reminder 2' },
+                { time: '11:00', title: 'Reminder 3' },
+                { time: '12:00', title: 'Reminder 4' },
+                { time: '13:00', title: 'Reminder 5' }
+            ]);
+
+            consoleSpy.mockClear();
+            automationManager.generateDailySummary();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('Reminder 1');
+            expect(output).toContain('Reminder 2');
+            expect(output).toContain('Reminder 3');
+            expect(output).not.toContain('Reminder 4');
+            expect(output).not.toContain('Reminder 5');
+        });
+
+        test('should not display reminders section when no reminders', () => {
+            mockDashboard.getEntry.mockReturnValue({ mood: 8 });
+            mockGoalManager.getGoals.mockReturnValue([]);
+            mockReminderManager.getReminders.mockReturnValue([]);
+
+            consoleSpy.mockClear();
+            automationManager.generateDailySummary();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).not.toContain('Active Reminders:');
+        });
+
+        test('should display complete summary with all sections', () => {
+            mockDashboard.getEntry.mockReturnValue({
+                mood: 8,
+                sleep_hours: 7,
+                exercise_minutes: 30
+            });
+            mockGoalManager.getGoals.mockReturnValue([
+                { title: 'Goal 1', progress: { percentage: 50, streak: 3 } }
+            ]);
+            mockReminderManager.getReminders.mockReturnValue([
+                { time: '09:00', title: 'Reminder 1' }
+            ]);
+
+            consoleSpy.mockClear();
+            automationManager.generateDailySummary();
+
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('Daily Summary');
+            expect(output).toContain('Mood: 8/10');
+            expect(output).toContain('Sleep: 7 hours');
+            expect(output).toContain('Exercise: 30 minutes');
+            expect(output).toContain('Goal Progress:');
+            expect(output).toContain('Active Reminders:');
         });
     });
 });
