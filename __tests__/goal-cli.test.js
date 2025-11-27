@@ -244,6 +244,133 @@ describe('GoalCLI', () => {
             const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
             expect(output).toContain('Error');
         });
+
+        test('handles empty title', async () => {
+            let promptCallCount = 0;
+            cli.prompt = jest.fn().mockImplementation(() => {
+                const responses = ['1', '']; // type, empty title
+                return Promise.resolve(responses[promptCallCount++] || '');
+            });
+
+            await cli.createGoal();
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            expect(output).toContain('Title is required');
+        });
+
+        test('handles invalid target value', async () => {
+            let promptCallCount = 0;
+            cli.prompt = jest.fn().mockImplementation(() => {
+                const responses = ['1', 'Test Goal', 'Description', 'abc']; // invalid target
+                return Promise.resolve(responses[promptCallCount++] || '');
+            });
+
+            await cli.createGoal();
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            expect(output).toContain('Invalid target value');
+        });
+
+        test('handles invalid duration', async () => {
+            let promptCallCount = 0;
+            cli.prompt = jest.fn().mockImplementation(() => {
+                const responses = ['1', 'Test Goal', 'Description', '8', 'abc']; // invalid duration
+                return Promise.resolve(responses[promptCallCount++] || '');
+            });
+
+            await cli.createGoal();
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            expect(output).toContain('Invalid duration');
+        });
+
+        test('handles zero or negative duration', async () => {
+            let promptCallCount = 0;
+            cli.prompt = jest.fn().mockImplementation(() => {
+                const responses = ['1', 'Test Goal', 'Description', '8', '0']; // zero duration
+                return Promise.resolve(responses[promptCallCount++] || '');
+            });
+
+            await cli.createGoal();
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            expect(output).toContain('Invalid duration');
+        });
+
+        test('creates exercise goal type', async () => {
+            let promptCallCount = 0;
+            cli.prompt = jest.fn().mockImplementation(() => {
+                const responses = ['2', 'Exercise 30 min', 'Daily exercise', '30', '21', ''];
+                return Promise.resolve(responses[promptCallCount++] || '');
+            });
+
+            await cli.createGoal();
+
+            expect(mockGoalManager.createGoal).toHaveBeenCalled();
+            const callArg = mockGoalManager.createGoal.mock.calls[0][0];
+            expect(callArg.type).toBe('exercise');
+        });
+
+        test('creates mood goal type', async () => {
+            let promptCallCount = 0;
+            cli.prompt = jest.fn().mockImplementation(() => {
+                const responses = ['3', 'Mood goal', 'Daily mood', '7', '30', ''];
+                return Promise.resolve(responses[promptCallCount++] || '');
+            });
+
+            await cli.createGoal();
+
+            expect(mockGoalManager.createGoal).toHaveBeenCalled();
+            const callArg = mockGoalManager.createGoal.mock.calls[0][0];
+            expect(callArg.type).toBe('mood');
+        });
+
+        test('creates medication goal type', async () => {
+            let promptCallCount = 0;
+            cli.prompt = jest.fn().mockImplementation(() => {
+                const responses = ['4', 'Take meds', 'Daily medication', '30', ''];
+                return Promise.resolve(responses[promptCallCount++] || '');
+            });
+
+            await cli.createGoal();
+
+            expect(mockGoalManager.createGoal).toHaveBeenCalled();
+            const callArg = mockGoalManager.createGoal.mock.calls[0][0];
+            expect(callArg.type).toBe('medication');
+            expect(callArg.target).toBe(1); // Binary target
+        });
+
+        test('creates custom goal type', async () => {
+            let promptCallCount = 0;
+            cli.prompt = jest.fn().mockImplementation(() => {
+                const responses = ['5', 'Custom goal', 'My custom goal', '100', '14', ''];
+                return Promise.resolve(responses[promptCallCount++] || '');
+            });
+
+            await cli.createGoal();
+
+            expect(mockGoalManager.createGoal).toHaveBeenCalled();
+            const callArg = mockGoalManager.createGoal.mock.calls[0][0];
+            expect(callArg.type).toBe('custom');
+        });
+
+        test('handles custom start date', async () => {
+            let promptCallCount = 0;
+            cli.prompt = jest.fn().mockImplementation(() => {
+                const responses = ['1', 'Test Goal', 'Description', '8', '30', '2025-01-15'];
+                return Promise.resolve(responses[promptCallCount++] || '');
+            });
+
+            await cli.createGoal();
+
+            expect(mockGoalManager.createGoal).toHaveBeenCalled();
+            const callArg = mockGoalManager.createGoal.mock.calls[0][0];
+            expect(callArg.startDate).toBe('2025-01-15');
+        });
     });
 
     describe('updateProgress', () => {
