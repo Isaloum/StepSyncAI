@@ -236,6 +236,21 @@ describe('ExportManager', () => {
 
             const emptyDataFile = path.join(testDataDir, 'empty-json-dashboard.json');
             const emptyDashboard = new DailyDashboard(emptyDataFile);
+
+            // Clear tracker data to ensure truly empty state
+            if (emptyDashboard.mentalHealth) {
+                emptyDashboard.mentalHealth.data = { moodLogs: [], journalEntries: [] };
+            }
+            if (emptyDashboard.sleep) {
+                emptyDashboard.sleep.data = { sleepLogs: [] };
+            }
+            if (emptyDashboard.exercise) {
+                emptyDashboard.exercise.data = { exercises: [] };
+            }
+            if (emptyDashboard.medication) {
+                emptyDashboard.medication.data = { medications: [], logs: [] };
+            }
+
             const emptyExportsDir = path.join(testDataDir, 'empty-json-exports');
             const emptyExportManager = new ExportManager(emptyDashboard, emptyExportsDir);
 
