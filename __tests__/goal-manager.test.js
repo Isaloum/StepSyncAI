@@ -605,4 +605,270 @@ describe('GoalManager', () => {
             expect(allAchievements).toHaveLength(3);
         });
     });
+
+    describe('checkGoalCompletion - different goal types', () => {
+        test('should check exercise goal', () => {
+            const exerciseGoal = goalManager.createGoal({
+                type: 'exercise',
+                title: 'Exercise 30 min',
+                target: 30,
+                duration: 21
+            });
+
+            const isMet = goalManager.checkGoalCompletion(exerciseGoal, { exercise_minutes: 35 });
+            expect(isMet).toBe(true);
+
+            const isNotMet = goalManager.checkGoalCompletion(exerciseGoal, { exercise_minutes: 20 });
+            expect(isNotMet).toBe(false);
+        });
+
+        test('should check mood goal', () => {
+            const moodGoal = goalManager.createGoal({
+                type: 'mood',
+                title: 'Maintain mood 7+',
+                target: 7,
+                duration: 14
+            });
+
+            const isMet = goalManager.checkGoalCompletion(moodGoal, { mood: 8 });
+            expect(isMet).toBe(true);
+
+            const isNotMet = goalManager.checkGoalCompletion(moodGoal, { mood: 5 });
+            expect(isNotMet).toBe(false);
+        });
+
+        test('should check medication goal', () => {
+            const medGoal = goalManager.createGoal({
+                type: 'medication',
+                title: 'Take meds daily',
+                target: 1,
+                duration: 30
+            });
+
+            const isMet = goalManager.checkGoalCompletion(medGoal, {});
+            expect(isMet).toBe(true); // Simplified medication check always returns true
+        });
+
+        test('should check custom goal', () => {
+            const customGoal = goalManager.createGoal({
+                type: 'custom',
+                title: 'Water intake',
+                target: 8,
+                duration: 7,
+                metric: 'water_glasses'
+            });
+
+            const isMet = goalManager.checkGoalCompletion(customGoal, { water_glasses: 10 });
+            expect(isMet).toBe(true);
+
+            const isNotMet = goalManager.checkGoalCompletion(customGoal, { water_glasses: 5 });
+            expect(isNotMet).toBe(false);
+        });
+
+        test('should return false for unknown goal type', () => {
+            const unknownGoal = {
+                type: 'unknown',
+                target: 10
+            };
+
+            const isMet = goalManager.checkGoalCompletion(unknownGoal, { unknown: 15 });
+            expect(isMet).toBe(false);
+        });
+    });
+
+    describe('getValueFromData - different goal types', () => {
+        test('should get exercise value from data', () => {
+            const exerciseGoal = { type: 'exercise' };
+            const value = goalManager.getValueFromData(exerciseGoal, { exercise_minutes: 45 });
+            expect(value).toBe(45);
+        });
+
+        test('should get mood value from data', () => {
+            const moodGoal = { type: 'mood' };
+            const value = goalManager.getValueFromData(moodGoal, { mood: 7 });
+            expect(value).toBe(7);
+        });
+
+        test('should get custom metric value from data', () => {
+            const customGoal = { type: 'custom', metric: 'water_glasses' };
+            const value = goalManager.getValueFromData(customGoal, { water_glasses: 8 });
+            expect(value).toBe(8);
+        });
+
+        test('should return 0 for unknown goal type', () => {
+            const unknownGoal = { type: 'unknown' };
+            const value = goalManager.getValueFromData(unknownGoal, { some_value: 100 });
+            expect(value).toBe(0);
+        });
+
+        test('should return 0 for missing data', () => {
+            const exerciseGoal = { type: 'exercise' };
+            const value = goalManager.getValueFromData(exerciseGoal, {});
+            expect(value).toBe(0);
+        });
+    });
+
+    describe('updateAllGoals', () => {
+        beforeEach(() => {
+            // Create multiple active goals
+            goalManager.createGoal({
+                type: 'sleep',
+                title: 'Sleep goal 1',
+                target: 8,
+                duration: 7
+            });
+
+            goalManager.createGoal({
+                type: 'exercise',
+                title: 'Exercise goal 1',
+                target: 30,
+                duration: 7
+            });
+        });
+
+        test('should update all active goals successfully', () => {
+            const todayData = {
+                date: new Date().toISOString().split('T')[0],
+                sleep_hours: 8,
+                exercise_minutes: 35
+            };
+
+            const results = goalManager.updateAllGoals(todayData);
+
+            expect(results).toHaveLength(2);
+            expect(results.every(r => r.success)).toBe(true);
+        });
+
+        test('should handle errors for individual goals', () => {
+            const invalidData = {
+                date: new Date().toISOString().split('T')[0]
+            };
+
+            // Update progress should work even with missing data
+            const results = goalManager.updateAllGoals(invalidData);
+
+            expect(results).toHaveLength(2);
+            expect(results.every(r => r.hasOwnProperty('success'))).toBe(true);
+        });
+    });
+
+    describe('displayGoals', () => {
+        let consoleLogSpy;
+
+        beforeEach(() => {
+            consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+        });
+
+        afterEach(() => {
+            consoleLogSpy.mockRestore();
+        });
+
+        test('should display message when no goals exist', () => {
+            goalManager.displayGoals();
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+            const output = consoleLogSpy.mock.calls.flat().join('\n');
+            expect(output).toContain('No goals set yet');
+        });
+
+        test('should display active goals', () => {
+            goalManager.createGoal({
+                type: 'sleep',
+                title: 'Sleep 8 hours',
+                target: 8,
+                duration: 21
+            });
+
+            goalManager.displayGoals();
+
+            const output = consoleLogSpy.mock.calls.flat().join('\n');
+            expect(output).toContain('ACTIVE GOALS');
+            expect(output).toContain('Sleep 8 hours');
+        });
+
+        test('should display completed goals', () => {
+            const goal = goalManager.createGoal({
+                type: 'sleep',
+                title: 'Sleep goal',
+                target: 8,
+                duration: 7
+            });
+
+            // Complete the goal
+            goal.status = 'completed';
+            goal.completedAt = new Date().toISOString();
+            goalManager.saveGoals();
+
+            goalManager.displayGoals();
+
+            const output = consoleLogSpy.mock.calls.flat().join('\n');
+            expect(output).toContain('COMPLETED GOALS');
+            expect(output).toContain('Sleep goal');
+        });
+    });
+
+    describe('displayAchievements', () => {
+        let consoleLogSpy;
+
+        beforeEach(() => {
+            consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+        });
+
+        afterEach(() => {
+            consoleLogSpy.mockRestore();
+        });
+
+        test('should display message when no achievements exist', () => {
+            goalManager.displayAchievements();
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+            const output = consoleLogSpy.mock.calls.flat().join('\n');
+            expect(output).toContain('No achievements yet');
+        });
+
+        test('should display achievements when they exist', () => {
+            // Add an achievement
+            goalManager.achievements = [{
+                id: 'ach-1',
+                title: 'First Goal',
+                description: 'Completed your first goal',
+                badge: '🏆',
+                type: 'completion',
+                earnedAt: new Date().toISOString(),
+                goalId: 'goal-1',
+                stats: {
+                    maxStreak: 7,
+                    successRate: 100
+                }
+            }];
+            goalManager.saveAchievements();
+
+            goalManager.displayAchievements();
+
+            const output = consoleLogSpy.mock.calls.flat().join('\n');
+            expect(output).toContain('Your Achievements');
+            expect(output).toContain('First Goal');
+            expect(output).toContain('Max Streak: 7');
+            expect(output).toContain('Success Rate: 100%');
+        });
+    });
+
+    describe('saveAchievements error handling', () => {
+        test('should handle file write errors gracefully', () => {
+            const mockFs = require('fs');
+            mockFs.writeFileSync = jest.fn(() => {
+                throw new Error('Write failed');
+            });
+
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+            const result = goalManager.saveAchievements();
+
+            expect(result).toBe(false);
+            expect(consoleErrorSpy).toHaveBeenCalled();
+
+            consoleErrorSpy.mockRestore();
+            jest.restoreAllMocks();
+        });
+    });
 });

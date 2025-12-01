@@ -168,6 +168,59 @@ describe('ReminderCLI', () => {
             expect(cli.prompt).toHaveBeenCalled();
             expect(mockManager.createReminder).toHaveBeenCalled();
         });
+
+        test('handles empty title', async () => {
+            cli.prompt = jest.fn()
+                .mockResolvedValueOnce('custom')
+                .mockResolvedValueOnce('');  // empty title
+
+            await cli.createInteractive();
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            expect(output).toContain('Title is required');
+        });
+
+        test('handles invalid time format', async () => {
+            cli.prompt = jest.fn()
+                .mockResolvedValueOnce('custom')
+                .mockResolvedValueOnce('Test')
+                .mockResolvedValueOnce('Message')
+                .mockResolvedValueOnce('999');  // invalid time
+
+            await cli.createInteractive();
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            expect(output).toContain('Invalid time format');
+        });
+
+        test('handles custom days input', async () => {
+            cli.prompt = jest.fn()
+                .mockResolvedValueOnce('custom')
+                .mockResolvedValueOnce('Test')
+                .mockResolvedValueOnce('Message')
+                .mockResolvedValueOnce('09:00')
+                .mockResolvedValueOnce('monday,wednesday,friday');
+
+            await cli.createInteractive();
+
+            expect(mockManager.createReminder).toHaveBeenCalled();
+            const callArg = mockManager.createReminder.mock.calls[0][0];
+            expect(Array.isArray(callArg.days)).toBe(true);
+        });
+
+        test('handles creation error', async () => {
+            mockManager.createReminder.mockImplementation(() => {
+                throw new Error('Creation failed');
+            });
+
+            await cli.createInteractive();
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            expect(output).toContain('Error');
+        });
     });
 
     describe('createMedicationReminder', () => {
@@ -184,6 +237,29 @@ describe('ReminderCLI', () => {
 
             expect(cli.prompt).toHaveBeenCalled();
             expect(mockManager.createMedicationReminder).toHaveBeenCalled();
+        });
+
+        test('handles empty medication name', async () => {
+            cli.prompt = jest.fn()
+                .mockResolvedValueOnce('');  // empty name
+
+            await cli.createMedicationReminder();
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            expect(output).toContain('Medication name is required');
+        });
+
+        test('handles creation error', async () => {
+            mockManager.createMedicationReminder.mockImplementation(() => {
+                throw new Error('Creation failed');
+            });
+
+            await cli.createMedicationReminder();
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            expect(output).toContain('Error');
         });
     });
 
@@ -202,6 +278,41 @@ describe('ReminderCLI', () => {
             expect(cli.prompt).toHaveBeenCalled();
             expect(mockManager.createExerciseReminder).toHaveBeenCalled();
         });
+
+        test('handles invalid time format', async () => {
+            cli.prompt = jest.fn()
+                .mockResolvedValueOnce('Workout')
+                .mockResolvedValueOnce('invalid-time');
+
+            await cli.createExerciseReminder();
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            expect(output).toContain('Invalid time format');
+        });
+
+        test('handles custom days input', async () => {
+            cli.prompt = jest.fn()
+                .mockResolvedValueOnce('Workout')
+                .mockResolvedValueOnce('07:00')
+                .mockResolvedValueOnce('monday,friday');
+
+            await cli.createExerciseReminder();
+
+            expect(mockManager.createExerciseReminder).toHaveBeenCalled();
+        });
+
+        test('handles creation error', async () => {
+            mockManager.createExerciseReminder.mockImplementation(() => {
+                throw new Error('Creation failed');
+            });
+
+            await cli.createExerciseReminder();
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            expect(output).toContain('Error');
+        });
     });
 
     describe('createSleepReminder', () => {
@@ -216,6 +327,29 @@ describe('ReminderCLI', () => {
 
             expect(cli.prompt).toHaveBeenCalled();
             expect(mockManager.createSleepReminder).toHaveBeenCalled();
+        });
+
+        test('handles invalid bedtime format', async () => {
+            cli.prompt = jest.fn()
+                .mockResolvedValueOnce('invalid-time');
+
+            await cli.createSleepReminder();
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            expect(output).toContain('Invalid time format');
+        });
+
+        test('handles creation error', async () => {
+            mockManager.createSleepReminder.mockImplementation(() => {
+                throw new Error('Creation failed');
+            });
+
+            await cli.createSleepReminder();
+
+            expect(consoleLogSpy).toHaveBeenCalled();
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            expect(output).toContain('Error');
         });
     });
 
