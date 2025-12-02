@@ -28,18 +28,34 @@ class BackupManager {
 
     /**
      * Ensure backup directory exists
+     * @returns {boolean} true if directory exists or was created, false on failure
      */
     ensureBackupDirectory() {
-        if (!fs.existsSync(this.backupDir)) {
-            fs.mkdirSync(this.backupDir, { recursive: true });
+        try {
+            if (!fs.existsSync(this.backupDir)) {
+                fs.mkdirSync(this.backupDir, { recursive: true });
+            }
+            return true;
+        } catch (error) {
+            console.error('Failed to create backup directory:', error.message);
+            return false;
         }
     }
 
     /**
      * Create a full backup of all data files
+     * @returns {Object} Result object with success, backupId, path, data, or error
      */
     createBackup(options = {}) {
         const { description = '', tags = [] } = options;
+
+        // Ensure backup directory exists first
+        if (!this.ensureBackupDirectory()) {
+            return {
+                success: false,
+                message: 'Failed to create backup directory'
+            };
+        }
 
         try {
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');

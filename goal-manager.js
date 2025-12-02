@@ -114,24 +114,41 @@ class GoalManager {
             throw new Error('Missing required fields: type, title, target, duration');
         }
 
-        // Validate goal type
+        // Validate goal type - throw on invalid inputs
         const validTypes = ['sleep', 'exercise', 'mood', 'medication', 'custom'];
         if (!validTypes.includes(type)) {
             throw new Error(`Invalid type. Must be one of: ${validTypes.join(', ')}`);
         }
 
+        // Validate title is non-empty - throw on invalid inputs
+        if (typeof title !== 'string' || title.trim().length === 0) {
+            throw new Error('Title must be non-empty');
+        }
+
+        // Validate target is a positive number - throw on invalid inputs
+        const targetNum = parseFloat(target);
+        if (isNaN(targetNum) || targetNum <= 0) {
+            throw new Error('Target must be a positive number');
+        }
+
+        // Validate duration is a positive number - throw on invalid inputs
+        const durationNum = parseInt(duration);
+        if (isNaN(durationNum) || durationNum <= 0) {
+            throw new Error('Duration must be a positive number');
+        }
+
         // Calculate end date
         const start = new Date(startDate);
         const end = new Date(start);
-        end.setDate(end.getDate() + duration);
+        end.setDate(end.getDate() + durationNum);
 
         const goal = {
             id: uuidv4(),
             type,
-            title,
+            title: title.trim(),
             description: description || title,
-            target,
-            duration,
+            target: targetNum,
+            duration: durationNum,
             startDate,
             endDate: end.toISOString().split('T')[0],
             metric,
@@ -145,7 +162,7 @@ class GoalManager {
                 daysCompleted: 0,
                 lastCompletedDate: null
             },
-            milestones: this.generateMilestones(duration),
+            milestones: this.generateMilestones(durationNum),
             createdAt: new Date().toISOString(),
             completedAt: null,
             history: []
@@ -156,8 +173,8 @@ class GoalManager {
 
         console.log('\n✅ Goal created successfully!');
         console.log(`   ${this.getGoalEmoji(type)} ${title}`);
-        console.log(`   Target: ${this.formatTarget(target, type)}`);
-        console.log(`   Duration: ${duration} days`);
+        console.log(`   Target: ${this.formatTarget(targetNum, type)}`);
+        console.log(`   Duration: ${durationNum} days`);
         console.log(`   Start: ${startDate} → End: ${goal.endDate}`);
 
         return goal;
