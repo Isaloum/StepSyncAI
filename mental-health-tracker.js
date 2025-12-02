@@ -999,10 +999,9 @@ class MentalHealthTracker {
             console.log('─'.repeat(60));
         });
 
-        // Calculate average only from valid numeric ratings
-        const numericRatings = recentMoods.filter(e => typeof e.rating === 'number');
-        if (numericRatings.length > 0) {
-            const avg = (numericRatings.reduce((sum, e) => sum + e.rating, 0) / numericRatings.length).toFixed(1);
+        // Calculate average - recentMoods already contains only entries with numeric ratings
+        if (recentMoods.length > 0) {
+            const avg = (recentMoods.reduce((sum, e) => sum + e.rating, 0) / recentMoods.length).toFixed(1);
             console.log(`Average Mood: ${avg}/10`);
         } else {
             console.log('Average Mood: N/A');
@@ -1012,6 +1011,11 @@ class MentalHealthTracker {
 
     // Journal Entries
     addJournal(content, type = 'general') {
+        // Ensure journalEntries array exists
+        if (!Array.isArray(this.data.journalEntries)) {
+            this.data.journalEntries = [];
+        }
+
         const entry = {
             id: this.generateId(),
             type: type, // 'general', 'incident', 'therapy', 'progress'
@@ -1020,6 +1024,9 @@ class MentalHealthTracker {
         };
 
         this.data.journalEntries.push(entry);
+
+        // Keep alias in sync
+        this.data.journalLogs = this.data.journalEntries;
 
         if (this.saveData()) {
             console.log('\n✓ Journal entry saved!');
