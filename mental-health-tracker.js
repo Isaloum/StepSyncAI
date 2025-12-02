@@ -16,35 +16,87 @@ class MentalHealthTracker {
         return ++this.idCounter;
     }
 
+    normalizeData(raw) {
+        const data = raw || {};
+
+        // Ensure profile exists with expected fields
+        if (!data.profile || typeof data.profile !== 'object') {
+            data.profile = {
+                accidentDate: null,
+                accidentDescription: null,
+                createdAt: new Date().toISOString()
+            };
+        }
+
+        // Detect and alias legacy properties: moodLogs <-> moodEntries
+        if (Array.isArray(data.moodLogs) && !Array.isArray(data.moodEntries)) {
+            data.moodEntries = data.moodLogs;
+        } else if (Array.isArray(data.moodEntries) && !Array.isArray(data.moodLogs)) {
+            data.moodLogs = data.moodEntries;
+        }
+
+        // Detect and alias legacy properties: journalLogs <-> journalEntries
+        if (Array.isArray(data.journalLogs) && !Array.isArray(data.journalEntries)) {
+            data.journalEntries = data.journalLogs;
+        } else if (Array.isArray(data.journalEntries) && !Array.isArray(data.journalLogs)) {
+            data.journalLogs = data.journalEntries;
+        }
+
+        // List of all expected array properties
+        const arrayProperties = [
+            'moodEntries', 'moodLogs',
+            'journalEntries', 'journalLogs',
+            'symptoms', 'triggers', 'copingStrategies',
+            'emergencyContacts', 'goals', 'therapists', 'therapySessions'
+        ];
+
+        // Coerce all expected list properties to arrays and filter out null/undefined elements
+        for (const prop of arrayProperties) {
+            if (!Array.isArray(data[prop])) {
+                data[prop] = [];
+            } else {
+                data[prop] = data[prop].filter(item => item != null);
+            }
+        }
+
+        // Keep aliases in sync after filtering
+        data.moodLogs = data.moodEntries;
+        data.journalLogs = data.journalEntries;
+
+        return data;
+    }
+
     loadData() {
         try {
             if (fs.existsSync(this.dataFile)) {
                 const rawData = fs.readFileSync(this.dataFile, 'utf8');
-                return JSON.parse(rawData);
+                try {
+                    const parsed = JSON.parse(rawData);
+                    return this.normalizeData(parsed);
+                } catch (parseError) {
+                    console.error('Error loading data:', parseError.message);
+                    return this.normalizeData({});
+                }
             }
         } catch (error) {
             console.error('Error loading data:', error.message);
         }
-        return {
-            profile: {
-                accidentDate: null,
-                accidentDescription: null,
-                createdAt: new Date().toISOString()
-            },
-            moodEntries: [],
-            journalEntries: [],
-            symptoms: [],
-            triggers: [],
-            copingStrategies: [],
-            emergencyContacts: [],
-            goals: [],
-            therapists: [],
-            therapySessions: []
-        };
+        return this.normalizeData({});
     }
 
     saveData() {
         try {
+            // Synchronize aliases before writing (bidirectional)
+            if (Array.isArray(this.data.moodEntries)) {
+                this.data.moodLogs = this.data.moodEntries;
+            } else if (Array.isArray(this.data.moodLogs)) {
+                this.data.moodEntries = this.data.moodLogs;
+            }
+            if (Array.isArray(this.data.journalEntries)) {
+                this.data.journalLogs = this.data.journalEntries;
+            } else if (Array.isArray(this.data.journalLogs)) {
+                this.data.journalEntries = this.data.journalLogs;
+            }
             fs.writeFileSync(this.dataFile, JSON.stringify(this.data, null, 2));
             return true;
         } catch (error) {
@@ -889,6 +941,8 @@ class MentalHealthTracker {
         };
 
         this.data.moodEntries.push(entry);
+        // Keep moodLogs alias in sync
+        this.data.moodLogs = this.data.moodEntries;
 
         if (this.saveData()) {
             const emoji = this.getMoodEmoji(rating);
@@ -912,7 +966,11 @@ class MentalHealthTracker {
         const now = new Date();
         const startDate = new Date(now.getTime() - (days * 24 * 60 * 60 * 1000));
 
-        const recentMoods = this.data.moodEntries.filter(entry => {
+        // Defensive: ensure moodEntries is an array, filter out null entries and invalid entries
+        const source = Array.isArray(this.data.moodEntries) ? this.data.moodEntries : [];
+        const recentMoods = source.filter(entry => {
+            if (!entry || typeof entry !== 'object') return false;
+            if (!entry.timestamp) return false;
             return new Date(entry.timestamp) >= startDate;
         });
 
@@ -926,15 +984,21 @@ class MentalHealthTracker {
 
         recentMoods.forEach(entry => {
             const date = new Date(entry.timestamp).toLocaleString();
-            const emoji = this.getMoodEmoji(entry.rating);
-            console.log(`${emoji} ${entry.rating}/10 - ${date}`);
+            const rating = typeof entry.rating === 'number' ? entry.rating : 0;
+            const emoji = this.getMoodEmoji(rating);
+            console.log(`${emoji} ${rating}/10 - ${date}`);
             if (entry.note) console.log(`   "${entry.note}"`);
             console.log('─'.repeat(60));
         });
 
-        // Calculate average
-        const avg = (recentMoods.reduce((sum, e) => sum + e.rating, 0) / recentMoods.length).toFixed(1);
-        console.log(`Average Mood: ${avg}/10`);
+        // Calculate average using only valid numeric ratings
+        const validRatings = recentMoods.filter(e => typeof e.rating === 'number');
+        if (validRatings.length > 0) {
+            const avg = (validRatings.reduce((sum, e) => sum + e.rating, 0) / validRatings.length).toFixed(1);
+            console.log(`Average Mood: ${avg}/10`);
+        } else {
+            console.log(`Average Mood: N/A`);
+        }
         console.log('═'.repeat(60));
     }
 
