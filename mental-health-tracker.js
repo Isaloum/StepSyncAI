@@ -16,35 +16,69 @@ class MentalHealthTracker {
         return ++this.idCounter;
     }
 
-    loadData() {
-        try {
-            if (fs.existsSync(this.dataFile)) {
-                const rawData = fs.readFileSync(this.dataFile, 'utf8');
-                return JSON.parse(rawData);
-            }
-        } catch (error) {
-            console.error('Error loading data:', error.message);
+    /**
+     * Normalize data by supporting legacy aliases and ensuring arrays exist
+     * @param {Object} raw - Raw data object
+     * @returns {Object} Normalized data object
+     */
+    normalizeData(raw) {
+        if (!raw || typeof raw !== 'object') {
+            raw = {};
         }
-        return {
-            profile: {
+
+        // Support legacy aliases: moodLogs <-> moodEntries, journalLogs <-> journalEntries
+        const moodEntries = Array.isArray(raw.moodEntries) ? raw.moodEntries : 
+                           (Array.isArray(raw.moodLogs) ? raw.moodLogs : []);
+        const journalEntries = Array.isArray(raw.journalEntries) ? raw.journalEntries : 
+                              (Array.isArray(raw.journalLogs) ? raw.journalLogs : []);
+
+        // Filter out malformed entries (null, undefined, non-objects)
+        const filterValidEntries = (arr) => {
+            return Array.isArray(arr) ? arr.filter(e => e != null && typeof e === 'object') : [];
+        };
+
+        const normalized = {
+            profile: raw.profile && typeof raw.profile === 'object' ? raw.profile : {
                 accidentDate: null,
                 accidentDescription: null,
                 createdAt: new Date().toISOString()
             },
-            moodEntries: [],
-            journalEntries: [],
-            symptoms: [],
-            triggers: [],
-            copingStrategies: [],
-            emergencyContacts: [],
-            goals: [],
-            therapists: [],
-            therapySessions: []
+            moodEntries: filterValidEntries(moodEntries),
+            journalEntries: filterValidEntries(journalEntries),
+            symptoms: filterValidEntries(raw.symptoms),
+            triggers: filterValidEntries(raw.triggers),
+            copingStrategies: filterValidEntries(raw.copingStrategies),
+            emergencyContacts: filterValidEntries(raw.emergencyContacts),
+            goals: filterValidEntries(raw.goals),
+            therapists: filterValidEntries(raw.therapists),
+            therapySessions: filterValidEntries(raw.therapySessions)
         };
+
+        // Sync legacy aliases so tests reading moodLogs and journalLogs see data
+        normalized.moodLogs = normalized.moodEntries;
+        normalized.journalLogs = normalized.journalEntries;
+
+        return normalized;
+    }
+
+    loadData() {
+        try {
+            if (fs.existsSync(this.dataFile)) {
+                const rawData = fs.readFileSync(this.dataFile, 'utf8');
+                const parsed = JSON.parse(rawData);
+                return this.normalizeData(parsed);
+            }
+        } catch (error) {
+            console.error('Error loading data:', error.message);
+        }
+        return this.normalizeData({});
     }
 
     saveData() {
         try {
+            // Sync legacy aliases before writing
+            this.data.moodLogs = this.data.moodEntries;
+            this.data.journalLogs = this.data.journalEntries;
             fs.writeFileSync(this.dataFile, JSON.stringify(this.data, null, 2));
             return true;
         } catch (error) {
@@ -876,23 +910,32 @@ class MentalHealthTracker {
 
     // Mood Tracking
     logMood(rating, note = '') {
-        if (rating < 1 || rating > 10) {
+        // Validate rating is an integer between 1 and 10
+        const ratingNum = parseInt(rating);
+        if (!Number.isInteger(ratingNum) || ratingNum < 1 || ratingNum > 10) {
             console.log('❌ Rating must be between 1 and 10');
             return false;
         }
 
+        // Ensure moodEntries exists as an array
+        if (!Array.isArray(this.data.moodEntries)) {
+            this.data.moodEntries = [];
+        }
+
         const entry = {
             id: this.generateId(),
-            rating: parseInt(rating),
+            rating: ratingNum,
             note: note,
             timestamp: new Date().toISOString()
         };
 
         this.data.moodEntries.push(entry);
+        // Sync legacy alias
+        this.data.moodLogs = this.data.moodEntries;
 
         if (this.saveData()) {
-            const emoji = this.getMoodEmoji(rating);
-            console.log(`\n✓ Mood logged: ${emoji} ${rating}/10`);
+            const emoji = this.getMoodEmoji(ratingNum);
+            console.log(`\n✓ Mood logged: ${emoji} ${ratingNum}/10`);
             if (note) console.log(`  Note: ${note}`);
             console.log(`  Time: ${new Date().toLocaleString()}`);
             return true;
@@ -912,8 +955,10 @@ class MentalHealthTracker {
         const now = new Date();
         const startDate = new Date(now.getTime() - (days * 24 * 60 * 60 * 1000));
 
-        const recentMoods = this.data.moodEntries.filter(entry => {
-            return new Date(entry.timestamp) >= startDate;
+        // Defensive check: ensure moodEntries is an array and filter out invalid entries
+        const entries = Array.isArray(this.data.moodEntries) ? this.data.moodEntries : [];
+        const recentMoods = entries.filter(entry => {
+            return entry && entry.timestamp && new Date(entry.timestamp) >= startDate;
         });
 
         if (recentMoods.length === 0) {
