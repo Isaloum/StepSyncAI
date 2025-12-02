@@ -34,7 +34,7 @@ class MentalHealthTracker {
 
         // Filter out malformed entries (null, undefined, non-objects)
         const filterValidEntries = (arr) => {
-            return Array.isArray(arr) ? arr.filter(e => e != null && typeof e === 'object') : [];
+            return Array.isArray(arr) ? arr.filter(e => e !== null && e !== undefined && typeof e === 'object') : [];
         };
 
         const normalized = {
@@ -54,7 +54,7 @@ class MentalHealthTracker {
             therapySessions: filterValidEntries(raw.therapySessions)
         };
 
-        // Sync legacy aliases so tests reading moodLogs and journalLogs see data
+        // Sync legacy aliases for backward compatibility
         normalized.moodLogs = normalized.moodEntries;
         normalized.journalLogs = normalized.journalEntries;
 
@@ -915,11 +915,6 @@ class MentalHealthTracker {
         if (!Number.isInteger(ratingNum) || ratingNum < 1 || ratingNum > 10) {
             console.log('❌ Rating must be between 1 and 10');
             return false;
-        }
-
-        // Ensure moodEntries exists as an array
-        if (!Array.isArray(this.data.moodEntries)) {
-            this.data.moodEntries = [];
         }
 
         const entry = {

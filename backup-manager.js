@@ -54,7 +54,7 @@ class BackupManager {
         if (!this.ensureBackupDirectory()) {
             return {
                 success: false,
-                message: 'Failed to create backup directory'
+                error: 'Failed to create backup directory'
             };
         }
 
