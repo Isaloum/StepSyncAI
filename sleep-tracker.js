@@ -57,6 +57,14 @@ class SleepTracker {
             return null;
         }
 
+        // Handle Date objects - convert to HH:MM format
+        if (bedtime instanceof Date) {
+            bedtime = bedtime.toTimeString().slice(0, 5); // Extract HH:MM
+        }
+        if (wakeTime instanceof Date) {
+            wakeTime = wakeTime.toTimeString().slice(0, 5); // Extract HH:MM
+        }
+
         // Validate time format using ValidationUtils
         if (!ValidationUtils.validateTime(bedtime, 'bedtime') || !ValidationUtils.validateTime(wakeTime, 'wake time')) {
             console.log('💡 Example: node sleep-tracker.js log 22:30 06:30 8 "Good sleep"\n');

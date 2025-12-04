@@ -8,6 +8,8 @@ class MentalHealthTracker {
     constructor(dataFile = 'mental-health-data.json') {
         this.dataFile = dataFile;
         this.data = this.loadData();
+        // Add alias for backward compatibility
+        this.data.moodLogs = this.data.moodEntries;
         this.reminderService = new ReminderService();
         this.idCounter = Date.now();
     }

@@ -22,6 +22,19 @@ class GoalManager {
         this.achievementsFile = path.join(dataDir, 'achievements.json');
         this.goals = this.loadGoals();
         this.achievements = this.loadAchievements();
+        this.deferSaves = false; // Flag to batch saves
+        this.goalMap = new Map(); // For O(1) lookups
+        this._rebuildGoalMap();
+    }
+
+    /**
+     * Rebuild the goal map for fast lookups
+     */
+    _rebuildGoalMap() {
+        this.goalMap.clear();
+        this.goals.forEach(goal => {
+            this.goalMap.set(goal.id, goal);
+        });
     }
 
     /**
@@ -43,6 +56,11 @@ class GoalManager {
      * Save goals to file
      */
     saveGoals() {
+        // Skip save if in batch mode
+        if (this.deferSaves) {
+            return true;
+        }
+
         try {
             if (!fs.existsSync(this.dataDir)) {
                 fs.mkdirSync(this.dataDir, { recursive: true });
@@ -152,6 +170,7 @@ class GoalManager {
         };
 
         this.goals.push(goal);
+        this.goalMap.set(goal.id, goal);
         this.saveGoals();
 
         console.log('\n✅ Goal created successfully!');
@@ -213,7 +232,7 @@ class GoalManager {
      * Get specific goal by ID
      */
     getGoal(id) {
-        return this.goals.find(g => g.id === id);
+        return this.goalMap.get(id);
     }
 
     /**
@@ -390,13 +409,14 @@ class GoalManager {
      * Delete a goal
      */
     deleteGoal(id) {
-        const index = this.goals.findIndex(g => g.id === id);
-        if (index === -1) {
+        const goal = this.getGoal(id);
+        if (!goal) {
             throw new Error(`Goal not found: ${id}`);
         }
 
-        const goal = this.goals[index];
+        const index = this.goals.findIndex(g => g.id === id);
         this.goals.splice(index, 1);
+        this.goalMap.delete(id);
         this.saveGoals();
 
         console.log(`✅ Goal deleted: ${goal.title}`);
@@ -459,6 +479,28 @@ class GoalManager {
             : 0;
 
         return stats;
+    }
+
+    /**
+     * Enable batch mode to defer saves
+     */
+    beginBatch() {
+        this.deferSaves = true;
+    }
+
+    /**
+     * End batch mode and flush pending saves
+     */
+    endBatch() {
+        this.deferSaves = false;
+        return this.saveGoals();
+    }
+
+    /**
+     * Get statistics (alias for getGoalStats)
+     */
+    getStats(goalId = null) {
+        return this.getGoalStats(goalId);
     }
 
     /**

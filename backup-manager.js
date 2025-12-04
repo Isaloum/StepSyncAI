@@ -116,7 +116,8 @@ class BackupManager {
                 success: true,
                 backupId,
                 path: backupPath,
-                data: backupData
+                data: backupData,
+                message: 'Backup created successfully'
             };
 
         } catch (error) {
@@ -238,7 +239,8 @@ class BackupManager {
             console.error('\n❌ Restore failed:', error.message);
             return {
                 success: false,
-                error: error.message
+                error: error.message,
+                message: error.message
             };
         }
     }
@@ -281,17 +283,20 @@ class BackupManager {
                 }
             }
 
+            const filesChecked = Object.keys(manifest.files).filter(f => manifest.files[f].backedUp).length;
             return {
                 valid: errors.length === 0,
                 errors,
                 backupId,
-                filesChecked: Object.keys(manifest.files).filter(f => manifest.files[f].backedUp).length
+                filesChecked,
+                message: errors.length === 0 ? 'Backup is valid' : `Backup has ${errors.length} error(s)`
             };
 
         } catch (error) {
             return {
                 valid: false,
-                errors: [error.message]
+                errors: [error.message],
+                message: `Verification failed: ${error.message}`
             };
         }
     }
@@ -331,6 +336,7 @@ class BackupManager {
             cutoffDate.setDate(cutoffDate.getDate() - this.retentionDays);
 
             let deletedCount = 0;
+            let keptCount = 0;
 
             for (const backup of backups) {
                 const backupDate = new Date(backup.timestamp);
@@ -342,6 +348,8 @@ class BackupManager {
                 if (!isProtected && backupDate < cutoffDate) {
                     this.deleteBackup(backup.id);
                     deletedCount++;
+                } else {
+                    keptCount++;
                 }
             }
 
@@ -355,6 +363,7 @@ class BackupManager {
                     if (!isProtected) {
                         this.deleteBackup(backup.id);
                         deletedCount++;
+                        keptCount--;
                     }
                 }
             }
@@ -363,8 +372,20 @@ class BackupManager {
                 console.log(`🧹 Cleaned up ${deletedCount} old backup(s)`);
             }
 
+            return {
+                deleted: deletedCount,
+                kept: keptCount,
+                total: backups.length
+            };
+
         } catch (error) {
             console.error('Cleanup warning:', error.message);
+            return {
+                deleted: 0,
+                kept: 0,
+                total: 0,
+                error: error.message
+            };
         }
     }
 

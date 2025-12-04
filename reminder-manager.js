@@ -328,15 +328,20 @@ class ReminderManager {
      * Dismiss a reminder
      */
     dismissReminder(id) {
-        const reminder = this.getReminder(id);
-        if (!reminder) {
+        const index = this.reminders.findIndex(r => r.id === id);
+        if (index === -1) {
             throw new Error(`Reminder not found: ${id}`);
         }
+
+        const reminder = this.reminders[index];
 
         reminder.history.push({
             timestamp: new Date().toISOString(),
             action: 'dismissed'
         });
+
+        // Remove the reminder from the list
+        this.reminders.splice(index, 1);
 
         this.saveReminders();
         console.log('✅ Reminder dismissed');

@@ -460,7 +460,7 @@ class AnalyticsEngine {
         const report = this.generateReport(days);
 
         console.log('\n╔═══════════════════════════════════════════════════════════════╗');
-        console.log('║              Advanced Analytics Dashboard                     ║');
+        console.log('║                  Wellness Dashboard                           ║');
         console.log('╚═══════════════════════════════════════════════════════════════╝');
         console.log(`\nAnalysis Period: ${report.period}`);
         console.log(`Generated: ${new Date(report.generated).toLocaleString()}\n`);
