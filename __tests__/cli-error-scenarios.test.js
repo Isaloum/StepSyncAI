@@ -101,17 +101,18 @@ describe('CLI Error Scenarios', () => {
         test('should reject invalid mood ratings', () => {
             const tracker = new MentalHealthTracker();
 
-            expect(() => {
-                tracker.logMood(0, 'Too low'); // Below 1
-            }).toThrow();
+            // Below 1 - returns false
+            expect(tracker.logMood(0, 'Too low')).toBe(false);
+            expect(tracker.data.moodEntries.length).toBe(0);
 
-            expect(() => {
-                tracker.logMood(11, 'Too high'); // Above 10
-            }).toThrow();
+            // Above 10 - returns false
+            expect(tracker.logMood(11, 'Too high')).toBe(false);
+            expect(tracker.data.moodEntries.length).toBe(0);
 
-            expect(() => {
-                tracker.logMood('seven', 'Not a number');
-            }).toThrow();
+            // Not a number - NaN becomes invalid after parseInt
+            const result = tracker.logMood('seven', 'Not a number');
+            expect(result).toBe(false);
+            expect(tracker.data.moodEntries.length).toBe(0);
         });
 
         test('should reject invalid sleep quality ratings', () => {
@@ -120,13 +121,11 @@ describe('CLI Error Scenarios', () => {
             const sleepStart = new Date('2025-12-01T22:00');
             const sleepEnd = new Date('2025-12-02T06:00');
 
-            expect(() => {
-                tracker.logSleep(sleepStart, sleepEnd, 0); // Below 1
-            }).toThrow();
+            // Below 1 - returns null
+            expect(tracker.logSleep(sleepStart, sleepEnd, 0)).toBe(null);
 
-            expect(() => {
-                tracker.logSleep(sleepStart, sleepEnd, 11); // Above 10
-            }).toThrow();
+            // Above 10 - returns null
+            expect(tracker.logSleep(sleepStart, sleepEnd, 11)).toBe(null);
         });
 
         test('should reject invalid sleep times', () => {
@@ -135,41 +134,35 @@ describe('CLI Error Scenarios', () => {
             const sleepStart = new Date('2025-12-02T06:00');
             const sleepEnd = new Date('2025-12-01T22:00'); // End before start
 
-            expect(() => {
-                tracker.logSleep(sleepStart, sleepEnd, 7);
-            }).toThrow();
+            // Invalid time order - returns null due to validation
+            const result = tracker.logSleep(sleepStart, sleepEnd, 7);
+            expect(result).toBe(null);
         });
 
         test('should reject invalid exercise data', () => {
             const tracker = new ExerciseTracker();
 
-            expect(() => {
-                tracker.logExercise('', 30, 'moderate', 'Notes'); // Empty type
-            }).toThrow();
+            // Empty type - returns false
+            expect(tracker.logExercise('', 30, 'moderate', 'Notes')).toBe(false);
 
-            expect(() => {
-                tracker.logExercise('Running', -10, 'moderate', 'Notes'); // Negative duration
-            }).toThrow();
+            // Negative duration - returns false
+            expect(tracker.logExercise('Running', -10, 'moderate', 'Notes')).toBe(false);
 
-            expect(() => {
-                tracker.logExercise('Running', 30, 'invalid-intensity', 'Notes');
-            }).toThrow();
+            // Invalid intensity - returns false
+            expect(tracker.logExercise('Running', 30, 'invalid-intensity', 'Notes')).toBe(false);
         });
 
         test('should reject invalid medication data', () => {
             const tracker = new MedicationTracker();
 
-            expect(() => {
-                tracker.addMedication('', '10mg', 'daily', '08:00'); // Empty name
-            }).toThrow();
+            // Empty name - returns false
+            expect(tracker.addMedication('', '10mg', 'daily', '08:00')).toBe(false);
 
-            expect(() => {
-                tracker.addMedication('Med', '', 'daily', '08:00'); // Empty dosage
-            }).toThrow();
+            // Empty dosage - returns false
+            expect(tracker.addMedication('Med', '', 'daily', '08:00')).toBe(false);
 
-            expect(() => {
-                tracker.addMedication('Med', '10mg', 'invalid', '08:00'); // Invalid frequency
-            }).toThrow();
+            // Invalid frequency - returns false
+            expect(tracker.addMedication('Med', '10mg', 'invalid', '08:00')).toBe(false);
         });
 
         test('should reject invalid goal data', () => {

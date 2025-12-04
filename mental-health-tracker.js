@@ -878,7 +878,8 @@ class MentalHealthTracker {
 
     // Mood Tracking
     logMood(rating, note = '') {
-        if (rating < 1 || rating > 10) {
+        const ratingNum = Number(rating);
+        if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 10) {
             console.log('❌ Rating must be between 1 and 10');
             return false;
         }
