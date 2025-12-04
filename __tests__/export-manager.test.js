@@ -381,14 +381,31 @@ describe('ExportManager', () => {
             // First export data
             const exportPath = exportManager.exportToJSON({ days: 30 });
 
-            // Clean up tracker files so new dashboard starts empty
-            const trackerFiles = ['mental-health-data.json', 'medications.json', 'sleep-data.json', 'exercise-data.json'];
-            trackerFiles.forEach(file => { if (fs.existsSync(file)) fs.unlinkSync(file); });
+            // Create new isolated dashboard in separate directory
+            const newTestDir = path.join(__dirname, 'test-import-isolated');
+            if (fs.existsSync(newTestDir)) {
+                fs.rmSync(newTestDir, { recursive: true, force: true });
+            }
+            fs.mkdirSync(newTestDir, { recursive: true });
 
-            // Create new dashboard
-            const newDataFile = path.join(testDataDir, 'import-test-dashboard.json');
+            const newDataFile = path.join(newTestDir, 'import-test-dashboard.json');
             const newDashboard = new DailyDashboard(newDataFile);
-            const newExportsDir = path.join(testDataDir, 'import-test-exports');
+
+            // Clear tracker data to ensure truly empty dashboard
+            if (newDashboard.mentalHealth) {
+                newDashboard.mentalHealth.data = { moodLogs: [], journalEntries: [] };
+            }
+            if (newDashboard.sleep) {
+                newDashboard.sleep.data = { sleepLogs: [] };
+            }
+            if (newDashboard.exercise) {
+                newDashboard.exercise.data = { exercises: [] };
+            }
+            if (newDashboard.medication) {
+                newDashboard.medication.data = { medications: [], logs: [] };
+            }
+
+            const newExportsDir = path.join(newTestDir, 'exports');
             const newExportManager = new ExportManager(newDashboard, newExportsDir);
 
             // Import data
@@ -399,6 +416,11 @@ describe('ExportManager', () => {
 
             const entries = newDashboard.getAllEntries();
             expect(entries.length).toBe(3);
+
+            // Clean up
+            if (fs.existsSync(newTestDir)) {
+                fs.rmSync(newTestDir, { recursive: true, force: true });
+            }
         });
 
         test('should skip duplicate entries on import', () => {
