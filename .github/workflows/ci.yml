@@ -29,10 +29,10 @@ jobs:
       run: npm ci
 
     - name: Run tests
-      run: npm test -- --runInBand --detectOpenHandles --maxWorkers=50%
+      run: npm test -- --runInBand --detectOpenHandles
 
     - name: Run tests with coverage
-      run: npm run test:coverage -- --runInBand --detectOpenHandles --maxWorkers=50%
+      run: npm run test:coverage -- --runInBand --detectOpenHandles
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v4
@@ -180,7 +180,7 @@ jobs:
       run: npm ci
 
     - name: Run coverage check
-      run: npm run test:coverage -- --runInBand --detectOpenHandles --maxWorkers=50%
+      run: npm run test:coverage -- --runInBand --detectOpenHandles
 
     - name: Verify coverage thresholds
       run: |
