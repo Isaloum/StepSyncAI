@@ -419,6 +419,23 @@ class BackupManager {
     }
 
     /**
+     * Graceful destroy/cleanup for tests and shutdown.
+     */
+    destroy() {
+        try {
+            this.stopScheduledBackups();
+        } catch (e) {
+            // best-effort cleanup
+        }
+
+        try {
+            if (this.backupRegistry && typeof this.backupRegistry.clear === 'function') {
+                this.backupRegistry.clear();
+            }
+        } catch (e) {}
+    }
+
+    /**
      * Export backup to external location
      */
     exportBackup(backupId, destinationPath) {
