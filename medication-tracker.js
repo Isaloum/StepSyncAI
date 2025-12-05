@@ -584,9 +584,10 @@ class MedicationTracker {
             return false;
         }
 
-        // Validate frequency value
-        const validFrequencies = ['daily', 'twice-daily', 'three-times-daily', 'weekly', 'as-needed', 'every-other-day'];
-        if (!validFrequencies.includes(frequency.toLowerCase())) {
+        // Validate frequency value (only for English frequencies, allow i18n)
+        const validFrequencies = ['daily', 'twice-daily', 'three-times-daily', 'four-times-daily', 'weekly', 'as-needed', 'every-other-day'];
+        const isEnglishFrequency = /^[a-zA-Z-]+$/.test(frequency);
+        if (isEnglishFrequency && !validFrequencies.includes(frequency.toLowerCase())) {
             console.error(`❌ Error: Invalid frequency. Must be one of: ${validFrequencies.join(', ')}`);
             return false;
         }

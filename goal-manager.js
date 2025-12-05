@@ -330,11 +330,17 @@ class GoalManager {
     checkGoalCompletion(goal, data) {
         switch (goal.type) {
             case 'sleep':
-                return data.sleep_hours && data.sleep_hours >= goal.target;
+                const sleepHours = data.sleep_hours || (data.sleep && data.sleep.hours);
+                return sleepHours && sleepHours >= goal.target;
             case 'exercise':
-                return data.exercise_minutes && data.exercise_minutes >= goal.target;
+                // Support both flat and nested data structures
+                const exerciseValue = data.exercise_minutes ||
+                                     (data.exercise && data.exercise.duration) ||
+                                     (data.exercise && data.exercise.count);
+                return exerciseValue && exerciseValue >= goal.target;
             case 'mood':
-                return data.mood && data.mood >= goal.target;
+                const moodValue = data.mood || (data.mood_rating);
+                return moodValue && moodValue >= goal.target;
             case 'medication':
                 // Check if medication was taken (would need medication tracking data)
                 return true; // Simplified for now
@@ -351,11 +357,13 @@ class GoalManager {
     getValueFromData(goal, data) {
         switch (goal.type) {
             case 'sleep':
-                return data.sleep_hours || 0;
+                return data.sleep_hours || (data.sleep && data.sleep.hours) || 0;
             case 'exercise':
-                return data.exercise_minutes || 0;
+                return data.exercise_minutes ||
+                       (data.exercise && data.exercise.duration) ||
+                       (data.exercise && data.exercise.count) || 0;
             case 'mood':
-                return data.mood || 0;
+                return data.mood || data.mood_rating || 0;
             case 'custom':
                 return data[goal.metric] || 0;
             default:

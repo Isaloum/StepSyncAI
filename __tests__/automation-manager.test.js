@@ -319,9 +319,11 @@ describe('AutomationManager', () => {
                 action: (data) => console.log('Alert: Low mood detected')
             };
 
-            const workflowId = automationManager.addWorkflow(workflow);
+            const result = automationManager.addWorkflow(workflow);
 
-            expect(workflowId).toMatch(/^wf-/);
+            expect(result).toBeDefined();
+            expect(result.id).toMatch(/^wf-/);
+            expect(result.name).toBe('Low Mood Alert');
             expect(automationManager.workflows).toHaveLength(1);
             expect(automationManager.workflows[0].name).toBe('Low Mood Alert');
             expect(automationManager.workflows[0].enabled).toBe(true);

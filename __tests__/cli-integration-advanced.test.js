@@ -695,7 +695,7 @@ describe('Advanced CLI Integration Tests', () => {
                 title: 'Exercise 5 times',
                 description: 'Test completion',
                 target: 5,
-                duration: 7
+                duration: 1  // 1 day duration to reach 100% in one update
             });
 
             // Update progress to 100% to trigger completion

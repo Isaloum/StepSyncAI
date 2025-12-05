@@ -941,7 +941,7 @@ describe('Branch Coverage Improvements', () => {
 
         test('MedicationTracker enableReminders calls reminder service', () => {
             const medTracker = new MedicationTracker('test-med-tracker.json');
-            medTracker.addMedication('Test Med', '100mg', ['08:00'], 'daily', 'With food');
+            medTracker.addMedication('Test Med', '100mg', 'daily', '08:00');
 
             const result = medTracker.enableReminders();
 
