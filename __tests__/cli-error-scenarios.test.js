@@ -259,9 +259,9 @@ describe('CLI Error Scenarios', () => {
         test('should handle zero duration exercise', () => {
             const tracker = new ExerciseTracker();
 
-            expect(() => {
-                tracker.logExercise('Stretching', 0, 'light', 'Quick stretch');
-            }).toThrow(); // Should reject zero duration
+            // Should reject zero duration by returning false
+            expect(tracker.logExercise('Stretching', 0, 'light', 'Quick stretch')).toBe(false);
+            expect(tracker.data.exercises.length).toBe(0);
         });
     });
 
@@ -672,19 +672,19 @@ describe('CLI Error Scenarios', () => {
             let errorCount = 0;
 
             // Mix of valid and invalid operations
-            const operations = [
-                () => tracker.logMood(7, 'Valid'),
-                () => tracker.logMood(15, 'Invalid'),
-                () => tracker.logMood(5, 'Valid'),
-                () => tracker.logMood(-1, 'Invalid'),
-                () => tracker.logMood(8, 'Valid')
+            // logMood returns true for success, false for errors
+            const results = [
+                tracker.logMood(7, 'Valid'),    // valid
+                tracker.logMood(15, 'Invalid'), // invalid (>10)
+                tracker.logMood(5, 'Valid'),    // valid
+                tracker.logMood(-1, 'Invalid'), // invalid (<1)
+                tracker.logMood(8, 'Valid')     // valid
             ];
 
-            operations.forEach(op => {
-                try {
-                    op();
+            results.forEach(result => {
+                if (result === true) {
                     successCount++;
-                } catch (e) {
+                } else {
                     errorCount++;
                 }
             });

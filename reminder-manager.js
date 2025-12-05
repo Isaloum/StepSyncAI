@@ -84,7 +84,7 @@ class ReminderManager {
         }
 
         // Validate type
-        const validTypes = ['medication', 'exercise', 'sleep', 'custom'];
+        const validTypes = ['medication', 'exercise', 'sleep', 'mood', 'goal', 'general', 'custom'];
         if (!validTypes.includes(type)) {
             throw new Error(`Invalid type. Must be one of: ${validTypes.join(', ')}`);
         }

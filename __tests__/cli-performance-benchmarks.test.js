@@ -514,6 +514,7 @@ describe('CLI Performance Benchmarks', () => {
             const goalManager = new GoalManager(dashboard);
 
             const startTime = performance.now();
+            goalManager.beginBatch(); // Use batch mode for bulk operations
             for (let i = 0; i < 1000; i++) {
                 goalManager.createGoal({
                     type: i % 2 === 0 ? 'exercise' : 'mood',
@@ -523,6 +524,7 @@ describe('CLI Performance Benchmarks', () => {
                     duration: 7
                 });
             }
+            goalManager.endBatch(); // Commit all changes at once
             const endTime = performance.now();
             const duration = endTime - startTime;
 

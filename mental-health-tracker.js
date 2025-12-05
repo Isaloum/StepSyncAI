@@ -912,11 +912,17 @@ class MentalHealthTracker {
     }
 
     viewMoodHistory(days = 7) {
+        // Handle corrupted data gracefully
+        if (!this.data || !Array.isArray(this.data.moodEntries)) {
+            console.log('\n⚠️  No mood data available or data is corrupted.');
+            return [];
+        }
+
         const now = new Date();
         const startDate = new Date(now.getTime() - (days * 24 * 60 * 60 * 1000));
 
         const recentMoods = this.data.moodEntries.filter(entry => {
-            return new Date(entry.timestamp) >= startDate;
+            return entry && entry.timestamp && new Date(entry.timestamp) >= startDate;
         });
 
         if (recentMoods.length === 0) {

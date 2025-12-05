@@ -189,7 +189,7 @@ class AutomationManager {
         }
 
         const workflowId = `wf-${Date.now()}`;
-        this.workflows.push({
+        const newWorkflow = {
             id: workflowId,
             name,
             condition,
@@ -198,10 +198,11 @@ class AutomationManager {
             createdAt: new Date().toISOString(),
             lastTriggered: null,
             triggerCount: 0
-        });
+        };
+        this.workflows.push(newWorkflow);
 
         console.log(`✅ Workflow added: ${name} (${workflowId})`);
-        return workflowId;
+        return newWorkflow;
     }
 
     /**

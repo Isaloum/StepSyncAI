@@ -138,6 +138,16 @@ class GoalManager {
             throw new Error(`Invalid type. Must be one of: ${validTypes.join(', ')}`);
         }
 
+        // Validate target is positive
+        if (target <= 0) {
+            throw new Error('Target must be a positive number');
+        }
+
+        // Validate duration is positive
+        if (duration <= 0) {
+            throw new Error('Duration must be a positive number');
+        }
+
         // Calculate end date
         const start = new Date(startDate);
         const end = new Date(start);
@@ -173,11 +183,14 @@ class GoalManager {
         this.goalMap.set(goal.id, goal);
         this.saveGoals();
 
-        console.log('\n✅ Goal created successfully!');
-        console.log(`   ${this.getGoalEmoji(type)} ${title}`);
-        console.log(`   Target: ${this.formatTarget(target, type)}`);
-        console.log(`   Duration: ${duration} days`);
-        console.log(`   Start: ${startDate} → End: ${goal.endDate}`);
+        // Suppress console output during batch operations for performance
+        if (!this.deferSaves) {
+            console.log('\n✅ Goal created successfully!');
+            console.log(`   ${this.getGoalEmoji(type)} ${title}`);
+            console.log(`   Target: ${this.formatTarget(target, type)}`);
+            console.log(`   Duration: ${duration} days`);
+            console.log(`   Start: ${startDate} → End: ${goal.endDate}`);
+        }
 
         return goal;
     }

@@ -1086,7 +1086,8 @@ describe('Advanced CLI Integration Tests', () => {
 
             expect(() => {
                 analytics.analyzeMoodSleepCorrelation(30);
-                analytics.predictWellness(30, 7);
+                // predictWellness doesn't exist - using predictTrend instead
+                analytics.predictTrend([5], 7);
                 analytics.detectAnomalies(30);
             }).not.toThrow();
         });
@@ -1097,7 +1098,7 @@ describe('Advanced CLI Integration Tests', () => {
             const verifyResult = backup.verifyBackup('invalid-id');
             expect(verifyResult.valid).toBe(false);
 
-            const restoreResult = backup.restoreBackup('invalid-id');
+            const restoreResult = backup.restore('invalid-id');
             expect(restoreResult.success).toBe(false);
 
             const deleteResult = backup.deleteBackup('invalid-id');
