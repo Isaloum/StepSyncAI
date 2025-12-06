@@ -123,7 +123,7 @@ describe('PerformanceCache', () => {
             expect(cache.has('key2')).toBe(false);
         });
 
-        test('should clear expired entries', () => {
+        test('should clear expired entries', (done) => {
             cache.set('key1', 'value1', 100);
             cache.set('key2', 'value2', 5000);
 
@@ -131,6 +131,7 @@ describe('PerformanceCache', () => {
                 cache.clearExpired();
                 expect(cache.get('key1')).toBeNull();
                 expect(cache.get('key2')).toBe('value2');
+                done();
             }, 150);
         });
 
