@@ -22,11 +22,10 @@ class GoalManager {
         this.achievementsFile = path.join(dataDir, 'achievements.json');
         this.goals = this.loadGoals();
         this.achievements = this.loadAchievements();
-        
-        // Batching support for bulk operations
-        this._pendingGoals = [];
-        this._deferSaves = false;
-        this._goalMap = null; // Lazy-initialized lookup map
+        this.deferSaves = false; // Flag to batch saves
+        this.pendingGoals = [];
+        this.goalMap = new Map();
+        this._rebuildGoalMap();
     }
 
     /**
@@ -34,8 +33,8 @@ class GoalManager {
      * Use this when creating many goals at once for better performance
      */
     beginBatch() {
-        this._deferSaves = true;
-        this._pendingGoals = [];
+        this.deferSaves = true;
+        this.pendingGoals = [];
     }
 
     /**
@@ -43,20 +42,20 @@ class GoalManager {
      * @returns {Array} All goals that were created during batch
      */
     endBatch() {
-        if (!this._deferSaves) {
+        if (!this.deferSaves) {
             return [];
         }
 
         // Append all pending goals to main array in one operation
-        if (this._pendingGoals.length > 0) {
-            this.goals.push(...this._pendingGoals);
+        if (this.pendingGoals.length > 0) {
+            this.goals.push(...this.pendingGoals);
         }
 
-        const batchedGoals = this._pendingGoals;
+        const batchedGoals = this.pendingGoals;
         
         // Reset batch state
-        this._pendingGoals = [];
-        this._deferSaves = false;
+        this.pendingGoals = [];
+        this.deferSaves = false;
         
         // Rebuild lookup map once
         this._rebuildGoalMap();
@@ -71,9 +70,9 @@ class GoalManager {
      * Rebuild the goal lookup map (used after batch operations)
      */
     _rebuildGoalMap() {
-        this._goalMap = new Map();
+        this.goalMap = new Map();
         for (const goal of this.goals) {
-            this._goalMap.set(goal.id, goal);
+            this.goalMap.set(goal.id, goal);
         }
     }
 
@@ -96,6 +95,11 @@ class GoalManager {
      * Save goals to file
      */
     saveGoals() {
+        // Skip save if in batch mode
+        if (this.deferSaves) {
+            return true;
+        }
+
         try {
             if (!fs.existsSync(this.dataDir)) {
                 fs.mkdirSync(this.dataDir, { recursive: true });
@@ -189,6 +193,8 @@ class GoalManager {
         if (isNaN(durationNum) || durationNum <= 0) {
             throw new Error('Duration must be a positive number');
         }
+            throw new Error('Duration must be a positive number');
+        }
 
         // Calculate end date
         const start = new Date(startDate);
@@ -222,16 +228,18 @@ class GoalManager {
         };
 
         // When in batch mode, buffer the goal instead of adding to main array
-        if (this._deferSaves) {
-            this._pendingGoals.push(goal);
+        if (this.deferSaves) {
+            this.pendingGoals.push(goal);
         } else {
             this.goals.push(goal);
+            this.goalMap.set(goal.id, goal);
             this.saveGoals();
 
             console.log('\n✅ Goal created successfully!');
             console.log(`   ${this.getGoalEmoji(type)} ${title}`);
             console.log(`   Target: ${this.formatTarget(targetNum, type)}`);
             console.log(`   Duration: ${durationNum} days`);
+        }
             console.log(`   Start: ${startDate} → End: ${goal.endDate}`);
         }
 
@@ -288,7 +296,7 @@ class GoalManager {
      * Get specific goal by ID
      */
     getGoal(id) {
-        return this.goals.find(g => g.id === id);
+        return this.goalMap.get(id);
     }
 
     /**
@@ -373,11 +381,17 @@ class GoalManager {
     checkGoalCompletion(goal, data) {
         switch (goal.type) {
             case 'sleep':
-                return data.sleep_hours && data.sleep_hours >= goal.target;
+                const sleepHours = data.sleep_hours || (data.sleep && data.sleep.hours);
+                return sleepHours && sleepHours >= goal.target;
             case 'exercise':
-                return data.exercise_minutes && data.exercise_minutes >= goal.target;
+                // Support both flat and nested data structures
+                const exerciseValue = data.exercise_minutes ||
+                                     (data.exercise && data.exercise.duration) ||
+                                     (data.exercise && data.exercise.count);
+                return exerciseValue && exerciseValue >= goal.target;
             case 'mood':
-                return data.mood && data.mood >= goal.target;
+                const moodValue = data.mood || (data.mood_rating);
+                return moodValue && moodValue >= goal.target;
             case 'medication':
                 // Check if medication was taken (would need medication tracking data)
                 return true; // Simplified for now
@@ -394,11 +408,13 @@ class GoalManager {
     getValueFromData(goal, data) {
         switch (goal.type) {
             case 'sleep':
-                return data.sleep_hours || 0;
+                return data.sleep_hours || (data.sleep && data.sleep.hours) || 0;
             case 'exercise':
-                return data.exercise_minutes || 0;
+                return data.exercise_minutes ||
+                       (data.exercise && data.exercise.duration) ||
+                       (data.exercise && data.exercise.count) || 0;
             case 'mood':
-                return data.mood || 0;
+                return data.mood || data.mood_rating || 0;
             case 'custom':
                 return data[goal.metric] || 0;
             default:
@@ -465,13 +481,14 @@ class GoalManager {
      * Delete a goal
      */
     deleteGoal(id) {
-        const index = this.goals.findIndex(g => g.id === id);
-        if (index === -1) {
+        const goal = this.getGoal(id);
+        if (!goal) {
             throw new Error(`Goal not found: ${id}`);
         }
 
-        const goal = this.goals[index];
+        const index = this.goals.findIndex(g => g.id === id);
         this.goals.splice(index, 1);
+        this.goalMap.delete(id);
         this.saveGoals();
 
         console.log(`✅ Goal deleted: ${goal.title}`);
@@ -534,6 +551,28 @@ class GoalManager {
             : 0;
 
         return stats;
+    }
+
+    /**
+     * Enable batch mode to defer saves
+     */
+    beginBatch() {
+        this.deferSaves = true;
+    }
+
+    /**
+     * End batch mode and flush pending saves
+     */
+    endBatch() {
+        this.deferSaves = false;
+        return this.saveGoals();
+    }
+
+    /**
+     * Get statistics (alias for getGoalStats)
+     */
+    getStats(goalId = null) {
+        return this.getGoalStats(goalId);
     }
 
     /**

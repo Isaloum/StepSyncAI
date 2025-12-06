@@ -138,7 +138,7 @@ describe('BackupManager', () => {
             const verification = backup.verifyBackup('nonexistent-backup');
 
             expect(verification.valid).toBe(false);
-            expect(verification.errors).toContain('Manifest file not found');
+            expect(verification.errors).toContain('Backup directory not found');
         });
 
         test('should detect corrupted file', () => {

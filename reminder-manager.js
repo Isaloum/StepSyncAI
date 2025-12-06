@@ -84,7 +84,7 @@ class ReminderManager {
         }
 
         // Validate type
-        const validTypes = ['medication', 'exercise', 'sleep', 'custom'];
+        const validTypes = ['medication', 'exercise', 'sleep', 'mood', 'goal', 'general', 'custom'];
         if (!validTypes.includes(type)) {
             throw new Error(`Invalid type. Must be one of: ${validTypes.join(', ')}`);
         }
@@ -101,6 +101,7 @@ class ReminderManager {
             createdAt: new Date().toISOString(),
             lastShown: null,
             snoozedUntil: null,
+            dismissed: false,
             history: []
         };
 
@@ -329,10 +330,11 @@ class ReminderManager {
      */
     dismissReminder(id) {
         const reminder = this.getReminder(id);
-        if (!reminder) {
+        if (!reminder || reminder.dismissed) {
             throw new Error(`Reminder not found: ${id}`);
         }
 
+        reminder.dismissed = true;
         reminder.history.push({
             timestamp: new Date().toISOString(),
             action: 'dismissed'

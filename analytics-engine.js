@@ -263,7 +263,8 @@ class AnalyticsEngine {
      * Detect anomalies using Z-score
      */
     detectAnomalies(data, threshold = 2.5) {
-        if (data.length < 3) return [];
+        // Guard against non-array input
+        if (!Array.isArray(data) || data.length < 3) return [];
 
         const mean = data.reduce((sum, val) => sum + val, 0) / data.length;
         const variance = data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / data.length;
@@ -460,7 +461,7 @@ class AnalyticsEngine {
         const report = this.generateReport(days);
 
         console.log('\n╔═══════════════════════════════════════════════════════════════╗');
-        console.log('║              Advanced Analytics Dashboard                     ║');
+        console.log('║                  Wellness Dashboard                           ║');
         console.log('╚═══════════════════════════════════════════════════════════════╝');
         console.log(`\nAnalysis Period: ${report.period}`);
         console.log(`Generated: ${new Date(report.generated).toLocaleString()}\n`);

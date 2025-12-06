@@ -401,6 +401,13 @@ EXAMPLES:
     }
 
     /**
+     * Alias for displayTrends (for backward compatibility)
+     */
+    showTrends(days = 30) {
+        return this.displayTrends(days);
+    }
+
+    /**
      * Get trend emoji
      */
     getTrendEmoji(trend) {

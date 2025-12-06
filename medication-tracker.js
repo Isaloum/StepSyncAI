@@ -570,6 +570,28 @@ class MedicationTracker {
     }
 
     addMedication(name, dosage, frequency, time) {
+        // Validate required fields
+        if (!name || typeof name !== 'string' || name.trim() === '') {
+            console.error('❌ Error: Medication name is required');
+            return false;
+        }
+        if (!dosage || typeof dosage !== 'string' || dosage.trim() === '') {
+            console.error('❌ Error: Dosage is required');
+            return false;
+        }
+        if (!frequency || typeof frequency !== 'string' || frequency.trim() === '') {
+            console.error('❌ Error: Frequency is required');
+            return false;
+        }
+
+        // Validate frequency value (only for English frequencies, allow i18n)
+        const validFrequencies = ['daily', 'twice-daily', 'three-times-daily', 'four-times-daily', 'weekly', 'as-needed', 'every-other-day'];
+        const isEnglishFrequency = /^[a-zA-Z-]+$/.test(frequency);
+        if (isEnglishFrequency && !validFrequencies.includes(frequency.toLowerCase())) {
+            console.error(`❌ Error: Invalid frequency. Must be one of: ${validFrequencies.join(', ')}`);
+            return false;
+        }
+
         // Check for interactions with current medications BEFORE adding
         const interactions = this.checkInteractions(name, false); // Don't display yet
 

@@ -8,6 +8,8 @@ class MentalHealthTracker {
     constructor(dataFile = 'mental-health-data.json') {
         this.dataFile = dataFile;
         this.data = this.loadData();
+        // Add alias for backward compatibility
+        this.data.moodLogs = this.data.moodEntries;
         this.reminderService = new ReminderService();
         this.idCounter = Date.now();
     }
@@ -967,6 +969,12 @@ class MentalHealthTracker {
     }
 
     viewMoodHistory(days = 7) {
+        // Handle corrupted data gracefully
+        if (!this.data || !Array.isArray(this.data.moodEntries)) {
+            console.log('\n⚠️  No mood data available or data is corrupted.');
+            return [];
+        }
+
         const now = new Date();
         const startDate = new Date(now.getTime() - (days * 24 * 60 * 60 * 1000));
 
