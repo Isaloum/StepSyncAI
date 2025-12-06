@@ -197,6 +197,55 @@ describe('PerformanceCache', () => {
             expect(stats.misses).toBe(2);
         });
     });
+
+    describe('Background Cleanup Timer', () => {
+        test('should start cleanup timer by default', () => {
+            const cacheWithTimer = new PerformanceCache(10, 1000);
+            expect(cacheWithTimer._cleanupTimer).not.toBeNull();
+            cacheWithTimer.stop(); // Clean up
+        });
+
+        test('should not start cleanup timer when disableAutoCleanup is true', () => {
+            const cacheNoTimer = new PerformanceCache(10, 1000, { disableAutoCleanup: true });
+            expect(cacheNoTimer._cleanupTimer).toBeNull();
+        });
+
+        test('should stop cleanup timer with stop()', () => {
+            const cacheWithTimer = new PerformanceCache(10, 1000);
+            expect(cacheWithTimer._cleanupTimer).not.toBeNull();
+            
+            cacheWithTimer.stop();
+            
+            expect(cacheWithTimer._cleanupTimer).toBeNull();
+        });
+
+        test('should handle multiple stop() calls gracefully', () => {
+            const cacheWithTimer = new PerformanceCache(10, 1000);
+            
+            cacheWithTimer.stop();
+            cacheWithTimer.stop(); // Should not throw
+            
+            expect(cacheWithTimer._cleanupTimer).toBeNull();
+        });
+
+        test('should use custom cleanupIntervalMs', () => {
+            const cacheCustomInterval = new PerformanceCache(10, 60000, { cleanupIntervalMs: 5000 });
+            expect(cacheCustomInterval.cleanupIntervalMs).toBe(5000);
+            cacheCustomInterval.stop();
+        });
+
+        test('should default cleanupIntervalMs to half of TTL or 60 seconds (whichever is smaller)', () => {
+            // TTL = 1000ms, half = 500ms, which is smaller than 60000
+            const cacheShortTTL = new PerformanceCache(10, 1000);
+            expect(cacheShortTTL.cleanupIntervalMs).toBe(500);
+            cacheShortTTL.stop();
+
+            // TTL = 200000ms, half = 100000ms, but 60000 is smaller
+            const cacheLongTTL = new PerformanceCache(10, 200000);
+            expect(cacheLongTTL.cleanupIntervalMs).toBe(60000);
+            cacheLongTTL.stop();
+        });
+    });
 });
 
 describe('DateUtils', () => {

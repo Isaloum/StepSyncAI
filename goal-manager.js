@@ -22,6 +22,59 @@ class GoalManager {
         this.achievementsFile = path.join(dataDir, 'achievements.json');
         this.goals = this.loadGoals();
         this.achievements = this.loadAchievements();
+        
+        // Batching support for bulk operations
+        this._pendingGoals = [];
+        this._deferSaves = false;
+        this._goalMap = null; // Lazy-initialized lookup map
+    }
+
+    /**
+     * Begin batch mode - defers saves and buffers goal creations
+     * Use this when creating many goals at once for better performance
+     */
+    beginBatch() {
+        this._deferSaves = true;
+        this._pendingGoals = [];
+    }
+
+    /**
+     * End batch mode - commits all pending goals, rebuilds lookup, and saves once
+     * @returns {Array} All goals that were created during batch
+     */
+    endBatch() {
+        if (!this._deferSaves) {
+            return [];
+        }
+
+        // Append all pending goals to main array in one operation
+        if (this._pendingGoals.length > 0) {
+            this.goals.push(...this._pendingGoals);
+        }
+
+        const batchedGoals = this._pendingGoals;
+        
+        // Reset batch state
+        this._pendingGoals = [];
+        this._deferSaves = false;
+        
+        // Rebuild lookup map once
+        this._rebuildGoalMap();
+        
+        // Single save for all goals
+        this.saveGoals();
+        
+        return batchedGoals;
+    }
+
+    /**
+     * Rebuild the goal lookup map (used after batch operations)
+     */
+    _rebuildGoalMap() {
+        this._goalMap = new Map();
+        for (const goal of this.goals) {
+            this._goalMap.set(goal.id, goal);
+        }
     }
 
     /**
@@ -168,14 +221,19 @@ class GoalManager {
             history: []
         };
 
-        this.goals.push(goal);
-        this.saveGoals();
+        // When in batch mode, buffer the goal instead of adding to main array
+        if (this._deferSaves) {
+            this._pendingGoals.push(goal);
+        } else {
+            this.goals.push(goal);
+            this.saveGoals();
 
-        console.log('\n✅ Goal created successfully!');
-        console.log(`   ${this.getGoalEmoji(type)} ${title}`);
-        console.log(`   Target: ${this.formatTarget(targetNum, type)}`);
-        console.log(`   Duration: ${durationNum} days`);
-        console.log(`   Start: ${startDate} → End: ${goal.endDate}`);
+            console.log('\n✅ Goal created successfully!');
+            console.log(`   ${this.getGoalEmoji(type)} ${title}`);
+            console.log(`   Target: ${this.formatTarget(targetNum, type)}`);
+            console.log(`   Duration: ${durationNum} days`);
+            console.log(`   Start: ${startDate} → End: ${goal.endDate}`);
+        }
 
         return goal;
     }
