@@ -8,6 +8,8 @@ const cron = require('node-cron');
  * Handles automated backups, point-in-time recovery, and data integrity
  */
 class BackupManager {
+    static backupCounter = 0;
+
     constructor(config = {}) {
         this.backupDir = config.backupDir || path.join(process.cwd(), 'backups');
         this.dataFiles = config.dataFiles || [
@@ -59,7 +61,8 @@ class BackupManager {
 
         try {
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const backupId = `backup-${timestamp}`;
+            const uniqueSuffix = BackupManager.backupCounter++;
+            const backupId = `backup-${timestamp}-${uniqueSuffix}`;
             const backupPath = path.join(this.backupDir, backupId);
 
             // Create backup directory
