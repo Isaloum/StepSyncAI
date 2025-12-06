@@ -871,4 +871,165 @@ describe('GoalManager', () => {
             jest.restoreAllMocks();
         });
     });
+
+    describe('Batch Goal Creation', () => {
+        beforeEach(() => {
+            jest.spyOn(console, 'log').mockImplementation();
+        });
+
+        afterEach(() => {
+            console.log.mockRestore();
+        });
+
+        test('should initialize batch mode with beginBatch()', () => {
+            goalManager.beginBatch();
+
+            expect(goalManager._deferSaves).toBe(true);
+            expect(goalManager._pendingGoals).toEqual([]);
+        });
+
+        test('should buffer goals during batch mode', () => {
+            goalManager.beginBatch();
+
+            const goal1 = goalManager.createGoal({
+                type: 'sleep',
+                title: 'Sleep goal 1',
+                target: 8,
+                duration: 7
+            });
+
+            const goal2 = goalManager.createGoal({
+                type: 'exercise',
+                title: 'Exercise goal 1',
+                target: 30,
+                duration: 7
+            });
+
+            // Goals should be in pending buffer, not in main array
+            expect(goalManager._pendingGoals).toHaveLength(2);
+            expect(goalManager.goals).toHaveLength(0);
+            expect(goal1.id).toBeDefined();
+            expect(goal2.id).toBeDefined();
+        });
+
+        test('should not call saveGoals during batch mode', () => {
+            // Reset writeFileSync mock to track calls
+            fs.writeFileSync.mockClear();
+
+            goalManager.beginBatch();
+
+            goalManager.createGoal({
+                type: 'sleep',
+                title: 'Batched goal',
+                target: 8,
+                duration: 7
+            });
+
+            // Save should not have been called for the goal
+            expect(fs.writeFileSync).not.toHaveBeenCalled();
+        });
+
+        test('should commit all goals and save once with endBatch()', () => {
+            goalManager.beginBatch();
+
+            goalManager.createGoal({
+                type: 'sleep',
+                title: 'Sleep goal 1',
+                target: 8,
+                duration: 7
+            });
+
+            goalManager.createGoal({
+                type: 'exercise',
+                title: 'Exercise goal 1',
+                target: 30,
+                duration: 7
+            });
+
+            goalManager.createGoal({
+                type: 'mood',
+                title: 'Mood goal 1',
+                target: 7,
+                duration: 14
+            });
+
+            // Reset mock to track only endBatch save
+            fs.writeFileSync.mockClear();
+
+            const batchedGoals = goalManager.endBatch();
+
+            // All goals should now be in main array
+            expect(goalManager.goals).toHaveLength(3);
+            expect(goalManager._pendingGoals).toHaveLength(0);
+            expect(goalManager._deferSaves).toBe(false);
+            expect(batchedGoals).toHaveLength(3);
+
+            // Save should have been called exactly once
+            expect(fs.writeFileSync).toHaveBeenCalledTimes(1);
+        });
+
+        test('should return empty array when endBatch called without beginBatch', () => {
+            const result = goalManager.endBatch();
+            expect(result).toEqual([]);
+        });
+
+        test('should rebuild goal map after batch', () => {
+            goalManager.beginBatch();
+
+            const goal = goalManager.createGoal({
+                type: 'sleep',
+                title: 'Test goal',
+                target: 8,
+                duration: 7
+            });
+
+            goalManager.endBatch();
+
+            // Goal map should be rebuilt and contain the goal
+            expect(goalManager._goalMap).toBeDefined();
+            expect(goalManager._goalMap.get(goal.id)).toBeDefined();
+        });
+
+        test('should handle large batch of 1000 goals efficiently', () => {
+            goalManager.beginBatch();
+
+            const startTime = Date.now();
+
+            for (let i = 0; i < 1000; i++) {
+                goalManager.createGoal({
+                    type: 'sleep',
+                    title: `Goal ${i}`,
+                    target: 8,
+                    duration: 7
+                });
+            }
+
+            goalManager.endBatch();
+
+            const duration = Date.now() - startTime;
+
+            expect(goalManager.goals).toHaveLength(1000);
+            // Should complete in reasonable time (less than 2 seconds for 1000 goals)
+            expect(duration).toBeLessThan(2000);
+        });
+
+        test('should not log during batch mode', () => {
+            const logSpy = jest.spyOn(console, 'log');
+            logSpy.mockClear();
+
+            goalManager.beginBatch();
+
+            goalManager.createGoal({
+                type: 'sleep',
+                title: 'Silent goal',
+                target: 8,
+                duration: 7
+            });
+
+            // No console output during batch mode
+            expect(logSpy).not.toHaveBeenCalledWith(expect.stringContaining('Goal created'));
+
+            goalManager.endBatch();
+        });
+    });
 });
