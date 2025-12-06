@@ -23,18 +23,57 @@ class GoalManager {
         this.goals = this.loadGoals();
         this.achievements = this.loadAchievements();
         this.deferSaves = false; // Flag to batch saves
-        this.goalMap = new Map(); // For O(1) lookups
+        this.pendingGoals = [];
+        this.goalMap = new Map();
         this._rebuildGoalMap();
     }
 
     /**
-     * Rebuild the goal map for fast lookups
+     * Begin batch mode - defers saves and buffers goal creations
+     * Use this when creating many goals at once for better performance
+     */
+    beginBatch() {
+        this.deferSaves = true;
+        this.pendingGoals = [];
+    }
+
+    /**
+     * End batch mode - commits all pending goals, rebuilds lookup, and saves once
+     * @returns {Array} All goals that were created during batch
+     */
+    endBatch() {
+        if (!this.deferSaves) {
+            return [];
+        }
+
+        // Append all pending goals to main array in one operation
+        if (this.pendingGoals.length > 0) {
+            this.goals.push(...this.pendingGoals);
+        }
+
+        const batchedGoals = this.pendingGoals;
+        
+        // Reset batch state
+        this.pendingGoals = [];
+        this.deferSaves = false;
+        
+        // Rebuild lookup map once
+        this._rebuildGoalMap();
+        
+        // Single save for all goals
+        this.saveGoals();
+        
+        return batchedGoals;
+    }
+
+    /**
+     * Rebuild the goal lookup map (used after batch operations)
      */
     _rebuildGoalMap() {
-        this.goalMap.clear();
-        this.goals.forEach(goal => {
+        this.goalMap = new Map();
+        for (const goal of this.goals) {
             this.goalMap.set(goal.id, goal);
-        });
+        }
     }
 
     /**
@@ -132,34 +171,43 @@ class GoalManager {
             throw new Error('Missing required fields: type, title, target, duration');
         }
 
-        // Validate goal type
+        // Validate goal type - throw on invalid inputs
         const validTypes = ['sleep', 'exercise', 'mood', 'medication', 'custom'];
         if (!validTypes.includes(type)) {
             throw new Error(`Invalid type. Must be one of: ${validTypes.join(', ')}`);
         }
 
-        // Validate target is positive
-        if (target <= 0) {
+        // Validate title is non-empty - throw on invalid inputs
+        if (typeof title !== 'string' || title.trim().length === 0) {
+            throw new Error('Title must be non-empty');
+        }
+
+        // Validate target is a positive number - throw on invalid inputs
+        const targetNum = parseFloat(target);
+        if (isNaN(targetNum) || targetNum <= 0) {
             throw new Error('Target must be a positive number');
         }
 
-        // Validate duration is positive
-        if (duration <= 0) {
+        // Validate duration is a positive number - throw on invalid inputs
+        const durationNum = parseInt(duration);
+        if (isNaN(durationNum) || durationNum <= 0) {
+            throw new Error('Duration must be a positive number');
+        }
             throw new Error('Duration must be a positive number');
         }
 
         // Calculate end date
         const start = new Date(startDate);
         const end = new Date(start);
-        end.setDate(end.getDate() + duration);
+        end.setDate(end.getDate() + durationNum);
 
         const goal = {
             id: uuidv4(),
             type,
-            title,
+            title: title.trim(),
             description: description || title,
-            target,
-            duration,
+            target: targetNum,
+            duration: durationNum,
             startDate,
             endDate: end.toISOString().split('T')[0],
             metric,
@@ -173,22 +221,25 @@ class GoalManager {
                 daysCompleted: 0,
                 lastCompletedDate: null
             },
-            milestones: this.generateMilestones(duration),
+            milestones: this.generateMilestones(durationNum),
             createdAt: new Date().toISOString(),
             completedAt: null,
             history: []
         };
 
-        this.goals.push(goal);
-        this.goalMap.set(goal.id, goal);
-        this.saveGoals();
+        // When in batch mode, buffer the goal instead of adding to main array
+        if (this.deferSaves) {
+            this.pendingGoals.push(goal);
+        } else {
+            this.goals.push(goal);
+            this.goalMap.set(goal.id, goal);
+            this.saveGoals();
 
-        // Suppress console output during batch operations for performance
-        if (!this.deferSaves) {
             console.log('\n✅ Goal created successfully!');
             console.log(`   ${this.getGoalEmoji(type)} ${title}`);
-            console.log(`   Target: ${this.formatTarget(target, type)}`);
-            console.log(`   Duration: ${duration} days`);
+            console.log(`   Target: ${this.formatTarget(targetNum, type)}`);
+            console.log(`   Duration: ${durationNum} days`);
+        }
             console.log(`   Start: ${startDate} → End: ${goal.endDate}`);
         }
 

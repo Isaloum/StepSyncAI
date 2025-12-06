@@ -626,6 +626,88 @@ describe('Sleep Tracker', () => {
         });
     });
 
+    describe('analyzeQualityPatterns', () => {
+        test('shows strong positive correlation message', () => {
+            // Create data with strong positive correlation (longer sleep = better quality)
+            tracker.data.sleepEntries = [
+                { date: '2025-11-01', duration: 6.0, quality: 5 },
+                { date: '2025-11-02', duration: 7.0, quality: 7 },
+                { date: '2025-11-03', duration: 8.0, quality: 8 },
+                { date: '2025-11-04', duration: 8.5, quality: 9 },
+                { date: '2025-11-05', duration: 9.0, quality: 9 }
+            ];
+
+            tracker.analyzeQualityPatterns();
+
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            expect(output).toContain('Sleep Quality Insights');
+            expect(output).toContain('Longer sleep → Better quality');
+        });
+
+        test('shows negative correlation message', () => {
+            // Create data with negative correlation (shorter sleep = better quality)
+            tracker.data.sleepEntries = [
+                { date: '2025-11-01', duration: 9.0, quality: 5 },
+                { date: '2025-11-02', duration: 8.0, quality: 6 },
+                { date: '2025-11-03', duration: 7.0, quality: 7 },
+                { date: '2025-11-04', duration: 6.5, quality: 8 },
+                { date: '2025-11-05', duration: 6.0, quality: 9 }
+            ];
+
+            tracker.analyzeQualityPatterns();
+
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            expect(output).toContain('You sleep better with shorter durations');
+            expect(output).toContain('Quality over quantity');
+        });
+
+        test('shows weak correlation message', () => {
+            // Create data with weak/no correlation (random quality regardless of duration)
+            tracker.data.sleepEntries = [
+                { date: '2025-11-01', duration: 7.0, quality: 7 },
+                { date: '2025-11-02', duration: 8.0, quality: 7 },
+                { date: '2025-11-03', duration: 6.5, quality: 7 },
+                { date: '2025-11-04', duration: 7.5, quality: 7 },
+                { date: '2025-11-05', duration: 9.0, quality: 7 }
+            ];
+
+            tracker.analyzeQualityPatterns();
+
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            expect(output).toContain('doesn\'t strongly depend on duration');
+            expect(output).toContain('Consider other factors');
+        });
+
+        test('analyzes poor nights when present', () => {
+            tracker.data.sleepEntries = [
+                { date: '2025-11-01', duration: 7.0, quality: 4 },  // Poor night
+                { date: '2025-11-02', duration: 8.0, quality: 8 },
+                { date: '2025-11-03', duration: 6.0, quality: 3 },  // Poor night
+                { date: '2025-11-04', duration: 7.5, quality: 7 },
+                { date: '2025-11-05', duration: 8.0, quality: 9 }
+            ];
+
+            tracker.analyzeQualityPatterns();
+
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            expect(output).toContain('poor sleep (quality <5)');
+            expect(output).toContain('Average duration');
+        });
+
+        test('handles insufficient data (less than 5 entries)', () => {
+            tracker.data.sleepEntries = [
+                { date: '2025-11-01', duration: 7.0, quality: 7 },
+                { date: '2025-11-02', duration: 8.0, quality: 8 }
+            ];
+
+            tracker.analyzeQualityPatterns();
+
+            const output = consoleLogSpy.mock.calls.map(call => call[0]).join('\n');
+            // With <5 entries, correlation calculation is skipped
+            expect(output).toContain('Sleep Quality Insights');
+        });
+    });
+
     describe('getSleepDataForCorrelation', () => {
         test('returns sleep data in correct format for correlation', () => {
             tracker.data.sleepEntries = [

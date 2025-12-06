@@ -63,7 +63,7 @@ class ExerciseTracker {
 
         // Validate intensity
         const validIntensities = ['low', 'moderate', 'high'];
-        const intensityLower = intensity.toLowerCase();
+        const intensityLower = (intensity || 'moderate').toLowerCase();
         if (!validIntensities.includes(intensityLower)) {
             console.error('❌ Invalid intensity: Intensity must be low, moderate, or high');
             console.log('💡 Example: node exercise-tracker.js log "Yoga" 45 low\n');

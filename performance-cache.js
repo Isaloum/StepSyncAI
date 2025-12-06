@@ -4,11 +4,44 @@
  */
 
 class PerformanceCache {
-    constructor(maxSize = 100, defaultTTL = 300000) { // 5 minute default TTL
+    /**
+     * @param {number} maxSize - maximum number of entries to keep
+     * @param {number} defaultTTL - time-to-live in milliseconds (default 5 minutes)
+     * @param {object} options - { cleanupIntervalMs, disableAutoCleanup }
+     */
+    constructor(maxSize = 100, defaultTTL = 300000, options = {}) {
         this.cache = new Map();
         this.maxSize = maxSize;
         this.defaultTTL = defaultTTL;
         this.accessOrder = []; // Track access order for LRU
+        this._cleanupTimer = null;
+        this.cleanupIntervalMs = options.cleanupIntervalMs || Math.min(60000, Math.floor(defaultTTL / 2));
+
+        if (!options.disableAutoCleanup) {
+            this._startCleanup();
+        }
+    }
+
+    /**
+     * Start background cleanup timer (unref'd so it won't keep Node alive)
+     */
+    _startCleanup() {
+        if (this._cleanupTimer) return;
+        this._cleanupTimer = setInterval(() => this.clearExpired(), this.cleanupIntervalMs);
+        // Allow Node to exit even if this timer exists
+        if (this._cleanupTimer && typeof this._cleanupTimer.unref === 'function') {
+            this._cleanupTimer.unref();
+        }
+    }
+
+    /**
+     * Stop the background cleanup timer
+     */
+    stop() {
+        if (this._cleanupTimer) {
+            clearInterval(this._cleanupTimer);
+            this._cleanupTimer = null;
+        }
     }
 
     /**
