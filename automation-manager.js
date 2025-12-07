@@ -88,9 +88,13 @@ class AutomationManager {
             console.log('\n📋 Daily Check-In Reminder');
             console.log('Time to log your wellness data for today!');
             console.log('Run: npm run mental');
-        }, this._cronOptions());
+        });
 
         this.scheduledTasks.push(task);
+        // If scheduling is disabled for tests, ensure the task is not started
+        if (!this._cronOptions().scheduled && task && typeof task.stop === 'function') {
+            task.stop();
+        }
         console.log(`📋 Scheduled daily check-in at ${time}`);
         return task;
     }
@@ -113,9 +117,12 @@ class AutomationManager {
 
                 console.log('\nRun: npm run reminders:list to view all reminders');
             }
-        }, this._cronOptions());
+        });
 
         this.scheduledTasks.push(task);
+        if (!this._cronOptions().scheduled && task && typeof task.stop === 'function') {
+            task.stop();
+        }
         console.log('🔔 Scheduled reminder checks (every 5 minutes)');
         return task;
     }
@@ -139,9 +146,12 @@ class AutomationManager {
             } catch (error) {
                 console.error('❌ Error generating report:', error.message);
             }
-        }, this._cronOptions());
+        });
 
         this.scheduledTasks.push(task);
+        if (!this._cronOptions().scheduled && task && typeof task.stop === 'function') {
+            task.stop();
+        }
         const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         console.log(`📊 Scheduled weekly report on ${dayNames[day]} at ${time}`);
         return task;
@@ -168,9 +178,12 @@ class AutomationManager {
             } else {
                 console.log('⚠️  No data from yesterday to update goals');
             }
-        }, this._cronOptions());
+        });
 
         this.scheduledTasks.push(task);
+        if (!this._cronOptions().scheduled && task && typeof task.stop === 'function') {
+            task.stop();
+        }
         console.log('🎯 Scheduled daily goal updates (midnight)');
         return task;
     }
