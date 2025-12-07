@@ -3,13 +3,15 @@
 const readline = require('readline');
 const chalk = require('chalk');
 
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
+let rl = null;
+function getRl() {
+    if (!rl) rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    return rl;
+}
 
 function question(query) {
-    return new Promise(resolve => rl.question(query, resolve));
+    const r = getRl();
+    return new Promise(resolve => r.question(query, resolve));
 }
 
 async function setup() {
@@ -29,7 +31,7 @@ async function setup() {
     const proceed = await question(chalk.yellow('Ready to get started? (yes/no): '));
     if (proceed.toLowerCase() !== 'yes' && proceed.toLowerCase() !== 'y') {
         console.log(chalk.gray('\nNo problem! Run this script anytime with: npm run setup\n'));
-        rl.close();
+        if (rl) rl.close();
         return;
     }
 
@@ -170,12 +172,12 @@ async function setup() {
     console.log(chalk.yellow('\n💡 Pro tip: Run commands daily to build meaningful insights!\n'));
     console.log(chalk.gray('═'.repeat(60) + '\n'));
 
-    rl.close();
+    if (rl) rl.close();
 }
 
 // Run setup
 setup().catch(err => {
     console.error(chalk.red('\n❌ Setup error:', err.message));
-    rl.close();
+    if (rl) rl.close();
     process.exit(1);
 });

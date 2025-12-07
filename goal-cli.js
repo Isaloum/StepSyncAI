@@ -22,10 +22,22 @@ class GoalCLI {
     constructor() {
         this.dashboard = new DailyDashboard();
         this.goalManager = new GoalManager(this.dashboard);
-        this.rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout
-        });
+        // Lazily create readline interface to avoid holding stdin open during tests
+        this._realRl = null;
+        this.rl = {
+            question: (q, cb) => {
+                if (!this._realRl) {
+                    this._realRl = readline.createInterface({ input: process.stdin, output: process.stdout });
+                }
+                this._realRl.question(q, cb);
+            },
+            close: () => {
+                if (this._realRl) {
+                    this._realRl.close();
+                    this._realRl = null;
+                }
+            }
+        };
     }
 
     /**

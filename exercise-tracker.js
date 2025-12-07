@@ -77,7 +77,7 @@ class ExerciseTracker {
             type: validatedType,
             duration: durationNum,
             intensity: intensityLower,
-            notes: notes ? notes.trim() : ''
+            notes: (notes && typeof notes === 'string') ? notes.trim() : ''
         };
 
         this.data.exercises.push(exercise);

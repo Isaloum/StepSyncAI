@@ -29,6 +29,11 @@ class AutomationManager {
         this.enabled = false;
     }
 
+    _cronOptions() {
+        // Prevent scheduled tasks from auto-starting during tests to avoid open handles/timeouts
+        return { scheduled: process.env.NODE_ENV !== 'test' };
+    }
+
     /**
      * Start automation system
      */
@@ -86,6 +91,10 @@ class AutomationManager {
         });
 
         this.scheduledTasks.push(task);
+        // If scheduling is disabled for tests, ensure the task is not started
+        if (!this._cronOptions().scheduled && task && typeof task.stop === 'function') {
+            task.stop();
+        }
         console.log(`📋 Scheduled daily check-in at ${time}`);
         return task;
     }
@@ -111,6 +120,9 @@ class AutomationManager {
         });
 
         this.scheduledTasks.push(task);
+        if (!this._cronOptions().scheduled && task && typeof task.stop === 'function') {
+            task.stop();
+        }
         console.log('🔔 Scheduled reminder checks (every 5 minutes)');
         return task;
     }
@@ -137,6 +149,9 @@ class AutomationManager {
         });
 
         this.scheduledTasks.push(task);
+        if (!this._cronOptions().scheduled && task && typeof task.stop === 'function') {
+            task.stop();
+        }
         const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         console.log(`📊 Scheduled weekly report on ${dayNames[day]} at ${time}`);
         return task;
@@ -166,6 +181,9 @@ class AutomationManager {
         });
 
         this.scheduledTasks.push(task);
+        if (!this._cronOptions().scheduled && task && typeof task.stop === 'function') {
+            task.stop();
+        }
         console.log('🎯 Scheduled daily goal updates (midnight)');
         return task;
     }
@@ -189,7 +207,7 @@ class AutomationManager {
         }
 
         const workflowId = `wf-${Date.now()}`;
-        this.workflows.push({
+        const newWorkflow = {
             id: workflowId,
             name,
             condition,
@@ -198,10 +216,11 @@ class AutomationManager {
             createdAt: new Date().toISOString(),
             lastTriggered: null,
             triggerCount: 0
-        });
+        };
+        this.workflows.push(newWorkflow);
 
         console.log(`✅ Workflow added: ${name} (${workflowId})`);
-        return workflowId;
+        return newWorkflow;
     }
 
     /**

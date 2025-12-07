@@ -263,7 +263,8 @@ class AnalyticsEngine {
      * Detect anomalies using Z-score
      */
     detectAnomalies(data, threshold = 2.5) {
-        if (data.length < 3) return [];
+        // Guard against non-array input
+        if (!Array.isArray(data) || data.length < 3) return [];
 
         const mean = data.reduce((sum, val) => sum + val, 0) / data.length;
         const variance = data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / data.length;
@@ -293,19 +294,21 @@ class AnalyticsEngine {
         const cached = this.cache.get(cacheKey);
         if (cached) return cached;
 
+        // Optimized approach: avoid per-day expensive queries by using aggregated scores
+        // If detailed per-day historical data is required, replace this with a proper time-series fetch.
         const scores = [];
-        const cutoffDate = DateUtils.getCutoffDate(days);
 
-        // Get daily wellness scores
-        for (let i = 0; i < days; i++) {
-            const date = new Date(cutoffDate);
-            date.setDate(date.getDate() + i);
-
-            // Calculate score for this day (simplified - you may want to use actual historical data)
-            const dayData = this.dashboard.getAllWellnessData(1);
-            if (dayData.mood || dayData.sleep || dayData.exercise) {
+        // Try to get an overall score for the period and use it as a fast proxy for per-day values
+        try {
+            const overall = this.dashboard.calculateWellnessScore(days);
+            if (overall && typeof overall.percentage === 'number') {
+                for (let i = 0; i < days; i++) scores.push(overall.percentage);
+            }
+        } catch (err) {
+            // Fallback to a light-weight per-day probe if calculateWellnessScore fails
+            for (let i = 0; i < days; i++) {
                 const score = this.dashboard.calculateWellnessScore(1);
-                scores.push(score.percentage);
+                if (score && typeof score.percentage === 'number') scores.push(score.percentage);
             }
         }
 
@@ -460,7 +463,7 @@ class AnalyticsEngine {
         const report = this.generateReport(days);
 
         console.log('\n╔═══════════════════════════════════════════════════════════════╗');
-        console.log('║              Advanced Analytics Dashboard                     ║');
+        console.log('║                  Wellness Dashboard                           ║');
         console.log('╚═══════════════════════════════════════════════════════════════╝');
         console.log(`\nAnalysis Period: ${report.period}`);
         console.log(`Generated: ${new Date(report.generated).toLocaleString()}\n`);
