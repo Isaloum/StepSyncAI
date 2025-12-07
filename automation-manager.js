@@ -29,6 +29,11 @@ class AutomationManager {
         this.enabled = false;
     }
 
+    _cronOptions() {
+        // Prevent scheduled tasks from auto-starting during tests to avoid open handles/timeouts
+        return { scheduled: process.env.NODE_ENV !== 'test' };
+    }
+
     /**
      * Start automation system
      */
@@ -79,7 +84,7 @@ class AutomationManager {
      * Schedule daily wellness check-in
      */
     scheduleDailyCheckIn(time = '20:00') {
-        const task = cron.schedule(`0 ${time.split(':')[1]} ${time.split(':')[0]} * * *`, () => {
+        const task = cron.schedule(`0 ${time.split(':')[1]} ${time.split(':')[0]} * * *`, () => {, this._cronOptions());
             console.log('\n📋 Daily Check-In Reminder');
             console.log('Time to log your wellness data for today!');
             console.log('Run: npm run mental');
@@ -94,7 +99,7 @@ class AutomationManager {
      * Schedule reminder checks (every 5 minutes)
      */
     scheduleReminderChecks() {
-        const task = cron.schedule('*/5 * * * *', () => {
+        const task = cron.schedule('*/5 * * * *', () => {, this._cronOptions());
             const dueReminders = this.reminderManager.getDueReminders();
 
             if (dueReminders.length > 0) {
@@ -120,7 +125,7 @@ class AutomationManager {
      */
     scheduleWeeklyReport(day = 0, time = '09:00') {
         // day: 0 = Sunday, 1 = Monday, etc.
-        const task = cron.schedule(`0 ${time.split(':')[1]} ${time.split(':')[0]} * * ${day}`, () => {
+        const task = cron.schedule(`0 ${time.split(':')[1]} ${time.split(':')[0]} * * ${day}`, () => {, this._cronOptions());
             console.log('\n📊 Generating Weekly Wellness Report...');
 
             try {
@@ -146,7 +151,7 @@ class AutomationManager {
      * Schedule goal progress updates (daily at midnight)
      */
     scheduleGoalUpdates() {
-        const task = cron.schedule('0 0 * * *', () => {
+        const task = cron.schedule('0 0 * * *', () => {, this._cronOptions());
             console.log('\n🎯 Auto-updating goal progress...');
 
             const yesterday = new Date();
