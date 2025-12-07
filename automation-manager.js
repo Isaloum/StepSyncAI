@@ -84,11 +84,11 @@ class AutomationManager {
      * Schedule daily wellness check-in
      */
     scheduleDailyCheckIn(time = '20:00') {
-        const task = cron.schedule(`0 ${time.split(':')[1]} ${time.split(':')[0]} * * *`, () => {, this._cronOptions());
+        const task = cron.schedule(`0 ${time.split(':')[1]} ${time.split(':')[0]} * * *`, () => {
             console.log('\n📋 Daily Check-In Reminder');
             console.log('Time to log your wellness data for today!');
             console.log('Run: npm run mental');
-        });
+        }, this._cronOptions());
 
         this.scheduledTasks.push(task);
         console.log(`📋 Scheduled daily check-in at ${time}`);
@@ -99,7 +99,7 @@ class AutomationManager {
      * Schedule reminder checks (every 5 minutes)
      */
     scheduleReminderChecks() {
-        const task = cron.schedule('*/5 * * * *', () => {, this._cronOptions());
+        const task = cron.schedule('*/5 * * * *', () => {
             const dueReminders = this.reminderManager.getDueReminders();
 
             if (dueReminders.length > 0) {
@@ -113,7 +113,7 @@ class AutomationManager {
 
                 console.log('\nRun: npm run reminders:list to view all reminders');
             }
-        });
+        }, this._cronOptions());
 
         this.scheduledTasks.push(task);
         console.log('🔔 Scheduled reminder checks (every 5 minutes)');
@@ -125,7 +125,7 @@ class AutomationManager {
      */
     scheduleWeeklyReport(day = 0, time = '09:00') {
         // day: 0 = Sunday, 1 = Monday, etc.
-        const task = cron.schedule(`0 ${time.split(':')[1]} ${time.split(':')[0]} * * ${day}`, () => {, this._cronOptions());
+        const task = cron.schedule(`0 ${time.split(':')[1]} ${time.split(':')[0]} * * ${day}`, () => {
             console.log('\n📊 Generating Weekly Wellness Report...');
 
             try {
@@ -139,7 +139,7 @@ class AutomationManager {
             } catch (error) {
                 console.error('❌ Error generating report:', error.message);
             }
-        });
+        }, this._cronOptions());
 
         this.scheduledTasks.push(task);
         const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -151,7 +151,7 @@ class AutomationManager {
      * Schedule goal progress updates (daily at midnight)
      */
     scheduleGoalUpdates() {
-        const task = cron.schedule('0 0 * * *', () => {, this._cronOptions());
+        const task = cron.schedule('0 0 * * *', () => {
             console.log('\n🎯 Auto-updating goal progress...');
 
             const yesterday = new Date();
@@ -168,7 +168,7 @@ class AutomationManager {
             } else {
                 console.log('⚠️  No data from yesterday to update goals');
             }
-        });
+        }, this._cronOptions());
 
         this.scheduledTasks.push(task);
         console.log('🎯 Scheduled daily goal updates (midnight)');
