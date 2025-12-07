@@ -232,6 +232,148 @@ describe('visualization-cli', () => {
         });
     });
 
+    describe('displayChart method', () => {
+        beforeEach(() => {
+            // Add test data to dashboard
+            for (let i = 1; i <= 7; i++) {
+                cli.dashboard.addEntry({
+                    date: `2025-11-${String(i).padStart(2, '0')}`,
+                    mood: 5 + i,
+                    sleep_hours: 7 + (i % 3),
+                    exercise_minutes: 20 + i * 5
+                });
+            }
+        });
+
+        test('should display mood chart with data', () => {
+            consoleSpy.mockClear();
+            cli.displayChart('mood', 30);
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('Mood Rating');
+            expect(output).toContain('/10');
+            expect(output).toContain('Statistics');
+        });
+
+        test('should display sleep chart with data', () => {
+            consoleSpy.mockClear();
+            cli.displayChart('sleep', 30);
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('Sleep Hours');
+            expect(output).toContain('hours');
+        });
+
+        test('should display exercise chart with data', () => {
+            consoleSpy.mockClear();
+            cli.displayChart('exercise', 30);
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('Exercise Minutes');
+            expect(output).toContain('min');
+        });
+
+        test('should handle invalid chart type', () => {
+            const errorSpy = jest.spyOn(console, 'error');
+            cli.displayChart('invalid', 30);
+            expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid chart type'));
+        });
+
+        test('should handle empty data', () => {
+            const emptyCli = new VisualizationCLI();
+            // Clear tracker data
+            if (emptyCli.dashboard.mentalHealth) {
+                emptyCli.dashboard.mentalHealth.data = { moodLogs: [], journalEntries: [] };
+            }
+            if (emptyCli.dashboard.sleep) {
+                emptyCli.dashboard.sleep.data = { sleepLogs: [] };
+            }
+            if (emptyCli.dashboard.exercise) {
+                emptyCli.dashboard.exercise.data = { exercises: [] };
+            }
+            consoleSpy.mockClear();
+            emptyCli.displayChart('mood', 30);
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('No data available');
+        });
+
+        test('should handle entries without specific metric', () => {
+            const emptyCli = new VisualizationCLI();
+            // Clear tracker data
+            if (emptyCli.dashboard.mentalHealth) {
+                emptyCli.dashboard.mentalHealth.data = { moodLogs: [], journalEntries: [] };
+            }
+            if (emptyCli.dashboard.sleep) {
+                emptyCli.dashboard.sleep.data = { sleepLogs: [] };
+            }
+            if (emptyCli.dashboard.exercise) {
+                emptyCli.dashboard.exercise.data = { exercises: [] };
+            }
+            emptyCli.dashboard.addEntry({
+                date: '2025-11-01',
+                sleep_hours: 8  // No mood data
+            });
+            consoleSpy.mockClear();
+            emptyCli.displayChart('mood', 30);
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('No mood data available');
+        });
+    });
+
+    describe('displayHeatmap method', () => {
+        beforeEach(() => {
+            // Add test data with varying wellness scores
+            for (let i = 1; i <= 14; i++) {
+                cli.dashboard.addEntry({
+                    date: `2025-11-${String(i).padStart(2, '0')}`,
+                    mood: 5 + (i % 5),
+                    sleep_hours: 6 + (i % 4),
+                    exercise_minutes: 15 + i * 3
+                });
+            }
+        });
+
+        test('should display heatmap with data', () => {
+            consoleSpy.mockClear();
+            cli.displayHeatmap(30);
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('Wellness Heatmap');
+            expect(output).toContain('Mon');
+            expect(output).toContain('Tue');
+            expect(output).toContain('Legend');
+        });
+
+        test('should handle empty data', () => {
+            const emptyCli = new VisualizationCLI();
+            // Clear tracker data
+            if (emptyCli.dashboard.mentalHealth) {
+                emptyCli.dashboard.mentalHealth.data = { moodLogs: [], journalEntries: [] };
+            }
+            if (emptyCli.dashboard.sleep) {
+                emptyCli.dashboard.sleep.data = { sleepLogs: [] };
+            }
+            if (emptyCli.dashboard.exercise) {
+                emptyCli.dashboard.exercise.data = { exercises: [] };
+            }
+            consoleSpy.mockClear();
+            emptyCli.displayHeatmap(30);
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('No data available for heatmap');
+        });
+
+        test('should respect days parameter', () => {
+            consoleSpy.mockClear();
+            cli.displayHeatmap(7);
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            expect(output).toContain('Last 7 Days');
+        });
+
+        test('should display weekly grid', () => {
+            consoleSpy.mockClear();
+            cli.displayHeatmap(14);
+            const output = consoleSpy.mock.calls.flat().join(' ');
+            // Should have week rows (W1, W2, etc.)
+            expect(output).toMatch(/W\d/);
+        });
+    });
+
     describe('CLI execution tests', () => {
         test('shows help with help command', () => {
             try {

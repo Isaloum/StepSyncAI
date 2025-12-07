@@ -11,13 +11,6 @@ const AutomationManager = require('../automation-manager');
 // Mock fs module
 jest.mock('fs');
 
-// Mock node-cron to prevent real timers from being created
-jest.mock('node-cron', () => ({
-    schedule: jest.fn(() => ({
-        stop: jest.fn()
-    }))
-}));
-
 describe('Advanced CLI Integration Tests', () => {
     let consoleLogSpy;
     let consoleErrorSpy;
@@ -882,9 +875,6 @@ describe('Advanced CLI Integration Tests', () => {
                 automationManager.scheduleWeeklyReport(0, '09:00');
                 automationManager.scheduleGoalUpdates();
             }).not.toThrow();
-
-            // Clean up cron jobs to prevent Jest worker hanging
-            automationManager.stop();
         });
 
         test('should add smart reminders', () => {
