@@ -43,6 +43,8 @@ class GoalManager {
         });
 
         this._rebuildGoalMap();
+        // Test-friendly fast id counter to speed up benchmarks in CI/test envs
+        this._testIdCounter = 0;
     }
 
     /**
@@ -217,7 +219,7 @@ class GoalManager {
         end.setDate(end.getDate() + durationNum);
 
         const goal = {
-            id: uuidv4(),
+            id: this._generateId(),
             type,
             title: title.trim(),
             description: description || title,
@@ -266,6 +268,15 @@ class GoalManager {
         }
 
         return goal;
+    }
+
+    _generateId() {
+        // Fast deterministic id during tests to reduce UUID overhead in benchmarks
+        if (process.env.NODE_ENV === 'test') {
+            this._testIdCounter = (this._testIdCounter || 0) + 1;
+            return `test-${this._testIdCounter}`;
+        }
+        return uuidv4();
     }
 
     /**

@@ -24,10 +24,22 @@ const readline = require('readline');
 class ReminderCLI {
     constructor() {
         this.manager = new ReminderManager();
-        this.rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout
-        });
+        // Lazily create a real readline interface only when needed to avoid keeping stdin open in tests
+        this._realRl = null;
+        this.rl = {
+            question: (q, cb) => {
+                if (!this._realRl) {
+                    this._realRl = readline.createInterface({ input: process.stdin, output: process.stdout });
+                }
+                this._realRl.question(q, cb);
+            },
+            close: () => {
+                if (this._realRl) {
+                    this._realRl.close();
+                    this._realRl = null;
+                }
+            }
+        };
     }
 
     /**
