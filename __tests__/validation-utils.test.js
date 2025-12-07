@@ -154,7 +154,7 @@ describe('ValidationUtils', () => {
     });
 
     describe('readJSONFile', () => {
-        const testFile = path.join(__dirname, 'test-data.json');
+        const testFile = path.join(__dirname, 'validation-utils-test-read.json');
 
         beforeEach(() => {
             // Clean up test file if it exists
