@@ -105,9 +105,5 @@
     "node-cron": "^4.2.1",
     "node-notifier": "^10.0.1",
     "pdfkit": "^0.17.2"
-  },
-  "overrides": {
-    "glob": "^10.0.0",
-    "inflight": "npm:@npmcli/inflight@^1.0.1"
   }
 }
