@@ -37,6 +37,20 @@ describe('ExportManager', () => {
         dashboard = new DailyDashboard(dataFile);
         analytics = new AnalyticsEngine(dashboard);
 
+        // Clear any data that was loaded by the trackers
+        if (dashboard.mentalHealth && dashboard.mentalHealth.data) {
+            dashboard.mentalHealth.data.moodLogs = [];
+            if (dashboard.mentalHealth.saveData) dashboard.mentalHealth.saveData();
+        }
+        if (dashboard.sleep && dashboard.sleep.data) {
+            dashboard.sleep.data.sleepLogs = [];
+            if (dashboard.sleep.saveData) dashboard.sleep.saveData();
+        }
+        if (dashboard.exercise && dashboard.exercise.data) {
+            dashboard.exercise.data.exercises = [];
+            if (dashboard.exercise.saveData) dashboard.exercise.saveData();
+        }
+
         exportManager = new ExportManager(dashboard, testExportsDir);
 
         // Add some test data
