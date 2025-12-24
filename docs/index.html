@@ -4,192 +4,748 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>StepSyncAI - Personal Health & Wellness Platform</title>
-  <meta name="description" content="A production-grade health tracking platform with 6 integrated applications, 1,927 automated tests, and comprehensive CI/CD pipeline.">
+  <meta name="description" content="Track your mental health, medication, sleep, exercise, and get personalized wellness insights.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
   <style>
-    :root{--bg:#0f172a;--card:#1e293b;--accent:#3b82f6;--accent-2:#60a5fa;--success:#10b981;--text:#f1f5f9;--muted:#94a3b8;--border:#334155}
+    :root{--bg:#0f172a;--card:#1e293b;--card-hover:#273549;--accent:#3b82f6;--accent-2:#60a5fa;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--text:#f1f5f9;--muted:#94a3b8;--border:#334155;--radius:12px}
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
-    .container{max-width:1100px;margin:0 auto;padding:2rem}
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+    .container{max-width:1200px;margin:0 auto;padding:1rem}
 
-    /* Hero */
-    .hero{text-align:center;padding:4rem 2rem;background:linear-gradient(135deg,var(--bg) 0%,#1e293b 100%)}
-    .hero-badge{background:var(--success);color:#fff;padding:.5rem 1rem;border-radius:999px;font-size:.875rem;font-weight:600;display:inline-block;margin-bottom:1.5rem}
-    .hero h1{font-size:3rem;font-weight:800;margin-bottom:1rem;background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-    .hero p{font-size:1.25rem;color:var(--muted);max-width:700px;margin:0 auto 2rem}
-    .hero-stats{display:flex;justify-content:center;gap:3rem;flex-wrap:wrap;margin-top:2rem}
-    .stat{text-align:center}
-    .stat-value{font-size:2.5rem;font-weight:800;color:var(--accent)}
-    .stat-label{color:var(--muted);font-size:.875rem}
+    /* Header */
+    header{background:var(--card);border-bottom:1px solid var(--border);padding:1rem 0;position:sticky;top:0;z-index:100}
+    .header-content{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+    .logo{display:flex;align-items:center;gap:.75rem;font-size:1.5rem;font-weight:800;color:var(--accent);text-decoration:none}
+    .badge{background:var(--success);color:#fff;padding:.25rem .75rem;border-radius:999px;font-size:.75rem;font-weight:600}
+
+    /* Navigation Tabs */
+    .nav-tabs{display:flex;gap:.5rem;flex-wrap:wrap}
+    .nav-tab{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.5rem 1rem;border-radius:8px;cursor:pointer;font-weight:600;transition:all .2s;font-size:.875rem}
+    .nav-tab:hover{border-color:var(--accent);color:var(--accent)}
+    .nav-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+    .nav-tab .icon{margin-right:.5rem}
+
+    /* Main Content */
+    main{padding:1.5rem 0}
+    .app-section{display:none}
+    .app-section.active{display:block}
+
+    /* Cards */
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem}
+    .card-title{font-size:1.25rem;font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+
+    /* Forms */
+    .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem}
+    .form-group{margin-bottom:1rem}
+    .form-group label{display:block;font-weight:600;margin-bottom:.5rem;color:var(--muted);font-size:.875rem}
+    input,select,textarea{width:100%;padding:.75rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:1rem}
+    input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+    input[type="range"]{padding:0}
 
     /* Buttons */
-    .btn-group{display:flex;gap:1rem;justify-content:center;margin-top:2rem;flex-wrap:wrap}
-    .btn{padding:1rem 2rem;border-radius:8px;font-weight:700;text-decoration:none;transition:all .2s}
-    .btn-primary{background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 100%);color:#fff}
-    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(59,130,246,.3)}
+    .btn{padding:.75rem 1.5rem;border-radius:8px;font-weight:700;cursor:pointer;transition:all .2s;border:none;font-size:.9rem}
+    .btn-primary{background:var(--accent);color:#fff}
+    .btn-primary:hover{background:var(--accent-2)}
+    .btn-success{background:var(--success);color:#fff}
+    .btn-danger{background:var(--danger);color:#fff}
     .btn-secondary{background:var(--card);color:var(--text);border:1px solid var(--border)}
-    .btn-secondary:hover{border-color:var(--accent)}
+    .btn-group{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem}
 
-    /* Features */
-    .features{padding:4rem 0}
-    .features h2{text-align:center;font-size:2rem;margin-bottom:3rem}
-    .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem}
-    .feature-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;transition:all .2s}
-    .feature-card:hover{border-color:var(--accent);transform:translateY(-4px)}
-    .feature-icon{font-size:2.5rem;margin-bottom:1rem}
-    .feature-card h3{font-size:1.25rem;margin-bottom:.5rem}
-    .feature-card p{color:var(--muted);font-size:.9rem}
+    /* Mood Slider */
+    .mood-display{font-size:3rem;text-align:center;margin:1rem 0}
+    .mood-scale{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-top:.5rem}
 
-    /* Code Block */
-    .code-section{background:var(--card);border-radius:12px;padding:2rem;margin:3rem 0;border:1px solid var(--border)}
-    .code-section h3{margin-bottom:1rem}
-    pre{background:#0d1117;padding:1.5rem;border-radius:8px;overflow-x:auto;font-family:'SF Mono',Monaco,Consolas,monospace;font-size:.9rem;color:#c9d1d9}
+    /* Wellness Score */
+    .wellness-score{text-align:center;padding:2rem;background:linear-gradient(135deg,var(--card) 0%,var(--bg) 100%);border-radius:var(--radius);margin-bottom:1.5rem}
+    .score-circle{width:150px;height:150px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:2.5rem;font-weight:800;border:8px solid var(--border)}
+    .score-good{border-color:var(--success);color:var(--success)}
+    .score-medium{border-color:var(--warning);color:var(--warning)}
+    .score-low{border-color:var(--danger);color:var(--danger)}
+    .score-label{font-size:1.25rem;color:var(--muted)}
 
-    /* Dashboard Preview */
-    .dashboard{background:linear-gradient(135deg,var(--card) 0%,#0f172a 100%);border:1px solid var(--border);border-radius:12px;padding:2rem;margin:2rem 0;font-family:'SF Mono',Monaco,Consolas,monospace;font-size:.8rem;white-space:pre;overflow-x:auto}
+    /* Progress Bars */
+    .progress-bar{background:var(--border);border-radius:999px;height:12px;margin:.5rem 0;overflow:hidden}
+    .progress-fill{height:100%;border-radius:999px;transition:width .3s}
+    .progress-fill.good{background:var(--success)}
+    .progress-fill.medium{background:var(--warning)}
+    .progress-fill.low{background:var(--danger)}
 
-    /* Tech Stack */
-    .tech-grid{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-top:2rem}
-    .tech-badge{background:var(--card);border:1px solid var(--border);padding:.75rem 1.5rem;border-radius:8px;font-weight:600}
+    /* Data List */
+    .data-list{max-height:300px;overflow-y:auto}
+    .data-item{background:var(--bg);padding:1rem;border-radius:8px;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center}
+    .data-item-info{flex:1}
+    .data-item-title{font-weight:600}
+    .data-item-meta{font-size:.875rem;color:var(--muted)}
+    .data-item-value{font-size:1.25rem;font-weight:700}
 
-    /* Footer */
-    footer{text-align:center;padding:3rem;border-top:1px solid var(--border);color:var(--muted)}
-    footer a{color:var(--accent)}
+    /* Stats Grid */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem}
+    .stat-card{background:var(--bg);padding:1rem;border-radius:8px;text-align:center}
+    .stat-value{font-size:1.75rem;font-weight:800;color:var(--accent)}
+    .stat-label{font-size:.75rem;color:var(--muted);margin-top:.25rem}
 
-    @media(max-width:768px){.hero h1{font-size:2rem}.hero-stats{gap:1.5rem}.stat-value{font-size:2rem}}
+    /* Medication Grid */
+    .med-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem}
+    .med-card{background:var(--bg);padding:1rem;border-radius:8px;border-left:4px solid var(--accent)}
+    .med-card.taken{border-left-color:var(--success);opacity:.7}
+    .med-card.missed{border-left-color:var(--danger)}
+    .med-name{font-weight:700;font-size:1.1rem}
+    .med-time{color:var(--muted);font-size:.875rem}
+
+    /* Quiz */
+    .quiz-question{font-size:1.25rem;margin-bottom:1.5rem}
+    .quiz-options{display:grid;gap:.75rem}
+    .quiz-option{background:var(--bg);padding:1rem;border-radius:8px;cursor:pointer;border:2px solid var(--border);transition:all .2s}
+    .quiz-option:hover{border-color:var(--accent)}
+    .quiz-option.correct{border-color:var(--success);background:rgba(16,185,129,.1)}
+    .quiz-option.incorrect{border-color:var(--danger);background:rgba(239,68,68,.1)}
+    .quiz-option.selected{border-color:var(--accent)}
+
+    /* Insights */
+    .insight{background:var(--bg);padding:1rem;border-radius:8px;margin-bottom:.75rem;border-left:4px solid var(--accent)}
+    .insight.positive{border-left-color:var(--success)}
+    .insight.warning{border-left-color:var(--warning)}
+    .insight.negative{border-left-color:var(--danger)}
+
+    /* Responsive */
+    @media(max-width:768px){
+      .nav-tabs{justify-content:center}
+      .nav-tab span:not(.icon){display:none}
+      .header-content{justify-content:center}
+      .stats-grid{grid-template-columns:repeat(2,1fr)}
+    }
   </style>
 </head>
 <body>
-  <header class="hero">
+  <header>
     <div class="container">
-      <span class="hero-badge">✅ 1,927 Tests Passing</span>
-      <h1>🏥 StepSyncAI</h1>
-      <p>A production-grade personal health & wellness platform with 6 integrated applications, comprehensive test coverage, and CI/CD automation.</p>
-      <div class="hero-stats">
-        <div class="stat"><div class="stat-value">6</div><div class="stat-label">Integrated Apps</div></div>
-        <div class="stat"><div class="stat-value">82%</div><div class="stat-label">Test Coverage</div></div>
-        <div class="stat"><div class="stat-value">1,927</div><div class="stat-label">Automated Tests</div></div>
-        <div class="stat"><div class="stat-value">0</div><div class="stat-label">Vulnerabilities</div></div>
-      </div>
-      <div class="btn-group">
-        <a href="https://github.com/Isaloum/StepSyncAI" class="btn btn-primary">⭐ View on GitHub</a>
-        <a href="https://github.com/Isaloum/StepSyncAI#-quick-start" class="btn btn-secondary">📖 Documentation</a>
+      <div class="header-content">
+        <a href="#" class="logo">🏥 StepSyncAI <span class="badge">LIVE</span></a>
+        <nav class="nav-tabs">
+          <button class="nav-tab active" data-tab="dashboard"><span class="icon">📊</span><span>Dashboard</span></button>
+          <button class="nav-tab" data-tab="mental"><span class="icon">🧠</span><span>Mental Health</span></button>
+          <button class="nav-tab" data-tab="medication"><span class="icon">💊</span><span>Medication</span></button>
+          <button class="nav-tab" data-tab="sleep"><span class="icon">😴</span><span>Sleep</span></button>
+          <button class="nav-tab" data-tab="exercise"><span class="icon">🏃</span><span>Exercise</span></button>
+          <button class="nav-tab" data-tab="aws"><span class="icon">☁️</span><span>AWS Quiz</span></button>
+        </nav>
       </div>
     </div>
   </header>
 
   <main class="container">
-    <section class="features">
-      <h2>✨ Integrated Applications</h2>
-      <div class="feature-grid">
-        <div class="feature-card">
-          <div class="feature-icon">🧠</div>
-          <h3>Mental Health Tracker</h3>
-          <p>PTSD/trauma recovery support with mood tracking, symptom monitoring, and correlation analysis.</p>
+    <!-- Dashboard -->
+    <section id="dashboard" class="app-section active">
+      <div class="wellness-score">
+        <div class="score-circle score-medium" id="wellnessCircle">
+          <span id="wellnessScore">--</span>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon">💊</div>
-          <h3>Medication Tracker</h3>
-          <p>Medication management with adherence tracking and 65+ drug interaction warnings.</p>
+        <div class="score-label">Overall Wellness Score</div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value" id="statMood">--</div><div class="stat-label">Mood Today</div></div>
+        <div class="stat-card"><div class="stat-value" id="statSleep">--</div><div class="stat-label">Hours Sleep</div></div>
+        <div class="stat-card"><div class="stat-value" id="statExercise">--</div><div class="stat-label">Min Exercise</div></div>
+        <div class="stat-card"><div class="stat-value" id="statMeds">--</div><div class="stat-label">Meds Taken</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💡 Today's Insights</div>
+        <div id="insightsList">
+          <div class="insight">Log your daily data to see personalized insights!</div>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon">😴</div>
-          <h3>Sleep Tracker</h3>
-          <p>Sleep pattern analysis with quality tracking, duration analysis, and sleep debt calculation.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">🏃</div>
-          <h3>Exercise Tracker</h3>
-          <p>Fitness monitoring with activity logging, goal tracking, and intensity levels.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">📊</div>
-          <h3>Daily Dashboard</h3>
-          <p>Unified wellness overview with 0-100 scoring, correlations, trends, and smart recommendations.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">☁️</div>
-          <h3>AWS Study Guide</h3>
-          <p>Cloud certification prep with 20+ concepts, practice quizzes, and progress tracking.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📈 Weekly Progress</div>
+        <div class="form-grid">
+          <div>
+            <label>🧠 Mood</label>
+            <div class="progress-bar"><div class="progress-fill good" id="progressMood" style="width:0%"></div></div>
+          </div>
+          <div>
+            <label>😴 Sleep</label>
+            <div class="progress-bar"><div class="progress-fill medium" id="progressSleep" style="width:0%"></div></div>
+          </div>
+          <div>
+            <label>🏃 Exercise</label>
+            <div class="progress-bar"><div class="progress-fill low" id="progressExercise" style="width:0%"></div></div>
+          </div>
+          <div>
+            <label>💊 Medication</label>
+            <div class="progress-bar"><div class="progress-fill good" id="progressMeds" style="width:0%"></div></div>
+          </div>
         </div>
       </div>
     </section>
 
-    <section>
-      <h2 style="text-align:center;margin-bottom:1.5rem">📊 Live Dashboard Preview</h2>
-      <div class="dashboard">╔════════════════════════════════════════════════════════════╗
-║           📊 DAILY WELLNESS DASHBOARD                       ║
-╚════════════════════════════════════════════════════════════╝
+    <!-- Mental Health -->
+    <section id="mental" class="app-section">
+      <div class="card">
+        <div class="card-title">🧠 Log Your Mood</div>
+        <div class="form-group">
+          <label>How are you feeling today? (1-10)</label>
+          <div class="mood-display" id="moodEmoji">😐</div>
+          <input type="range" id="moodSlider" min="1" max="10" value="5">
+          <div class="mood-scale"><span>1 - Very Low</span><span>5 - Neutral</span><span>10 - Excellent</span></div>
+        </div>
+        <div class="form-group">
+          <label>Any symptoms today?</label>
+          <div class="btn-group">
+            <button class="btn btn-secondary symptom-btn" data-symptom="anxiety">😰 Anxiety</button>
+            <button class="btn btn-secondary symptom-btn" data-symptom="stress">😫 Stress</button>
+            <button class="btn btn-secondary symptom-btn" data-symptom="fatigue">😴 Fatigue</button>
+            <button class="btn btn-secondary symptom-btn" data-symptom="irritability">😤 Irritability</button>
+            <button class="btn btn-secondary symptom-btn" data-symptom="hopeful">🌟 Hopeful</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notes (optional)</label>
+          <textarea id="moodNotes" rows="3" placeholder="How was your day?"></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="saveMood()">💾 Save Mood Entry</button>
+      </div>
 
-📅 Today's Date
-
-┌─────────────────────────────────────────────────────────┐
-│  😊  OVERALL WELLNESS: 78.5/100 (78.5%) - Good          │
-└─────────────────────────────────────────────────────────┘
-
-📊 Score Breakdown:
-
-  🧠 Mood:        [████████████████░░░░] 20/25
-  😴 Sleep:       [███████████████████░] 23.5/25
-  🏃 Exercise:    [████████████████░░░░] 20/25
-  💊 Medication:  [███████████████░░░░░] 15/25
-
-💡 Today's Recommendations:
-  ✅ 🌟 Your mood is looking great! Keep up the good work.
-  🟡 🏃 Try to reach 30 minutes of exercise today.
-  🔴 💊 Medication adherence at 60%. Consistency is key.</div>
-    </section>
-
-    <section class="code-section">
-      <h3>🚀 Quick Start</h3>
-      <pre><code># Clone the repository
-git clone https://github.com/Isaloum/StepSyncAI.git
-cd StepSyncAI
-
-# Install dependencies
-npm install
-
-# Run the daily dashboard
-node daily-dashboard.js daily
-
-# Run all 1,927 tests
-npm test</code></pre>
-    </section>
-
-    <section style="text-align:center;padding:3rem 0">
-      <h2>🛠️ Tech Stack</h2>
-      <div class="tech-grid">
-        <span class="tech-badge">Node.js 18/20</span>
-        <span class="tech-badge">Jest Testing</span>
-        <span class="tech-badge">GitHub Actions</span>
-        <span class="tech-badge">82% Coverage</span>
-        <span class="tech-badge">CI/CD Pipeline</span>
-        <span class="tech-badge">PDF Export</span>
+      <div class="card">
+        <div class="card-title">📅 Recent Entries</div>
+        <div class="data-list" id="moodHistory"></div>
       </div>
     </section>
 
-    <section style="text-align:center;padding:2rem 0">
-      <h2>🎓 What I Learned Building This</h2>
-      <div class="feature-grid" style="margin-top:2rem">
-        <div class="feature-card">
-          <h3>Test-Driven Development</h3>
-          <p>Writing 1,927 comprehensive tests with 82% coverage using Jest</p>
+    <!-- Medication -->
+    <section id="medication" class="app-section">
+      <div class="card">
+        <div class="card-title">💊 Add Medication</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Medication Name</label>
+            <input type="text" id="medName" placeholder="e.g., Vitamin D">
+          </div>
+          <div class="form-group">
+            <label>Dosage</label>
+            <input type="text" id="medDosage" placeholder="e.g., 1000 IU">
+          </div>
+          <div class="form-group">
+            <label>Time</label>
+            <select id="medTime">
+              <option value="morning">🌅 Morning</option>
+              <option value="afternoon">☀️ Afternoon</option>
+              <option value="evening">🌆 Evening</option>
+              <option value="night">🌙 Night</option>
+            </select>
+          </div>
         </div>
-        <div class="feature-card">
-          <h3>CI/CD Automation</h3>
-          <p>GitHub Actions workflows with multi-version Node.js testing</p>
+        <button class="btn btn-primary" onclick="addMedication()">➕ Add Medication</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📋 Today's Medications</div>
+        <div class="med-grid" id="medList"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⚠️ Interaction Warnings</div>
+        <div id="interactionWarnings">
+          <div class="insight positive">No dangerous interactions detected.</div>
         </div>
-        <div class="feature-card">
-          <h3>Modular Architecture</h3>
-          <p>Clean separation of concerns with service integration patterns</p>
+      </div>
+    </section>
+
+    <!-- Sleep -->
+    <section id="sleep" class="app-section">
+      <div class="card">
+        <div class="card-title">😴 Log Sleep</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Bedtime</label>
+            <input type="time" id="sleepBedtime" value="22:00">
+          </div>
+          <div class="form-group">
+            <label>Wake Time</label>
+            <input type="time" id="sleepWake" value="06:00">
+          </div>
+          <div class="form-group">
+            <label>Sleep Quality (1-10)</label>
+            <input type="range" id="sleepQuality" min="1" max="10" value="7">
+            <div class="mood-scale"><span>Poor</span><span>Average</span><span>Excellent</span></div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveSleep()">💾 Save Sleep Entry</button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value" id="avgSleep">--</div><div class="stat-label">Avg Hours</div></div>
+        <div class="stat-card"><div class="stat-value" id="avgQuality">--</div><div class="stat-label">Avg Quality</div></div>
+        <div class="stat-card"><div class="stat-value" id="sleepDebt">--</div><div class="stat-label">Sleep Debt</div></div>
+        <div class="stat-card"><div class="stat-value" id="sleepStreak">--</div><div class="stat-label">Day Streak</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📅 Sleep History</div>
+        <div class="data-list" id="sleepHistory"></div>
+      </div>
+    </section>
+
+    <!-- Exercise -->
+    <section id="exercise" class="app-section">
+      <div class="card">
+        <div class="card-title">🏃 Log Exercise</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Activity Type</label>
+            <select id="exerciseType">
+              <option value="walking">🚶 Walking</option>
+              <option value="running">🏃 Running</option>
+              <option value="cycling">🚴 Cycling</option>
+              <option value="swimming">🏊 Swimming</option>
+              <option value="gym">🏋️ Gym/Weights</option>
+              <option value="yoga">🧘 Yoga</option>
+              <option value="sports">⚽ Sports</option>
+              <option value="other">✨ Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Duration (minutes)</label>
+            <input type="number" id="exerciseDuration" placeholder="30" min="1">
+          </div>
+          <div class="form-group">
+            <label>Intensity</label>
+            <select id="exerciseIntensity">
+              <option value="light">😌 Light</option>
+              <option value="moderate">💪 Moderate</option>
+              <option value="intense">🔥 Intense</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveExercise()">💾 Log Exercise</button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value" id="todayExercise">0</div><div class="stat-label">Min Today</div></div>
+        <div class="stat-card"><div class="stat-value" id="weekExercise">0</div><div class="stat-label">Min This Week</div></div>
+        <div class="stat-card"><div class="stat-value" id="exerciseGoal">30</div><div class="stat-label">Daily Goal</div></div>
+        <div class="stat-card"><div class="stat-value" id="exerciseStreak">0</div><div class="stat-label">Day Streak</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📅 Exercise History</div>
+        <div class="data-list" id="exerciseHistory"></div>
+      </div>
+    </section>
+
+    <!-- AWS Quiz -->
+    <section id="aws" class="app-section">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value" id="quizScore">0</div><div class="stat-label">Correct</div></div>
+        <div class="stat-card"><div class="stat-value" id="quizTotal">0</div><div class="stat-label">Attempted</div></div>
+        <div class="stat-card"><div class="stat-value" id="quizAccuracy">--%</div><div class="stat-label">Accuracy</div></div>
+        <div class="stat-card"><div class="stat-value" id="quizStreak">0</div><div class="stat-label">Streak</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">☁️ AWS Cloud Practitioner Quiz</div>
+        <div id="quizContainer">
+          <div class="quiz-question" id="quizQuestion">Loading question...</div>
+          <div class="quiz-options" id="quizOptions"></div>
+          <div class="btn-group" style="margin-top:1.5rem">
+            <button class="btn btn-primary" id="nextQuizBtn" onclick="nextQuestion()" style="display:none">Next Question →</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📚 AWS Concepts</div>
+        <div class="data-list">
+          <div class="data-item"><div class="data-item-info"><div class="data-item-title">EC2</div><div class="data-item-meta">Elastic Compute Cloud - Virtual servers</div></div></div>
+          <div class="data-item"><div class="data-item-info"><div class="data-item-title">S3</div><div class="data-item-meta">Simple Storage Service - Object storage</div></div></div>
+          <div class="data-item"><div class="data-item-info"><div class="data-item-title">Lambda</div><div class="data-item-meta">Serverless compute - Run code without servers</div></div></div>
+          <div class="data-item"><div class="data-item-info"><div class="data-item-title">RDS</div><div class="data-item-meta">Relational Database Service - Managed databases</div></div></div>
+          <div class="data-item"><div class="data-item-info"><div class="data-item-title">IAM</div><div class="data-item-meta">Identity & Access Management - Security</div></div></div>
         </div>
       </div>
     </section>
   </main>
 
-  <footer>
-    <p>Built with ❤️ by <a href="https://github.com/Isaloum">Isaloum</a></p>
-    <p style="margin-top:.5rem">MIT License • <a href="https://github.com/Isaloum/StepSyncAI">GitHub</a></p>
-  </footer>
+  <script>
+    // Data Storage
+    const DB = {
+      get: (key) => JSON.parse(localStorage.getItem('stepsync_' + key) || '[]'),
+      set: (key, data) => localStorage.setItem('stepsync_' + key, JSON.stringify(data)),
+      getOne: (key) => JSON.parse(localStorage.getItem('stepsync_' + key) || 'null'),
+      setOne: (key, data) => localStorage.setItem('stepsync_' + key, JSON.stringify(data))
+    };
+
+    // Tab Navigation
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Mood Tracker
+    const moodEmojis = ['😢','😞','😔','😕','😐','🙂','😊','😄','😁','🤩'];
+    const moodSlider = document.getElementById('moodSlider');
+    const moodEmoji = document.getElementById('moodEmoji');
+    let selectedSymptoms = [];
+
+    moodSlider.addEventListener('input', () => {
+      moodEmoji.textContent = moodEmojis[parseInt(moodSlider.value) - 1];
+    });
+
+    document.querySelectorAll('.symptom-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('btn-primary');
+        btn.classList.toggle('btn-secondary');
+        const symptom = btn.dataset.symptom;
+        if (selectedSymptoms.includes(symptom)) {
+          selectedSymptoms = selectedSymptoms.filter(s => s !== symptom);
+        } else {
+          selectedSymptoms.push(symptom);
+        }
+      });
+    });
+
+    function saveMood() {
+      const entry = {
+        date: new Date().toISOString(),
+        mood: parseInt(moodSlider.value),
+        symptoms: [...selectedSymptoms],
+        notes: document.getElementById('moodNotes').value
+      };
+      const moods = DB.get('moods');
+      moods.unshift(entry);
+      DB.set('moods', moods.slice(0, 100));
+      document.getElementById('moodNotes').value = '';
+      selectedSymptoms = [];
+      document.querySelectorAll('.symptom-btn').forEach(b => {
+        b.classList.remove('btn-primary');
+        b.classList.add('btn-secondary');
+      });
+      alert('Mood saved! 🎉');
+      loadMoodHistory();
+      updateDashboard();
+    }
+
+    function loadMoodHistory() {
+      const moods = DB.get('moods');
+      const container = document.getElementById('moodHistory');
+      if (moods.length === 0) {
+        container.innerHTML = '<div class="insight">No mood entries yet. Start tracking!</div>';
+        return;
+      }
+      container.innerHTML = moods.slice(0, 10).map(m => `
+        <div class="data-item">
+          <div class="data-item-info">
+            <div class="data-item-title">${moodEmojis[m.mood - 1]} Mood: ${m.mood}/10</div>
+            <div class="data-item-meta">${new Date(m.date).toLocaleDateString()} ${m.symptoms.length ? '• ' + m.symptoms.join(', ') : ''}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Medication Tracker
+    function addMedication() {
+      const name = document.getElementById('medName').value.trim();
+      const dosage = document.getElementById('medDosage').value.trim();
+      const time = document.getElementById('medTime').value;
+      if (!name) return alert('Please enter medication name');
+
+      const meds = DB.get('medications');
+      meds.push({ id: Date.now(), name, dosage, time, taken: false });
+      DB.set('medications', meds);
+      document.getElementById('medName').value = '';
+      document.getElementById('medDosage').value = '';
+      loadMedications();
+      checkInteractions();
+    }
+
+    function loadMedications() {
+      const meds = DB.get('medications');
+      const container = document.getElementById('medList');
+      if (meds.length === 0) {
+        container.innerHTML = '<div class="insight">No medications added yet.</div>';
+        return;
+      }
+      container.innerHTML = meds.map(m => `
+        <div class="med-card ${m.taken ? 'taken' : ''}">
+          <div class="med-name">${m.name}</div>
+          <div class="med-time">${m.dosage} • ${m.time}</div>
+          <button class="btn ${m.taken ? 'btn-success' : 'btn-secondary'}" onclick="toggleMed(${m.id})" style="margin-top:.5rem">
+            ${m.taken ? '✅ Taken' : '⬜ Mark Taken'}
+          </button>
+          <button class="btn btn-danger" onclick="deleteMed(${m.id})" style="margin-top:.5rem;margin-left:.5rem">🗑️</button>
+        </div>
+      `).join('');
+      updateDashboard();
+    }
+
+    function toggleMed(id) {
+      const meds = DB.get('medications');
+      const med = meds.find(m => m.id === id);
+      if (med) med.taken = !med.taken;
+      DB.set('medications', meds);
+      loadMedications();
+    }
+
+    function deleteMed(id) {
+      const meds = DB.get('medications').filter(m => m.id !== id);
+      DB.set('medications', meds);
+      loadMedications();
+      checkInteractions();
+    }
+
+    const dangerousInteractions = [
+      ['aspirin', 'ibuprofen', '⚠️ Both are NSAIDs - increased bleeding risk'],
+      ['warfarin', 'aspirin', '🚨 High bleeding risk - consult doctor'],
+      ['lisinopril', 'potassium', '⚠️ Risk of hyperkalemia'],
+      ['metformin', 'alcohol', '⚠️ Risk of lactic acidosis'],
+      ['ssri', 'maoi', '🚨 Serotonin syndrome risk - dangerous!']
+    ];
+
+    function checkInteractions() {
+      const meds = DB.get('medications').map(m => m.name.toLowerCase());
+      const warnings = [];
+      dangerousInteractions.forEach(([drug1, drug2, warning]) => {
+        if (meds.some(m => m.includes(drug1)) && meds.some(m => m.includes(drug2))) {
+          warnings.push(warning);
+        }
+      });
+      const container = document.getElementById('interactionWarnings');
+      if (warnings.length === 0) {
+        container.innerHTML = '<div class="insight positive">✅ No dangerous interactions detected.</div>';
+      } else {
+        container.innerHTML = warnings.map(w => `<div class="insight negative">${w}</div>`).join('');
+      }
+    }
+
+    // Sleep Tracker
+    function saveSleep() {
+      const bedtime = document.getElementById('sleepBedtime').value;
+      const wake = document.getElementById('sleepWake').value;
+      const quality = parseInt(document.getElementById('sleepQuality').value);
+
+      const bedDate = new Date(`2000-01-01T${bedtime}`);
+      let wakeDate = new Date(`2000-01-01T${wake}`);
+      if (wakeDate < bedDate) wakeDate.setDate(wakeDate.getDate() + 1);
+      const hours = (wakeDate - bedDate) / (1000 * 60 * 60);
+
+      const entry = { date: new Date().toISOString(), bedtime, wake, hours: Math.round(hours * 10) / 10, quality };
+      const sleeps = DB.get('sleeps');
+      sleeps.unshift(entry);
+      DB.set('sleeps', sleeps.slice(0, 100));
+      alert(`Sleep logged: ${entry.hours} hours, quality ${quality}/10`);
+      loadSleepData();
+      updateDashboard();
+    }
+
+    function loadSleepData() {
+      const sleeps = DB.get('sleeps');
+      const container = document.getElementById('sleepHistory');
+
+      if (sleeps.length === 0) {
+        container.innerHTML = '<div class="insight">No sleep data yet.</div>';
+        document.getElementById('avgSleep').textContent = '--';
+        document.getElementById('avgQuality').textContent = '--';
+        document.getElementById('sleepDebt').textContent = '--';
+        document.getElementById('sleepStreak').textContent = '--';
+        return;
+      }
+
+      const avgHours = sleeps.reduce((a, s) => a + s.hours, 0) / sleeps.length;
+      const avgQual = sleeps.reduce((a, s) => a + s.quality, 0) / sleeps.length;
+      const debt = Math.max(0, (8 * 7) - sleeps.slice(0, 7).reduce((a, s) => a + s.hours, 0));
+
+      document.getElementById('avgSleep').textContent = avgHours.toFixed(1);
+      document.getElementById('avgQuality').textContent = avgQual.toFixed(1);
+      document.getElementById('sleepDebt').textContent = debt.toFixed(1) + 'h';
+      document.getElementById('sleepStreak').textContent = sleeps.length;
+
+      container.innerHTML = sleeps.slice(0, 10).map(s => `
+        <div class="data-item">
+          <div class="data-item-info">
+            <div class="data-item-title">${s.hours}h sleep, Quality: ${s.quality}/10</div>
+            <div class="data-item-meta">${new Date(s.date).toLocaleDateString()} • ${s.bedtime} - ${s.wake}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Exercise Tracker
+    function saveExercise() {
+      const type = document.getElementById('exerciseType').value;
+      const duration = parseInt(document.getElementById('exerciseDuration').value) || 0;
+      const intensity = document.getElementById('exerciseIntensity').value;
+      if (duration <= 0) return alert('Please enter duration');
+
+      const entry = { date: new Date().toISOString(), type, duration, intensity };
+      const exercises = DB.get('exercises');
+      exercises.unshift(entry);
+      DB.set('exercises', exercises.slice(0, 100));
+      document.getElementById('exerciseDuration').value = '';
+      alert(`Logged ${duration} min of ${type}! 💪`);
+      loadExerciseData();
+      updateDashboard();
+    }
+
+    function loadExerciseData() {
+      const exercises = DB.get('exercises');
+      const container = document.getElementById('exerciseHistory');
+      const today = new Date().toDateString();
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+      const todayMin = exercises.filter(e => new Date(e.date).toDateString() === today).reduce((a, e) => a + e.duration, 0);
+      const weekMin = exercises.filter(e => new Date(e.date) > weekAgo).reduce((a, e) => a + e.duration, 0);
+
+      document.getElementById('todayExercise').textContent = todayMin;
+      document.getElementById('weekExercise').textContent = weekMin;
+
+      if (exercises.length === 0) {
+        container.innerHTML = '<div class="insight">No exercise logged yet.</div>';
+        return;
+      }
+
+      const typeIcons = { walking: '🚶', running: '🏃', cycling: '🚴', swimming: '🏊', gym: '🏋️', yoga: '🧘', sports: '⚽', other: '✨' };
+      container.innerHTML = exercises.slice(0, 10).map(e => `
+        <div class="data-item">
+          <div class="data-item-info">
+            <div class="data-item-title">${typeIcons[e.type] || '🏃'} ${e.type} - ${e.duration} min</div>
+            <div class="data-item-meta">${new Date(e.date).toLocaleDateString()} • ${e.intensity} intensity</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // AWS Quiz
+    const awsQuestions = [
+      { q: "What does EC2 stand for?", options: ["Elastic Compute Cloud", "Electronic Computing Center", "Enterprise Cloud Computing", "Elastic Container Cluster"], answer: 0 },
+      { q: "Which AWS service is used for object storage?", options: ["EBS", "S3", "RDS", "DynamoDB"], answer: 1 },
+      { q: "What is AWS Lambda used for?", options: ["Database management", "Virtual machines", "Serverless computing", "Content delivery"], answer: 2 },
+      { q: "Which service provides managed relational databases?", options: ["DynamoDB", "S3", "RDS", "ElastiCache"], answer: 2 },
+      { q: "What does IAM stand for?", options: ["Internet Access Management", "Identity and Access Management", "Integrated Application Module", "Instance Availability Manager"], answer: 1 },
+      { q: "Which AWS service is a content delivery network?", options: ["Route 53", "CloudFront", "API Gateway", "Direct Connect"], answer: 1 },
+      { q: "What is the AWS shared responsibility model?", options: ["AWS manages everything", "Customer manages everything", "AWS manages infrastructure, customer manages data", "Only applies to enterprise accounts"], answer: 2 },
+      { q: "Which service is used for DNS in AWS?", options: ["CloudFront", "Route 53", "API Gateway", "VPC"], answer: 1 },
+      { q: "What type of database is DynamoDB?", options: ["Relational", "Graph", "NoSQL/Key-Value", "Time-series"], answer: 2 },
+      { q: "What does VPC stand for?", options: ["Virtual Private Cloud", "Virtual Processing Center", "Verified Public Connection", "Variable Pricing Calculator"], answer: 0 }
+    ];
+
+    let currentQuestion = 0;
+    let quizScore = 0;
+    let quizTotal = 0;
+    let quizStreak = 0;
+
+    function loadQuestion() {
+      const q = awsQuestions[currentQuestion];
+      document.getElementById('quizQuestion').textContent = q.q;
+      document.getElementById('quizOptions').innerHTML = q.options.map((opt, i) => `
+        <div class="quiz-option" onclick="checkAnswer(${i})" data-index="${i}">${opt}</div>
+      `).join('');
+      document.getElementById('nextQuizBtn').style.display = 'none';
+    }
+
+    function checkAnswer(selected) {
+      const q = awsQuestions[currentQuestion];
+      const options = document.querySelectorAll('.quiz-option');
+      options.forEach((opt, i) => {
+        opt.style.pointerEvents = 'none';
+        if (i === q.answer) opt.classList.add('correct');
+        if (i === selected && selected !== q.answer) opt.classList.add('incorrect');
+      });
+
+      quizTotal++;
+      if (selected === q.answer) {
+        quizScore++;
+        quizStreak++;
+      } else {
+        quizStreak = 0;
+      }
+
+      document.getElementById('quizScore').textContent = quizScore;
+      document.getElementById('quizTotal').textContent = quizTotal;
+      document.getElementById('quizAccuracy').textContent = Math.round((quizScore / quizTotal) * 100) + '%';
+      document.getElementById('quizStreak').textContent = quizStreak;
+      document.getElementById('nextQuizBtn').style.display = 'inline-block';
+    }
+
+    function nextQuestion() {
+      currentQuestion = (currentQuestion + 1) % awsQuestions.length;
+      loadQuestion();
+    }
+
+    // Dashboard
+    function updateDashboard() {
+      const moods = DB.get('moods');
+      const sleeps = DB.get('sleeps');
+      const exercises = DB.get('exercises');
+      const meds = DB.get('medications');
+
+      const today = new Date().toDateString();
+      const todayMood = moods.find(m => new Date(m.date).toDateString() === today);
+      const todaySleep = sleeps.find(s => new Date(s.date).toDateString() === today);
+      const todayExercise = exercises.filter(e => new Date(e.date).toDateString() === today).reduce((a, e) => a + e.duration, 0);
+      const medsTaken = meds.filter(m => m.taken).length;
+      const medsTotal = meds.length;
+
+      // Stats
+      document.getElementById('statMood').textContent = todayMood ? todayMood.mood + '/10' : '--';
+      document.getElementById('statSleep').textContent = todaySleep ? todaySleep.hours + 'h' : '--';
+      document.getElementById('statExercise').textContent = todayExercise + 'min';
+      document.getElementById('statMeds').textContent = medsTotal > 0 ? `${medsTaken}/${medsTotal}` : '--';
+
+      // Calculate wellness score
+      let score = 0;
+      let maxScore = 0;
+
+      if (todayMood) { score += todayMood.mood * 2.5; maxScore += 25; }
+      if (todaySleep) { score += Math.min(todaySleep.hours / 8 * 25, 25); maxScore += 25; }
+      if (todayExercise > 0) { score += Math.min(todayExercise / 30 * 25, 25); maxScore += 25; }
+      if (medsTotal > 0) { score += (medsTaken / medsTotal) * 25; maxScore += 25; }
+
+      const wellness = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+      const circle = document.getElementById('wellnessCircle');
+      document.getElementById('wellnessScore').textContent = wellness;
+      circle.className = 'score-circle ' + (wellness >= 70 ? 'score-good' : wellness >= 40 ? 'score-medium' : 'score-low');
+
+      // Progress bars
+      const setProgress = (id, value, max) => {
+        const pct = Math.min(100, (value / max) * 100);
+        document.getElementById(id).style.width = pct + '%';
+        document.getElementById(id).className = 'progress-fill ' + (pct >= 70 ? 'good' : pct >= 40 ? 'medium' : 'low');
+      };
+
+      if (moods.length > 0) setProgress('progressMood', moods.slice(0, 7).reduce((a, m) => a + m.mood, 0) / Math.min(7, moods.length), 10);
+      if (sleeps.length > 0) setProgress('progressSleep', sleeps.slice(0, 7).reduce((a, s) => a + s.hours, 0) / Math.min(7, sleeps.length), 8);
+      if (exercises.length > 0) setProgress('progressExercise', exercises.filter(e => new Date(e.date) > new Date(Date.now() - 7*24*60*60*1000)).reduce((a, e) => a + e.duration, 0) / 7, 30);
+      if (medsTotal > 0) setProgress('progressMeds', medsTaken, medsTotal);
+
+      // Insights
+      const insights = [];
+      if (todayMood && todayMood.mood >= 7) insights.push({ type: 'positive', text: '🌟 Great mood today! Keep it up!' });
+      if (todayMood && todayMood.mood <= 3) insights.push({ type: 'negative', text: '💙 Tough day? Remember, it\'s okay to not be okay.' });
+      if (todaySleep && todaySleep.hours >= 7) insights.push({ type: 'positive', text: '😴 Excellent sleep! Well rested.' });
+      if (todaySleep && todaySleep.hours < 6) insights.push({ type: 'warning', text: '⚠️ You need more sleep. Aim for 7-8 hours.' });
+      if (todayExercise >= 30) insights.push({ type: 'positive', text: '💪 You hit your exercise goal today!' });
+      if (todayExercise === 0) insights.push({ type: 'warning', text: '🏃 No exercise logged. A short walk counts!' });
+      if (medsTotal > 0 && medsTaken < medsTotal) insights.push({ type: 'warning', text: '💊 Remember to take all your medications.' });
+      if (medsTotal > 0 && medsTaken === medsTotal) insights.push({ type: 'positive', text: '✅ All medications taken!' });
+
+      if (insights.length === 0) insights.push({ type: 'info', text: '📊 Start logging data to see personalized insights!' });
+
+      document.getElementById('insightsList').innerHTML = insights.map(i => `<div class="insight ${i.type}">${i.text}</div>`).join('');
+    }
+
+    // Initialize
+    loadMoodHistory();
+    loadMedications();
+    loadSleepData();
+    loadExerciseData();
+    loadQuestion();
+    updateDashboard();
+    moodEmoji.textContent = moodEmojis[4];
+  </script>
 </body>
 </html>
