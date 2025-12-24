@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StepSyncAI - Personal Health & Wellness Platform</title>
+  <meta name="description" content="A production-grade health tracking platform with 6 integrated applications, 1,927 automated tests, and comprehensive CI/CD pipeline.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
+  <style>
+    :root{--bg:#0f172a;--card:#1e293b;--accent:#3b82f6;--accent-2:#60a5fa;--success:#10b981;--text:#f1f5f9;--muted:#94a3b8;--border:#334155}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+    .container{max-width:1100px;margin:0 auto;padding:2rem}
+
+    /* Hero */
+    .hero{text-align:center;padding:4rem 2rem;background:linear-gradient(135deg,var(--bg) 0%,#1e293b 100%)}
+    .hero-badge{background:var(--success);color:#fff;padding:.5rem 1rem;border-radius:999px;font-size:.875rem;font-weight:600;display:inline-block;margin-bottom:1.5rem}
+    .hero h1{font-size:3rem;font-weight:800;margin-bottom:1rem;background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .hero p{font-size:1.25rem;color:var(--muted);max-width:700px;margin:0 auto 2rem}
+    .hero-stats{display:flex;justify-content:center;gap:3rem;flex-wrap:wrap;margin-top:2rem}
+    .stat{text-align:center}
+    .stat-value{font-size:2.5rem;font-weight:800;color:var(--accent)}
+    .stat-label{color:var(--muted);font-size:.875rem}
+
+    /* Buttons */
+    .btn-group{display:flex;gap:1rem;justify-content:center;margin-top:2rem;flex-wrap:wrap}
+    .btn{padding:1rem 2rem;border-radius:8px;font-weight:700;text-decoration:none;transition:all .2s}
+    .btn-primary{background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 100%);color:#fff}
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(59,130,246,.3)}
+    .btn-secondary{background:var(--card);color:var(--text);border:1px solid var(--border)}
+    .btn-secondary:hover{border-color:var(--accent)}
+
+    /* Features */
+    .features{padding:4rem 0}
+    .features h2{text-align:center;font-size:2rem;margin-bottom:3rem}
+    .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem}
+    .feature-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;transition:all .2s}
+    .feature-card:hover{border-color:var(--accent);transform:translateY(-4px)}
+    .feature-icon{font-size:2.5rem;margin-bottom:1rem}
+    .feature-card h3{font-size:1.25rem;margin-bottom:.5rem}
+    .feature-card p{color:var(--muted);font-size:.9rem}
+
+    /* Code Block */
+    .code-section{background:var(--card);border-radius:12px;padding:2rem;margin:3rem 0;border:1px solid var(--border)}
+    .code-section h3{margin-bottom:1rem}
+    pre{background:#0d1117;padding:1.5rem;border-radius:8px;overflow-x:auto;font-family:'SF Mono',Monaco,Consolas,monospace;font-size:.9rem;color:#c9d1d9}
+
+    /* Dashboard Preview */
+    .dashboard{background:linear-gradient(135deg,var(--card) 0%,#0f172a 100%);border:1px solid var(--border);border-radius:12px;padding:2rem;margin:2rem 0;font-family:'SF Mono',Monaco,Consolas,monospace;font-size:.8rem;white-space:pre;overflow-x:auto}
+
+    /* Tech Stack */
+    .tech-grid{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-top:2rem}
+    .tech-badge{background:var(--card);border:1px solid var(--border);padding:.75rem 1.5rem;border-radius:8px;font-weight:600}
+
+    /* Footer */
+    footer{text-align:center;padding:3rem;border-top:1px solid var(--border);color:var(--muted)}
+    footer a{color:var(--accent)}
+
+    @media(max-width:768px){.hero h1{font-size:2rem}.hero-stats{gap:1.5rem}.stat-value{font-size:2rem}}
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="container">
+      <span class="hero-badge">✅ 1,927 Tests Passing</span>
+      <h1>🏥 StepSyncAI</h1>
+      <p>A production-grade personal health & wellness platform with 6 integrated applications, comprehensive test coverage, and CI/CD automation.</p>
+      <div class="hero-stats">
+        <div class="stat"><div class="stat-value">6</div><div class="stat-label">Integrated Apps</div></div>
+        <div class="stat"><div class="stat-value">82%</div><div class="stat-label">Test Coverage</div></div>
+        <div class="stat"><div class="stat-value">1,927</div><div class="stat-label">Automated Tests</div></div>
+        <div class="stat"><div class="stat-value">0</div><div class="stat-label">Vulnerabilities</div></div>
+      </div>
+      <div class="btn-group">
+        <a href="https://github.com/Isaloum/StepSyncAI" class="btn btn-primary">⭐ View on GitHub</a>
+        <a href="https://github.com/Isaloum/StepSyncAI#-quick-start" class="btn btn-secondary">📖 Documentation</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="features">
+      <h2>✨ Integrated Applications</h2>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🧠</div>
+          <h3>Mental Health Tracker</h3>
+          <p>PTSD/trauma recovery support with mood tracking, symptom monitoring, and correlation analysis.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💊</div>
+          <h3>Medication Tracker</h3>
+          <p>Medication management with adherence tracking and 65+ drug interaction warnings.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">😴</div>
+          <h3>Sleep Tracker</h3>
+          <p>Sleep pattern analysis with quality tracking, duration analysis, and sleep debt calculation.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🏃</div>
+          <h3>Exercise Tracker</h3>
+          <p>Fitness monitoring with activity logging, goal tracking, and intensity levels.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>Daily Dashboard</h3>
+          <p>Unified wellness overview with 0-100 scoring, correlations, trends, and smart recommendations.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">☁️</div>
+          <h3>AWS Study Guide</h3>
+          <p>Cloud certification prep with 20+ concepts, practice quizzes, and progress tracking.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 style="text-align:center;margin-bottom:1.5rem">📊 Live Dashboard Preview</h2>
+      <div class="dashboard">╔════════════════════════════════════════════════════════════╗
+║           📊 DAILY WELLNESS DASHBOARD                       ║
+╚════════════════════════════════════════════════════════════╝
+
+📅 Today's Date
+
+┌─────────────────────────────────────────────────────────┐
+│  😊  OVERALL WELLNESS: 78.5/100 (78.5%) - Good          │
+└─────────────────────────────────────────────────────────┘
+
+📊 Score Breakdown:
+
+  🧠 Mood:        [████████████████░░░░] 20/25
+  😴 Sleep:       [███████████████████░] 23.5/25
+  🏃 Exercise:    [████████████████░░░░] 20/25
+  💊 Medication:  [███████████████░░░░░] 15/25
+
+💡 Today's Recommendations:
+  ✅ 🌟 Your mood is looking great! Keep up the good work.
+  🟡 🏃 Try to reach 30 minutes of exercise today.
+  🔴 💊 Medication adherence at 60%. Consistency is key.</div>
+    </section>
+
+    <section class="code-section">
+      <h3>🚀 Quick Start</h3>
+      <pre><code># Clone the repository
+git clone https://github.com/Isaloum/StepSyncAI.git
+cd StepSyncAI
+
+# Install dependencies
+npm install
+
+# Run the daily dashboard
+node daily-dashboard.js daily
+
+# Run all 1,927 tests
+npm test</code></pre>
+    </section>
+
+    <section style="text-align:center;padding:3rem 0">
+      <h2>🛠️ Tech Stack</h2>
+      <div class="tech-grid">
+        <span class="tech-badge">Node.js 18/20</span>
+        <span class="tech-badge">Jest Testing</span>
+        <span class="tech-badge">GitHub Actions</span>
+        <span class="tech-badge">82% Coverage</span>
+        <span class="tech-badge">CI/CD Pipeline</span>
+        <span class="tech-badge">PDF Export</span>
+      </div>
+    </section>
+
+    <section style="text-align:center;padding:2rem 0">
+      <h2>🎓 What I Learned Building This</h2>
+      <div class="feature-grid" style="margin-top:2rem">
+        <div class="feature-card">
+          <h3>Test-Driven Development</h3>
+          <p>Writing 1,927 comprehensive tests with 82% coverage using Jest</p>
+        </div>
+        <div class="feature-card">
+          <h3>CI/CD Automation</h3>
+          <p>GitHub Actions workflows with multi-version Node.js testing</p>
+        </div>
+        <div class="feature-card">
+          <h3>Modular Architecture</h3>
+          <p>Clean separation of concerns with service integration patterns</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Built with ❤️ by <a href="https://github.com/Isaloum">Isaloum</a></p>
+    <p style="margin-top:.5rem">MIT License • <a href="https://github.com/Isaloum/StepSyncAI">GitHub</a></p>
+  </footer>
+</body>
+</html>
