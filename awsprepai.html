@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AWSPrepAI - AWS Cloud Practitioner Study Tool</title>
+  <meta name="description" content="Master AWS Cloud Practitioner certification with 55+ practice questions, flashcards, and progress tracking.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☁️</text></svg>">
+  <style>
+    :root{--bg:#0f172a;--card:#1e293b;--accent:#f59e0b;--accent-2:#fbbf24;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--text:#f1f5f9;--muted:#94a3b8;--border:#334155;--radius:12px;--aws-orange:#ff9900}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+    .container{max-width:1200px;margin:0 auto;padding:1rem}
+
+    header{background:linear-gradient(135deg,#232f3e 0%,#1a2332 100%);border-bottom:3px solid var(--aws-orange);padding:1rem 0}
+    .header-content{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+    .logo{display:flex;align-items:center;gap:.75rem;font-size:1.5rem;font-weight:800;color:var(--aws-orange);text-decoration:none}
+    .logo-sub{font-size:.75rem;color:var(--muted);font-weight:400}
+    .badge{background:var(--success);color:#fff;padding:.25rem .75rem;border-radius:999px;font-size:.75rem;font-weight:600}
+
+    .nav-tabs{display:flex;gap:.5rem;flex-wrap:wrap}
+    .nav-tab{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.5rem 1rem;border-radius:8px;cursor:pointer;font-weight:600;transition:all .2s;font-size:.875rem}
+    .nav-tab:hover{border-color:var(--aws-orange);color:var(--aws-orange)}
+    .nav-tab.active{background:var(--aws-orange);color:#000;border-color:var(--aws-orange)}
+    .nav-tab .icon{margin-right:.5rem}
+
+    main{padding:1.5rem 0}
+    .app-section{display:none}
+    .app-section.active{display:block}
+
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem}
+    .card-title{font-size:1.25rem;font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+    .card-orange{border-left:4px solid var(--aws-orange)}
+
+    .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem}
+    .form-group{margin-bottom:1rem}
+    .form-group label{display:block;font-weight:600;margin-bottom:.5rem;color:var(--muted);font-size:.875rem}
+
+    .btn{padding:.75rem 1.5rem;border-radius:8px;font-weight:700;cursor:pointer;transition:all .2s;border:none;font-size:.9rem}
+    .btn-primary{background:var(--aws-orange);color:#000}
+    .btn-primary:hover{background:var(--accent-2)}
+    .btn-success{background:var(--success);color:#fff}
+    .btn-danger{background:var(--danger);color:#fff}
+    .btn-secondary{background:var(--card);color:var(--text);border:1px solid var(--border)}
+    .btn-group{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem}
+
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.5rem}
+    .stat-card{background:var(--card);padding:1.25rem;border-radius:var(--radius);text-align:center;border:1px solid var(--border)}
+    .stat-value{font-size:2rem;font-weight:800;color:var(--aws-orange)}
+    .stat-label{font-size:.75rem;color:var(--muted);margin-top:.25rem}
+
+    .progress-bar{background:var(--border);border-radius:999px;height:12px;margin:.5rem 0;overflow:hidden}
+    .progress-fill{height:100%;border-radius:999px;transition:width .3s}
+    .progress-fill.good{background:var(--success)}
+    .progress-fill.medium{background:var(--warning)}
+    .progress-fill.low{background:var(--danger)}
+
+    .quiz-question{font-size:1.25rem;margin-bottom:1.5rem;line-height:1.5}
+    .quiz-options{display:grid;gap:.75rem}
+    .quiz-option{background:var(--bg);padding:1rem;border-radius:8px;cursor:pointer;border:2px solid var(--border);transition:all .2s}
+    .quiz-option:hover{border-color:var(--aws-orange);background:#232f3e}
+    .quiz-option.correct{border-color:var(--success);background:rgba(16,185,129,.15)}
+    .quiz-option.incorrect{border-color:var(--danger);background:rgba(239,68,68,.15)}
+
+    .data-list{max-height:400px;overflow-y:auto}
+    .data-item{background:var(--bg);padding:1rem;border-radius:8px;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:all .2s}
+    .data-item:hover{border-left:3px solid var(--aws-orange)}
+    .data-item-info{flex:1}
+    .data-item-title{font-weight:600}
+    .data-item-meta{font-size:.875rem;color:var(--muted)}
+    .data-item-value{font-size:1.25rem;font-weight:700}
+
+    .insight{background:var(--bg);padding:1rem;border-radius:8px;margin-bottom:.75rem;border-left:4px solid var(--aws-orange)}
+    .insight.positive{border-left-color:var(--success)}
+    .insight.warning{border-left-color:var(--warning)}
+    .insight.negative{border-left-color:var(--danger)}
+
+    .flashcard{background:linear-gradient(135deg,#232f3e 0%,var(--card) 100%);border:2px solid var(--aws-orange);border-radius:var(--radius);padding:2rem;min-height:200px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;transition:transform .3s}
+    .flashcard:hover{transform:scale(1.02)}
+    .flashcard-front{font-size:1.25rem}
+    .flashcard-back{font-size:1.1rem;color:var(--aws-orange)}
+    .flashcard-meta{font-size:.875rem;color:var(--muted);margin-top:1rem}
+
+    .service-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}
+    .service-card{background:var(--bg);padding:1rem;border-radius:8px;border-left:4px solid var(--aws-orange)}
+    .service-name{font-weight:700;font-size:1.1rem;color:var(--aws-orange)}
+    .service-desc{font-size:.9rem;color:var(--muted);margin-top:.5rem}
+    .service-category{font-size:.75rem;background:var(--card);padding:.25rem .5rem;border-radius:4px;display:inline-block;margin-top:.5rem}
+
+    .exam-timer{font-size:2rem;font-weight:800;color:var(--aws-orange);text-align:center;padding:1rem}
+    .exam-progress{text-align:center;color:var(--muted);margin-bottom:1rem}
+
+    @media(max-width:768px){
+      .nav-tabs{justify-content:center}
+      .nav-tab span:not(.icon){display:none}
+      .header-content{justify-content:center}
+      .stats-grid{grid-template-columns:repeat(2,1fr)}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="header-content">
+        <a href="#" class="logo">
+          ☁️ AWSPrepAI
+          <span class="badge">CLF-C02</span>
+        </a>
+        <nav class="nav-tabs">
+          <button class="nav-tab active" data-tab="dashboard"><span class="icon">📊</span><span>Dashboard</span></button>
+          <button class="nav-tab" data-tab="quiz"><span class="icon">❓</span><span>Practice Quiz</span></button>
+          <button class="nav-tab" data-tab="flashcards"><span class="icon">🎴</span><span>Flashcards</span></button>
+          <button class="nav-tab" data-tab="exam"><span class="icon">📝</span><span>Mock Exam</span></button>
+          <button class="nav-tab" data-tab="services"><span class="icon">📚</span><span>Services</span></button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Dashboard -->
+    <section id="dashboard" class="app-section active">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value" id="totalAnswered">0</div><div class="stat-label">Questions Answered</div></div>
+        <div class="stat-card"><div class="stat-value" id="totalAccuracy">--%</div><div class="stat-label">Overall Accuracy</div></div>
+        <div class="stat-card"><div class="stat-value" id="bestStreak">0</div><div class="stat-label">Best Streak</div></div>
+        <div class="stat-card"><div class="stat-value" id="examReady">No</div><div class="stat-label">Exam Ready?</div></div>
+      </div>
+
+      <div class="card card-orange">
+        <div class="card-title">🎯 Certification Progress</div>
+        <p style="color:var(--muted);margin-bottom:1rem">Target: 70% accuracy across all domains</p>
+        <div class="progress-bar" style="height:20px"><div class="progress-fill" id="overallProgress" style="width:0%"></div></div>
+        <div style="text-align:center;margin-top:.5rem;font-weight:700" id="overallPct">0%</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📈 Progress by Domain</div>
+        <div class="form-grid">
+          <div><label>🖥️ Compute</label><div class="progress-bar"><div class="progress-fill" id="progCompute" style="width:0%"></div></div><span id="statCompute" style="font-size:.75rem;color:var(--muted)">0/0</span></div>
+          <div><label>💾 Storage</label><div class="progress-bar"><div class="progress-fill" id="progStorage" style="width:0%"></div></div><span id="statStorage" style="font-size:.75rem;color:var(--muted)">0/0</span></div>
+          <div><label>🗄️ Database</label><div class="progress-bar"><div class="progress-fill" id="progDatabase" style="width:0%"></div></div><span id="statDatabase" style="font-size:.75rem;color:var(--muted)">0/0</span></div>
+          <div><label>🔐 Security</label><div class="progress-bar"><div class="progress-fill" id="progSecurity" style="width:0%"></div></div><span id="statSecurity" style="font-size:.75rem;color:var(--muted)">0/0</span></div>
+          <div><label>🌐 Networking</label><div class="progress-bar"><div class="progress-fill" id="progNetworking" style="width:0%"></div></div><span id="statNetworking" style="font-size:.75rem;color:var(--muted)">0/0</span></div>
+          <div><label>💰 Pricing</label><div class="progress-bar"><div class="progress-fill" id="progPricing" style="width:0%"></div></div><span id="statPricing" style="font-size:.75rem;color:var(--muted)">0/0</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⚠️ Weak Areas <span style="font-weight:400;color:var(--muted);font-size:.9rem">(Focus on these)</span></div>
+        <div id="weakAreas" class="data-list">
+          <div class="insight">Complete some questions to identify weak areas!</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📅 Study Streak</div>
+        <div class="stats-grid" style="margin-bottom:0">
+          <div class="stat-card"><div class="stat-value" id="currentStreak">0</div><div class="stat-label">Current Streak</div></div>
+          <div class="stat-card"><div class="stat-value" id="lastStudy">--</div><div class="stat-label">Last Study</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Practice Quiz -->
+    <section id="quiz" class="app-section">
+      <div class="card">
+        <div class="card-title">🎯 Select Domain</div>
+        <div class="btn-group" id="categoryBtns">
+          <button class="btn btn-primary category-btn" data-cat="all" onclick="setCategory('all')">All Domains</button>
+          <button class="btn btn-secondary category-btn" data-cat="compute" onclick="setCategory('compute')">🖥️ Compute</button>
+          <button class="btn btn-secondary category-btn" data-cat="storage" onclick="setCategory('storage')">💾 Storage</button>
+          <button class="btn btn-secondary category-btn" data-cat="database" onclick="setCategory('database')">🗄️ Database</button>
+          <button class="btn btn-secondary category-btn" data-cat="security" onclick="setCategory('security')">🔐 Security</button>
+          <button class="btn btn-secondary category-btn" data-cat="networking" onclick="setCategory('networking')">🌐 Networking</button>
+          <button class="btn btn-secondary category-btn" data-cat="pricing" onclick="setCategory('pricing')">💰 Pricing</button>
+        </div>
+      </div>
+
+      <div class="card card-orange">
+        <div class="card-title">☁️ AWS Cloud Practitioner <span id="questionCounter" style="font-weight:400;color:var(--muted);font-size:.9rem"></span></div>
+        <div id="quizCategory" style="color:var(--aws-orange);font-size:.875rem;margin-bottom:.5rem"></div>
+        <div class="quiz-question" id="quizQuestion">Loading question...</div>
+        <div class="quiz-options" id="quizOptions"></div>
+        <div id="quizExplanation" style="display:none;margin-top:1rem;padding:1rem;background:var(--bg);border-radius:8px;border-left:4px solid var(--aws-orange)"></div>
+        <div class="btn-group" style="margin-top:1.5rem">
+          <button class="btn btn-primary" id="nextQuizBtn" onclick="nextQuestion()" style="display:none">Next Question →</button>
+          <button class="btn btn-secondary" onclick="resetQuiz()">🔄 Reset Progress</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Flashcards -->
+    <section id="flashcards" class="app-section">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value" id="cardsStudied">0</div><div class="stat-label">Cards Studied</div></div>
+        <div class="stat-card"><div class="stat-value" id="cardsKnown">0</div><div class="stat-label">Know It</div></div>
+        <div class="stat-card"><div class="stat-value" id="cardsLearning">0</div><div class="stat-label">Still Learning</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🎴 AWS Service Flashcards</div>
+        <div class="flashcard" id="flashcard" onclick="flipCard()">
+          <div id="flashcardContent">
+            <div class="flashcard-front" id="cardFront">Click to start studying!</div>
+            <div class="flashcard-back" id="cardBack" style="display:none"></div>
+          </div>
+        </div>
+        <div class="btn-group" style="justify-content:center;margin-top:1.5rem">
+          <button class="btn btn-danger" onclick="markCard('learning')">🔄 Still Learning</button>
+          <button class="btn btn-success" onclick="markCard('known')">✅ Know It</button>
+          <button class="btn btn-secondary" onclick="nextCard()">⏭️ Skip</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mock Exam -->
+    <section id="exam" class="app-section">
+      <div class="card card-orange">
+        <div class="card-title">📝 Mock Certification Exam</div>
+        <p style="color:var(--muted);margin-bottom:1rem">Simulate the real AWS Cloud Practitioner exam: 65 questions, 90 minutes, 70% to pass.</p>
+
+        <div id="examStart">
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-value">65</div><div class="stat-label">Questions</div></div>
+            <div class="stat-card"><div class="stat-value">90</div><div class="stat-label">Minutes</div></div>
+            <div class="stat-card"><div class="stat-value">70%</div><div class="stat-label">Pass Score</div></div>
+          </div>
+          <button class="btn btn-primary" onclick="startExam()" style="width:100%;padding:1rem;font-size:1.1rem">🚀 Start Mock Exam</button>
+        </div>
+
+        <div id="examInProgress" style="display:none">
+          <div class="exam-timer" id="examTimer">90:00</div>
+          <div class="exam-progress" id="examProgress">Question 1 of 65</div>
+          <div class="quiz-question" id="examQuestion"></div>
+          <div class="quiz-options" id="examOptions"></div>
+          <div class="btn-group" style="margin-top:1.5rem">
+            <button class="btn btn-primary" id="examNextBtn" onclick="examNext()">Next →</button>
+            <button class="btn btn-danger" onclick="endExam()">End Exam</button>
+          </div>
+        </div>
+
+        <div id="examResults" style="display:none">
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-value" id="examScore">0%</div><div class="stat-label">Your Score</div></div>
+            <div class="stat-card"><div class="stat-value" id="examCorrect">0</div><div class="stat-label">Correct</div></div>
+            <div class="stat-card"><div class="stat-value" id="examResult">--</div><div class="stat-label">Result</div></div>
+          </div>
+          <button class="btn btn-primary" onclick="restartExam()" style="width:100%">Try Again</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Services Reference -->
+    <section id="services" class="app-section">
+      <div class="card">
+        <div class="card-title">🔍 Search Services</div>
+        <input type="text" id="serviceSearch" placeholder="Search AWS services..." style="width:100%;padding:.75rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:1rem" oninput="filterServices()">
+      </div>
+
+      <div class="service-grid" id="serviceGrid"></div>
+    </section>
+  </main>
+
+  <script>
+    // Data Storage
+    const DB = {
+      get: (key) => JSON.parse(localStorage.getItem('awsprep_' + key) || '[]'),
+      set: (key, data) => localStorage.setItem('awsprep_' + key, JSON.stringify(data)),
+      getOne: (key) => JSON.parse(localStorage.getItem('awsprep_' + key) || 'null'),
+      setOne: (key, data) => localStorage.setItem('awsprep_' + key, JSON.stringify(data))
+    };
+
+    // Tab Navigation
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    // 55+ AWS Questions
+    const awsQuestions = [
+      // COMPUTE
+      { cat: "compute", q: "What does EC2 stand for?", options: ["Elastic Compute Cloud", "Electronic Computing Center", "Enterprise Cloud Computing", "Elastic Container Cluster"], answer: 0, explain: "EC2 = Elastic Compute Cloud. It provides resizable virtual servers in the cloud." },
+      { cat: "compute", q: "What is AWS Lambda used for?", options: ["Database management", "Virtual machines", "Serverless computing", "Content delivery"], answer: 2, explain: "Lambda runs code without provisioning servers. You pay only for compute time used." },
+      { cat: "compute", q: "Which EC2 pricing model offers the biggest discount for long-term use?", options: ["On-Demand", "Spot Instances", "Reserved Instances", "Dedicated Hosts"], answer: 2, explain: "Reserved Instances offer up to 72% discount for 1-3 year commitments." },
+      { cat: "compute", q: "What is an EC2 Auto Scaling group used for?", options: ["Automatic security patching", "Automatically adjust capacity based on demand", "Automatic backup creation", "Automatic DNS routing"], answer: 1, explain: "Auto Scaling automatically adds/removes EC2 instances based on conditions you define." },
+      { cat: "compute", q: "Which service runs Docker containers on AWS?", options: ["EC2", "ECS/EKS", "Lambda", "Lightsail"], answer: 1, explain: "ECS (Elastic Container Service) and EKS (Elastic Kubernetes Service) run containers." },
+      { cat: "compute", q: "What is AWS Elastic Beanstalk?", options: ["Container orchestration", "PaaS for deploying applications", "Serverless database", "Load balancer"], answer: 1, explain: "Elastic Beanstalk is a PaaS that handles deployment, scaling, and monitoring automatically." },
+      { cat: "compute", q: "Which EC2 instance type is best for memory-intensive workloads?", options: ["C-series (Compute)", "R-series (Memory)", "T-series (Burstable)", "P-series (GPU)"], answer: 1, explain: "R-series instances are memory-optimized for databases and in-memory caching." },
+      { cat: "compute", q: "What are Spot Instances?", options: ["Free tier instances", "Unused EC2 capacity at up to 90% discount", "Instances in multiple regions", "Dedicated physical servers"], answer: 1, explain: "Spot Instances use spare EC2 capacity at steep discounts but can be interrupted." },
+      { cat: "compute", q: "What is AWS Fargate?", options: ["Serverless compute for containers", "File storage service", "Database migration tool", "API management service"], answer: 0, explain: "Fargate runs containers without managing servers - serverless container compute." },
+      { cat: "compute", q: "What does an AMI contain?", options: ["Only the operating system", "Template to launch EC2 instances", "Container images", "Database snapshots"], answer: 1, explain: "AMI (Amazon Machine Image) is a template with OS, applications, and configurations." },
+
+      // STORAGE
+      { cat: "storage", q: "Which AWS service is used for object storage?", options: ["EBS", "S3", "EFS", "FSx"], answer: 1, explain: "S3 (Simple Storage Service) stores objects (files) with unlimited scalability." },
+      { cat: "storage", q: "What is the maximum size of a single S3 object?", options: ["5 GB", "50 GB", "5 TB", "Unlimited"], answer: 2, explain: "A single S3 object can be up to 5 TB. Use multipart upload for files over 5 GB." },
+      { cat: "storage", q: "Which S3 storage class is cheapest for rarely accessed data?", options: ["S3 Standard", "S3 Intelligent-Tiering", "S3 Glacier Deep Archive", "S3 One Zone-IA"], answer: 2, explain: "Glacier Deep Archive is lowest cost for data accessed 1-2 times per year." },
+      { cat: "storage", q: "What is Amazon EBS?", options: ["Object storage", "Block storage for EC2", "File storage", "Tape backup"], answer: 1, explain: "EBS (Elastic Block Store) provides persistent block storage volumes for EC2." },
+      { cat: "storage", q: "Which storage service provides a shared file system for EC2?", options: ["S3", "EBS", "EFS", "Glacier"], answer: 2, explain: "EFS (Elastic File System) provides NFS file storage that multiple EC2 can share." },
+      { cat: "storage", q: "What is S3 versioning used for?", options: ["Faster access", "Keep multiple versions of objects", "Reduce costs", "Cross-region replication"], answer: 1, explain: "Versioning preserves all versions of an object for recovery and audit purposes." },
+      { cat: "storage", q: "Which service moves data to S3 Glacier automatically?", options: ["S3 Transfer Acceleration", "S3 Lifecycle Policies", "AWS DataSync", "Storage Gateway"], answer: 1, explain: "Lifecycle policies automate transitions between storage classes based on rules." },
+      { cat: "storage", q: "What is AWS Storage Gateway?", options: ["VPN connection", "Hybrid cloud storage", "Data encryption service", "Content delivery"], answer: 1, explain: "Storage Gateway connects on-premises storage to AWS cloud storage seamlessly." },
+      { cat: "storage", q: "How many 9s of durability does S3 Standard provide?", options: ["99.9%", "99.99%", "99.999999999% (11 9s)", "100%"], answer: 2, explain: "S3 Standard provides 99.999999999% (11 nines) durability - extremely reliable." },
+      { cat: "storage", q: "What is AWS Snowball used for?", options: ["Real-time streaming", "Physical data transfer device", "Database backup", "DNS routing"], answer: 1, explain: "Snowball is a physical device for transferring large amounts of data to AWS." },
+
+      // DATABASE
+      { cat: "database", q: "Which service provides managed relational databases?", options: ["DynamoDB", "S3", "RDS", "ElastiCache"], answer: 2, explain: "RDS (Relational Database Service) manages MySQL, PostgreSQL, SQL Server, etc." },
+      { cat: "database", q: "What type of database is DynamoDB?", options: ["Relational", "Graph", "NoSQL key-value", "Time-series"], answer: 2, explain: "DynamoDB is a fully managed NoSQL database with single-digit ms latency." },
+      { cat: "database", q: "Which database service is best for caching?", options: ["RDS", "DynamoDB", "ElastiCache", "Redshift"], answer: 2, explain: "ElastiCache provides in-memory caching with Redis or Memcached." },
+      { cat: "database", q: "What is Amazon Redshift used for?", options: ["Transactional database", "Data warehousing", "Document database", "Graph database"], answer: 1, explain: "Redshift is a petabyte-scale data warehouse for analytics and BI." },
+      { cat: "database", q: "Which database is best for graph data and relationships?", options: ["DynamoDB", "Neptune", "DocumentDB", "RDS"], answer: 1, explain: "Neptune is a graph database for highly connected data like social networks." },
+      { cat: "database", q: "What does Amazon Aurora provide?", options: ["NoSQL database", "MySQL/PostgreSQL compatible with 5x performance", "In-memory cache", "Data warehouse"], answer: 1, explain: "Aurora is MySQL/PostgreSQL compatible with up to 5x better performance." },
+      { cat: "database", q: "Which service is MongoDB compatible?", options: ["DynamoDB", "DocumentDB", "Neptune", "Timestream"], answer: 1, explain: "DocumentDB is a managed document database compatible with MongoDB." },
+      { cat: "database", q: "What is RDS Multi-AZ used for?", options: ["Read scaling", "High availability and failover", "Cost reduction", "Global distribution"], answer: 1, explain: "Multi-AZ provides automatic failover to a standby in another Availability Zone." },
+      { cat: "database", q: "Which DynamoDB feature provides automatic scaling?", options: ["Provisioned capacity", "On-demand capacity", "Reserved capacity", "Spot capacity"], answer: 1, explain: "On-demand capacity automatically scales to handle any traffic level." },
+
+      // SECURITY
+      { cat: "security", q: "What does IAM stand for?", options: ["Internet Access Management", "Identity and Access Management", "Integrated Application Module", "Instance Availability Manager"], answer: 1, explain: "IAM manages users, groups, roles, and their permissions to AWS resources." },
+      { cat: "security", q: "What is the AWS shared responsibility model?", options: ["AWS manages everything", "Customer manages everything", "AWS manages infrastructure, customer manages data/apps", "Only for enterprise"], answer: 2, explain: "AWS secures the cloud infrastructure; customers secure what they put IN the cloud." },
+      { cat: "security", q: "What is an IAM role?", options: ["A user account", "Temporary credentials for AWS services", "A group of users", "A password policy"], answer: 1, explain: "Roles provide temporary credentials - used by services, apps, or cross-account access." },
+      { cat: "security", q: "Which service provides DDoS protection?", options: ["WAF", "Shield", "GuardDuty", "Inspector"], answer: 1, explain: "AWS Shield provides DDoS protection. Shield Advanced offers enhanced protection." },
+      { cat: "security", q: "What is AWS KMS used for?", options: ["Container management", "Key management and encryption", "Kubernetes service", "Knowledge base"], answer: 1, explain: "KMS (Key Management Service) creates and manages encryption keys." },
+      { cat: "security", q: "Which service scans for security vulnerabilities in EC2?", options: ["GuardDuty", "Inspector", "Macie", "Detective"], answer: 1, explain: "Inspector automatically assesses EC2 instances for vulnerabilities and exposures." },
+      { cat: "security", q: "What is AWS WAF?", options: ["Wide Area Firewall", "Web Application Firewall", "Wireless Access Firewall", "Workload Access Filter"], answer: 1, explain: "WAF protects web apps from common exploits like SQL injection and XSS." },
+      { cat: "security", q: "Which service discovers and protects sensitive data in S3?", options: ["GuardDuty", "Inspector", "Macie", "Shield"], answer: 2, explain: "Macie uses ML to discover, classify, and protect sensitive data like PII." },
+      { cat: "security", q: "What is the principle of least privilege?", options: ["Maximum permissions", "Give only permissions needed", "No permissions", "Admin access for all"], answer: 1, explain: "Least privilege: grant only the minimum permissions required to perform a task." },
+      { cat: "security", q: "What does MFA add to security?", options: ["Faster login", "Additional authentication factor", "Automatic password reset", "Single sign-on"], answer: 1, explain: "MFA requires something you know (password) + something you have (device/code)." },
+
+      // NETWORKING
+      { cat: "networking", q: "What does VPC stand for?", options: ["Virtual Private Cloud", "Virtual Processing Center", "Verified Public Connection", "Variable Pricing Calculator"], answer: 0, explain: "VPC is your isolated network in AWS where you launch resources." },
+      { cat: "networking", q: "Which AWS service is a content delivery network?", options: ["Route 53", "CloudFront", "API Gateway", "Direct Connect"], answer: 1, explain: "CloudFront is a CDN that delivers content globally with low latency via edge locations." },
+      { cat: "networking", q: "Which service is used for DNS in AWS?", options: ["CloudFront", "Route 53", "API Gateway", "VPC"], answer: 1, explain: "Route 53 is a DNS service that routes users to applications with high availability." },
+      { cat: "networking", q: "What is AWS Direct Connect?", options: ["VPN service", "Dedicated private connection to AWS", "Internet gateway", "Load balancer"], answer: 1, explain: "Direct Connect establishes a dedicated private network connection to AWS." },
+      { cat: "networking", q: "What is a Security Group?", options: ["Group of IAM users", "Virtual firewall for EC2", "Collection of S3 buckets", "Database cluster"], answer: 1, explain: "Security Groups act as virtual firewalls controlling inbound/outbound traffic." },
+      { cat: "networking", q: "What is an Elastic Load Balancer?", options: ["Distributes traffic across targets", "Stores elastic data", "Manages DNS", "Creates VPNs"], answer: 0, explain: "ELB automatically distributes incoming traffic across multiple targets." },
+      { cat: "networking", q: "What is a NAT Gateway used for?", options: ["DNS resolution", "Allow private subnet internet access", "Load balancing", "VPN connection"], answer: 1, explain: "NAT Gateway lets instances in private subnets access the internet securely." },
+      { cat: "networking", q: "What is VPC Peering?", options: ["Connect VPCs together", "Connect to on-premises", "Public internet access", "DNS service"], answer: 0, explain: "VPC Peering connects two VPCs so they can communicate using private IPs." },
+
+      // PRICING
+      { cat: "pricing", q: "What is the AWS Free Tier?", options: ["Always free services only", "12 months of free usage for new accounts", "Free for students only", "No free tier exists"], answer: 1, explain: "Free Tier includes 12 months of limited free usage, plus always-free services." },
+      { cat: "pricing", q: "Which pricing model has no upfront commitment?", options: ["Reserved Instances", "Savings Plans", "On-Demand", "Spot Instances"], answer: 2, explain: "On-Demand: pay by the hour/second with no commitments or upfront payments." },
+      { cat: "pricing", q: "What is AWS Cost Explorer?", options: ["Service catalog", "Visualize and analyze AWS costs", "Pricing calculator", "Billing alarm"], answer: 1, explain: "Cost Explorer visualizes spending patterns and forecasts future costs." },
+      { cat: "pricing", q: "What tool estimates costs before deployment?", options: ["Cost Explorer", "AWS Pricing Calculator", "Budgets", "Trusted Advisor"], answer: 1, explain: "Pricing Calculator estimates costs for AWS services before you use them." },
+      { cat: "pricing", q: "What is AWS Budgets used for?", options: ["Calculate prices", "Set cost/usage alerts", "Pay AWS bills", "Request refunds"], answer: 1, explain: "Budgets lets you set custom alerts when costs or usage exceed thresholds." },
+      { cat: "pricing", q: "Which support plan includes a Technical Account Manager?", options: ["Basic", "Developer", "Business", "Enterprise"], answer: 3, explain: "Enterprise Support includes a dedicated TAM for proactive guidance." },
+      { cat: "pricing", q: "What is Consolidated Billing?", options: ["Single bill for multiple accounts", "Pay in installments", "Automatic discounts", "Free tier extension"], answer: 0, explain: "Consolidated Billing combines usage across accounts for volume discounts." },
+      { cat: "pricing", q: "Which of these is always free in AWS?", options: ["EC2 t2.micro (first year)", "S3 first 5GB (first year)", "IAM", "RDS"], answer: 2, explain: "IAM is always free - no charge for users, groups, roles, or policies." }
+    ];
+
+    // Flashcards Data
+    const flashcards = [
+      { front: "EC2", back: "Elastic Compute Cloud - Virtual servers in the cloud", cat: "compute" },
+      { front: "S3", back: "Simple Storage Service - Object storage with unlimited scalability", cat: "storage" },
+      { front: "RDS", back: "Relational Database Service - Managed SQL databases", cat: "database" },
+      { front: "Lambda", back: "Serverless compute - Run code without managing servers", cat: "compute" },
+      { front: "VPC", back: "Virtual Private Cloud - Isolated network for your resources", cat: "networking" },
+      { front: "IAM", back: "Identity and Access Management - Users, roles, permissions", cat: "security" },
+      { front: "CloudFront", back: "Content Delivery Network - Fast global content delivery", cat: "networking" },
+      { front: "Route 53", back: "DNS Service - Domain name system and routing", cat: "networking" },
+      { front: "DynamoDB", back: "NoSQL Database - Key-value with single-digit ms latency", cat: "database" },
+      { front: "EBS", back: "Elastic Block Store - Persistent block storage for EC2", cat: "storage" },
+      { front: "EFS", back: "Elastic File System - Shared NFS file storage", cat: "storage" },
+      { front: "Glacier", back: "Archive Storage - Low-cost long-term data archiving", cat: "storage" },
+      { front: "ElastiCache", back: "In-Memory Caching - Redis or Memcached", cat: "database" },
+      { front: "Redshift", back: "Data Warehouse - Petabyte-scale analytics", cat: "database" },
+      { front: "Aurora", back: "High-Performance RDS - MySQL/PostgreSQL compatible, 5x faster", cat: "database" },
+      { front: "Shield", back: "DDoS Protection - Protects against distributed attacks", cat: "security" },
+      { front: "WAF", back: "Web Application Firewall - Blocks SQL injection, XSS", cat: "security" },
+      { front: "KMS", back: "Key Management Service - Encryption key management", cat: "security" },
+      { front: "CloudWatch", back: "Monitoring - Metrics, logs, and alarms", cat: "compute" },
+      { front: "SNS", back: "Simple Notification Service - Push messaging", cat: "compute" },
+      { front: "SQS", back: "Simple Queue Service - Message queuing", cat: "compute" },
+      { front: "ECS", back: "Elastic Container Service - Run Docker containers", cat: "compute" },
+      { front: "EKS", back: "Elastic Kubernetes Service - Managed Kubernetes", cat: "compute" },
+      { front: "Fargate", back: "Serverless Containers - Run containers without EC2", cat: "compute" },
+      { front: "API Gateway", back: "API Management - Create, publish, manage APIs", cat: "networking" }
+    ];
+
+    // AWS Services Reference
+    const awsServices = [
+      { name: "EC2", desc: "Virtual servers in the cloud with resizable compute capacity", cat: "Compute" },
+      { name: "Lambda", desc: "Run code without provisioning servers, pay per execution", cat: "Compute" },
+      { name: "ECS", desc: "Run and manage Docker containers", cat: "Compute" },
+      { name: "EKS", desc: "Managed Kubernetes service", cat: "Compute" },
+      { name: "Fargate", desc: "Serverless compute for containers", cat: "Compute" },
+      { name: "Elastic Beanstalk", desc: "PaaS for deploying web applications", cat: "Compute" },
+      { name: "Lightsail", desc: "Simple virtual private servers", cat: "Compute" },
+      { name: "S3", desc: "Object storage with 11 9s durability", cat: "Storage" },
+      { name: "EBS", desc: "Block storage volumes for EC2", cat: "Storage" },
+      { name: "EFS", desc: "Managed NFS file system", cat: "Storage" },
+      { name: "Glacier", desc: "Low-cost archive storage", cat: "Storage" },
+      { name: "Storage Gateway", desc: "Hybrid cloud storage", cat: "Storage" },
+      { name: "Snowball", desc: "Physical data transfer device", cat: "Storage" },
+      { name: "RDS", desc: "Managed relational databases", cat: "Database" },
+      { name: "Aurora", desc: "High-performance MySQL/PostgreSQL", cat: "Database" },
+      { name: "DynamoDB", desc: "NoSQL key-value database", cat: "Database" },
+      { name: "ElastiCache", desc: "In-memory caching (Redis/Memcached)", cat: "Database" },
+      { name: "Redshift", desc: "Data warehouse for analytics", cat: "Database" },
+      { name: "Neptune", desc: "Graph database", cat: "Database" },
+      { name: "DocumentDB", desc: "MongoDB-compatible database", cat: "Database" },
+      { name: "VPC", desc: "Isolated cloud network", cat: "Networking" },
+      { name: "CloudFront", desc: "Content delivery network (CDN)", cat: "Networking" },
+      { name: "Route 53", desc: "DNS and domain registration", cat: "Networking" },
+      { name: "API Gateway", desc: "Create and manage APIs", cat: "Networking" },
+      { name: "Direct Connect", desc: "Dedicated network connection to AWS", cat: "Networking" },
+      { name: "ELB", desc: "Distribute traffic across targets", cat: "Networking" },
+      { name: "IAM", desc: "User access and encryption key management", cat: "Security" },
+      { name: "Shield", desc: "DDoS protection", cat: "Security" },
+      { name: "WAF", desc: "Web application firewall", cat: "Security" },
+      { name: "KMS", desc: "Encryption key management", cat: "Security" },
+      { name: "Inspector", desc: "Security vulnerability assessment", cat: "Security" },
+      { name: "Macie", desc: "Discover and protect sensitive data", cat: "Security" },
+      { name: "GuardDuty", desc: "Threat detection service", cat: "Security" },
+      { name: "Cost Explorer", desc: "Visualize AWS spending", cat: "Pricing" },
+      { name: "Budgets", desc: "Set cost and usage alerts", cat: "Pricing" },
+      { name: "Pricing Calculator", desc: "Estimate AWS costs", cat: "Pricing" },
+      { name: "Trusted Advisor", desc: "Best practice recommendations", cat: "Pricing" }
+    ];
+
+    // Quiz State
+    let currentCategory = 'all';
+    let filteredQuestions = [...awsQuestions];
+    let currentQuestionIndex = 0;
+    let quizStats = DB.getOne('quizStats') || { correct: 0, total: 0, bestStreak: 0, currentStreak: 0, byCategory: {} };
+    let answeredQuestions = DB.get('answeredQuestions') || [];
+
+    // Flashcard State
+    let currentCardIndex = 0;
+    let cardFlipped = false;
+    let cardStats = DB.getOne('cardStats') || { studied: 0, known: 0, learning: 0 };
+
+    // Exam State
+    let examQuestions = [];
+    let examIndex = 0;
+    let examAnswers = [];
+    let examTimer = null;
+    let examTimeLeft = 90 * 60;
+
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+
+    // Quiz Functions
+    function setCategory(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-secondary');
+        if (btn.dataset.cat === cat) {
+          btn.classList.add('btn-primary');
+          btn.classList.remove('btn-secondary');
+        }
+      });
+      filteredQuestions = cat === 'all' ? [...awsQuestions] : awsQuestions.filter(q => q.cat === cat);
+      shuffleArray(filteredQuestions);
+      currentQuestionIndex = 0;
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      if (filteredQuestions.length === 0) {
+        document.getElementById('quizQuestion').textContent = 'No questions in this category!';
+        document.getElementById('quizOptions').innerHTML = '';
+        return;
+      }
+      const q = filteredQuestions[currentQuestionIndex];
+      const catLabels = { compute: '🖥️ Compute', storage: '💾 Storage', database: '🗄️ Database', security: '🔐 Security', networking: '🌐 Networking', pricing: '💰 Pricing' };
+      document.getElementById('quizCategory').textContent = catLabels[q.cat] || q.cat;
+      document.getElementById('quizQuestion').textContent = q.q;
+      document.getElementById('questionCounter').textContent = `(${currentQuestionIndex + 1}/${filteredQuestions.length})`;
+      document.getElementById('quizOptions').innerHTML = q.options.map((opt, i) => `
+        <div class="quiz-option" onclick="checkAnswer(${i})" data-index="${i}">${opt}</div>
+      `).join('');
+      document.getElementById('quizExplanation').style.display = 'none';
+      document.getElementById('nextQuizBtn').style.display = 'none';
+    }
+
+    function checkAnswer(selected) {
+      const q = filteredQuestions[currentQuestionIndex];
+      const options = document.querySelectorAll('#quizOptions .quiz-option');
+      options.forEach((opt, i) => {
+        opt.style.pointerEvents = 'none';
+        if (i === q.answer) opt.classList.add('correct');
+        if (i === selected && selected !== q.answer) opt.classList.add('incorrect');
+      });
+
+      quizStats.total++;
+      if (!quizStats.byCategory[q.cat]) quizStats.byCategory[q.cat] = { correct: 0, total: 0 };
+      quizStats.byCategory[q.cat].total++;
+
+      if (selected === q.answer) {
+        quizStats.correct++;
+        quizStats.currentStreak++;
+        quizStats.byCategory[q.cat].correct++;
+        if (quizStats.currentStreak > quizStats.bestStreak) quizStats.bestStreak = quizStats.currentStreak;
+      } else {
+        quizStats.currentStreak = 0;
+        answeredQuestions.push({ q: q.q, cat: q.cat, correct: false, date: new Date().toISOString() });
+      }
+
+      DB.setOne('quizStats', quizStats);
+      DB.set('answeredQuestions', answeredQuestions.slice(-200));
+      DB.setOne('lastStudy', new Date().toISOString());
+
+      const explainEl = document.getElementById('quizExplanation');
+      explainEl.innerHTML = `<strong>${selected === q.answer ? '✅ Correct!' : '❌ Incorrect'}</strong><br>${q.explain}`;
+      explainEl.style.display = 'block';
+      explainEl.style.borderLeftColor = selected === q.answer ? 'var(--success)' : 'var(--danger)';
+
+      document.getElementById('nextQuizBtn').style.display = 'inline-block';
+      updateDashboard();
+    }
+
+    function nextQuestion() {
+      currentQuestionIndex = (currentQuestionIndex + 1) % filteredQuestions.length;
+      if (currentQuestionIndex === 0) shuffleArray(filteredQuestions);
+      loadQuestion();
+    }
+
+    function resetQuiz() {
+      if (confirm('Reset all quiz progress?')) {
+        quizStats = { correct: 0, total: 0, bestStreak: 0, currentStreak: 0, byCategory: {} };
+        answeredQuestions = [];
+        DB.setOne('quizStats', quizStats);
+        DB.set('answeredQuestions', []);
+        updateDashboard();
+      }
+    }
+
+    // Flashcard Functions
+    function loadCard() {
+      cardFlipped = false;
+      const card = flashcards[currentCardIndex];
+      document.getElementById('cardFront').textContent = card.front;
+      document.getElementById('cardBack').textContent = card.back;
+      document.getElementById('cardFront').style.display = 'block';
+      document.getElementById('cardBack').style.display = 'none';
+    }
+
+    function flipCard() {
+      cardFlipped = !cardFlipped;
+      document.getElementById('cardFront').style.display = cardFlipped ? 'none' : 'block';
+      document.getElementById('cardBack').style.display = cardFlipped ? 'block' : 'none';
+    }
+
+    function markCard(status) {
+      cardStats.studied++;
+      if (status === 'known') cardStats.known++;
+      else cardStats.learning++;
+      DB.setOne('cardStats', cardStats);
+      updateCardStats();
+      nextCard();
+    }
+
+    function nextCard() {
+      currentCardIndex = (currentCardIndex + 1) % flashcards.length;
+      loadCard();
+    }
+
+    function updateCardStats() {
+      document.getElementById('cardsStudied').textContent = cardStats.studied;
+      document.getElementById('cardsKnown').textContent = cardStats.known;
+      document.getElementById('cardsLearning').textContent = cardStats.learning;
+    }
+
+    // Exam Functions
+    function startExam() {
+      examQuestions = [...awsQuestions];
+      shuffleArray(examQuestions);
+      examQuestions = examQuestions.slice(0, 65);
+      examIndex = 0;
+      examAnswers = new Array(65).fill(-1);
+      examTimeLeft = 90 * 60;
+
+      document.getElementById('examStart').style.display = 'none';
+      document.getElementById('examInProgress').style.display = 'block';
+      document.getElementById('examResults').style.display = 'none';
+
+      loadExamQuestion();
+      examTimer = setInterval(updateExamTimer, 1000);
+    }
+
+    function loadExamQuestion() {
+      const q = examQuestions[examIndex];
+      document.getElementById('examProgress').textContent = `Question ${examIndex + 1} of 65`;
+      document.getElementById('examQuestion').textContent = q.q;
+      document.getElementById('examOptions').innerHTML = q.options.map((opt, i) => `
+        <div class="quiz-option ${examAnswers[examIndex] === i ? 'selected' : ''}" onclick="selectExamAnswer(${i})" style="border-color:${examAnswers[examIndex] === i ? 'var(--aws-orange)' : ''}">${opt}</div>
+      `).join('');
+    }
+
+    function selectExamAnswer(i) {
+      examAnswers[examIndex] = i;
+      loadExamQuestion();
+    }
+
+    function examNext() {
+      if (examIndex < 64) {
+        examIndex++;
+        loadExamQuestion();
+      } else {
+        endExam();
+      }
+    }
+
+    function updateExamTimer() {
+      examTimeLeft--;
+      const mins = Math.floor(examTimeLeft / 60);
+      const secs = examTimeLeft % 60;
+      document.getElementById('examTimer').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+      if (examTimeLeft <= 0) endExam();
+    }
+
+    function endExam() {
+      clearInterval(examTimer);
+      let correct = 0;
+      examQuestions.forEach((q, i) => {
+        if (examAnswers[i] === q.answer) correct++;
+      });
+      const score = Math.round((correct / 65) * 100);
+      const passed = score >= 70;
+
+      document.getElementById('examInProgress').style.display = 'none';
+      document.getElementById('examResults').style.display = 'block';
+      document.getElementById('examScore').textContent = score + '%';
+      document.getElementById('examCorrect').textContent = correct + '/65';
+      document.getElementById('examResult').textContent = passed ? '✅ PASSED' : '❌ FAILED';
+      document.getElementById('examResult').style.color = passed ? 'var(--success)' : 'var(--danger)';
+    }
+
+    function restartExam() {
+      document.getElementById('examStart').style.display = 'block';
+      document.getElementById('examResults').style.display = 'none';
+    }
+
+    // Services Functions
+    function loadServices() {
+      const grid = document.getElementById('serviceGrid');
+      grid.innerHTML = awsServices.map(s => `
+        <div class="service-card">
+          <div class="service-name">${s.name}</div>
+          <div class="service-desc">${s.desc}</div>
+          <span class="service-category">${s.cat}</span>
+        </div>
+      `).join('');
+    }
+
+    function filterServices() {
+      const search = document.getElementById('serviceSearch').value.toLowerCase();
+      const filtered = awsServices.filter(s =>
+        s.name.toLowerCase().includes(search) ||
+        s.desc.toLowerCase().includes(search) ||
+        s.cat.toLowerCase().includes(search)
+      );
+      document.getElementById('serviceGrid').innerHTML = filtered.map(s => `
+        <div class="service-card">
+          <div class="service-name">${s.name}</div>
+          <div class="service-desc">${s.desc}</div>
+          <span class="service-category">${s.cat}</span>
+        </div>
+      `).join('');
+    }
+
+    // Dashboard Functions
+    function updateDashboard() {
+      document.getElementById('totalAnswered').textContent = quizStats.total;
+      document.getElementById('totalAccuracy').textContent = quizStats.total > 0 ? Math.round((quizStats.correct / quizStats.total) * 100) + '%' : '--%';
+      document.getElementById('bestStreak').textContent = quizStats.bestStreak;
+
+      const accuracy = quizStats.total > 0 ? (quizStats.correct / quizStats.total) * 100 : 0;
+      document.getElementById('examReady').textContent = accuracy >= 70 && quizStats.total >= 50 ? 'Yes!' : 'No';
+      document.getElementById('examReady').style.color = accuracy >= 70 && quizStats.total >= 50 ? 'var(--success)' : 'var(--danger)';
+
+      const progEl = document.getElementById('overallProgress');
+      progEl.style.width = accuracy + '%';
+      progEl.className = 'progress-fill ' + (accuracy >= 70 ? 'good' : accuracy >= 40 ? 'medium' : 'low');
+      document.getElementById('overallPct').textContent = Math.round(accuracy) + '%';
+
+      const cats = ['compute', 'storage', 'database', 'security', 'networking', 'pricing'];
+      cats.forEach(cat => {
+        const stats = quizStats.byCategory[cat] || { correct: 0, total: 0 };
+        const pct = stats.total > 0 ? (stats.correct / stats.total) * 100 : 0;
+        const progEl = document.getElementById('prog' + cat.charAt(0).toUpperCase() + cat.slice(1));
+        const statEl = document.getElementById('stat' + cat.charAt(0).toUpperCase() + cat.slice(1));
+        if (progEl) {
+          progEl.style.width = pct + '%';
+          progEl.className = 'progress-fill ' + (pct >= 70 ? 'good' : pct >= 40 ? 'medium' : 'low');
+        }
+        if (statEl) statEl.textContent = `${stats.correct}/${stats.total}`;
+      });
+
+      // Weak areas
+      const container = document.getElementById('weakAreas');
+      const wrongByCat = {};
+      answeredQuestions.filter(a => !a.correct).forEach(a => {
+        wrongByCat[a.cat] = (wrongByCat[a.cat] || 0) + 1;
+      });
+      const weakCats = Object.entries(wrongByCat).sort((a, b) => b[1] - a[1]).slice(0, 3);
+      const catLabels = { compute: '🖥️ Compute', storage: '💾 Storage', database: '🗄️ Database', security: '🔐 Security', networking: '🌐 Networking', pricing: '💰 Pricing' };
+
+      if (weakCats.length === 0) {
+        container.innerHTML = '<div class="insight positive">No weak areas yet - keep practicing!</div>';
+      } else {
+        container.innerHTML = weakCats.map(([cat, count]) => `
+          <div class="data-item" onclick="document.querySelector('[data-tab=quiz]').click(); setCategory('${cat}')">
+            <div class="data-item-info">
+              <div class="data-item-title">${catLabels[cat]}</div>
+              <div class="data-item-meta">${count} incorrect - Click to practice</div>
+            </div>
+            <div class="data-item-value" style="color:var(--danger)">${count}</div>
+          </div>
+        `).join('');
+      }
+
+      // Last study
+      const lastStudy = DB.getOne('lastStudy');
+      document.getElementById('lastStudy').textContent = lastStudy ? new Date(lastStudy).toLocaleDateString() : '--';
+    }
+
+    // Initialize
+    shuffleArray(filteredQuestions);
+    shuffleArray(flashcards);
+    loadQuestion();
+    loadCard();
+    loadServices();
+    updateCardStats();
+    updateDashboard();
+  </script>
+</body>
+</html>
