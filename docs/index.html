@@ -340,28 +340,54 @@
         <div class="stat-card"><div class="stat-value" id="quizScore">0</div><div class="stat-label">Correct</div></div>
         <div class="stat-card"><div class="stat-value" id="quizTotal">0</div><div class="stat-label">Attempted</div></div>
         <div class="stat-card"><div class="stat-value" id="quizAccuracy">--%</div><div class="stat-label">Accuracy</div></div>
-        <div class="stat-card"><div class="stat-value" id="quizStreak">0</div><div class="stat-label">Streak</div></div>
+        <div class="stat-card"><div class="stat-value" id="quizStreak">0</div><div class="stat-label">Best Streak</div></div>
       </div>
 
       <div class="card">
-        <div class="card-title">☁️ AWS Cloud Practitioner Quiz</div>
+        <div class="card-title">🎯 Select Topic</div>
+        <div class="btn-group" id="categoryBtns">
+          <button class="btn btn-primary category-btn" data-cat="all" onclick="setCategory('all')">All Topics</button>
+          <button class="btn btn-secondary category-btn" data-cat="compute" onclick="setCategory('compute')">🖥️ Compute</button>
+          <button class="btn btn-secondary category-btn" data-cat="storage" onclick="setCategory('storage')">💾 Storage</button>
+          <button class="btn btn-secondary category-btn" data-cat="database" onclick="setCategory('database')">🗄️ Database</button>
+          <button class="btn btn-secondary category-btn" data-cat="security" onclick="setCategory('security')">🔐 Security</button>
+          <button class="btn btn-secondary category-btn" data-cat="networking" onclick="setCategory('networking')">🌐 Networking</button>
+          <button class="btn btn-secondary category-btn" data-cat="pricing" onclick="setCategory('pricing')">💰 Pricing</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">☁️ AWS Cloud Practitioner Quiz <span id="questionCounter" style="font-weight:400;color:var(--muted);font-size:.9rem"></span></div>
         <div id="quizContainer">
+          <div class="quiz-category" id="quizCategory" style="color:var(--accent);font-size:.875rem;margin-bottom:.5rem"></div>
           <div class="quiz-question" id="quizQuestion">Loading question...</div>
           <div class="quiz-options" id="quizOptions"></div>
+          <div id="quizExplanation" style="display:none;margin-top:1rem;padding:1rem;background:var(--bg);border-radius:8px;border-left:4px solid var(--accent)"></div>
           <div class="btn-group" style="margin-top:1.5rem">
             <button class="btn btn-primary" id="nextQuizBtn" onclick="nextQuestion()" style="display:none">Next Question →</button>
+            <button class="btn btn-secondary" onclick="resetQuiz()">🔄 Reset Progress</button>
           </div>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-title">📚 AWS Concepts</div>
-        <div class="data-list">
-          <div class="data-item"><div class="data-item-info"><div class="data-item-title">EC2</div><div class="data-item-meta">Elastic Compute Cloud - Virtual servers</div></div></div>
-          <div class="data-item"><div class="data-item-info"><div class="data-item-title">S3</div><div class="data-item-meta">Simple Storage Service - Object storage</div></div></div>
-          <div class="data-item"><div class="data-item-info"><div class="data-item-title">Lambda</div><div class="data-item-meta">Serverless compute - Run code without servers</div></div></div>
-          <div class="data-item"><div class="data-item-info"><div class="data-item-title">RDS</div><div class="data-item-meta">Relational Database Service - Managed databases</div></div></div>
-          <div class="data-item"><div class="data-item-info"><div class="data-item-title">IAM</div><div class="data-item-meta">Identity & Access Management - Security</div></div></div>
+        <div class="card-title">📊 Weak Areas <span style="font-weight:400;color:var(--muted);font-size:.9rem">(Focus on these)</span></div>
+        <div id="weakAreas" class="data-list">
+          <div class="insight">Complete some questions to identify weak areas!</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📈 Progress by Category</div>
+        <div id="categoryProgress">
+          <div class="form-grid">
+            <div><label>🖥️ Compute</label><div class="progress-bar"><div class="progress-fill" id="progCompute" style="width:0%"></div></div><span id="statCompute" style="font-size:.75rem;color:var(--muted)">0/0</span></div>
+            <div><label>💾 Storage</label><div class="progress-bar"><div class="progress-fill" id="progStorage" style="width:0%"></div></div><span id="statStorage" style="font-size:.75rem;color:var(--muted)">0/0</span></div>
+            <div><label>🗄️ Database</label><div class="progress-bar"><div class="progress-fill" id="progDatabase" style="width:0%"></div></div><span id="statDatabase" style="font-size:.75rem;color:var(--muted)">0/0</span></div>
+            <div><label>🔐 Security</label><div class="progress-bar"><div class="progress-fill" id="progSecurity" style="width:0%"></div></div><span id="statSecurity" style="font-size:.75rem;color:var(--muted)">0/0</span></div>
+            <div><label>🌐 Networking</label><div class="progress-bar"><div class="progress-fill" id="progNetworking" style="width:0%"></div></div><span id="statNetworking" style="font-size:.75rem;color:var(--muted)">0/0</span></div>
+            <div><label>💰 Pricing</label><div class="progress-bar"><div class="progress-fill" id="progPricing" style="width:0%"></div></div><span id="statPricing" style="font-size:.75rem;color:var(--muted)">0/0</span></div>
+          </div>
         </div>
       </div>
     </section>
@@ -619,36 +645,126 @@
       `).join('');
     }
 
-    // AWS Quiz
+    // AWS Quiz - 50+ Questions with Categories and Explanations
     const awsQuestions = [
-      { q: "What does EC2 stand for?", options: ["Elastic Compute Cloud", "Electronic Computing Center", "Enterprise Cloud Computing", "Elastic Container Cluster"], answer: 0 },
-      { q: "Which AWS service is used for object storage?", options: ["EBS", "S3", "RDS", "DynamoDB"], answer: 1 },
-      { q: "What is AWS Lambda used for?", options: ["Database management", "Virtual machines", "Serverless computing", "Content delivery"], answer: 2 },
-      { q: "Which service provides managed relational databases?", options: ["DynamoDB", "S3", "RDS", "ElastiCache"], answer: 2 },
-      { q: "What does IAM stand for?", options: ["Internet Access Management", "Identity and Access Management", "Integrated Application Module", "Instance Availability Manager"], answer: 1 },
-      { q: "Which AWS service is a content delivery network?", options: ["Route 53", "CloudFront", "API Gateway", "Direct Connect"], answer: 1 },
-      { q: "What is the AWS shared responsibility model?", options: ["AWS manages everything", "Customer manages everything", "AWS manages infrastructure, customer manages data", "Only applies to enterprise accounts"], answer: 2 },
-      { q: "Which service is used for DNS in AWS?", options: ["CloudFront", "Route 53", "API Gateway", "VPC"], answer: 1 },
-      { q: "What type of database is DynamoDB?", options: ["Relational", "Graph", "NoSQL/Key-Value", "Time-series"], answer: 2 },
-      { q: "What does VPC stand for?", options: ["Virtual Private Cloud", "Virtual Processing Center", "Verified Public Connection", "Variable Pricing Calculator"], answer: 0 }
+      // COMPUTE (10 questions)
+      { cat: "compute", q: "What does EC2 stand for?", options: ["Elastic Compute Cloud", "Electronic Computing Center", "Enterprise Cloud Computing", "Elastic Container Cluster"], answer: 0, explain: "EC2 = Elastic Compute Cloud. It provides resizable virtual servers in the cloud." },
+      { cat: "compute", q: "What is AWS Lambda used for?", options: ["Database management", "Virtual machines", "Serverless computing", "Content delivery"], answer: 2, explain: "Lambda runs code without provisioning servers. You pay only for compute time used." },
+      { cat: "compute", q: "Which EC2 pricing model offers the biggest discount for long-term use?", options: ["On-Demand", "Spot Instances", "Reserved Instances", "Dedicated Hosts"], answer: 2, explain: "Reserved Instances offer up to 72% discount for 1-3 year commitments." },
+      { cat: "compute", q: "What is an EC2 Auto Scaling group used for?", options: ["Automatic security patching", "Automatically adjust capacity based on demand", "Automatic backup creation", "Automatic DNS routing"], answer: 1, explain: "Auto Scaling automatically adds/removes EC2 instances based on conditions you define." },
+      { cat: "compute", q: "Which service runs Docker containers on AWS?", options: ["EC2", "ECS/EKS", "Lambda", "Lightsail"], answer: 1, explain: "ECS (Elastic Container Service) and EKS (Elastic Kubernetes Service) run containers." },
+      { cat: "compute", q: "What is AWS Elastic Beanstalk?", options: ["Container orchestration", "PaaS for deploying applications", "Serverless database", "Load balancer"], answer: 1, explain: "Elastic Beanstalk is a PaaS that handles deployment, scaling, and monitoring automatically." },
+      { cat: "compute", q: "Which EC2 instance type is best for memory-intensive workloads?", options: ["C-series (Compute)", "R-series (Memory)", "T-series (Burstable)", "P-series (GPU)"], answer: 1, explain: "R-series instances are memory-optimized for databases and in-memory caching." },
+      { cat: "compute", q: "What are Spot Instances?", options: ["Free tier instances", "Unused EC2 capacity at up to 90% discount", "Instances in multiple regions", "Dedicated physical servers"], answer: 1, explain: "Spot Instances use spare EC2 capacity at steep discounts but can be interrupted." },
+      { cat: "compute", q: "What is AWS Fargate?", options: ["Serverless compute for containers", "File storage service", "Database migration tool", "API management service"], answer: 0, explain: "Fargate runs containers without managing servers - serverless container compute." },
+      { cat: "compute", q: "What does an AMI contain?", options: ["Only the operating system", "Template to launch EC2 instances", "Container images", "Database snapshots"], answer: 1, explain: "AMI (Amazon Machine Image) is a template with OS, applications, and configurations." },
+
+      // STORAGE (10 questions)
+      { cat: "storage", q: "Which AWS service is used for object storage?", options: ["EBS", "S3", "EFS", "FSx"], answer: 1, explain: "S3 (Simple Storage Service) stores objects (files) with unlimited scalability." },
+      { cat: "storage", q: "What is the maximum size of a single S3 object?", options: ["5 GB", "50 GB", "5 TB", "Unlimited"], answer: 2, explain: "A single S3 object can be up to 5 TB. Use multipart upload for files over 5 GB." },
+      { cat: "storage", q: "Which S3 storage class is cheapest for rarely accessed data?", options: ["S3 Standard", "S3 Intelligent-Tiering", "S3 Glacier Deep Archive", "S3 One Zone-IA"], answer: 2, explain: "Glacier Deep Archive is lowest cost for data accessed 1-2 times per year." },
+      { cat: "storage", q: "What is Amazon EBS?", options: ["Object storage", "Block storage for EC2", "File storage", "Tape backup"], answer: 1, explain: "EBS (Elastic Block Store) provides persistent block storage volumes for EC2." },
+      { cat: "storage", q: "Which storage service provides a shared file system for EC2?", options: ["S3", "EBS", "EFS", "Glacier"], answer: 2, explain: "EFS (Elastic File System) provides NFS file storage that multiple EC2 can share." },
+      { cat: "storage", q: "What is S3 versioning used for?", options: ["Faster access", "Keep multiple versions of objects", "Reduce costs", "Cross-region replication"], answer: 1, explain: "Versioning preserves all versions of an object for recovery and audit purposes." },
+      { cat: "storage", q: "Which service moves data to S3 Glacier automatically?", options: ["S3 Transfer Acceleration", "S3 Lifecycle Policies", "AWS DataSync", "Storage Gateway"], answer: 1, explain: "Lifecycle policies automate transitions between storage classes based on rules." },
+      { cat: "storage", q: "What is AWS Storage Gateway?", options: ["VPN connection", "Hybrid cloud storage", "Data encryption service", "Content delivery"], answer: 1, explain: "Storage Gateway connects on-premises storage to AWS cloud storage seamlessly." },
+      { cat: "storage", q: "How many 9s of durability does S3 Standard provide?", options: ["99.9%", "99.99%", "99.999999999% (11 9s)", "100%"], answer: 2, explain: "S3 Standard provides 99.999999999% (11 nines) durability - extremely reliable." },
+      { cat: "storage", q: "What is AWS Snowball used for?", options: ["Real-time streaming", "Physical data transfer device", "Database backup", "DNS routing"], answer: 1, explain: "Snowball is a physical device for transferring large amounts of data to AWS." },
+
+      // DATABASE (9 questions)
+      { cat: "database", q: "Which service provides managed relational databases?", options: ["DynamoDB", "S3", "RDS", "ElastiCache"], answer: 2, explain: "RDS (Relational Database Service) manages MySQL, PostgreSQL, SQL Server, etc." },
+      { cat: "database", q: "What type of database is DynamoDB?", options: ["Relational", "Graph", "NoSQL key-value", "Time-series"], answer: 2, explain: "DynamoDB is a fully managed NoSQL database with single-digit ms latency." },
+      { cat: "database", q: "Which database service is best for caching?", options: ["RDS", "DynamoDB", "ElastiCache", "Redshift"], answer: 2, explain: "ElastiCache provides in-memory caching with Redis or Memcached." },
+      { cat: "database", q: "What is Amazon Redshift used for?", options: ["Transactional database", "Data warehousing", "Document database", "Graph database"], answer: 1, explain: "Redshift is a petabyte-scale data warehouse for analytics and BI." },
+      { cat: "database", q: "Which database is best for graph data and relationships?", options: ["DynamoDB", "Neptune", "DocumentDB", "RDS"], answer: 1, explain: "Neptune is a graph database for highly connected data like social networks." },
+      { cat: "database", q: "What does Amazon Aurora provide?", options: ["NoSQL database", "MySQL/PostgreSQL compatible with 5x performance", "In-memory cache", "Data warehouse"], answer: 1, explain: "Aurora is MySQL/PostgreSQL compatible with up to 5x better performance." },
+      { cat: "database", q: "Which service is MongoDB compatible?", options: ["DynamoDB", "DocumentDB", "Neptune", "Timestream"], answer: 1, explain: "DocumentDB is a managed document database compatible with MongoDB." },
+      { cat: "database", q: "What is RDS Multi-AZ used for?", options: ["Read scaling", "High availability and failover", "Cost reduction", "Global distribution"], answer: 1, explain: "Multi-AZ provides automatic failover to a standby in another Availability Zone." },
+      { cat: "database", q: "Which DynamoDB feature provides automatic scaling?", options: ["Provisioned capacity", "On-demand capacity", "Reserved capacity", "Spot capacity"], answer: 1, explain: "On-demand capacity automatically scales to handle any traffic level." },
+
+      // SECURITY (10 questions)
+      { cat: "security", q: "What does IAM stand for?", options: ["Internet Access Management", "Identity and Access Management", "Integrated Application Module", "Instance Availability Manager"], answer: 1, explain: "IAM manages users, groups, roles, and their permissions to AWS resources." },
+      { cat: "security", q: "What is the AWS shared responsibility model?", options: ["AWS manages everything", "Customer manages everything", "AWS manages infrastructure, customer manages data/apps", "Only for enterprise"], answer: 2, explain: "AWS secures the cloud infrastructure; customers secure what they put IN the cloud." },
+      { cat: "security", q: "What is an IAM role?", options: ["A user account", "Temporary credentials for AWS services", "A group of users", "A password policy"], answer: 1, explain: "Roles provide temporary credentials - used by services, apps, or cross-account access." },
+      { cat: "security", q: "Which service provides DDoS protection?", options: ["WAF", "Shield", "GuardDuty", "Inspector"], answer: 1, explain: "AWS Shield provides DDoS protection. Shield Advanced offers enhanced protection." },
+      { cat: "security", q: "What is AWS KMS used for?", options: ["Container management", "Key management and encryption", "Kubernetes service", "Knowledge base"], answer: 1, explain: "KMS (Key Management Service) creates and manages encryption keys." },
+      { cat: "security", q: "Which service scans for security vulnerabilities in EC2?", options: ["GuardDuty", "Inspector", "Macie", "Detective"], answer: 1, explain: "Inspector automatically assesses EC2 instances for vulnerabilities and exposures." },
+      { cat: "security", q: "What is AWS WAF?", options: ["Wide Area Firewall", "Web Application Firewall", "Wireless Access Firewall", "Workload Access Filter"], answer: 1, explain: "WAF protects web apps from common exploits like SQL injection and XSS." },
+      { cat: "security", q: "Which service discovers and protects sensitive data in S3?", options: ["GuardDuty", "Inspector", "Macie", "Shield"], answer: 2, explain: "Macie uses ML to discover, classify, and protect sensitive data like PII." },
+      { cat: "security", q: "What is the principle of least privilege?", options: ["Maximum permissions", "Give only permissions needed", "No permissions", "Admin access for all"], answer: 1, explain: "Least privilege: grant only the minimum permissions required to perform a task." },
+      { cat: "security", q: "What does MFA add to security?", options: ["Faster login", "Additional authentication factor", "Automatic password reset", "Single sign-on"], answer: 1, explain: "MFA requires something you know (password) + something you have (device/code)." },
+
+      // NETWORKING (8 questions)
+      { cat: "networking", q: "What does VPC stand for?", options: ["Virtual Private Cloud", "Virtual Processing Center", "Verified Public Connection", "Variable Pricing Calculator"], answer: 0, explain: "VPC is your isolated network in AWS where you launch resources." },
+      { cat: "networking", q: "Which AWS service is a content delivery network?", options: ["Route 53", "CloudFront", "API Gateway", "Direct Connect"], answer: 1, explain: "CloudFront is a CDN that delivers content globally with low latency via edge locations." },
+      { cat: "networking", q: "Which service is used for DNS in AWS?", options: ["CloudFront", "Route 53", "API Gateway", "VPC"], answer: 1, explain: "Route 53 is a DNS service that routes users to applications with high availability." },
+      { cat: "networking", q: "What is AWS Direct Connect?", options: ["VPN service", "Dedicated private connection to AWS", "Internet gateway", "Load balancer"], answer: 1, explain: "Direct Connect establishes a dedicated private network connection to AWS." },
+      { cat: "networking", q: "What is a Security Group?", options: ["Group of IAM users", "Virtual firewall for EC2", "Collection of S3 buckets", "Database cluster"], answer: 1, explain: "Security Groups act as virtual firewalls controlling inbound/outbound traffic." },
+      { cat: "networking", q: "What is an Elastic Load Balancer?", options: ["Distributes traffic across targets", "Stores elastic data", "Manages DNS", "Creates VPNs"], answer: 0, explain: "ELB automatically distributes incoming traffic across multiple targets." },
+      { cat: "networking", q: "What is a NAT Gateway used for?", options: ["DNS resolution", "Allow private subnet internet access", "Load balancing", "VPN connection"], answer: 1, explain: "NAT Gateway lets instances in private subnets access the internet securely." },
+      { cat: "networking", q: "What is VPC Peering?", options: ["Connect VPCs together", "Connect to on-premises", "Public internet access", "DNS service"], answer: 0, explain: "VPC Peering connects two VPCs so they can communicate using private IPs." },
+
+      // PRICING (8 questions)
+      { cat: "pricing", q: "What is the AWS Free Tier?", options: ["Always free services only", "12 months of free usage for new accounts", "Free for students only", "No free tier exists"], answer: 1, explain: "Free Tier includes 12 months of limited free usage, plus always-free services." },
+      { cat: "pricing", q: "Which pricing model has no upfront commitment?", options: ["Reserved Instances", "Savings Plans", "On-Demand", "Spot Instances"], answer: 2, explain: "On-Demand: pay by the hour/second with no commitments or upfront payments." },
+      { cat: "pricing", q: "What is AWS Cost Explorer?", options: ["Service catalog", "Visualize and analyze AWS costs", "Pricing calculator", "Billing alarm"], answer: 1, explain: "Cost Explorer visualizes spending patterns and forecasts future costs." },
+      { cat: "pricing", q: "What tool estimates costs before deployment?", options: ["Cost Explorer", "AWS Pricing Calculator", "Budgets", "Trusted Advisor"], answer: 1, explain: "Pricing Calculator estimates costs for AWS services before you use them." },
+      { cat: "pricing", q: "What is AWS Budgets used for?", options: ["Calculate prices", "Set cost/usage alerts", "Pay AWS bills", "Request refunds"], answer: 1, explain: "Budgets lets you set custom alerts when costs or usage exceed thresholds." },
+      { cat: "pricing", q: "Which support plan includes a Technical Account Manager?", options: ["Basic", "Developer", "Business", "Enterprise"], answer: 3, explain: "Enterprise Support includes a dedicated TAM for proactive guidance." },
+      { cat: "pricing", q: "What is Consolidated Billing?", options: ["Single bill for multiple accounts", "Pay in installments", "Automatic discounts", "Free tier extension"], answer: 0, explain: "Consolidated Billing combines usage across accounts for volume discounts." },
+      { cat: "pricing", q: "Which of these is always free in AWS?", options: ["EC2 t2.micro (first year)", "S3 first 5GB (first year)", "IAM", "RDS"], answer: 2, explain: "IAM is always free - no charge for users, groups, roles, or policies." }
     ];
 
-    let currentQuestion = 0;
-    let quizScore = 0;
-    let quizTotal = 0;
-    let quizStreak = 0;
+    let currentCategory = 'all';
+    let filteredQuestions = [...awsQuestions];
+    let currentQuestionIndex = 0;
+    let quizStats = DB.getOne('quizStats') || { correct: 0, total: 0, bestStreak: 0, currentStreak: 0, byCategory: {} };
+    let answeredQuestions = DB.get('answeredQuestions') || [];
+
+    function setCategory(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-secondary');
+        if (btn.dataset.cat === cat) {
+          btn.classList.add('btn-primary');
+          btn.classList.remove('btn-secondary');
+        }
+      });
+      filteredQuestions = cat === 'all' ? [...awsQuestions] : awsQuestions.filter(q => q.cat === cat);
+      shuffleArray(filteredQuestions);
+      currentQuestionIndex = 0;
+      loadQuestion();
+    }
+
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
 
     function loadQuestion() {
-      const q = awsQuestions[currentQuestion];
+      if (filteredQuestions.length === 0) {
+        document.getElementById('quizQuestion').textContent = 'No questions in this category!';
+        document.getElementById('quizOptions').innerHTML = '';
+        return;
+      }
+      const q = filteredQuestions[currentQuestionIndex];
+      const catLabels = { compute: '🖥️ Compute', storage: '💾 Storage', database: '🗄️ Database', security: '🔐 Security', networking: '🌐 Networking', pricing: '💰 Pricing' };
+      document.getElementById('quizCategory').textContent = catLabels[q.cat] || q.cat;
       document.getElementById('quizQuestion').textContent = q.q;
+      document.getElementById('questionCounter').textContent = `(${currentQuestionIndex + 1}/${filteredQuestions.length})`;
       document.getElementById('quizOptions').innerHTML = q.options.map((opt, i) => `
         <div class="quiz-option" onclick="checkAnswer(${i})" data-index="${i}">${opt}</div>
       `).join('');
+      document.getElementById('quizExplanation').style.display = 'none';
       document.getElementById('nextQuizBtn').style.display = 'none';
+      updateQuizStats();
     }
 
     function checkAnswer(selected) {
-      const q = awsQuestions[currentQuestion];
+      const q = filteredQuestions[currentQuestionIndex];
       const options = document.querySelectorAll('.quiz-option');
       options.forEach((opt, i) => {
         opt.style.pointerEvents = 'none';
@@ -656,24 +772,97 @@
         if (i === selected && selected !== q.answer) opt.classList.add('incorrect');
       });
 
-      quizTotal++;
+      // Update stats
+      quizStats.total++;
+      if (!quizStats.byCategory[q.cat]) quizStats.byCategory[q.cat] = { correct: 0, total: 0 };
+      quizStats.byCategory[q.cat].total++;
+
       if (selected === q.answer) {
-        quizScore++;
-        quizStreak++;
+        quizStats.correct++;
+        quizStats.currentStreak++;
+        quizStats.byCategory[q.cat].correct++;
+        if (quizStats.currentStreak > quizStats.bestStreak) quizStats.bestStreak = quizStats.currentStreak;
       } else {
-        quizStreak = 0;
+        quizStats.currentStreak = 0;
+        // Track wrong answers for weak areas
+        answeredQuestions.push({ q: q.q, cat: q.cat, correct: false, date: new Date().toISOString() });
       }
 
-      document.getElementById('quizScore').textContent = quizScore;
-      document.getElementById('quizTotal').textContent = quizTotal;
-      document.getElementById('quizAccuracy').textContent = Math.round((quizScore / quizTotal) * 100) + '%';
-      document.getElementById('quizStreak').textContent = quizStreak;
+      DB.setOne('quizStats', quizStats);
+      DB.set('answeredQuestions', answeredQuestions.slice(-200));
+
+      // Show explanation
+      const explainEl = document.getElementById('quizExplanation');
+      explainEl.innerHTML = `<strong>${selected === q.answer ? '✅ Correct!' : '❌ Incorrect'}</strong><br>${q.explain}`;
+      explainEl.style.display = 'block';
+      explainEl.style.borderLeftColor = selected === q.answer ? 'var(--success)' : 'var(--danger)';
+
       document.getElementById('nextQuizBtn').style.display = 'inline-block';
+      updateQuizStats();
+      updateWeakAreas();
     }
 
     function nextQuestion() {
-      currentQuestion = (currentQuestion + 1) % awsQuestions.length;
+      currentQuestionIndex = (currentQuestionIndex + 1) % filteredQuestions.length;
+      if (currentQuestionIndex === 0) shuffleArray(filteredQuestions);
       loadQuestion();
+    }
+
+    function resetQuiz() {
+      if (confirm('Reset all quiz progress?')) {
+        quizStats = { correct: 0, total: 0, bestStreak: 0, currentStreak: 0, byCategory: {} };
+        answeredQuestions = [];
+        DB.setOne('quizStats', quizStats);
+        DB.set('answeredQuestions', []);
+        updateQuizStats();
+        updateWeakAreas();
+      }
+    }
+
+    function updateQuizStats() {
+      document.getElementById('quizScore').textContent = quizStats.correct;
+      document.getElementById('quizTotal').textContent = quizStats.total;
+      document.getElementById('quizAccuracy').textContent = quizStats.total > 0 ? Math.round((quizStats.correct / quizStats.total) * 100) + '%' : '--%';
+      document.getElementById('quizStreak').textContent = quizStats.bestStreak;
+
+      // Update category progress
+      const cats = ['compute', 'storage', 'database', 'security', 'networking', 'pricing'];
+      cats.forEach(cat => {
+        const stats = quizStats.byCategory[cat] || { correct: 0, total: 0 };
+        const pct = stats.total > 0 ? (stats.correct / stats.total) * 100 : 0;
+        const progEl = document.getElementById('prog' + cat.charAt(0).toUpperCase() + cat.slice(1));
+        const statEl = document.getElementById('stat' + cat.charAt(0).toUpperCase() + cat.slice(1));
+        if (progEl) {
+          progEl.style.width = pct + '%';
+          progEl.className = 'progress-fill ' + (pct >= 70 ? 'good' : pct >= 40 ? 'medium' : 'low');
+        }
+        if (statEl) statEl.textContent = `${stats.correct}/${stats.total}`;
+      });
+    }
+
+    function updateWeakAreas() {
+      const container = document.getElementById('weakAreas');
+      const wrongByCat = {};
+      answeredQuestions.filter(a => !a.correct).forEach(a => {
+        wrongByCat[a.cat] = (wrongByCat[a.cat] || 0) + 1;
+      });
+
+      const weakCats = Object.entries(wrongByCat).sort((a, b) => b[1] - a[1]).slice(0, 3);
+      const catLabels = { compute: '🖥️ Compute', storage: '💾 Storage', database: '🗄️ Database', security: '🔐 Security', networking: '🌐 Networking', pricing: '💰 Pricing' };
+
+      if (weakCats.length === 0) {
+        container.innerHTML = '<div class="insight positive">No weak areas yet - keep practicing!</div>';
+      } else {
+        container.innerHTML = weakCats.map(([cat, count]) => `
+          <div class="data-item" style="cursor:pointer" onclick="setCategory('${cat}')">
+            <div class="data-item-info">
+              <div class="data-item-title">${catLabels[cat]}</div>
+              <div class="data-item-meta">${count} incorrect answers - Click to practice</div>
+            </div>
+            <div class="data-item-value" style="color:var(--danger)">${count}</div>
+          </div>
+        `).join('');
+      }
     }
 
     // Dashboard
@@ -743,7 +932,10 @@
     loadMedications();
     loadSleepData();
     loadExerciseData();
+    shuffleArray(filteredQuestions);
     loadQuestion();
+    updateQuizStats();
+    updateWeakAreas();
     updateDashboard();
     moodEmoji.textContent = moodEmojis[4];
   </script>
