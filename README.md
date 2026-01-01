@@ -2,6 +2,10 @@
 
 <div align="center">
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-3b82f6?style=for-the-badge&logo=google-chrome)](https://isaloum.github.io/StepSyncAI)
+[![GitHub](https://img.shields.io/badge/GitHub-View%20Source-181717?style=for-the-badge&logo=github)](https://github.com/Isaloum/StepSyncAI)
+
+
 [![Tests](https://img.shields.io/badge/tests-1927%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
 [![Coverage](https://img.shields.io/badge/coverage-82.55%25-green)](https://github.com/Isaloum/StepSyncAI)
 [![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
@@ -10,7 +14,9 @@
 
 **A production-grade health tracking platform with 6 integrated applications, 1,927 automated tests, and comprehensive CI/CD pipeline.**
 
-[Live Demo](#-live-demo) • [Architecture](#-architecture) • [Features](#-features) • [Tech Stack](#-tech-stack)
+🎯 **[Try it now → https://isaloum.github.io/StepSyncAI](https://isaloum.github.io/StepSyncAI)
+
+[Architecture](#-architecture) • [Features](#-features) • [Tech Stack](#-tech-stack)
 
 </div>
 
@@ -473,9 +479,26 @@ Always consult healthcare professionals for medical advice.
 
 ---
 
-**Built by [Isaloum](https://github.com/Isaloum)**
-*Learning AWS • Building in Public • Test-Driven Development*
 
-[⭐ Star this repo](https://github.com/Isaloum/StepSyncAI) if you find it useful!
+</div>
+## 👨‍💻 Author
+
+**Ihab Saloum**
+
+[![GitHub](https://img.shields.io/badge/GitHub-Isaloum-181717?style=flat&logo=github)](https://github.com/Isaloum)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077B5?style=flat&logo=linkedin)](https://www.linkedin.com/in/ihab-saloum-170618ba/)
+[![Portfolio](https://img.shields.io/badge/Portfolio-More%20Projects-3b82f6?style=flat)](https://github.com/Isaloum)
+
+*Building production-grade applications • Test-Driven Development • AWS Cloud Solutions*
+
+---
+
+## ⭐ Support
+
+If this project helped with your wellness journey or inspired your own projects:
+- ⭐ [Star this repository](https://github.com/Isaloum/StepSyncAI)
+- 🔀 Share it with others
+- 📝 Provide feedback via issues
+- 🤝 Contribute improvements
 
 </div>
