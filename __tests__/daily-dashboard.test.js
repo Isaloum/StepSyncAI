@@ -942,47 +942,71 @@ describe('Daily Dashboard', () => {
     describe('Goals & Milestones', () => {
         describe('setGoal', () => {
             test('creates a wellness goal successfully', () => {
-                const goal = dashboard.setGoal('wellness', 80, '2025-12-31', 'Reach 80% wellness');
+                const futureDate = new Date();
+                futureDate.setDate(futureDate.getDate() + 30);
+                const futureDateStr = futureDate.toISOString().split('T')[0];
+                
+                const goal = dashboard.setGoal('wellness', 80, futureDateStr, 'Reach 80% wellness');
                 expect(goal).toBeDefined();
                 expect(goal.type).toBe('wellness');
                 expect(goal.target).toBe(80);
-                expect(goal.targetDate).toBe('2025-12-31');
+                expect(goal.targetDate).toBe(futureDateStr);
                 expect(goal.status).toBe('active');
                 expect(goal.id).toBe(1);
             });
 
             test('creates goal with default description', () => {
-                const goal = dashboard.setGoal('mood', 8, '2025-12-31');
+                const futureDate = new Date();
+                futureDate.setDate(futureDate.getDate() + 30);
+                const futureDateStr = futureDate.toISOString().split('T')[0];
+                
+                const goal = dashboard.setGoal('mood', 8, futureDateStr);
                 expect(goal.description).toBe('Maintain average mood of 8/10');
             });
 
             test('validates goal type', () => {
+                const futureDate = new Date();
+                futureDate.setDate(futureDate.getDate() + 30);
+                const futureDateStr = futureDate.toISOString().split('T')[0];
+                
                 const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-                const goal = dashboard.setGoal('invalid-type', 50, '2025-12-31');
+                const goal = dashboard.setGoal('invalid-type', 50, futureDateStr);
                 expect(goal).toBeNull();
                 expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid goal type'));
                 consoleSpy.mockRestore();
             });
 
             test('validates target is positive number', () => {
+                const futureDate = new Date();
+                futureDate.setDate(futureDate.getDate() + 30);
+                const futureDateStr = futureDate.toISOString().split('T')[0];
+                
                 const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-                const goal = dashboard.setGoal('wellness', -10, '2025-12-31');
+                const goal = dashboard.setGoal('wellness', -10, futureDateStr);
                 expect(goal).toBeNull();
                 expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('positive number'));
                 consoleSpy.mockRestore();
             });
 
             test('validates wellness target range (0-100)', () => {
+                const futureDate = new Date();
+                futureDate.setDate(futureDate.getDate() + 30);
+                const futureDateStr = futureDate.toISOString().split('T')[0];
+                
                 const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-                const goal = dashboard.setGoal('wellness', 150, '2025-12-31');
+                const goal = dashboard.setGoal('wellness', 150, futureDateStr);
                 expect(goal).toBeNull();
                 expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('between 0-100'));
                 consoleSpy.mockRestore();
             });
 
             test('validates mood target range (1-10)', () => {
+                const futureDate = new Date();
+                futureDate.setDate(futureDate.getDate() + 30);
+                const futureDateStr = futureDate.toISOString().split('T')[0];
+                
                 const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-                const goal = dashboard.setGoal('mood', 15, '2025-12-31');
+                const goal = dashboard.setGoal('mood', 15, futureDateStr);
                 expect(goal).toBeNull();
                 expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('between 1-10'));
                 consoleSpy.mockRestore();
@@ -1005,14 +1029,22 @@ describe('Daily Dashboard', () => {
             });
 
             test('increments goal IDs correctly', () => {
-                const goal1 = dashboard.setGoal('wellness', 80, '2025-12-31');
-                const goal2 = dashboard.setGoal('mood', 8, '2025-12-31');
+                const futureDate = new Date();
+                futureDate.setDate(futureDate.getDate() + 30);
+                const futureDateStr = futureDate.toISOString().split('T')[0];
+                
+                const goal1 = dashboard.setGoal('wellness', 80, futureDateStr);
+                const goal2 = dashboard.setGoal('mood', 8, futureDateStr);
                 expect(goal1.id).toBe(1);
                 expect(goal2.id).toBe(2);
             });
 
             test('initializes milestones correctly', () => {
-                const goal = dashboard.setGoal('wellness', 80, '2025-12-31');
+                const futureDate = new Date();
+                futureDate.setDate(futureDate.getDate() + 30);
+                const futureDateStr = futureDate.toISOString().split('T')[0];
+                
+                const goal = dashboard.setGoal('wellness', 80, futureDateStr);
                 expect(goal.milestones).toEqual({
                     '25': false,
                     '50': false,
@@ -1024,8 +1056,12 @@ describe('Daily Dashboard', () => {
 
         describe('getActiveGoals', () => {
             test('returns only active goals', () => {
-                dashboard.setGoal('wellness', 80, '2025-12-31');
-                dashboard.setGoal('mood', 8, '2025-12-31');
+                const futureDate = new Date();
+                futureDate.setDate(futureDate.getDate() + 30);
+                const futureDateStr = futureDate.toISOString().split('T')[0];
+                
+                dashboard.setGoal('wellness', 80, futureDateStr);
+                dashboard.setGoal('mood', 8, futureDateStr);
 
                 const activeGoals = dashboard.getActiveGoals();
                 expect(activeGoals.length).toBe(2);
@@ -1042,7 +1078,11 @@ describe('Daily Dashboard', () => {
 
         describe('getGoalById', () => {
             test('retrieves goal by ID', () => {
-                const goal = dashboard.setGoal('wellness', 80, '2025-12-31');
+                const futureDate = new Date();
+                futureDate.setDate(futureDate.getDate() + 30);
+                const futureDateStr = futureDate.toISOString().split('T')[0];
+                
+                const goal = dashboard.setGoal('wellness', 80, futureDateStr);
                 const retrieved = dashboard.getGoalById(goal.id);
                 expect(retrieved).toEqual(goal);
             });
@@ -1138,7 +1178,11 @@ describe('Daily Dashboard', () => {
 
         describe('deleteGoal', () => {
             test('deletes goal successfully', () => {
-                const goal = dashboard.setGoal('wellness', 80, '2025-12-31');
+                const futureDate = new Date();
+                futureDate.setDate(futureDate.getDate() + 30);
+                const futureDateStr = futureDate.toISOString().split('T')[0];
+                
+                const goal = dashboard.setGoal('wellness', 80, futureDateStr);
                 const result = dashboard.deleteGoal(goal.id);
 
                 expect(result).toBe(true);
@@ -1850,13 +1894,19 @@ describe('Daily Dashboard', () => {
                 const filename = 'test-report.txt';
 
                 // Add a goal for testing
+                const futureDate = new Date();
+                futureDate.setDate(futureDate.getDate() + 30);
+                const futureDateStr = futureDate.toISOString().split('T')[0];
+                const createdDate = new Date();
+                const createdDateStr = createdDate.toISOString().split('T')[0];
+                
                 dashboard.data.goals = [{
                     id: 1,
                     type: 'wellness',
                     target: 80,
-                    targetDate: '2025-12-31',
+                    targetDate: futureDateStr,
                     description: 'Test goal',
-                    createdDate: '2025-01-01'
+                    createdDate: createdDateStr
                 }];
 
                 dashboard.generateReport(7, filename);
@@ -2035,7 +2085,10 @@ describe('Daily Dashboard', () => {
                 }
 
                 // Add goals
-                dashboard.setGoal('wellness', 80, '2025-12-31', 'Reach 80%');
+                const futureDate = new Date();
+                futureDate.setDate(futureDate.getDate() + 30);
+                const futureDateStr = futureDate.toISOString().split('T')[0];
+                dashboard.setGoal('wellness', 80, futureDateStr, 'Reach 80%');
 
                 const promise = dashboard.exportToPDF(30, 'comprehensive-test.pdf');
 
