@@ -628,66 +628,6 @@
 
     }
 
-    function nextQuestion() {
-      currentQuestionIndex = (currentQuestionIndex + 1) % filteredQuestions.length;
-    }
-
-    function resetQuiz() {
-      if (confirm('Reset all quiz progress?')) {
-        quizStats = { correct: 0, total: 0, bestStreak: 0, currentStreak: 0, byCategory: {} };
-        answeredQuestions = [];
-        DB.setOne('quizStats', quizStats);
-        DB.set('answeredQuestions', []);
-      }
-    }
-
-    function updateQuizStats() {
-      document.getElementById('quizScore').textContent = quizStats.correct;
-      document.getElementById('quizTotal').textContent = quizStats.total;
-      document.getElementById('quizAccuracy').textContent = quizStats.total > 0 ? Math.round((quizStats.correct / quizStats.total) * 100) + '%' : '--%';
-      document.getElementById('quizStreak').textContent = quizStats.bestStreak;
-
-      // Update category progress
-      const cats = ['compute', 'storage', 'database', 'security', 'networking', 'pricing'];
-      cats.forEach(cat => {
-        const stats = quizStats.byCategory[cat] || { correct: 0, total: 0 };
-        const pct = stats.total > 0 ? (stats.correct / stats.total) * 100 : 0;
-        const progEl = document.getElementById('prog' + cat.charAt(0).toUpperCase() + cat.slice(1));
-        const statEl = document.getElementById('stat' + cat.charAt(0).toUpperCase() + cat.slice(1));
-        if (progEl) {
-          progEl.style.width = pct + '%';
-          progEl.className = 'progress-fill ' + (pct >= 70 ? 'good' : pct >= 40 ? 'medium' : 'low');
-        }
-        if (statEl) statEl.textContent = `${stats.correct}/${stats.total}`;
-      });
-    }
-
-    function updateWeakAreas() {
-      const container = document.getElementById('weakAreas');
-      const wrongByCat = {};
-      answeredQuestions.filter(a => !a.correct).forEach(a => {
-        wrongByCat[a.cat] = (wrongByCat[a.cat] || 0) + 1;
-      });
-
-      const weakCats = Object.entries(wrongByCat).sort((a, b) => b[1] - a[1]).slice(0, 3);
-      const catLabels = { compute: '🖥️ Compute', storage: '💾 Storage', database: '🗄️ Database', security: '🔐 Security', networking: '🌐 Networking', pricing: '💰 Pricing' };
-
-      if (weakCats.length === 0) {
-        container.innerHTML = '<div class="insight positive">No weak areas yet - keep practicing!</div>';
-      } else {
-        container.innerHTML = weakCats.map(([cat, count]) => `
-          <div class="data-item" style="cursor:pointer" onclick="setCategory('${cat}')">
-            <div class="data-item-info">
-              <div class="data-item-title">${catLabels[cat]}</div>
-              <div class="data-item-meta">${count} incorrect answers - Click to practice</div>
-            </div>
-            <div class="data-item-value" style="color:var(--danger)">${count}</div>
-          </div>
-        `).join('');
-      }
-    }
-
-    // Dashboard
     function updateDashboard() {
       const moods = DB.get('moods');
       const sleeps = DB.get('sleeps');
