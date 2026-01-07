@@ -2,7 +2,7 @@
   "name": "StepSyncAI - Personal Health & Wellness Platform",
   "short_name": "StepSyncAI",
   "description": "Track your mental health, medication, sleep, exercise, and get personalized wellness insights.",
-  "start_url": "/StepSyncAI/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#3b82f6",

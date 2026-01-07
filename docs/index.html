@@ -284,7 +284,7 @@
     </div>
   </header>
 
-  <main id="main-content" class="container"  tabindex="-1"  role="main"  aria-label="Main content">
+  <main id="main-content" class="container" tabindex="-1" role="main" aria-label="Main content">
     <!-- Dashboard -->
     <section id="dashboard" class="app-section active">
       <!-- Profile Card -->
@@ -705,7 +705,6 @@
       const moods = DB.get('moods');
       const sleeps = DB.get('sleeps');
       const exercises = DB.get('exercises');
-      const meds = DB.get('medications');
       
       const container = document.getElementById('streakChart');
       container.innerHTML = '';
@@ -721,7 +720,8 @@
         if (moods.some(m => new Date(m.date).toDateString() === dateStr)) activityCount++;
         if (sleeps.some(s => new Date(s.date).toDateString() === dateStr)) activityCount++;
         if (exercises.some(e => new Date(e.date).toDateString() === dateStr)) activityCount++;
-        if (i === 0 && meds.some(m => m.taken)) activityCount++; // Today's meds
+        // Note: Medications are not tracked historically (design limitation), 
+        // so we can't include them in the streak chart
         
         const day = document.createElement('div');
         day.className = 'streak-day';

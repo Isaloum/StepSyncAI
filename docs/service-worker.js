@@ -19,11 +19,9 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_VERSION) {
-            return caches.delete(cacheName);
-          }
-        })
+        cacheNames
+          .filter(cacheName => cacheName !== CACHE_VERSION)
+          .map(cacheName => caches.delete(cacheName))
       );
     }).then(() => self.clients.claim())
   );
