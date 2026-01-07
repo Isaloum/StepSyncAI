@@ -1,0 +1,22 @@
+{
+  "name": "StepSyncAI - Personal Health & Wellness Platform",
+  "short_name": "StepSyncAI",
+  "description": "Track your mental health, medication, sleep, exercise, and get personalized wellness insights.",
+  "start_url": "/StepSyncAI/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "medical", "lifestyle"],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
