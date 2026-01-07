@@ -131,19 +131,19 @@
     .theme-toggle:focus{outline:2px solid var(--accent);outline-offset:2px}
 
     /* Onboarding Modal */
-    .onboarding-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(4px)}
-    .onboarding-modal{background:var(--card);border-radius:var(--radius);padding:2rem;max-width:500px;width:90%;box-shadow:0 25px 50px -12px rgba(0,0,0,.5);border:1px solid var(--border)}
-    .onboarding-header{text-align:center;margin-bottom:2rem}
+    .onboarding-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(4px);padding:1rem}
+    .onboarding-modal{background:var(--card);border-radius:var(--radius);max-width:500px;width:90%;max-height:90vh;box-shadow:0 25px 50px -12px rgba(0,0,0,.5);border:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+    .onboarding-header{text-align:center;padding:2rem 2rem 0 2rem;flex-shrink:0}
     .onboarding-icon{font-size:4rem;margin-bottom:1rem}
     .onboarding-title{font-size:1.75rem;font-weight:800;margin-bottom:.5rem;color:var(--accent)}
     .onboarding-subtitle{color:var(--muted)}
-    .onboarding-content{margin-bottom:2rem}
+    .onboarding-content{padding:1rem 2rem;overflow-y:auto;flex:1;min-height:0}
     .onboarding-feature{display:flex;align-items:start;gap:1rem;margin-bottom:1rem;padding:1rem;background:var(--bg);border-radius:8px}
     .onboarding-feature-icon{font-size:1.5rem;flex-shrink:0}
     .onboarding-feature-text{flex:1}
     .onboarding-feature-title{font-weight:700;margin-bottom:.25rem}
     .onboarding-feature-desc{font-size:.875rem;color:var(--muted)}
-    .onboarding-actions{display:flex;gap:1rem;flex-direction:column}
+    .onboarding-actions{display:flex;gap:1rem;flex-direction:column;padding:1rem 2rem 2rem 2rem;flex-shrink:0;background:var(--card);border-top:1px solid var(--border);box-shadow:0 -4px 6px -1px rgba(0,0,0,.1)}
 
     /* Profile Section */
     .profile-card{background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 100%);color:#fff;padding:1.5rem;border-radius:var(--radius);margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem}
@@ -218,12 +218,12 @@
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
   <!-- Onboarding Modal (shown to first-time users) -->
-  <div id="onboardingOverlay" class="onboarding-overlay" style="display:none;" role="dialog" aria-labelledby="onboarding-title" aria-modal="true">
+  <div id="onboardingOverlay" class="onboarding-overlay" style="display:none;" role="dialog" aria-labelledby="onboarding-title" aria-describedby="onboarding-subtitle" aria-modal="true">
     <div class="onboarding-modal">
       <div class="onboarding-header">
         <div class="onboarding-icon" role="img" aria-label="Welcome">🏥</div>
         <h2 id="onboarding-title" class="onboarding-title">Welcome to StepSyncAI!</h2>
-        <p class="onboarding-subtitle">Your personal health and wellness companion</p>
+        <p id="onboarding-subtitle" class="onboarding-subtitle">Your personal health and wellness companion</p>
       </div>
       <div class="onboarding-content">
         <div class="onboarding-feature">
@@ -254,14 +254,14 @@
             <div class="onboarding-feature-desc">Log workouts and track progress</div>
           </div>
         </div>
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom:0">
           <label for="userName">What should we call you? (optional)</label>
           <input type="text" id="userName" placeholder="Your name" aria-describedby="userName-desc">
           <small id="userName-desc" class="sr-only">Enter your preferred name for personalization</small>
         </div>
       </div>
       <div class="onboarding-actions">
-        <button class="btn btn-primary" onclick="completeOnboarding()" aria-label="Start using StepSyncAI">🚀 Get Started</button>
+        <button class="btn btn-primary" onclick="completeOnboarding()" aria-label="Continue to start using StepSyncAI">Continue →</button>
       </div>
     </div>
   </div>
@@ -296,6 +296,7 @@
         </div>
         <div class="profile-actions">
           <button class="btn btn-secondary" onclick="editProfile()" aria-label="Edit profile" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:.875rem">✏️ Edit</button>
+          <button class="btn btn-secondary" onclick="signOut()" aria-label="Sign out and clear all data" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:.875rem">🚪 Sign Out</button>
         </div>
       </div>
 
@@ -562,6 +563,9 @@
         </div>
       </div>
       <div class="footer-right">
+        <button class="footer-link" onclick="signOut()" style="cursor:pointer" aria-label="Sign out and clear all data">
+          <span aria-hidden="true">🚪</span> Sign Out
+        </button>
         <a href="https://github.com/Isaloum/StepSyncAI" target="_blank" class="footer-link">
           <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
           View Source Code
@@ -695,6 +699,33 @@
       if (newName !== null && newName.trim()) {
         DB.setOne('userName', newName.trim());
         updateProfile();
+      }
+    }
+
+    // ============================================
+    // SIGN OUT SYSTEM
+    // ============================================
+    function signOut() {
+      const confirmation = confirm('Are you sure you want to sign out? This will clear all your data including mood logs, medications, sleep records, and exercise history. This action cannot be undone.');
+      
+      if (confirmation) {
+        // Clear all localStorage data
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('stepsync_')) {
+            keysToRemove.push(key);
+          }
+        }
+        
+        // Remove all StepSyncAI data
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        
+        // Show success message
+        alert('You have been signed out. All data has been cleared. The page will now reload.');
+        
+        // Reload the page to show onboarding again
+        window.location.reload();
       }
     }
 
