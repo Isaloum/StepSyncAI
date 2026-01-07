@@ -133,16 +133,15 @@
     /* Onboarding Modal */
     .onboarding-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(4px);padding:1rem}
     .onboarding-modal{background:var(--card);border-radius:var(--radius);max-width:500px;width:90%;max-height:90vh;box-shadow:0 25px 50px -12px rgba(0,0,0,.5);border:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-    .onboarding-header{text-align:center;padding:2rem 2rem 0 2rem;flex-shrink:0}
-    .onboarding-icon{font-size:4rem;margin-bottom:1rem}
-    .onboarding-title{font-size:1.75rem;font-weight:800;margin-bottom:.5rem;color:var(--accent)}
-    .onboarding-subtitle{color:var(--muted)}
-    .onboarding-content{padding:1rem 2rem;overflow-y:auto;flex:1;min-height:0}
-    .onboarding-feature{display:flex;align-items:start;gap:1rem;margin-bottom:1rem;padding:1rem;background:var(--bg);border-radius:8px}
-    .onboarding-feature-icon{font-size:1.5rem;flex-shrink:0}
-    .onboarding-feature-text{flex:1}
-    .onboarding-feature-title{font-weight:700;margin-bottom:.25rem}
-    .onboarding-feature-desc{font-size:.875rem;color:var(--muted)}
+    .onboarding-header{text-align:center;padding:1.5rem 2rem 1rem 2rem;flex-shrink:0}
+    .onboarding-icon{font-size:3rem;margin-bottom:.75rem}
+    .onboarding-title{font-size:1.5rem;font-weight:800;margin-bottom:.5rem;color:var(--accent)}
+    .onboarding-subtitle{color:var(--muted);font-size:.9rem;margin-bottom:1rem}
+    .onboarding-content{padding:0 2rem 1rem 2rem;overflow-y:auto;flex:1;min-height:0}
+    .onboarding-trackers{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;margin-bottom:1.5rem}
+    .onboarding-tracker{display:flex;flex-direction:column;align-items:center;gap:.5rem;padding:.75rem;background:var(--bg);border-radius:8px;text-align:center}
+    .onboarding-tracker-icon{font-size:2rem;flex-shrink:0}
+    .onboarding-tracker-title{font-weight:600;font-size:.875rem;line-height:1.2}
     .onboarding-actions{display:flex;gap:1rem;flex-direction:column;padding:1rem 2rem 2rem 2rem;flex-shrink:0;background:var(--card);border-top:1px solid var(--border);box-shadow:0 -4px 6px -1px rgba(0,0,0,.1)}
 
     /* Profile Section */
@@ -221,37 +220,27 @@
   <div id="onboardingOverlay" class="onboarding-overlay" style="display:none;" role="dialog" aria-labelledby="onboarding-title" aria-describedby="onboarding-subtitle" aria-modal="true">
     <div class="onboarding-modal">
       <div class="onboarding-header">
-        <div class="onboarding-icon" role="img" aria-label="Welcome">🏥</div>
+        <div class="onboarding-icon" role="img" aria-label="Welcome">✨</div>
         <h2 id="onboarding-title" class="onboarding-title">Welcome to StepSyncAI!</h2>
         <p id="onboarding-subtitle" class="onboarding-subtitle">Your personal health and wellness companion</p>
       </div>
       <div class="onboarding-content">
-        <div class="onboarding-feature">
-          <div class="onboarding-feature-icon" role="img" aria-label="Mental health">🧠</div>
-          <div class="onboarding-feature-text">
-            <div class="onboarding-feature-title">Mental Health Tracking</div>
-            <div class="onboarding-feature-desc">Log your mood, symptoms, and thoughts daily</div>
+        <div class="onboarding-trackers">
+          <div class="onboarding-tracker">
+            <div class="onboarding-tracker-icon" role="img" aria-label="Mental health">🧠</div>
+            <div class="onboarding-tracker-title">Mental Health</div>
           </div>
-        </div>
-        <div class="onboarding-feature">
-          <div class="onboarding-feature-icon" role="img" aria-label="Medication">💊</div>
-          <div class="onboarding-feature-text">
-            <div class="onboarding-feature-title">Medication Management</div>
-            <div class="onboarding-feature-desc">Track medications and get interaction warnings</div>
+          <div class="onboarding-tracker">
+            <div class="onboarding-tracker-icon" role="img" aria-label="Medication">💊</div>
+            <div class="onboarding-tracker-title">Medication</div>
           </div>
-        </div>
-        <div class="onboarding-feature">
-          <div class="onboarding-feature-icon" role="img" aria-label="Sleep">😴</div>
-          <div class="onboarding-feature-text">
-            <div class="onboarding-feature-title">Sleep Analysis</div>
-            <div class="onboarding-feature-desc">Monitor sleep patterns and quality</div>
+          <div class="onboarding-tracker">
+            <div class="onboarding-tracker-icon" role="img" aria-label="Sleep">😴</div>
+            <div class="onboarding-tracker-title">Sleep</div>
           </div>
-        </div>
-        <div class="onboarding-feature">
-          <div class="onboarding-feature-icon" role="img" aria-label="Exercise">🏃</div>
-          <div class="onboarding-feature-text">
-            <div class="onboarding-feature-title">Fitness Tracking</div>
-            <div class="onboarding-feature-desc">Log workouts and track progress</div>
+          <div class="onboarding-tracker">
+            <div class="onboarding-tracker-icon" role="img" aria-label="Exercise">🏃</div>
+            <div class="onboarding-tracker-title">Fitness</div>
           </div>
         </div>
         <div class="form-group" style="margin-bottom:0">
