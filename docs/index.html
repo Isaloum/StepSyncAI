@@ -6,8 +6,18 @@
   <title>StepSyncAI - Personal Health & Wellness Platform</title>
   <meta name="description" content="Track your mental health, medication, sleep, exercise, and get personalized wellness insights.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
+  
+  <!-- PWA Support -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#3b82f6">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="StepSyncAI">
   <style>
+    /* Dark mode (default) */
     :root{--bg:#0f172a;--card:#1e293b;--card-hover:#273549;--accent:#3b82f6;--accent-2:#60a5fa;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--text:#f1f5f9;--muted:#94a3b8;--border:#334155;--radius:12px}
+    /* Light mode */
+    [data-theme="light"]{--bg:#f8fafc;--card:#ffffff;--card-hover:#f1f5f9;--accent:#2563eb;--accent-2:#3b82f6;--success:#059669;--warning:#d97706;--danger:#dc2626;--text:#0f172a;--muted:#64748b;--border:#e2e8f0}
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
     .container{max-width:1200px;margin:0 auto;padding:1rem}
@@ -115,6 +125,80 @@
       .stats-grid{grid-template-columns:repeat(2,1fr)}
     }
 
+    /* Theme Toggle */
+    .theme-toggle{background:var(--card);border:1px solid var(--border);color:var(--text);padding:.5rem;border-radius:8px;cursor:pointer;font-size:1.25rem;transition:all .2s;display:flex;align-items:center;justify-content:center;width:2.5rem;height:2.5rem}
+    .theme-toggle:hover{background:var(--card-hover);border-color:var(--accent)}
+    .theme-toggle:focus{outline:2px solid var(--accent);outline-offset:2px}
+
+    /* Onboarding Modal */
+    .onboarding-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(4px)}
+    .onboarding-modal{background:var(--card);border-radius:var(--radius);padding:2rem;max-width:500px;width:90%;box-shadow:0 25px 50px -12px rgba(0,0,0,.5);border:1px solid var(--border)}
+    .onboarding-header{text-align:center;margin-bottom:2rem}
+    .onboarding-icon{font-size:4rem;margin-bottom:1rem}
+    .onboarding-title{font-size:1.75rem;font-weight:800;margin-bottom:.5rem;color:var(--accent)}
+    .onboarding-subtitle{color:var(--muted)}
+    .onboarding-content{margin-bottom:2rem}
+    .onboarding-feature{display:flex;align-items:start;gap:1rem;margin-bottom:1rem;padding:1rem;background:var(--bg);border-radius:8px}
+    .onboarding-feature-icon{font-size:1.5rem;flex-shrink:0}
+    .onboarding-feature-text{flex:1}
+    .onboarding-feature-title{font-weight:700;margin-bottom:.25rem}
+    .onboarding-feature-desc{font-size:.875rem;color:var(--muted)}
+    .onboarding-actions{display:flex;gap:1rem;flex-direction:column}
+
+    /* Profile Section */
+    .profile-card{background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 100%);color:#fff;padding:1.5rem;border-radius:var(--radius);margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem}
+    .profile-avatar{width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:2rem;border:3px solid rgba(255,255,255,.3)}
+    .profile-info{flex:1}
+    .profile-name{font-size:1.25rem;font-weight:700;margin-bottom:.25rem}
+    .profile-streak{font-size:.875rem;opacity:.9}
+    .profile-actions{display:flex;gap:.5rem}
+
+    /* Wellness Tips */
+    .wellness-tips{background:linear-gradient(135deg,var(--success) 0%,#059669 100%);color:#fff;padding:1.5rem;border-radius:var(--radius);margin-bottom:1.5rem}
+    .wellness-tips-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+    .wellness-tips-title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:.5rem}
+    .wellness-tips-nav{display:flex;gap:.5rem}
+    .wellness-tips-btn{background:rgba(255,255,255,.2);border:none;color:#fff;width:2rem;height:2rem;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+    .wellness-tips-btn:hover{background:rgba(255,255,255,.3)}
+    .wellness-tips-content{font-size:.95rem;line-height:1.5}
+
+    /* Streak Chart */
+    .streak-chart{display:flex;gap:.25rem;flex-wrap:wrap;justify-content:center;margin:1rem 0}
+    .streak-day{width:14px;height:14px;border-radius:3px;background:var(--border);position:relative;transition:all .2s}
+    .streak-day.active{background:var(--success)}
+    .streak-day.partial{background:var(--warning)}
+    .streak-day:hover{transform:scale(1.3);z-index:10}
+    .streak-day:hover::after{content:attr(data-date);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--card);color:var(--text);padding:.25rem .5rem;border-radius:4px;font-size:.75rem;white-space:nowrap;margin-bottom:.25rem;border:1px solid var(--border);z-index:100}
+
+    /* Action Buttons */
+    .action-buttons{display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap}
+    .action-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);text-decoration:none;font-weight:600;transition:all .2s;font-size:.875rem;cursor:pointer}
+    .action-btn:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-2px)}
+    .action-btn:focus{outline:2px solid var(--accent);outline-offset:2px}
+
+    /* SVG Icons */
+    .icon-svg{width:20px;height:20px;vertical-align:middle}
+
+    /* Loading State */
+    .loading{opacity:.6;pointer-events:none}
+    .fade-in{animation:fadeIn .3s ease-in}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+    /* Accessibility - High Contrast Focus */
+    button:focus,input:focus,select:focus,textarea:focus,.nav-tab:focus,.action-btn:focus{outline:2px solid var(--accent);outline-offset:2px}
+    
+    /* Skip to content link */
+    .skip-link{position:absolute;top:-40px;left:0;background:var(--accent);color:#fff;padding:.5rem 1rem;text-decoration:none;border-radius:0 0 8px 0;z-index:100}
+    .skip-link:focus{top:0}
+
+    /* Hidden but accessible */
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
+
+    /* Install PWA Button */
+    .install-pwa{display:none;position:fixed;bottom:1rem;right:1rem;background:var(--accent);color:#fff;padding:.75rem 1.5rem;border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,.3);cursor:pointer;font-weight:700;border:none;z-index:99;transition:all .2s}
+    .install-pwa:hover{transform:translateY(-2px);box-shadow:0 15px 30px rgba(0,0,0,.4)}
+    .install-pwa.show{display:block}
+
     /* Footer */
     footer{background:var(--card);border-top:1px solid var(--border);padding:2rem 0;margin-top:3rem}
     .footer-content{max-width:1200px;margin:0 auto;padding:0 1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1.5rem}
@@ -130,43 +214,135 @@
 
 
 <body>
+  <!-- Accessibility: Skip to main content -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Onboarding Modal (shown to first-time users) -->
+  <div id="onboardingOverlay" class="onboarding-overlay" style="display:none;" role="dialog" aria-labelledby="onboarding-title" aria-modal="true">
+    <div class="onboarding-modal">
+      <div class="onboarding-header">
+        <div class="onboarding-icon" role="img" aria-label="Welcome">🏥</div>
+        <h2 id="onboarding-title" class="onboarding-title">Welcome to StepSyncAI!</h2>
+        <p class="onboarding-subtitle">Your personal health and wellness companion</p>
+      </div>
+      <div class="onboarding-content">
+        <div class="onboarding-feature">
+          <div class="onboarding-feature-icon" role="img" aria-label="Mental health">🧠</div>
+          <div class="onboarding-feature-text">
+            <div class="onboarding-feature-title">Mental Health Tracking</div>
+            <div class="onboarding-feature-desc">Log your mood, symptoms, and thoughts daily</div>
+          </div>
+        </div>
+        <div class="onboarding-feature">
+          <div class="onboarding-feature-icon" role="img" aria-label="Medication">💊</div>
+          <div class="onboarding-feature-text">
+            <div class="onboarding-feature-title">Medication Management</div>
+            <div class="onboarding-feature-desc">Track medications and get interaction warnings</div>
+          </div>
+        </div>
+        <div class="onboarding-feature">
+          <div class="onboarding-feature-icon" role="img" aria-label="Sleep">😴</div>
+          <div class="onboarding-feature-text">
+            <div class="onboarding-feature-title">Sleep Analysis</div>
+            <div class="onboarding-feature-desc">Monitor sleep patterns and quality</div>
+          </div>
+        </div>
+        <div class="onboarding-feature">
+          <div class="onboarding-feature-icon" role="img" aria-label="Exercise">🏃</div>
+          <div class="onboarding-feature-text">
+            <div class="onboarding-feature-title">Fitness Tracking</div>
+            <div class="onboarding-feature-desc">Log workouts and track progress</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="userName">What should we call you? (optional)</label>
+          <input type="text" id="userName" placeholder="Your name" aria-describedby="userName-desc">
+          <small id="userName-desc" class="sr-only">Enter your preferred name for personalization</small>
+        </div>
+      </div>
+      <div class="onboarding-actions">
+        <button class="btn btn-primary" onclick="completeOnboarding()" aria-label="Start using StepSyncAI">🚀 Get Started</button>
+      </div>
+    </div>
+  </div>
+
   <header>
     <div class="container">
       <div class="header-content">
-        <a href="#" class="logo">🏥 StepSyncAI <span class="badge">LIVE</span></a>
-        <nav class="nav-tabs">
-          <button class="nav-tab active" data-tab="dashboard"><span class="icon">📊</span><span>Dashboard</span></button>
-          <button class="nav-tab" data-tab="mental"><span class="icon">🧠</span><span>Mental Health</span></button>
-          <button class="nav-tab" data-tab="medication"><span class="icon">💊</span><span>Medication</span></button>
-          <button class="nav-tab" data-tab="sleep"><span class="icon">😴</span><span>Sleep</span></button>
-          <button class="nav-tab" data-tab="exercise"><span class="icon">🏃</span><span>Exercise</span></button>
+        <a href="#" class="logo" aria-label="StepSyncAI home">🏥 StepSyncAI <span class="badge">LIVE</span></a>
+        <nav class="nav-tabs" role="navigation" aria-label="Main navigation">
+          <button class="nav-tab active" data-tab="dashboard" aria-label="Dashboard" aria-current="page"><span class="icon" aria-hidden="true">📊</span><span>Dashboard</span></button>
+          <button class="nav-tab" data-tab="mental" aria-label="Mental Health Tracker"><span class="icon" aria-hidden="true">🧠</span><span>Mental Health</span></button>
+          <button class="nav-tab" data-tab="medication" aria-label="Medication Tracker"><span class="icon" aria-hidden="true">💊</span><span>Medication</span></button>
+          <button class="nav-tab" data-tab="sleep" aria-label="Sleep Tracker"><span class="icon" aria-hidden="true">😴</span><span>Sleep</span></button>
+          <button class="nav-tab" data-tab="exercise" aria-label="Exercise Tracker"><span class="icon" aria-hidden="true">🏃</span><span>Exercise</span></button>
         </nav>
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark/light mode" title="Toggle theme">
+          <span id="themeIcon" aria-hidden="true">🌙</span>
+        </button>
       </div>
     </div>
   </header>
 
-  <main class="container">
+  <main id="main-content" class="container" tabindex="-1" role="main" aria-label="Main content">
     <!-- Dashboard -->
     <section id="dashboard" class="app-section active">
+      <!-- Profile Card -->
+      <div class="profile-card" id="profileCard">
+        <div class="profile-avatar" aria-hidden="true">👤</div>
+        <div class="profile-info">
+          <div class="profile-name" id="profileName">Welcome!</div>
+          <div class="profile-streak" id="profileStreak">Start your wellness journey today</div>
+        </div>
+        <div class="profile-actions">
+          <button class="btn btn-secondary" onclick="editProfile()" aria-label="Edit profile" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:.875rem">✏️ Edit</button>
+        </div>
+      </div>
+
+      <!-- Wellness Tips -->
+      <div class="wellness-tips">
+        <div class="wellness-tips-header">
+          <div class="wellness-tips-title">
+            <span aria-hidden="true">💡</span>
+            <span>Wellness Tip of the Day</span>
+          </div>
+          <div class="wellness-tips-nav">
+            <button class="wellness-tips-btn" onclick="previousTip()" aria-label="Previous tip">‹</button>
+            <button class="wellness-tips-btn" onclick="nextTip()" aria-label="Next tip">›</button>
+          </div>
+        </div>
+        <div class="wellness-tips-content" id="wellnessTip" role="region" aria-live="polite">Loading tip...</div>
+      </div>
+
       <div class="wellness-score">
-        <div class="score-circle score-medium" id="wellnessCircle">
+        <div class="score-circle score-medium" id="wellnessCircle" role="img" aria-label="Wellness score">
           <span id="wellnessScore">--</span>
         </div>
         <div class="score-label">Overall Wellness Score</div>
       </div>
 
       <div class="stats-grid">
-        <div class="stat-card"><div class="stat-value" id="statMood">--</div><div class="stat-label">Mood Today</div></div>
-        <div class="stat-card"><div class="stat-value" id="statSleep">--</div><div class="stat-label">Hours Sleep</div></div>
-        <div class="stat-card"><div class="stat-value" id="statExercise">--</div><div class="stat-label">Min Exercise</div></div>
-        <div class="stat-card"><div class="stat-value" id="statMeds">--</div><div class="stat-label">Meds Taken</div></div>
+        <div class="stat-card"><div class="stat-value" id="statMood" aria-live="polite">--</div><div class="stat-label">Mood Today</div></div>
+        <div class="stat-card"><div class="stat-value" id="statSleep" aria-live="polite">--</div><div class="stat-label">Hours Sleep</div></div>
+        <div class="stat-card"><div class="stat-value" id="statExercise" aria-live="polite">--</div><div class="stat-label">Min Exercise</div></div>
+        <div class="stat-card"><div class="stat-value" id="statMeds" aria-live="polite">--</div><div class="stat-label">Meds Taken</div></div>
       </div>
 
       <div class="card">
         <div class="card-title">💡 Today's Insights</div>
-        <div id="insightsList">
+        <div id="insightsList" role="region" aria-live="polite">
           <div class="insight">Log your daily data to see personalized insights!</div>
         </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>🔥 Activity Streak</span>
+        </div>
+        <div class="streak-chart" id="streakChart" role="img" aria-label="30-day activity streak visualization">
+          <!-- Streak days will be added by JavaScript -->
+        </div>
+        <p style="text-align:center;font-size:.875rem;color:var(--muted);margin-top:.5rem">Last 30 days activity • Green = Active day</p>
       </div>
 
       <div class="card">
@@ -174,20 +350,39 @@
         <div class="form-grid">
           <div>
             <label>🧠 Mood</label>
-            <div class="progress-bar"><div class="progress-fill good" id="progressMood" style="width:0%"></div></div>
+            <div class="progress-bar"><div class="progress-fill good" id="progressMood" style="width:0%" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Mood progress"></div></div>
           </div>
           <div>
             <label>😴 Sleep</label>
-            <div class="progress-bar"><div class="progress-fill medium" id="progressSleep" style="width:0%"></div></div>
+            <div class="progress-bar"><div class="progress-fill medium" id="progressSleep" style="width:0%" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Sleep progress"></div></div>
           </div>
           <div>
             <label>🏃 Exercise</label>
-            <div class="progress-bar"><div class="progress-fill low" id="progressExercise" style="width:0%"></div></div>
+            <div class="progress-bar"><div class="progress-fill low" id="progressExercise" style="width:0%" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Exercise progress"></div></div>
           </div>
           <div>
             <label>💊 Medication</label>
-            <div class="progress-bar"><div class="progress-fill good" id="progressMeds" style="width:0%"></div></div>
+            <div class="progress-bar"><div class="progress-fill good" id="progressMeds" style="width:0%" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Medication adherence"></div></div>
           </div>
+        </div>
+      </div>
+
+      <!-- Share & Feedback Actions -->
+      <div class="card">
+        <div class="card-title">📣 Share & Feedback</div>
+        <div class="action-buttons">
+          <button class="action-btn" onclick="shareProgress()" aria-label="Share your progress">
+            <span aria-hidden="true">📤</span> Share Progress
+          </button>
+          <a class="action-btn" href="https://github.com/Isaloum/StepSyncAI/issues/new" target="_blank" rel="noopener noreferrer" aria-label="Send feedback (opens in new tab)">
+            <span aria-hidden="true">💬</span> Send Feedback
+          </a>
+          <a class="action-btn" href="https://github.com/Isaloum/StepSyncAI" target="_blank" rel="noopener noreferrer" aria-label="View source code on GitHub (opens in new tab)">
+            <span aria-hidden="true">⭐</span> Star on GitHub
+          </a>
+          <button class="action-btn" onclick="exportData()" aria-label="Export your data">
+            <span aria-hidden="true">💾</span> Export Data
+          </button>
         </div>
       </div>
     </section>
@@ -197,14 +392,14 @@
       <div class="card">
         <div class="card-title">🧠 Log Your Mood</div>
         <div class="form-group">
-          <label>How are you feeling today? (1-10)</label>
-          <div class="mood-display" id="moodEmoji">😐</div>
-          <input type="range" id="moodSlider" min="1" max="10" value="5">
+          <label for="moodSlider">How are you feeling today? (1-10)</label>
+          <div class="mood-display" id="moodEmoji" role="img" aria-label="Current mood emoji">😐</div>
+          <input type="range" id="moodSlider" min="1" max="10" value="5" aria-valuemin="1" aria-valuemax="10" aria-valuenow="5" aria-label="Mood rating slider">
           <div class="mood-scale"><span>1 - Very Low</span><span>5 - Neutral</span><span>10 - Excellent</span></div>
         </div>
         <div class="form-group">
-          <label>Any symptoms today?</label>
-          <div class="btn-group">
+          <label id="symptoms-label">Any symptoms today?</label>
+          <div class="btn-group" role="group" aria-labelledby="symptoms-label">
             <button class="btn btn-secondary symptom-btn" data-symptom="anxiety">😰 Anxiety</button>
             <button class="btn btn-secondary symptom-btn" data-symptom="stress">😫 Stress</button>
             <button class="btn btn-secondary symptom-btn" data-symptom="fatigue">😴 Fatigue</button>
@@ -348,6 +543,11 @@
 
   </main>
 
+  <!-- Install PWA Button -->
+  <button id="installPWA" class="install-pwa" aria-label="Install StepSyncAI as app">
+    <span aria-hidden="true">📱</span> Install App
+  </button>
+
   <footer>
     <div class="footer-content">
       <div class="footer-left">
@@ -374,7 +574,243 @@
   </footer>
 
   <script>
-    // Data Storage
+    // ============================================
+    // WELLNESS TIPS SYSTEM
+    // ============================================
+    const wellnessTips = [
+      "Take 5 deep breaths when feeling stressed. Inhale for 4 counts, hold for 4, exhale for 4.",
+      "Stay hydrated! Aim for 8 glasses of water daily for better mood and energy.",
+      "Regular exercise releases endorphins - even a 10-minute walk can boost your mood.",
+      "Practice gratitude: Write down 3 things you're grateful for each day.",
+      "Quality sleep is crucial. Maintain a consistent sleep schedule, even on weekends.",
+      "Connect with others. Social support is vital for mental health.",
+      "Limit caffeine and alcohol, especially in the evening hours.",
+      "Take breaks from screens. Follow the 20-20-20 rule: every 20 minutes, look at something 20 feet away for 20 seconds.",
+      "Mindful eating: Eat slowly, savor your food, and listen to your body's hunger cues.",
+      "Set realistic goals. Break large tasks into smaller, manageable steps.",
+      "Practice self-compassion. Treat yourself with the same kindness you'd offer a friend.",
+      "Get some sunlight daily. Natural light helps regulate mood and sleep cycles.",
+      "Keep a journal. Writing can help process emotions and reduce stress.",
+      "Learn to say no. It's okay to set boundaries and prioritize your wellbeing.",
+      "Try progressive muscle relaxation to release physical tension.",
+      "Limit news consumption if it increases anxiety. Stay informed, not overwhelmed.",
+      "Engage in hobbies you enjoy. Creative activities reduce stress and boost happiness.",
+      "Practice mindfulness or meditation for even 5 minutes daily.",
+      "Maintain good posture. It can improve mood and energy levels.",
+      "Reach out for professional help when needed. It's a sign of strength, not weakness."
+    ];
+    let currentTipIndex = Math.floor(Math.random() * wellnessTips.length);
+
+    function displayTip() {
+      document.getElementById('wellnessTip').textContent = wellnessTips[currentTipIndex];
+    }
+
+    function nextTip() {
+      currentTipIndex = (currentTipIndex + 1) % wellnessTips.length;
+      displayTip();
+    }
+
+    function previousTip() {
+      currentTipIndex = (currentTipIndex - 1 + wellnessTips.length) % wellnessTips.length;
+      displayTip();
+    }
+
+    // ============================================
+    // THEME TOGGLE SYSTEM
+    // ============================================
+    function toggleTheme() {
+      const html = document.documentElement;
+      const currentTheme = html.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      html.setAttribute('data-theme', newTheme);
+      document.getElementById('themeIcon').textContent = newTheme === 'light' ? '🌙' : '☀️';
+      DB.setOne('theme', newTheme);
+    }
+
+    function initTheme() {
+      const savedTheme = DB.getOne('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      document.getElementById('themeIcon').textContent = savedTheme === 'light' ? '🌙' : '☀️';
+    }
+
+    // ============================================
+    // ONBOARDING SYSTEM
+    // ============================================
+    function showOnboarding() {
+      const hasSeenOnboarding = DB.getOne('hasSeenOnboarding');
+      if (!hasSeenOnboarding) {
+        document.getElementById('onboardingOverlay').style.display = 'flex';
+        document.getElementById('userName').focus();
+      }
+    }
+
+    function completeOnboarding() {
+      const userName = document.getElementById('userName').value.trim();
+      if (userName) {
+        DB.setOne('userName', userName);
+      }
+      DB.setOne('hasSeenOnboarding', true);
+      document.getElementById('onboardingOverlay').style.display = 'none';
+      updateProfile();
+    }
+
+    // ============================================
+    // PROFILE SYSTEM
+    // ============================================
+    function updateProfile() {
+      const userName = DB.getOne('userName') || 'Welcome';
+      const moods = DB.get('moods');
+      const sleeps = DB.get('sleeps');
+      const exercises = DB.get('exercises');
+      
+      // Calculate streak (consecutive days with any activity)
+      const today = new Date();
+      let streak = 0;
+      for (let i = 0; i < 365; i++) {
+        const checkDate = new Date(today);
+        checkDate.setDate(checkDate.getDate() - i);
+        const dateStr = checkDate.toDateString();
+        
+        const hasActivity = moods.some(m => new Date(m.date).toDateString() === dateStr) ||
+                           sleeps.some(s => new Date(s.date).toDateString() === dateStr) ||
+                           exercises.some(e => new Date(e.date).toDateString() === dateStr);
+        
+        if (hasActivity) {
+          streak++;
+        } else if (i > 0) {
+          // Only break if it's not today (allow today to have no data yet)
+          break;
+        }
+      }
+
+      document.getElementById('profileName').textContent = userName + '!';
+      document.getElementById('profileStreak').textContent = streak > 0 ? 
+        `🔥 ${streak} day${streak !== 1 ? 's' : ''} streak!` : 
+        'Start your wellness journey today';
+    }
+
+    function editProfile() {
+      const currentName = DB.getOne('userName') || '';
+      const newName = prompt('What should we call you?', currentName);
+      if (newName !== null && newName.trim()) {
+        DB.setOne('userName', newName.trim());
+        updateProfile();
+      }
+    }
+
+    // ============================================
+    // STREAK CHART SYSTEM
+    // ============================================
+    function updateStreakChart() {
+      const moods = DB.get('moods');
+      const sleeps = DB.get('sleeps');
+      const exercises = DB.get('exercises');
+      
+      const container = document.getElementById('streakChart');
+      container.innerHTML = '';
+      
+      const today = new Date();
+      for (let i = 29; i >= 0; i--) {
+        const checkDate = new Date(today);
+        checkDate.setDate(checkDate.getDate() - i);
+        const dateStr = checkDate.toDateString();
+        
+        // Count activities for this day
+        let activityCount = 0;
+        if (moods.some(m => new Date(m.date).toDateString() === dateStr)) activityCount++;
+        if (sleeps.some(s => new Date(s.date).toDateString() === dateStr)) activityCount++;
+        if (exercises.some(e => new Date(e.date).toDateString() === dateStr)) activityCount++;
+        // Note: Medications are not tracked historically (design limitation), 
+        // so we can't include them in the streak chart
+        
+        const day = document.createElement('div');
+        day.className = 'streak-day';
+        if (activityCount >= 3) {
+          day.classList.add('active');
+        } else if (activityCount > 0) {
+          day.classList.add('partial');
+        }
+        day.setAttribute('data-date', checkDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        day.setAttribute('aria-label', `${checkDate.toLocaleDateString()}: ${activityCount} activities`);
+        day.setAttribute('tabindex', '0');
+        container.appendChild(day);
+      }
+    }
+
+    // ============================================
+    // SHARE & EXPORT FUNCTIONS
+    // ============================================
+    function shareProgress() {
+      const wellness = document.getElementById('wellnessScore').textContent;
+      const text = `I'm tracking my wellness with StepSyncAI! My current wellness score is ${wellness}/100. 🏥💪`;
+      
+      if (navigator.share) {
+        navigator.share({
+          title: 'My StepSyncAI Progress',
+          text: text,
+          url: 'https://isaloum.github.io/StepSyncAI'
+        }).catch(err => console.log('Share cancelled'));
+      } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(text + '\nhttps://isaloum.github.io/StepSyncAI')
+          .then(() => alert('Progress copied to clipboard! 📋'))
+          .catch(() => alert('Share text: ' + text));
+      }
+    }
+
+    function exportData() {
+      const data = {
+        profile: {
+          name: DB.getOne('userName'),
+          exportDate: new Date().toISOString()
+        },
+        moods: DB.get('moods'),
+        medications: DB.get('medications'),
+        sleeps: DB.get('sleeps'),
+        exercises: DB.get('exercises')
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `stepsync-export-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ============================================
+    // PWA INSTALLATION
+    // ============================================
+    let deferredPrompt;
+    const installBtn = document.getElementById('installPWA');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.classList.add('show');
+    });
+
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      installBtn.classList.remove('show');
+    });
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(reg => console.log('SW registered'))
+          .catch(err => console.log('SW registration failed'));
+      });
+    }
+
+    // ============================================
+    // DATA STORAGE (ORIGINAL)
+    // ============================================
     const DB = {
       get: (key) => JSON.parse(localStorage.getItem('stepsync_' + key) || '[]'),
       set: (key, data) => localStorage.setItem('stepsync_' + key, JSON.stringify(data)),
@@ -385,10 +821,22 @@
     // Tab Navigation
     document.querySelectorAll('.nav-tab').forEach(tab => {
       tab.addEventListener('click', () => {
-        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(t => {
+          t.classList.remove('active');
+          t.removeAttribute('aria-current');
+        });
         document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
         tab.classList.add('active');
+        tab.setAttribute('aria-current', 'page');
         document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+      
+      // Keyboard navigation
+      tab.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          tab.click();
+        }
       });
     });
 
@@ -399,7 +847,9 @@
     let selectedSymptoms = [];
 
     moodSlider.addEventListener('input', () => {
-      moodEmoji.textContent = moodEmojis[parseInt(moodSlider.value) - 1];
+      const value = parseInt(moodSlider.value);
+      moodEmoji.textContent = moodEmojis[value - 1];
+      moodSlider.setAttribute('aria-valuenow', value);
     });
 
     document.querySelectorAll('.symptom-btn').forEach(btn => {
@@ -662,8 +1112,10 @@
       // Progress bars
       const setProgress = (id, value, max) => {
         const pct = Math.min(100, (value / max) * 100);
-        document.getElementById(id).style.width = pct + '%';
-        document.getElementById(id).className = 'progress-fill ' + (pct >= 70 ? 'good' : pct >= 40 ? 'medium' : 'low');
+        const element = document.getElementById(id);
+        element.style.width = pct + '%';
+        element.className = 'progress-fill ' + (pct >= 70 ? 'good' : pct >= 40 ? 'medium' : 'low');
+        element.setAttribute('aria-valuenow', Math.round(pct));
       };
 
       if (moods.length > 0) setProgress('progressMood', moods.slice(0, 7).reduce((a, m) => a + m.mood, 0) / Math.min(7, moods.length), 10);
@@ -685,15 +1137,23 @@
       if (insights.length === 0) insights.push({ type: 'info', text: '📊 Start logging data to see personalized insights!' });
 
       document.getElementById('insightsList').innerHTML = insights.map(i => `<div class="insight ${i.type}">${i.text}</div>`).join('');
+      
+      // Update streak chart when dashboard is updated
+      updateStreakChart();
     }
 
     // Initialize
+    initTheme();
+    displayTip();
     loadMoodHistory();
     loadMedications();
     loadSleepData();
     loadExerciseData();
     updateDashboard();
+    updateProfile();
+    updateStreakChart();
     moodEmoji.textContent = moodEmojis[4];
+    showOnboarding();
   </script>
 </body>
 </html>
