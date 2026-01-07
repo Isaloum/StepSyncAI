@@ -1,8 +1,8 @@
 // Service Worker for StepSyncAI PWA
 const CACHE_VERSION = 'stepsync-v1';
 const CACHE_ASSETS = [
-  '/StepSyncAI/',
-  '/StepSyncAI/index.html'
+  './',
+  './index.html'
 ];
 
 // Install event - cache assets
@@ -39,7 +39,7 @@ self.addEventListener('fetch', (event) => {
       })
       .catch(() => {
         // If both cache and network fail, could return a custom offline page
-        return caches.match('/StepSyncAI/');
+        return caches.match('./');
       })
   );
 });
