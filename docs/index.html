@@ -947,11 +947,57 @@
       const warnings = [];
       let foundMatch = false;
       
+      // UNIVERSAL SAFETY CHECK - Flag obviously dangerous dosages for ANY medication
+      let { amount, unit } = parsed;
+      let amountInMg = amount;
+      
+      // Convert everything to mg for universal check
+      if (unit === 'g') amountInMg = amount * 1000;
+      if (unit === 'mcg') amountInMg = amount / 1000;
+      if (unit === 'iu') amountInMg = amount; // Treat IU as comparable to mg for safety
+      
+      // Universal thresholds (very conservative)
+      if (amountInMg > 50000) { // More than 50 grams is extremely dangerous
+        warnings.push({
+          level: 'critical',
+          message: `🆘 CRITICAL: Dosage of ${dosageStr} is EXTREMELY HIGH and potentially LETHAL! A typical medication dose is under 2000mg. Do NOT take this amount. If already taken, contact poison control immediately: 1-800-222-1222`
+        });
+        return { valid: false, warnings };
+      }
+      
+      if (amountInMg > 10000) { // More than 10 grams
+        warnings.push({
+          level: 'danger',
+          message: `🚨 WARNING: Dosage of ${dosageStr} is VERY HIGH (${Math.round(amountInMg)}mg). Most medications are dosed between 1-2000mg. This could be dangerous. Verify with your doctor before taking.`
+        });
+      }
+      
+      // Better medication name matching
+      const aliases = {
+        'd3': 'vitamin d',
+        'd': 'vitamin d',
+        'vit d': 'vitamin d',
+        'b12': 'vitamin b12',
+        'b-12': 'vitamin b12',
+        'vit b12': 'vitamin b12',
+        'vit c': 'vitamin c',
+        'c': 'vitamin c',
+        'k2': 'vitamin k',
+        'k': 'vitamin k'
+      };
+      
+      let searchName = medLower;
+      for (const [alias, canonical] of Object.entries(aliases)) {
+        if (medLower === alias || medLower.includes(alias)) {
+          searchName = canonical;
+          break;
+        }
+      }
+      
       // Check against known safe ranges
       for (const [drug, range] of Object.entries(dosageRanges)) {
-        if (medLower.includes(drug)) {
+        if (searchName.includes(drug)) {
           foundMatch = true;
-          let { amount, unit } = parsed;
           
           // Convert user's amount to the expected unit for this drug
           let checkAmount = amount;
