@@ -1,59 +1,41 @@
-# 🏥 StepSyncAI
-
-> **Production-grade health tracking platform** with 6 integrated applications, PWA capabilities, and enterprise-level testing infrastructure.
+# 🏥 StepSyncAI - Personal Health & Wellness Platform
 
 <div align="center">
 
-<!-- Build & Quality -->
-[![Build Status](https://github.com/Isaloum/StepSyncAI/actions/workflows/ci.yml/badge.svg)](https://github.com/Isaloum/StepSyncAI/actions)
-[![Tests](https://img.shields.io/badge/tests-1927%20passing-brightgreen)](COMPLETE_STATUS_CHECK.md)
-[![Coverage](https://img.shields.io/badge/coverage-82.55%25-brightgreen)](COMPLETE_STATUS_CHECK.md)
-[![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen?logo=node.js)](https://nodejs.org/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-3b82f6?style=for-the-badge&logo=google-chrome)](https://isaloum.github.io/StepSyncAI)
+[![GitHub](https://img.shields.io/badge/GitHub-View%20Source-181717?style=for-the-badge&logo=github)](https://github.com/Isaloum/StepSyncAI)
 
-<!-- Release & License -->
-[![Latest Release](https://img.shields.io/badge/release-v3.12.0-blue)](CHANGELOG.md)
+
+[![Tests](https://img.shields.io/badge/tests-1927%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
+[![Coverage](https://img.shields.io/badge/coverage-82.55%25-green)](https://github.com/Isaloum/StepSyncAI)
+[![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
+[![CI/CD](https://img.shields.io/badge/CI%2FCD-passing-brightgreen)](https://github.com/Isaloum/StepSyncAI/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Open Issues](https://img.shields.io/github/issues/Isaloum/StepSyncAI)](https://github.com/Isaloum/StepSyncAI/issues)
-[![GitHub Stars](https://img.shields.io/github/stars/Isaloum/StepSyncAI?style=social)](https://github.com/Isaloum/StepSyncAI/stargazers)
 
-<!-- Deployment & Compliance -->
-[![AWS Deploy Ready](https://img.shields.io/badge/aws-deploy%20ready-success?logo=amazonaws)](DEPLOYMENT_READY.md)
-[![PWA Enabled](https://img.shields.io/badge/pwa-enabled-blueviolet?logo=pwa)](https://isaloum.github.io/StepSyncAI)
-[![HIPAA Ready](https://img.shields.io/badge/HIPAA-ready-informational)](SECURITY.md)
-[![GDPR Ready](https://img.shields.io/badge/GDPR-ready-informational)](SECURITY.md)
+**A production-grade health tracking platform with 6 integrated applications, 1,927 automated tests, and comprehensive CI/CD pipeline.**
 
-**🚀 Modern PWA | 📊 1,927 Tests | 🔒 HIPAA/GDPR Ready | ☁️ AWS Deployable**
+🎯 **[Try it now → https://isaloum.github.io/StepSyncAI](https://isaloum.github.io/StepSyncAI)
 
-[🎯 Quick Start](#-quick-start) • [📚 Documentation](#-documentation) • [🏗️ Architecture](#-architecture) • [✨ Features](#-features-at-a-glance)
+[Architecture](#-architecture) • [Features](#-features) • [Tech Stack](#-tech-stack)
 
 </div>
 
 ---
 
-## 🎯 Overview
+## 🎯 What Is This?
 
-**StepSyncAI** is a comprehensive health and wellness platform that unifies **6 specialized tracking applications** into one cohesive ecosystem. Built with enterprise-grade testing (1,927 tests, 82.55% coverage), modern PWA capabilities, and cloud-ready architecture for AWS deployment.
+A full-stack health and wellness platform that integrates **6 specialized applications** into one unified system. Built with **test-driven development** (82% coverage, 1,927 tests), **CI/CD automation**, and **production-ready** code quality.
 
-### 🚀 Key Highlights
+### 🚀 Quick Stats
 
 ```
-📊 1,927 Automated Tests (100% passing)       🏥 6 Health Tracking Apps
-🎯 82.55% Test Coverage                       💊 65+ Drug Interaction Warnings
-⚡ 37 Test Suites                             🔒 HIPAA/GDPR Compliance Ready
-🔐 0 Security Vulnerabilities                  ☁️ AWS Serverless Architecture
-🤖 CI/CD Pipeline (Node 18.x & 20.x)          📱 Progressive Web App (PWA)
+📊 1,927 Automated Tests (100% passing)
+🎯 82.55% Test Coverage
+⚡ 37 Test Suites
+🔒 0 Security Vulnerabilities
+🤖 CI/CD with GitHub Actions (Node 18.x & 20.x)
+📦 6 Integrated Applications
 ```
-
-### 📚 Documentation
-
-| Document | Description |
-|----------|-------------|
-| **[CHANGELOG.md](CHANGELOG.md)** | Version history with semantic versioning |
-| **[SECURITY.md](SECURITY.md)** | Security policy, vulnerability disclosure, HIPAA/GDPR compliance |
-| **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** | System design, data flows, and technical architecture |
-| **[DEPLOYMENT_READY.md](DEPLOYMENT_READY.md)** | AWS deployment guide and production checklist |
-| **[CONTRIBUTING.md](CONTRIBUTING.md)** | Development guidelines and contribution standards |
-| **[COMPLETE_STATUS_CHECK.md](COMPLETE_STATUS_CHECK.md)** | Test results and quality metrics |
 
 ---
 
@@ -282,36 +264,15 @@ See [`.github/workflows/ci.yml`](.github/workflows/ci.yml) for pipeline configur
 
 ---
 
-## 📸 Screenshots & Demo
+## 📸 Screenshots
 
-### 🎨 PWA Landing Page
-```
-┌────────────────────────────────────────────────────────────┐
-│                                                            │
-│           🏥 StepSyncAI - Your Health, Simplified         │
-│                                                            │
-│   Track mental health, medications, sleep, and exercise   │
-│              All in one beautiful dashboard                │
-│                                                            │
-│         [🚀 Get Started]    [📚 Learn More]              │
-│                                                            │
-│  Features:                                                 │
-│  ✓ 6 Integrated Health Apps                              │
-│  ✓ Smart Wellness Scoring                                │
-│  ✓ Drug Interaction Warnings                             │
-│  ✓ HIPAA/GDPR Ready                                      │
-│                                                            │
-│  🌙 Dark Mode  |  📱 Mobile-First  |  🔒 Private          │
-└────────────────────────────────────────────────────────────┘
-```
-
-### 📊 Daily Dashboard
+### Daily Dashboard
 ```
 ╔════════════════════════════════════════════════════════════╗
 ║           📊 DAILY WELLNESS DASHBOARD                      ║
 ╚════════════════════════════════════════════════════════════╝
 
-📅 Monday, January 8, 2026
+📅 Monday, December 8, 2025
 
 ┌─────────────────────────────────────────────────────────┐
 │  😊  OVERALL WELLNESS: 78.5/100 (78.5%) - Good          │
@@ -337,35 +298,7 @@ See [`.github/workflows/ci.yml`](.github/workflows/ci.yml) for pipeline configur
   🔴 💊 Medication adherence is at 60%. Consistency is key.
 ```
 
-### 🧠 Mental Health Tracker
-```
-┌─────────────────────────────────────────────────────────┐
-│  PTSD/Trauma Recovery Support                          │
-├─────────────────────────────────────────────────────────┤
-│  Today's Mood: 😊 8/10                                  │
-│  Symptoms: Anxiety (3/10), Sleep issues (2/10)         │
-│                                                         │
-│  Correlation Insights:                                  │
-│  • Better sleep = improved mood (+15%)                 │
-│  • Exercise helps anxiety (-20%)                       │
-└─────────────────────────────────────────────────────────┘
-```
-
-### 💊 Medication Tracker with Drug Interactions
-```
-┌─────────────────────────────────────────────────────────┐
-│  Active Medications: 3                                  │
-├─────────────────────────────────────────────────────────┤
-│  ⚠️  INTERACTION WARNING DETECTED                       │
-│                                                         │
-│  Warfarin + Aspirin = High bleeding risk               │
-│  ⚠️  Consult doctor before combining                    │
-│                                                         │
-│  Adherence Rate: 85% (Last 7 days)                     │
-└─────────────────────────────────────────────────────────┘
-```
-
-### ✅ Test Results Dashboard
+### Test Results
 ```
 Test Suites: 37 passed, 37 total
 Tests:       1927 passed, 1927 total
@@ -436,14 +369,8 @@ StepSyncAI/
 │
 └── 📚 Documentation
     ├── README.md                 # This file
-    ├── CHANGELOG.md              # Version history (v3.12.0+)
-    ├── SECURITY.md               # Security policy & compliance
-    ├── CONTRIBUTING.md           # Contribution guidelines
-    ├── DEPLOYMENT_READY.md       # AWS deployment guide
-    ├── COMPLETE_STATUS_CHECK.md  # Test results & metrics
-    ├── TESTING_README.md         # Testing guide
-    └── docs/
-        └── ARCHITECTURE.md       # System architecture
+    ├── TESTING_README.md        # Testing guide
+    └── CONTRIBUTING.md          # Contribution guidelines
 ```
 
 ---
@@ -451,34 +378,28 @@ StepSyncAI/
 ## 🔮 Future Roadmap
 
 ### **Phase 1: AWS Deployment** (Next)
-- [ ] Convert to serverless architecture (Lambda + DynamoDB) - See [DEPLOYMENT_READY.md](DEPLOYMENT_READY.md)
+- [ ] Convert to serverless architecture (Lambda + DynamoDB)
 - [ ] Deploy to AWS with API Gateway
 - [ ] Add Cognito authentication
 - [ ] Setup CloudWatch monitoring
 
 ### **Phase 2: Web Interface**
-- [ ] React frontend with PWA enhancements
+- [ ] React frontend
 - [ ] Real-time data sync
 - [ ] Responsive mobile design
-- [ ] Enhanced offline capabilities
+- [ ] Progressive Web App (PWA)
 
 ### **Phase 3: Advanced Features**
-- [ ] Multi-user support with RBAC
+- [ ] Multi-user support
 - [ ] Machine learning insights
-- [ ] Health device integration (Fitbit, Apple Health)
+- [ ] Health device integration
 - [ ] Telemedicine integration
-
-See [CHANGELOG.md](CHANGELOG.md) for past releases and [SECURITY.md](SECURITY.md) for security roadmap.
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions! Please review our documentation before getting started:
-
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Development guidelines and standards
-- **[SECURITY.md](SECURITY.md)** - Security policy and vulnerability disclosure
-- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - System design and technical details
+Contributions welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ### Development Workflow
 1. Fork the repository
@@ -499,27 +420,7 @@ We welcome contributions! Please review our documentation before getting started
 
 ## 📝 License
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
-For security policies and compliance information, refer to [SECURITY.md](SECURITY.md).
-
----
-
-## 📚 Additional Resources
-
-### Project Documentation
-- **[README.md](README.md)** - Project overview (you are here)
-- **[CHANGELOG.md](CHANGELOG.md)** - Complete version history
-- **[SECURITY.md](SECURITY.md)** - Security & compliance documentation
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute
-- **[DEPLOYMENT_READY.md](DEPLOYMENT_READY.md)** - Production deployment
-- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Technical architecture
-
-### External Links
-- **Live PWA Demo**: [isaloum.github.io/StepSyncAI](https://isaloum.github.io/StepSyncAI)
-- **GitHub Repository**: [Isaloum/StepSyncAI](https://github.com/Isaloum/StepSyncAI)
-- **Issue Tracker**: [Report Issues](https://github.com/Isaloum/StepSyncAI/issues)
-- **CI/CD Pipeline**: [GitHub Actions](https://github.com/Isaloum/StepSyncAI/actions)
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
@@ -542,62 +443,62 @@ Built with ❤️ to support personal health, wellness, and professional develop
 
 ## 📞 Contact & Support
 
-### 🔗 Project Links
-- **Repository**: [github.com/Isaloum/StepSyncAI](https://github.com/Isaloum/StepSyncAI)
-- **Bug Reports**: [GitHub Issues](https://github.com/Isaloum/StepSyncAI/issues)
-- **Feature Requests**: [GitHub Discussions](https://github.com/Isaloum/StepSyncAI/discussions)
-- **Security Issues**: See [SECURITY.md](SECURITY.md) for responsible disclosure
+### Project Links
+- **GitHub**: [Isaloum/StepSyncAI](https://github.com/Isaloum/StepSyncAI)
+- **Issues**: [Report a Bug](https://github.com/Isaloum/StepSyncAI/issues)
+- **Discussions**: [Feature Requests](https://github.com/Isaloum/StepSyncAI/discussions)
 
-### 📖 Documentation Quick Links
-- 🚀 [Quick Start Guide](#-quick-start)
-- 🏗️ [Architecture Documentation](docs/ARCHITECTURE.md)
-- 🔒 [Security Policy](SECURITY.md)
-- 📋 [Version History](CHANGELOG.md)
-- ☁️ [AWS Deployment Guide](DEPLOYMENT_READY.md)
-
-### 🆘 Mental Health Resources
+### Mental Health Resources
 - **National Suicide Prevention Lifeline**: 988
 - **Crisis Text Line**: Text HOME to 741741
 - **SAMHSA National Helpline**: 1-800-662-4357
 
 ---
 
-## 📈 Project Metrics
+## 📈 Project Stats
 
-![GitHub Stars](https://img.shields.io/github/stars/Isaloum/StepSyncAI?style=social)
-![GitHub Forks](https://img.shields.io/github/forks/Isaloum/StepSyncAI?style=social)
-![GitHub Watchers](https://img.shields.io/github/watchers/Isaloum/StepSyncAI?style=social)
+![GitHub stars](https://img.shields.io/github/stars/Isaloum/StepSyncAI?style=social)
+![GitHub forks](https://img.shields.io/github/forks/Isaloum/StepSyncAI?style=social)
+![GitHub watchers](https://img.shields.io/github/watchers/Isaloum/StepSyncAI?style=social)
 
-| Metric | Value |
-|--------|-------|
-| **Version** | v3.12.0 ([CHANGELOG.md](CHANGELOG.md)) |
-| **Status** | ✅ Active Development |
-| **Last Updated** | January 8, 2026 |
-| **Test Suite** | 1,927 tests passing |
-| **Coverage** | 82.55% |
-| **Security** | 0 vulnerabilities ([SECURITY.md](SECURITY.md)) |
-| **License** | MIT |
-| **Node Support** | 18.x, 20.x |
+**Version**: 3.12.0
+**Status**: ✅ Active Development
+**Last Updated**: December 2025
+**Test Suite**: 1,927 tests passing
+**Coverage**: 82.55%
 
 ---
 
 <div align="center">
 
----
+**⚠️ Important Note**
 
-### ⚠️ Important Medical Disclaimer
-
-**This tool is designed to support your wellness journey, not replace professional medical care.**  
-Always consult qualified healthcare professionals for medical advice, diagnosis, or treatment.
-
-For security and privacy information, see [SECURITY.md](SECURITY.md).
+This tool is designed to support your wellness journey,
+not replace professional medical care.
+Always consult healthcare professionals for medical advice.
 
 ---
 
-**Built with ❤️ by [Isaloum](https://github.com/Isaloum)**  
-*Learning AWS • Building in Public • Test-Driven Development*
 
-[![⭐ Star this repo](https://img.shields.io/github/stars/Isaloum/StepSyncAI?style=social)](https://github.com/Isaloum/StepSyncAI)  
-[📚 Documentation](docs/ARCHITECTURE.md) • [🔒 Security](SECURITY.md) • [📋 Changelog](CHANGELOG.md) • [🤝 Contributing](CONTRIBUTING.md)
+</div>
+## 👨‍💻 Author
+
+**Ihab Saloum**
+
+[![GitHub](https://img.shields.io/badge/GitHub-Isaloum-181717?style=flat&logo=github)](https://github.com/Isaloum)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077B5?style=flat&logo=linkedin)](https://www.linkedin.com/in/ihab-saloum-170618ba/)
+[![Portfolio](https://img.shields.io/badge/Portfolio-More%20Projects-3b82f6?style=flat)](https://github.com/Isaloum)
+
+*Building production-grade applications • Test-Driven Development • AWS Cloud Solutions*
+
+---
+
+## ⭐ Support
+
+If this project helped with your wellness journey or inspired your own projects:
+- ⭐ [Star this repository](https://github.com/Isaloum/StepSyncAI)
+- 🔀 Share it with others
+- 📝 Provide feedback via issues
+- 🤝 Contribute improvements
 
 </div>
