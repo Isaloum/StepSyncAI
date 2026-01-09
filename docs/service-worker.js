@@ -1,5 +1,5 @@
 // Service Worker for StepSyncAI PWA
-const CACHE_VERSION = 'stepsync-v3-medication-validation-150-drugs';
+const CACHE_VERSION = 'stepsync-v4-premium-ui-redesign';
 const CACHE_ASSETS = [
   './',
   './index.html'
