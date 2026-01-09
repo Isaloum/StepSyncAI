@@ -1,5 +1,5 @@
 // Service Worker for StepSyncAI PWA
-const CACHE_VERSION = 'stepsync-v1';
+const CACHE_VERSION = 'stepsync-v2-star-branding';
 const CACHE_ASSETS = [
   './',
   './index.html'
