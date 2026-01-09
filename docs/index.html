@@ -156,19 +156,98 @@
     /* App Tabs Section */
     .app-tabs-section{margin-top:2rem;padding-top:2rem;border-top:1px solid var(--border)}
 
+    /* Onboarding Modal */
+    .onboarding-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;z-index:2000;backdrop-filter:blur(8px);padding:1rem}
+    .onboarding-modal{background:var(--card);border-radius:var(--radius);max-width:550px;width:95%;max-height:90vh;box-shadow:0 25px 50px -12px rgba(0,0,0,.7);border:2px solid var(--accent);display:flex;flex-direction:column;overflow:hidden;animation:slideUp .4s ease-out}
+    @keyframes slideUp{from{opacity:0;transform:translateY(50px)}to{opacity:1;transform:translateY(0)}}
+    .onboarding-header{text-align:center;padding:2rem 2rem 1rem;flex-shrink:0;background:linear-gradient(135deg,var(--card) 0%,var(--bg) 100%)}
+    .onboarding-icon{font-size:4rem;margin-bottom:1rem;animation:pulse 2s ease-in-out infinite}
+    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+    .onboarding-title{font-size:1.75rem;font-weight:900;margin-bottom:.75rem;color:var(--accent)}
+    .onboarding-subtitle{color:var(--muted);font-size:1rem;line-height:1.6}
+    .onboarding-content{padding:1.5rem 2rem;overflow-y:auto;flex:1;min-height:0}
+    .onboarding-name-group{margin-bottom:2rem}
+    .onboarding-name-group label{display:block;font-weight:700;margin-bottom:.75rem;color:var(--text);font-size:1.1rem}
+    .onboarding-name-group input{font-size:1.1rem;padding:1rem;border:2px solid var(--border);transition:all .2s}
+    .onboarding-name-group input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+    .onboarding-modules-title{font-weight:700;margin-bottom:1rem;color:var(--text);font-size:1.1rem;text-align:center}
+    .onboarding-modules{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.5rem}
+    .onboarding-module{display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:1rem;background:var(--bg);border-radius:8px;border:2px solid var(--border);text-align:center;transition:all .2s}
+    .onboarding-module:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 12px rgba(59,130,246,.2)}
+    .onboarding-module-icon{font-size:2.5rem;line-height:1}
+    .onboarding-module-title{font-weight:700;font-size:.95rem;color:var(--text);line-height:1.3}
+    .onboarding-module-desc{font-size:.8rem;color:var(--muted);line-height:1.4}
+    .onboarding-actions{display:flex;gap:1rem;flex-direction:column;padding:1.5rem 2rem;flex-shrink:0;background:var(--bg);border-top:2px solid var(--border)}
+    .onboarding-actions .btn{width:100%;padding:1rem;font-size:1.1rem;border:none;cursor:pointer}
+    .onboarding-actions .btn:disabled{opacity:.5;cursor:not-allowed}
+
+    /* Sign Out Button */
+    .user-menu{display:flex;align-items:center;gap:.75rem}
+    .user-greeting{color:var(--text);font-size:.9rem;display:flex;align-items:center;gap:.5rem}
+    .user-greeting-name{font-weight:700;color:var(--accent)}
+    .btn-sign-out{background:transparent;color:var(--muted);border:1px solid var(--border);padding:.5rem 1rem;border-radius:8px;cursor:pointer;font-weight:600;transition:all .2s;font-size:.875rem}
+    .btn-sign-out:hover{border-color:var(--danger);color:var(--danger);background:rgba(239,68,68,.1)}
+
     @media(max-width:768px){
       .hero-title{font-size:2rem}
       .hero-subtitle{font-size:1rem}
       .screenshots-grid{grid-template-columns:1fr}
       .enterprise-grid{grid-template-columns:1fr}
+      .onboarding-modal{max-width:100%;width:100%;max-height:100vh;border-radius:0}
+      .onboarding-modules{grid-template-columns:1fr}
+      .user-greeting{display:none}
     }
   </style>
 </head>
 <body>
+  <!-- Onboarding Modal -->
+  <div id="onboardingOverlay" class="onboarding-overlay" style="display:none" role="dialog" aria-labelledby="onboarding-title" aria-modal="true">
+    <div class="onboarding-modal">
+      <div class="onboarding-header">
+        <div class="onboarding-icon">🏥</div>
+        <h1 id="onboarding-title" class="onboarding-title">Welcome to StepSyncAI</h1>
+        <p class="onboarding-subtitle">Your personal health & wellness companion with enterprise-grade features</p>
+      </div>
+      <div class="onboarding-content">
+        <div class="onboarding-name-group">
+          <label for="onboardingName">What should we call you?</label>
+          <input type="text" id="onboardingName" placeholder="Enter your name" autocomplete="given-name" autofocus>
+        </div>
+        <div class="onboarding-modules-title">🚀 Explore Our 4 Core Health Tracking Modules</div>
+        <div class="onboarding-modules">
+          <div class="onboarding-module">
+            <div class="onboarding-module-icon">📊</div>
+            <div class="onboarding-module-title">Daily Dashboard</div>
+            <div class="onboarding-module-desc">Unified wellness overview with 0-100 scoring</div>
+          </div>
+          <div class="onboarding-module">
+            <div class="onboarding-module-icon">🧠</div>
+            <div class="onboarding-module-title">Mental Health</div>
+            <div class="onboarding-module-desc">PTSD support & mood tracking</div>
+          </div>
+          <div class="onboarding-module">
+            <div class="onboarding-module-icon">💊</div>
+            <div class="onboarding-module-title">Medication Tracker</div>
+            <div class="onboarding-module-desc">65+ drug interaction warnings</div>
+          </div>
+          <div class="onboarding-module">
+            <div class="onboarding-module-icon">😴</div>
+            <div class="onboarding-module-title">Sleep Tracker</div>
+            <div class="onboarding-module-desc">Quality analysis & sleep debt</div>
+          </div>
+        </div>
+      </div>
+      <div class="onboarding-actions">
+        <button id="onboardingContinue" class="btn btn-primary" disabled>Continue to Dashboard →</button>
+        <p style="text-align:center;color:var(--muted);font-size:.85rem;margin-top:.5rem">Press Enter to continue</p>
+      </div>
+    </div>
+  </div>
+
   <header>
     <div class="container">
       <div class="header-content">
-        <a href="#" class="logo">🏥 StepSyncAI <span class="badge">v3.12.0</span></a>
+        <a href="#" class="logo" onclick="event.preventDefault(); goToHome()">🏥 StepSyncAI <span class="badge">v3.12.0</span></a>
         <nav class="nav-tabs">
           <button class="nav-tab" data-tab="dashboard"><span class="icon">📊</span><span>Dashboard</span></button>
           <button class="nav-tab" data-tab="mental"><span class="icon">🧠</span><span>Mental Health</span></button>
@@ -177,6 +256,10 @@
           <button class="nav-tab" data-tab="exercise"><span class="icon">🏃</span><span>Exercise</span></button>
           <button class="nav-tab" data-tab="aws"><span class="icon">☁️</span><span>AWS Quiz</span></button>
         </nav>
+        <div class="user-menu" id="userMenu" style="display:none">
+          <span class="user-greeting">👋 Hi, <span class="user-greeting-name" id="userGreetingName"></span></span>
+          <button class="btn-sign-out" onclick="signOut()">Sign Out</button>
+        </div>
       </div>
     </div>
   </header>
@@ -588,17 +671,199 @@
       get: (key) => JSON.parse(localStorage.getItem('stepsync_' + key) || '[]'),
       set: (key, data) => localStorage.setItem('stepsync_' + key, JSON.stringify(data)),
       getOne: (key) => JSON.parse(localStorage.getItem('stepsync_' + key) || 'null'),
-      setOne: (key, data) => localStorage.setItem('stepsync_' + key, JSON.stringify(data))
+      setOne: (key, data) => localStorage.setItem('stepsync_' + key, JSON.stringify(data)),
+      remove: (key) => localStorage.removeItem('stepsync_' + key),
+      clearAll: () => {
+        // Clear all StepSyncAI data
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('stepsync_')) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
     };
+
+    // =============================================
+    // ONBOARDING & USER SESSION MANAGEMENT
+    // =============================================
+    
+    /**
+     * Initialize onboarding on page load
+     * Shows onboarding modal if user hasn't completed it
+     */
+    function initOnboarding() {
+      const userName = DB.getOne('userName');
+      const onboardingCompleted = DB.getOne('onboardingCompleted');
+      
+      if (!userName || !onboardingCompleted) {
+        // Show onboarding modal
+        showOnboarding();
+      } else {
+        // User is logged in, show user menu and hide hero sections
+        showUserMenu(userName);
+      }
+    }
+
+    /**
+     * Show onboarding modal
+     */
+    function showOnboarding() {
+      const overlay = document.getElementById('onboardingOverlay');
+      overlay.style.display = 'flex';
+      document.getElementById('onboardingName').focus();
+      
+      // Hide all marketing sections
+      hideMarketingSections();
+    }
+
+    /**
+     * Hide onboarding modal
+     */
+    function hideOnboarding() {
+      const overlay = document.getElementById('onboardingOverlay');
+      overlay.style.display = 'none';
+    }
+
+    /**
+     * Complete onboarding and save user data
+     */
+    function completeOnboarding() {
+      const nameInput = document.getElementById('onboardingName');
+      const userName = nameInput.value.trim();
+      
+      if (!userName) {
+        nameInput.focus();
+        return;
+      }
+      
+      // Save user data
+      DB.setOne('userName', userName);
+      DB.setOne('onboardingCompleted', true);
+      DB.setOne('onboardingDate', new Date().toISOString());
+      
+      // Hide onboarding and show user menu
+      hideOnboarding();
+      showUserMenu(userName);
+      
+      // Navigate to dashboard
+      document.querySelector('[data-tab="dashboard"]').click();
+    }
+
+    /**
+     * Show user menu in header
+     */
+    function showUserMenu(userName) {
+      const userMenu = document.getElementById('userMenu');
+      const userGreetingName = document.getElementById('userGreetingName');
+      userGreetingName.textContent = userName;
+      userMenu.style.display = 'flex';
+    }
+
+    /**
+     * Hide user menu
+     */
+    function hideUserMenu() {
+      const userMenu = document.getElementById('userMenu');
+      userMenu.style.display = 'none';
+    }
+
+    /**
+     * Sign out user - clear all data and return to onboarding
+     */
+    function signOut() {
+      if (confirm('Are you sure you want to sign out? All your local data will remain saved.')) {
+        // Clear only user session data, keep health data
+        DB.remove('userName');
+        DB.remove('onboardingCompleted');
+        DB.remove('onboardingDate');
+        
+        // Hide user menu
+        hideUserMenu();
+        
+        // Show hero sections
+        showMarketingSections();
+        
+        // Hide all app sections
+        document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        
+        // Show onboarding
+        showOnboarding();
+        
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    /**
+     * Go to home/marketing page
+     */
+    function goToHome() {
+      // Show marketing sections
+      showMarketingSections();
+      
+      // Hide app sections
+      document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /**
+     * Hide marketing sections (hero, screenshots, etc.)
+     */
+    function hideMarketingSections() {
+      const sections = ['.hero', '.screenshots', '.enterprise', '.quick-links'];
+      sections.forEach(selector => {
+        const section = document.querySelector(selector);
+        if (section) section.style.display = 'none';
+      });
+    }
+
+    /**
+     * Show marketing sections
+     */
+    function showMarketingSections() {
+      document.querySelector('.hero').style.display = 'block';
+      document.querySelector('.screenshots').style.display = 'block';
+      document.querySelector('.enterprise').style.display = 'block';
+      document.querySelector('.quick-links').style.display = 'block';
+    }
+
+    // =============================================
+    // ONBOARDING EVENT LISTENERS
+    // =============================================
+    
+    // Name input - enable/disable continue button
+    document.getElementById('onboardingName').addEventListener('input', (e) => {
+      const continueBtn = document.getElementById('onboardingContinue');
+      continueBtn.disabled = e.target.value.trim().length === 0;
+    });
+
+    // Name input - Enter key to continue
+    document.getElementById('onboardingName').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const continueBtn = document.getElementById('onboardingContinue');
+        if (!continueBtn.disabled) {
+          completeOnboarding();
+        }
+      }
+    });
+
+    // Continue button click
+    document.getElementById('onboardingContinue').addEventListener('click', completeOnboarding);
+
+    // =============================================
+    // TAB NAVIGATION
+    // =============================================
 
     // Tab Navigation
     document.querySelectorAll('.nav-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         // Hide hero sections and show app sections
-        document.querySelector('.hero').style.display = 'none';
-        document.querySelector('.screenshots').style.display = 'none';
-        document.querySelector('.enterprise').style.display = 'none';
-        document.querySelector('.quick-links').style.display = 'none';
+        hideMarketingSections();
         
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
@@ -609,6 +874,10 @@
         document.querySelector('main').scrollIntoView({ behavior: 'smooth' });
       });
     });
+
+    // =============================================
+    // HEALTH TRACKING FEATURES
+    // =============================================
 
     // Mood Tracker
     const moodEmojis = ['😢','😞','😔','😕','😐','🙂','😊','😄','😁','🤩'];
@@ -1136,6 +1405,11 @@
     updateWeakAreas();
     updateDashboard();
     moodEmoji.textContent = moodEmojis[4];
+    
+    // =============================================
+    // INITIALIZE ONBOARDING ON PAGE LOAD
+    // =============================================
+    initOnboarding();
   </script>
 
   <!-- Footer -->
