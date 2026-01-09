@@ -1140,28 +1140,159 @@
     
     // Safe dosage ranges (in mg unless specified)
     const dosageRanges = {
-      // Vitamins & Supplements
+      // ===== FAT-SOLUBLE VITAMINS (A, D, E, K) =====
+      'vitamin a': { min: 700, max: 3000, unit: 'mcg', name: 'Vitamin A' },
+      'retinol': { min: 700, max: 3000, unit: 'mcg', name: 'Vitamin A (Retinol)' },
+      'beta carotene': { min: 3, max: 20, unit: 'mg', name: 'Beta-Carotene' },
       'vitamin d': { min: 400, max: 4000, unit: 'IU', name: 'Vitamin D' },
+      'vitamin d3': { min: 400, max: 4000, unit: 'IU', name: 'Vitamin D3' },
+      'cholecalciferol': { min: 400, max: 4000, unit: 'IU', name: 'Vitamin D3 (Cholecalciferol)' },
+      'vitamin e': { min: 15, max: 1000, unit: 'mg', name: 'Vitamin E' },
+      'tocopherol': { min: 15, max: 1000, unit: 'mg', name: 'Vitamin E (Tocopherol)' },
+      'vitamin k': { min: 90, max: 120, unit: 'mcg', name: 'Vitamin K' },
+      'vitamin k1': { min: 90, max: 120, unit: 'mcg', name: 'Vitamin K1 (Phylloquinone)' },
+      'vitamin k2': { min: 90, max: 200, unit: 'mcg', name: 'Vitamin K2 (Menaquinone)' },
+      
+      // ===== WATER-SOLUBLE VITAMINS (B-complex, C) =====
       'vitamin c': { min: 65, max: 2000, unit: 'mg', name: 'Vitamin C' },
+      'ascorbic acid': { min: 65, max: 2000, unit: 'mg', name: 'Vitamin C (Ascorbic Acid)' },
+      'vitamin b1': { min: 1.1, max: 100, unit: 'mg', name: 'Vitamin B1 (Thiamine)' },
+      'thiamine': { min: 1.1, max: 100, unit: 'mg', name: 'Thiamine (Vitamin B1)' },
+      'vitamin b2': { min: 1.1, max: 100, unit: 'mg', name: 'Vitamin B2 (Riboflavin)' },
+      'riboflavin': { min: 1.1, max: 100, unit: 'mg', name: 'Riboflavin (Vitamin B2)' },
+      'vitamin b3': { min: 14, max: 35, unit: 'mg', name: 'Vitamin B3 (Niacin)' },
+      'niacin': { min: 14, max: 35, unit: 'mg', name: 'Niacin (Vitamin B3)' },
+      'vitamin b5': { min: 5, max: 1000, unit: 'mg', name: 'Vitamin B5 (Pantothenic Acid)' },
+      'pantothenic acid': { min: 5, max: 1000, unit: 'mg', name: 'Pantothenic Acid (Vitamin B5)' },
+      'vitamin b6': { min: 1.3, max: 100, unit: 'mg', name: 'Vitamin B6 (Pyridoxine)' },
+      'pyridoxine': { min: 1.3, max: 100, unit: 'mg', name: 'Pyridoxine (Vitamin B6)' },
+      'vitamin b7': { min: 30, max: 10000, unit: 'mcg', name: 'Vitamin B7 (Biotin)' },
+      'biotin': { min: 30, max: 10000, unit: 'mcg', name: 'Biotin (Vitamin B7)' },
+      'vitamin b9': { min: 400, max: 1000, unit: 'mcg', name: 'Vitamin B9 (Folate)' },
+      'folate': { min: 400, max: 1000, unit: 'mcg', name: 'Folate (Vitamin B9)' },
+      'folic acid': { min: 400, max: 1000, unit: 'mcg', name: 'Folic Acid (Vitamin B9)' },
       'vitamin b12': { min: 2.4, max: 1000, unit: 'mcg', name: 'Vitamin B12' },
-      'zinc': { min: 8, max: 40, unit: 'mg', name: 'Zinc' },
-      'iron': { min: 8, max: 45, unit: 'mg', name: 'Iron' },
+      'cobalamin': { min: 2.4, max: 1000, unit: 'mcg', name: 'Cobalamin (Vitamin B12)' },
+      'methylcobalamin': { min: 2.4, max: 1000, unit: 'mcg', name: 'Methylcobalamin (B12)' },
+      
+      // ===== MINERALS =====
       'calcium': { min: 1000, max: 2500, unit: 'mg', name: 'Calcium' },
+      'calcium citrate': { min: 1000, max: 2500, unit: 'mg', name: 'Calcium Citrate' },
+      'calcium carbonate': { min: 1000, max: 2500, unit: 'mg', name: 'Calcium Carbonate' },
+      'iron': { min: 8, max: 45, unit: 'mg', name: 'Iron' },
+      'ferrous sulfate': { min: 8, max: 45, unit: 'mg', name: 'Ferrous Sulfate (Iron)' },
       'magnesium': { min: 310, max: 420, unit: 'mg', name: 'Magnesium' },
+      'magnesium citrate': { min: 310, max: 420, unit: 'mg', name: 'Magnesium Citrate' },
+      'magnesium glycinate': { min: 310, max: 420, unit: 'mg', name: 'Magnesium Glycinate' },
+      'zinc': { min: 8, max: 40, unit: 'mg', name: 'Zinc' },
+      'zinc picolinate': { min: 8, max: 40, unit: 'mg', name: 'Zinc Picolinate' },
+      'potassium': { min: 2600, max: 3400, unit: 'mg', name: 'Potassium' },
+      'selenium': { min: 55, max: 400, unit: 'mcg', name: 'Selenium' },
+      'copper': { min: 0.9, max: 10, unit: 'mg', name: 'Copper' },
+      'chromium': { min: 25, max: 200, unit: 'mcg', name: 'Chromium' },
+      'iodine': { min: 150, max: 1100, unit: 'mcg', name: 'Iodine' },
+      'manganese': { min: 1.8, max: 11, unit: 'mg', name: 'Manganese' },
+      'molybdenum': { min: 45, max: 2000, unit: 'mcg', name: 'Molybdenum' },
+      'phosphorus': { min: 700, max: 4000, unit: 'mg', name: 'Phosphorus' },
+      
+      // ===== OMEGA FATTY ACIDS & SUPPLEMENTS =====
+      'fish oil': { min: 250, max: 3000, unit: 'mg', name: 'Fish Oil/Omega-3' },
+      'omega 3': { min: 250, max: 3000, unit: 'mg', name: 'Omega-3' },
+      'omega-3': { min: 250, max: 3000, unit: 'mg', name: 'Omega-3' },
+      'epa': { min: 250, max: 2000, unit: 'mg', name: 'EPA (Omega-3)' },
+      'dha': { min: 250, max: 2000, unit: 'mg', name: 'DHA (Omega-3)' },
+      'coq10': { min: 30, max: 200, unit: 'mg', name: 'CoQ10 (Coenzyme Q10)' },
+      'coenzyme q10': { min: 30, max: 200, unit: 'mg', name: 'Coenzyme Q10' },
+      'glucosamine': { min: 500, max: 2000, unit: 'mg', name: 'Glucosamine' },
+      'chondroitin': { min: 400, max: 1200, unit: 'mg', name: 'Chondroitin' },
+      'turmeric': { min: 500, max: 2000, unit: 'mg', name: 'Turmeric' },
+      'curcumin': { min: 500, max: 2000, unit: 'mg', name: 'Curcumin' },
+      'probiotics': { min: 1, max: 100, unit: 'billion CFU', name: 'Probiotics' },
+      'melatonin': { min: 0.5, max: 10, unit: 'mg', name: 'Melatonin' },
+      'collagen': { min: 2500, max: 15000, unit: 'mg', name: 'Collagen' },
+      'ashwagandha': { min: 300, max: 1200, unit: 'mg', name: 'Ashwagandha' },
+      'rhodiola': { min: 200, max: 600, unit: 'mg', name: 'Rhodiola' },
+      'ginkgo biloba': { min: 120, max: 240, unit: 'mg', name: 'Ginkgo Biloba' },
+      'st john\'s wort': { min: 300, max: 900, unit: 'mg', name: 'St. John\'s Wort' },
+      'valerian root': { min: 300, max: 900, unit: 'mg', name: 'Valerian Root' },
+      'saw palmetto': { min: 160, max: 320, unit: 'mg', name: 'Saw Palmetto' },
+      'milk thistle': { min: 140, max: 800, unit: 'mg', name: 'Milk Thistle' },
+      
+      // ===== PAIN RELIEVERS & FEVER REDUCERS =====
+      'aspirin': { min: 81, max: 325, unit: 'mg', name: 'Aspirin' },
+      'ibuprofen': { min: 200, max: 800, unit: 'mg', name: 'Ibuprofen' },
+      'advil': { min: 200, max: 800, unit: 'mg', name: 'Advil (Ibuprofen)' },
+      'motrin': { min: 200, max: 800, unit: 'mg', name: 'Motrin (Ibuprofen)' },
+      'naproxen': { min: 220, max: 500, unit: 'mg', name: 'Naproxen' },
+      'aleve': { min: 220, max: 500, unit: 'mg', name: 'Aleve (Naproxen)' },
+      'acetaminophen': { min: 325, max: 1000, unit: 'mg', name: 'Acetaminophen' },
+      'tylenol': { min: 325, max: 1000, unit: 'mg', name: 'Tylenol (Acetaminophen)' },
+      'paracetamol': { min: 325, max: 1000, unit: 'mg', name: 'Paracetamol (Acetaminophen)' },
+      
+      // ===== BLOOD PRESSURE MEDICATIONS =====
+      'lisinopril': { min: 2.5, max: 40, unit: 'mg', name: 'Lisinopril' },
+      'amlodipine': { min: 2.5, max: 10, unit: 'mg', name: 'Amlodipine' },
+      'losartan': { min: 25, max: 100, unit: 'mg', name: 'Losartan' },
+      'metoprolol': { min: 25, max: 200, unit: 'mg', name: 'Metoprolol' },
+      'atenolol': { min: 25, max: 100, unit: 'mg', name: 'Atenolol' },
+      'hydrochlorothiazide': { min: 12.5, max: 50, unit: 'mg', name: 'Hydrochlorothiazide' },
+      'hctz': { min: 12.5, max: 50, unit: 'mg', name: 'HCTZ (Hydrochlorothiazide)' },
+      
+      // ===== CHOLESTEROL & STATINS =====
+      'atorvastatin': { min: 10, max: 80, unit: 'mg', name: 'Atorvastatin' },
+      'lipitor': { min: 10, max: 80, unit: 'mg', name: 'Lipitor (Atorvastatin)' },
+      'simvastatin': { min: 5, max: 40, unit: 'mg', name: 'Simvastatin' },
+      'rosuvastatin': { min: 5, max: 40, unit: 'mg', name: 'Rosuvastatin' },
+      'crestor': { min: 5, max: 40, unit: 'mg', name: 'Crestor (Rosuvastatin)' },
+      'pravastatin': { min: 10, max: 80, unit: 'mg', name: 'Pravastatin' },
+      
+      // ===== DIABETES MEDICATIONS =====
+      'metformin': { min: 500, max: 2000, unit: 'mg', name: 'Metformin' },
+      'glucophage': { min: 500, max: 2000, unit: 'mg', name: 'Glucophage (Metformin)' },
+      'glipizide': { min: 2.5, max: 20, unit: 'mg', name: 'Glipizide' },
+      'glyburide': { min: 1.25, max: 20, unit: 'mg', name: 'Glyburide' },
+      
+      // ===== THYROID MEDICATIONS =====
+      'levothyroxine': { min: 25, max: 200, unit: 'mcg', name: 'Levothyroxine' },
+      'synthroid': { min: 25, max: 200, unit: 'mcg', name: 'Synthroid (Levothyroxine)' },
+      'liothyronine': { min: 5, max: 25, unit: 'mcg', name: 'Liothyronine (T3)' },
+      
+      // ===== STOMACH/DIGESTIVE =====
+      'omeprazole': { min: 20, max: 40, unit: 'mg', name: 'Omeprazole' },
+      'prilosec': { min: 20, max: 40, unit: 'mg', name: 'Prilosec (Omeprazole)' },
+      'esomeprazole': { min: 20, max: 40, unit: 'mg', name: 'Esomeprazole' },
+      'nexium': { min: 20, max: 40, unit: 'mg', name: 'Nexium (Esomeprazole)' },
+      'pantoprazole': { min: 20, max: 40, unit: 'mg', name: 'Pantoprazole' },
+      'ranitidine': { min: 75, max: 300, unit: 'mg', name: 'Ranitidine' },
+      'famotidine': { min: 10, max: 40, unit: 'mg', name: 'Famotidine' },
+      'pepcid': { min: 10, max: 40, unit: 'mg', name: 'Pepcid (Famotidine)' },
+      
+      // ===== ANTIHISTAMINES & ALLERGY =====
+      'cetirizine': { min: 5, max: 10, unit: 'mg', name: 'Cetirizine' },
+      'zyrtec': { min: 5, max: 10, unit: 'mg', name: 'Zyrtec (Cetirizine)' },
+      'loratadine': { min: 10, max: 10, unit: 'mg', name: 'Loratadine' },
+      'claritin': { min: 10, max: 10, unit: 'mg', name: 'Claritin (Loratadine)' },
+      'fexofenadine': { min: 60, max: 180, unit: 'mg', name: 'Fexofenadine' },
+      'allegra': { min: 60, max: 180, unit: 'mg', name: 'Allegra (Fexofenadine)' },
+      'diphenhydramine': { min: 25, max: 50, unit: 'mg', name: 'Diphenhydramine' },
+      'benadryl': { min: 25, max: 50, unit: 'mg', name: 'Benadryl (Diphenhydramine)' },
+      
+      // ===== ANTIBIOTICS (COMMON) =====
+      'amoxicillin': { min: 250, max: 875, unit: 'mg', name: 'Amoxicillin' },
+      'azithromycin': { min: 250, max: 500, unit: 'mg', name: 'Azithromycin' },
+      'z-pack': { min: 250, max: 500, unit: 'mg', name: 'Z-Pack (Azithromycin)' },
+      'ciprofloxacin': { min: 250, max: 750, unit: 'mg', name: 'Ciprofloxacin' },
+      'doxycycline': { min: 50, max: 200, unit: 'mg', name: 'Doxycycline' },
+      'cephalexin': { min: 250, max: 500, unit: 'mg', name: 'Cephalexin' }
       'fish oil': { min: 250, max: 3000, unit: 'mg', name: 'Fish Oil/Omega-3' },
       'omega 3': { min: 250, max: 3000, unit: 'mg', name: 'Omega-3' },
       
-      // Common Medications
-      'aspirin': { min: 81, max: 325, unit: 'mg', name: 'Aspirin' },
-      'ibuprofen': { min: 200, max: 800, unit: 'mg', name: 'Ibuprofen' },
-      'acetaminophen': { min: 325, max: 1000, unit: 'mg', name: 'Acetaminophen' },
-      'tylenol': { min: 325, max: 1000, unit: 'mg', name: 'Tylenol (Acetaminophen)' },
-      'metformin': { min: 500, max: 2000, unit: 'mg', name: 'Metformin' },
-      'lisinopril': { min: 2.5, max: 40, unit: 'mg', name: 'Lisinopril' },
-      'atorvastatin': { min: 10, max: 80, unit: 'mg', name: 'Atorvastatin' },
-      'levothyroxine': { min: 25, max: 200, unit: 'mcg', name: 'Levothyroxine' },
-      'omeprazole': { min: 20, max: 40, unit: 'mg', name: 'Omeprazole' },
-      'melatonin': { min: 0.5, max: 10, unit: 'mg', name: 'Melatonin' }
+      'amoxicillin': { min: 250, max: 875, unit: 'mg', name: 'Amoxicillin' },
+      'azithromycin': { min: 250, max: 500, unit: 'mg', name: 'Azithromycin' },
+      'z-pack': { min: 250, max: 500, unit: 'mg', name: 'Z-Pack (Azithromycin)' },
+      'ciprofloxacin': { min: 250, max: 750, unit: 'mg', name: 'Ciprofloxacin' },
+      'doxycycline': { min: 50, max: 200, unit: 'mg', name: 'Doxycycline' },
+      'cephalexin': { min: 250, max: 500, unit: 'mg', name: 'Cephalexin' }
     };
 
     // Comprehensive drug interaction database (100+ interactions)
