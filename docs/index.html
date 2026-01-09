@@ -122,10 +122,28 @@
 
     /* Responsive */
     @media(max-width:768px){
-      .nav-tabs{justify-content:center}
-      .nav-tab span:not(.icon){display:none}
       .header-content{justify-content:center}
       .stats-grid{grid-template-columns:repeat(2,1fr)}
+      
+      /* Hide desktop navigation on mobile */
+      .nav-tabs{display:none}
+      
+      /* Add space for bottom navigation */
+      main{padding-bottom:5rem}
+    }
+
+    /* Mobile Bottom Navigation */
+    .mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:2px solid var(--border);padding:.75rem 0;z-index:100;box-shadow:0 -4px 12px rgba(0,0,0,.15)}
+    .mobile-nav-inner{display:flex;justify-content:space-around;align-items:center;max-width:600px;margin:0 auto}
+    .mobile-nav-btn{display:flex;flex-direction:column;align-items:center;gap:.25rem;background:transparent;border:none;color:var(--muted);cursor:pointer;padding:.5rem;border-radius:8px;transition:all .2s;min-width:60px}
+    .mobile-nav-btn:active{transform:scale(.95)}
+    .mobile-nav-btn.active{color:var(--accent)}
+    .mobile-nav-btn.active .mobile-nav-icon{background:var(--accent);color:#fff}
+    .mobile-nav-icon{font-size:1.5rem;transition:all .2s}
+    .mobile-nav-label{font-size:.65rem;font-weight:600;text-align:center;line-height:1.1}
+    
+    @media(max-width:768px){
+      .mobile-nav{display:block}
     }
 
     /* Theme Toggle */
@@ -570,6 +588,35 @@
     </div>
   </footer>
 
+  <!-- Mobile Bottom Navigation -->
+  <nav class="mobile-nav" role="navigation" aria-label="Mobile navigation">
+    <div class="mobile-nav-inner">
+      <button class="mobile-nav-btn active" data-tab="dashboard" aria-label="Dashboard" aria-current="page">
+        <span class="mobile-nav-icon" aria-hidden="true">📊</span>
+        <span class="mobile-nav-label">Dashboard</span>
+      </button>
+      <button class="mobile-nav-btn" data-tab="mental" aria-label="Mental Health">
+        <span class="mobile-nav-icon" aria-hidden="true">🧠</span>
+        <span class="mobile-nav-label">Mental Health</span>
+      </button>
+      <button class="mobile-nav-btn" data-tab="medication" aria-label="Medication">
+        <span class="mobile-nav-icon" aria-hidden="true">💊</span>
+        <span class="mobile-nav-label">Medication</span>
+      </button>
+      <button class="mobile-nav-btn" data-tab="sleep" aria-label="Sleep">
+        <span class="mobile-nav-icon" aria-hidden="true">😴</span>
+        <span class="mobile-nav-label">Sleep</span>
+      </button>
+      <button class="mobile-nav-btn" data-tab="exercise" aria-label="Exercise">
+        <span class="mobile-nav-icon" aria-hidden="true">🏃</span>
+        <span class="mobile-nav-label">Exercise</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Install PWA Button -->
+  <button id="installPWA" class="install-pwa" aria-label="Install StepSyncAI as an app">📲 Install App</button>
+
   <script>
     // ============================================
     // WELLNESS TIPS SYSTEM
@@ -836,17 +883,64 @@
       setOne: (key, data) => localStorage.setItem('stepsync_' + key, JSON.stringify(data))
     };
 
-    // Tab Navigation
+    // Tab Navigation (Desktop + Mobile)
+    function switchTab(tabName) {
+      // Update desktop navigation
+      document.querySelectorAll('.nav-tab').forEach(t => {
+        t.classList.remove('active');
+        t.removeAttribute('aria-current');
+      });
+      
+      // Update mobile navigation
+      document.querySelectorAll('.mobile-nav-btn').forEach(t => {
+        t.classList.remove('active');
+        t.removeAttribute('aria-current');
+      });
+      
+      // Update sections
+      document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
+      
+      // Activate selected tab (both desktop and mobile)
+      const desktopTab = document.querySelector(`.nav-tab[data-tab="${tabName}"]`);
+      const mobileTab = document.querySelector(`.mobile-nav-btn[data-tab="${tabName}"]`);
+      
+      if (desktopTab) {
+        desktopTab.classList.add('active');
+        desktopTab.setAttribute('aria-current', 'page');
+      }
+      
+      if (mobileTab) {
+        mobileTab.classList.add('active');
+        mobileTab.setAttribute('aria-current', 'page');
+      }
+      
+      document.getElementById(tabName).classList.add('active');
+      
+      // Scroll to top on mobile
+      if (window.innerWidth <= 768) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    // Desktop navigation
     document.querySelectorAll('.nav-tab').forEach(tab => {
       tab.addEventListener('click', () => {
-        document.querySelectorAll('.nav-tab').forEach(t => {
-          t.classList.remove('active');
-          t.removeAttribute('aria-current');
-        });
-        document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
-        tab.classList.add('active');
-        tab.setAttribute('aria-current', 'page');
-        document.getElementById(tab.dataset.tab).classList.add('active');
+        switchTab(tab.dataset.tab);
+      });
+      
+      // Keyboard navigation
+      tab.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          tab.click();
+        }
+      });
+    });
+
+    // Mobile navigation
+    document.querySelectorAll('.mobile-nav-btn').forEach(tab => {
+      tab.addEventListener('click', () => {
+        switchTab(tab.dataset.tab);
       });
       
       // Keyboard navigation
