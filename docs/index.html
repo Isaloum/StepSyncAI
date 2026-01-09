@@ -158,7 +158,7 @@
 
     /* Onboarding Modal */
     .onboarding-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;z-index:2000;backdrop-filter:blur(8px);padding:1rem}
-    .onboarding-modal{background:var(--card);border-radius:var(--radius);max-width:550px;width:95%;max-height:90vh;box-shadow:0 25px 50px -12px rgba(0,0,0,.7);border:2px solid var(--accent);display:flex;flex-direction:column;overflow:hidden;animation:slideUp .4s ease-out}
+    .onboarding-modal{background:var(--card);border-radius:var(--radius);max-width:600px;width:95%;max-height:95vh;box-shadow:0 25px 50px -12px rgba(0,0,0,.7);border:2px solid var(--accent);display:flex;flex-direction:column;overflow:hidden;animation:slideUp .4s ease-out}
     @keyframes slideUp{from{opacity:0;transform:translateY(50px)}to{opacity:1;transform:translateY(0)}}
     .onboarding-header{text-align:center;padding:2rem 2rem 1rem;flex-shrink:0;background:linear-gradient(135deg,var(--card) 0%,var(--bg) 100%)}
     .onboarding-icon{font-size:4rem;margin-bottom:1rem;animation:pulse 2s ease-in-out infinite}
@@ -166,13 +166,13 @@
     .onboarding-title{font-size:1.75rem;font-weight:900;margin-bottom:.75rem;color:var(--accent)}
     .onboarding-subtitle{color:var(--muted);font-size:1rem;line-height:1.6}
     .onboarding-content{padding:1.5rem 2rem;overflow-y:auto;flex:1;min-height:0}
-    .onboarding-name-group{margin-bottom:2rem}
-    .onboarding-name-group label{display:block;font-weight:700;margin-bottom:.75rem;color:var(--text);font-size:1.1rem}
-    .onboarding-name-group input{font-size:1.1rem;padding:1rem;border:2px solid var(--border);transition:all .2s}
+    .onboarding-name-group{margin-top:1.5rem}
+    .onboarding-name-group label{display:block;font-weight:700;margin-bottom:.75rem;color:var(--text);font-size:1rem}
+    .onboarding-name-group input{font-size:1.05rem;padding:1rem;border:2px solid var(--border);transition:all .2s}
     .onboarding-name-group input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
-    .onboarding-modules-title{font-weight:700;margin-bottom:1rem;color:var(--text);font-size:1.1rem;text-align:center}
-    .onboarding-modules{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.5rem}
-    .onboarding-module{display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:1rem;background:var(--bg);border-radius:8px;border:2px solid var(--border);text-align:center;transition:all .2s}
+    .onboarding-modules-title{font-weight:700;margin-bottom:1.25rem;color:var(--text);font-size:1.05rem;text-align:center}
+    .onboarding-modules{display:grid;grid-template-columns:repeat(2,1fr);gap:.875rem;margin-bottom:0}
+    .onboarding-module{display:flex;flex-direction:column;align-items:center;gap:.5rem;padding:.875rem;background:var(--bg);border-radius:8px;border:2px solid var(--border);text-align:center;transition:all .2s}
     .onboarding-module:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 12px rgba(59,130,246,.2)}
     .onboarding-module-icon{font-size:2.5rem;line-height:1}
     .onboarding-module-title{font-weight:700;font-size:.95rem;color:var(--text);line-height:1.3}
@@ -204,16 +204,12 @@
   <div id="onboardingOverlay" class="onboarding-overlay" style="display:none" role="dialog" aria-labelledby="onboarding-title" aria-modal="true">
     <div class="onboarding-modal">
       <div class="onboarding-header">
-        <div class="onboarding-icon">🏥</div>
+        <div class="onboarding-icon">�</div>
         <h1 id="onboarding-title" class="onboarding-title">Welcome to StepSyncAI</h1>
         <p class="onboarding-subtitle">Your personal health & wellness companion with enterprise-grade features</p>
       </div>
       <div class="onboarding-content">
-        <div class="onboarding-name-group">
-          <label for="onboardingName">What should we call you?</label>
-          <input type="text" id="onboardingName" placeholder="Enter your name" autocomplete="given-name" autofocus>
-        </div>
-        <div class="onboarding-modules-title">🚀 Explore Our 4 Core Health Tracking Modules</div>
+        <div class="onboarding-modules-title">✨ Explore Our 4 Core Health Tracking Modules</div>
         <div class="onboarding-modules">
           <div class="onboarding-module">
             <div class="onboarding-module-icon">📊</div>
@@ -235,6 +231,10 @@
             <div class="onboarding-module-title">Sleep Tracker</div>
             <div class="onboarding-module-desc">Quality analysis & sleep debt</div>
           </div>
+        </div>
+        <div class="onboarding-name-group">
+          <label for="onboardingName">What should we call you?</label>
+          <input type="text" id="onboardingName" placeholder="Enter your name" autocomplete="given-name" autofocus>
         </div>
       </div>
       <div class="onboarding-actions">
