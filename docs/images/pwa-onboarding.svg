@@ -1,0 +1,45 @@
+<svg width="800" height="500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.2" />
+      <stop offset="100%" style="stop-color:#0f172a;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#grad4)" rx="12"/>
+  
+  <!-- Logo -->
+  <text x="400" y="100" font-family="Arial" font-size="64" text-anchor="middle">🏥</text>
+  <text x="400" y="145" font-family="Arial" font-size="36" fill="#3b82f6" font-weight="bold" text-anchor="middle">StepSyncAI</text>
+  <text x="400" y="175" font-family="Arial" font-size="16" fill="#94a3b8" text-anchor="middle">Your Health, Simplified</text>
+  
+  <!-- Features -->
+  <text x="400" y="220" font-family="Arial" font-size="14" fill="#f1f5f9" text-anchor="middle">Track mental health, medications, sleep, and exercise</text>
+  <text x="400" y="242" font-family="Arial" font-size="14" fill="#f1f5f9" text-anchor="middle">All in one beautiful dashboard</text>
+  
+  <!-- Feature Pills -->
+  <rect x="150" y="270" width="150" height="35" fill="#1e293b" rx="18" stroke="#3b82f6" stroke-width="1"/>
+  <text x="225" y="293" font-family="Arial" font-size="13" fill="#f1f5f9" text-anchor="middle">✓ 6 Integrated Apps</text>
+  
+  <rect x="325" y="270" width="150" height="35" fill="#1e293b" rx="18" stroke="#3b82f6" stroke-width="1"/>
+  <text x="400" y="293" font-family="Arial" font-size="13" fill="#f1f5f9" text-anchor="middle">✓ Smart Insights</text>
+  
+  <rect x="500" y="270" width="150" height="35" fill="#1e293b" rx="18" stroke="#3b82f6" stroke-width="1"/>
+  <text x="575" y="293" font-family="Arial" font-size="13" fill="#f1f5f9" text-anchor="middle">✓ HIPAA Ready</text>
+  
+  <!-- CTA Buttons -->
+  <rect x="250" y="340" width="140" height="50" fill="#3b82f6" rx="8"/>
+  <text x="320" y="372" font-family="Arial" font-size="18" fill="#ffffff" text-anchor="middle" font-weight="bold">🚀 Get Started</text>
+  
+  <rect x="410" y="340" width="140" height="50" fill="#1e293b" rx="8" stroke="#3b82f6" stroke-width="2"/>
+  <text x="480" y="372" font-family="Arial" font-size="18" fill="#3b82f6" text-anchor="middle" font-weight="bold">📚 Learn More</text>
+  
+  <!-- Footer Icons -->
+  <text x="300" y="445" font-family="Arial" font-size="24" text-anchor="middle">🌙</text>
+  <text x="300" y="470" font-family="Arial" font-size="11" fill="#94a3b8" text-anchor="middle">Dark Mode</text>
+  
+  <text x="400" y="445" font-family="Arial" font-size="24" text-anchor="middle">📱</text>
+  <text x="400" y="470" font-family="Arial" font-size="11" fill="#94a3b8" text-anchor="middle">Mobile-First</text>
+  
+  <text x="500" y="445" font-family="Arial" font-size="24" text-anchor="middle">🔒</text>
+  <text x="500" y="470" font-family="Arial" font-size="11" fill="#94a3b8" text-anchor="middle">Private</text>
+</svg>

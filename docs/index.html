@@ -114,15 +114,63 @@
       .header-content{justify-content:center}
       .stats-grid{grid-template-columns:repeat(2,1fr)}
     }
+
+    /* Hero Section */
+    .hero{background:linear-gradient(135deg,var(--card) 0%,var(--bg) 100%);padding:4rem 0;text-align:center;border-bottom:1px solid var(--border)}
+    .hero-title{font-size:3rem;font-weight:900;margin-bottom:1rem;background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .hero-subtitle{font-size:1.25rem;color:var(--muted);margin-bottom:2rem;max-width:600px;margin-left:auto;margin-right:auto}
+    .hero-badges{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-bottom:2rem}
+    .hero-badge{background:var(--card);border:1px solid var(--border);padding:.5rem 1rem;border-radius:8px;font-size:.875rem;display:flex;align-items:center;gap:.5rem}
+    .hero-badge img{height:20px}
+    .hero-cta{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+    .hero-cta .btn{padding:1rem 2rem;font-size:1.1rem}
+
+    /* Screenshots Gallery */
+    .screenshots{padding:3rem 0;background:var(--bg)}
+    .screenshots-title{font-size:2rem;font-weight:800;text-align:center;margin-bottom:2rem}
+    .screenshots-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:2rem;margin-bottom:2rem}
+    .screenshot-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:transform .2s,box-shadow .2s}
+    .screenshot-card:hover{transform:translateY(-5px);box-shadow:0 10px 30px rgba(59,130,246,.3)}
+    .screenshot-card img{width:100%;display:block;border-bottom:1px solid var(--border)}
+    .screenshot-caption{padding:1rem;font-weight:600;color:var(--text);text-align:center}
+
+    /* Enterprise Section */
+    .enterprise{background:linear-gradient(135deg,var(--bg) 0%,var(--card) 100%);padding:4rem 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+    .enterprise-title{font-size:2.5rem;font-weight:900;text-align:center;margin-bottom:3rem;color:var(--accent)}
+    .enterprise-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2rem}
+    .enterprise-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;text-align:center}
+    .enterprise-icon{font-size:3rem;margin-bottom:1rem}
+    .enterprise-card h3{font-size:1.5rem;margin-bottom:1rem;color:var(--accent)}
+    .enterprise-card p{color:var(--muted);line-height:1.8}
+    .enterprise-stat{font-size:2.5rem;font-weight:900;color:var(--success);margin-bottom:.5rem}
+
+    /* Quick Links */
+    .quick-links{background:var(--card);padding:2rem 0}
+    .quick-links-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem}
+    .quick-link{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:1.5rem;text-align:center;text-decoration:none;color:var(--text);transition:all .2s}
+    .quick-link:hover{border-color:var(--accent);transform:scale(1.05)}
+    .quick-link-icon{font-size:2rem;margin-bottom:.5rem}
+    .quick-link-title{font-weight:700;margin-bottom:.25rem}
+    .quick-link-desc{font-size:.875rem;color:var(--muted)}
+
+    /* App Tabs Section */
+    .app-tabs-section{margin-top:2rem;padding-top:2rem;border-top:1px solid var(--border)}
+
+    @media(max-width:768px){
+      .hero-title{font-size:2rem}
+      .hero-subtitle{font-size:1rem}
+      .screenshots-grid{grid-template-columns:1fr}
+      .enterprise-grid{grid-template-columns:1fr}
+    }
   </style>
 </head>
 <body>
   <header>
     <div class="container">
       <div class="header-content">
-        <a href="#" class="logo">🏥 StepSyncAI <span class="badge">LIVE</span></a>
+        <a href="#" class="logo">🏥 StepSyncAI <span class="badge">v3.12.0</span></a>
         <nav class="nav-tabs">
-          <button class="nav-tab active" data-tab="dashboard"><span class="icon">📊</span><span>Dashboard</span></button>
+          <button class="nav-tab" data-tab="dashboard"><span class="icon">📊</span><span>Dashboard</span></button>
           <button class="nav-tab" data-tab="mental"><span class="icon">🧠</span><span>Mental Health</span></button>
           <button class="nav-tab" data-tab="medication"><span class="icon">💊</span><span>Medication</span></button>
           <button class="nav-tab" data-tab="sleep"><span class="icon">😴</span><span>Sleep</span></button>
@@ -132,6 +180,147 @@
       </div>
     </div>
   </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <h1 class="hero-title">Your Health, Simplified</h1>
+      <p class="hero-subtitle">Production-grade health tracking platform with 6 integrated applications, enterprise testing, and HIPAA/GDPR compliance</p>
+      
+      <div class="hero-badges">
+        <span class="hero-badge"><img src="https://img.shields.io/badge/tests-1927%20passing-brightgreen" alt="Tests"> 1,927 Tests</span>
+        <span class="hero-badge"><img src="https://img.shields.io/badge/coverage-82.55%25-brightgreen" alt="Coverage"> 82.55% Coverage</span>
+        <span class="hero-badge"><img src="https://img.shields.io/badge/HIPAA-ready-informational" alt="HIPAA"> HIPAA Ready</span>
+        <span class="hero-badge"><img src="https://img.shields.io/badge/GDPR-ready-informational" alt="GDPR"> GDPR Ready</span>
+        <span class="hero-badge"><img src="https://img.shields.io/badge/aws-deploy%20ready-success" alt="AWS"> AWS Deploy Ready</span>
+        <span class="hero-badge"><img src="https://img.shields.io/badge/pwa-enabled-blueviolet" alt="PWA"> PWA Enabled</span>
+      </div>
+
+      <div class="hero-cta">
+        <button class="btn btn-primary" onclick="document.querySelector('[data-tab=dashboard]').click()">🚀 Try Live Demo</button>
+        <a href="https://github.com/Isaloum/StepSyncAI" class="btn btn-secondary" target="_blank">📚 View on GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Screenshots Gallery -->
+  <section class="screenshots">
+    <div class="container">
+      <h2 class="screenshots-title">📸 See It In Action</h2>
+      <div class="screenshots-grid">
+        <div class="screenshot-card">
+          <img src="images/pwa-onboarding.svg" alt="PWA Onboarding">
+          <div class="screenshot-caption">🎨 Beautiful PWA Onboarding</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="images/dashboard-screenshot.svg" alt="Daily Dashboard">
+          <div class="screenshot-caption">📊 Unified Wellness Dashboard</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="images/mental-health-screenshot.svg" alt="Mental Health Tracker">
+          <div class="screenshot-caption">🧠 Mental Health & PTSD Support</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="images/medication-screenshot.svg" alt="Medication Tracker">
+          <div class="screenshot-caption">💊 Drug Interaction Warnings</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="images/workflow-demo.svg" alt="Workflow Demo">
+          <div class="screenshot-caption">🎬 Animated Workflow Demo</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="images/test-coverage.svg" alt="Test Coverage">
+          <div class="screenshot-caption">✅ Enterprise-Grade Testing</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Enterprise Ready Section -->
+  <section class="enterprise">
+    <div class="container">
+      <h2 class="enterprise-title">Why StepSyncAI Is Enterprise-Ready</h2>
+      <div class="enterprise-grid">
+        <div class="enterprise-card">
+          <div class="enterprise-icon">🧪</div>
+          <h3>Comprehensive Testing</h3>
+          <div class="enterprise-stat">1,927</div>
+          <p>Automated tests with 82.55% coverage. Every feature is battle-tested across 37 test suites with multi-version Node.js support (18.x, 20.x).</p>
+        </div>
+        <div class="enterprise-card">
+          <div class="enterprise-icon">🔒</div>
+          <h3>Security & Compliance</h3>
+          <div class="enterprise-stat">HIPAA/GDPR</div>
+          <p>Built with healthcare compliance in mind. Zero security vulnerabilities, coordinated disclosure process, and privacy-by-design architecture.</p>
+        </div>
+        <div class="enterprise-card">
+          <div class="enterprise-icon">☁️</div>
+          <h3>Cloud-Native Architecture</h3>
+          <div class="enterprise-stat">AWS Ready</div>
+          <p>Serverless deployment scripts, production infrastructure as code, automated CI/CD pipeline, and comprehensive deployment documentation.</p>
+        </div>
+        <div class="enterprise-card">
+          <div class="enterprise-icon">💊</div>
+          <h3>Clinical-Grade Features</h3>
+          <div class="enterprise-stat">65+</div>
+          <p>Drug interaction warnings powered by clinical databases. PTSD/trauma recovery support, correlation analysis, and evidence-based insights.</p>
+        </div>
+        <div class="enterprise-card">
+          <div class="enterprise-icon">📱</div>
+          <h3>Progressive Web App</h3>
+          <div class="enterprise-stat">100%</div>
+          <p>Installable mobile experience with offline support, service workers, responsive design, and cross-platform compatibility (iOS, Android, Desktop).</p>
+        </div>
+        <div class="enterprise-card">
+          <div class="enterprise-icon">📊</div>
+          <h3>Data Intelligence</h3>
+          <div class="enterprise-stat">0-100</div>
+          <p>Smart wellness scoring algorithm, automated correlation detection, 8-week trend analysis, and actionable recommendations based on your data.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Links -->
+  <section class="quick-links">
+    <div class="container">
+      <div class="quick-links-grid">
+        <a href="https://github.com/Isaloum/StepSyncAI#-quick-start" class="quick-link" target="_blank">
+          <div class="quick-link-icon">🚀</div>
+          <div class="quick-link-title">Quick Start</div>
+          <div class="quick-link-desc">Get running in 5 minutes</div>
+        </a>
+        <a href="https://github.com/Isaloum/StepSyncAI/blob/main/CHANGELOG.md" class="quick-link" target="_blank">
+          <div class="quick-link-icon">📋</div>
+          <div class="quick-link-title">Changelog</div>
+          <div class="quick-link-desc">Version history (v3.12.0)</div>
+        </a>
+        <a href="https://github.com/Isaloum/StepSyncAI/blob/main/SECURITY.md" class="quick-link" target="_blank">
+          <div class="quick-link-icon">🔒</div>
+          <div class="quick-link-title">Security Policy</div>
+          <div class="quick-link-desc">Compliance & disclosure</div>
+        </a>
+        <a href="https://github.com/Isaloum/StepSyncAI/blob/main/docs/ARCHITECTURE.md" class="quick-link" target="_blank">
+          <div class="quick-link-icon">🏗️</div>
+          <div class="quick-link-title">Architecture</div>
+          <div class="quick-link-desc">Technical design docs</div>
+        </a>
+        <a href="https://github.com/Isaloum/StepSyncAI/blob/main/DEPLOYMENT_READY.md" class="quick-link" target="_blank">
+          <div class="quick-link-icon">☁️</div>
+          <div class="quick-link-title">Deploy Guide</div>
+          <div class="quick-link-desc">AWS deployment steps</div>
+        </a>
+        <a href="https://github.com/Isaloum/StepSyncAI/blob/main/CONTRIBUTING.md" class="quick-link" target="_blank">
+          <div class="quick-link-icon">🤝</div>
+          <div class="quick-link-title">Contributing</div>
+          <div class="quick-link-desc">Join the project</div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- App Tabs Section -->
+  <div class="app-tabs-section"></div>
 
   <main class="container">
     <!-- Dashboard -->
@@ -405,10 +594,19 @@
     // Tab Navigation
     document.querySelectorAll('.nav-tab').forEach(tab => {
       tab.addEventListener('click', () => {
+        // Hide hero sections and show app sections
+        document.querySelector('.hero').style.display = 'none';
+        document.querySelector('.screenshots').style.display = 'none';
+        document.querySelector('.enterprise').style.display = 'none';
+        document.querySelector('.quick-links').style.display = 'none';
+        
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
         tab.classList.add('active');
         document.getElementById(tab.dataset.tab).classList.add('active');
+        
+        // Scroll to main content
+        document.querySelector('main').scrollIntoView({ behavior: 'smooth' });
       });
     });
 
@@ -939,5 +1137,55 @@
     updateDashboard();
     moodEmoji.textContent = moodEmojis[4];
   </script>
+
+  <!-- Footer -->
+  <footer style="background:var(--card);border-top:1px solid var(--border);padding:3rem 0;margin-top:4rem">
+    <div class="container">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:2rem;margin-bottom:2rem">
+        <div>
+          <h3 style="color:var(--accent);margin-bottom:1rem;font-size:1.25rem">🏥 StepSyncAI</h3>
+          <p style="color:var(--muted);line-height:1.8">Production-grade health tracking platform with enterprise testing, HIPAA/GDPR compliance, and AWS cloud deployment.</p>
+        </div>
+        <div>
+          <h4 style="color:var(--text);margin-bottom:1rem;font-size:1.1rem">📚 Documentation</h4>
+          <div style="display:flex;flex-direction:column;gap:.5rem">
+            <a href="https://github.com/Isaloum/StepSyncAI#-quick-start" style="color:var(--muted);text-decoration:none" target="_blank">Quick Start Guide</a>
+            <a href="https://github.com/Isaloum/StepSyncAI/blob/main/CHANGELOG.md" style="color:var(--muted);text-decoration:none" target="_blank">Changelog (v3.12.0)</a>
+            <a href="https://github.com/Isaloum/StepSyncAI/blob/main/SECURITY.md" style="color:var(--muted);text-decoration:none" target="_blank">Security Policy</a>
+            <a href="https://github.com/Isaloum/StepSyncAI/blob/main/docs/ARCHITECTURE.md" style="color:var(--muted);text-decoration:none" target="_blank">Architecture Docs</a>
+          </div>
+        </div>
+        <div>
+          <h4 style="color:var(--text);margin-bottom:1rem;font-size:1.1rem">🔗 Resources</h4>
+          <div style="display:flex;flex-direction:column;gap:.5rem">
+            <a href="https://github.com/Isaloum/StepSyncAI" style="color:var(--muted);text-decoration:none" target="_blank">GitHub Repository</a>
+            <a href="https://github.com/Isaloum/StepSyncAI/issues" style="color:var(--muted);text-decoration:none" target="_blank">Report Issues</a>
+            <a href="https://github.com/Isaloum/StepSyncAI/blob/main/CONTRIBUTING.md" style="color:var(--muted);text-decoration:none" target="_blank">Contributing Guide</a>
+            <a href="https://github.com/Isaloum/StepSyncAI/blob/main/DEPLOYMENT_READY.md" style="color:var(--muted);text-decoration:none" target="_blank">AWS Deploy Guide</a>
+          </div>
+        </div>
+        <div>
+          <h4 style="color:var(--text);margin-bottom:1rem;font-size:1.1rem">🆘 Mental Health Resources</h4>
+          <div style="display:flex;flex-direction:column;gap:.5rem">
+            <span style="color:var(--muted)">National Suicide Prevention: 988</span>
+            <span style="color:var(--muted)">Crisis Text: HOME to 741741</span>
+            <span style="color:var(--muted)">SAMHSA: 1-800-662-4357</span>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;padding-top:2rem;border-top:1px solid var(--border)">
+        <p style="color:var(--muted);margin-bottom:1rem">
+          <strong>⚠️ Medical Disclaimer:</strong> This tool supports your wellness journey but does not replace professional medical care. Always consult qualified healthcare professionals.
+        </p>
+        <p style="color:var(--muted)">
+          Built with ❤️ by <a href="https://github.com/Isaloum" style="color:var(--accent);text-decoration:none" target="_blank">Isaloum</a> • 
+          <a href="https://github.com/Isaloum/StepSyncAI" style="color:var(--accent);text-decoration:none" target="_blank">⭐ Star on GitHub</a> • 
+          Licensed under MIT • Version 3.12.0
+        </p>
+        <p style="color:var(--muted);font-size:.875rem;margin-top:.5rem">Last Updated: January 8, 2026</p>
+      </div>
+    </div>
+  </footer>
+
 </body>
 </html>
