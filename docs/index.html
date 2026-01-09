@@ -185,6 +185,10 @@
     .loading{opacity:.6;pointer-events:none}
     .fade-in{animation:fadeIn .3s ease-in}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    
+    /* Service Worker Update Notification Animations */
+    @keyframes slideIn{from{transform:translateX(400px);opacity:0}to{transform:translateX(0);opacity:1}}
+    @keyframes slideOut{from{transform:translateX(0);opacity:1}to{transform:translateX(400px);opacity:0}}
 
     /* Accessibility - High Contrast Focus */
     button:focus,input:focus,select:focus,textarea:focus,.nav-tab:focus,.action-btn:focus{outline:2px solid var(--accent);outline-offset:2px}
@@ -822,13 +826,95 @@
       installBtn.classList.remove('show');
     });
 
-    // Register Service Worker
+    // Register Service Worker with update notification
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('service-worker.js')
-          .then(reg => console.log('SW registered'))
-          .catch(err => console.log('SW registration failed'));
+          .then(reg => {
+            console.log('[App] Service Worker registered');
+            
+            // Check for updates every 60 seconds
+            setInterval(() => {
+              reg.update();
+            }, 60000);
+            
+            // Listen for updates from the service worker
+            navigator.serviceWorker.addEventListener('message', (event) => {
+              if (event.data && event.data.type === 'SW_UPDATED') {
+                console.log('[App] New version available:', event.data.version);
+                showUpdateNotification();
+              }
+            });
+          })
+          .catch(err => console.log('[App] SW registration failed:', err));
       });
+    }
+
+    // Show update notification when new version is available
+    function showUpdateNotification() {
+      // Check if notification already exists
+      if (document.getElementById('sw-update-notification')) return;
+      
+      const notification = document.createElement('div');
+      notification.id = 'sw-update-notification';
+      notification.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: var(--primary);
+        color: white;
+        padding: 16px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        animation: slideIn 0.3s ease-out;
+      `;
+      
+      notification.innerHTML = `
+        <div style="flex: 1;">
+          <strong>✨ Update Available</strong>
+          <div style="font-size: 14px; opacity: 0.9; margin-top: 4px;">
+            A new version of StepSyncAI is ready!
+          </div>
+        </div>
+        <button onclick="location.reload()" style="
+          background: white;
+          color: var(--primary);
+          border: none;
+          padding: 8px 16px;
+          border-radius: 4px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: transform 0.2s;
+        " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+          Reload
+        </button>
+        <button onclick="this.parentElement.remove()" style="
+          background: transparent;
+          color: white;
+          border: 1px solid rgba(255,255,255,0.3);
+          padding: 8px 12px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 18px;
+          line-height: 1;
+        " title="Dismiss">
+          ×
+        </button>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      // Auto-dismiss after 30 seconds if user doesn't interact
+      setTimeout(() => {
+        if (notification.parentElement) {
+          notification.style.animation = 'slideOut 0.3s ease-out';
+          setTimeout(() => notification.remove(), 300);
+        }
+      }, 30000);
     }
 
     // ============================================
