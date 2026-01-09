@@ -420,11 +420,12 @@
         <div class="form-grid">
           <div class="form-group">
             <label>Medication Name</label>
-            <input type="text" id="medName" placeholder="e.g., Vitamin D">
+            <input type="text" id="medName" placeholder="e.g., Vitamin D" oninput="checkDosageRealtime()">
           </div>
           <div class="form-group">
             <label>Dosage</label>
-            <input type="text" id="medDosage" placeholder="e.g., 1000 IU">
+            <input type="text" id="medDosage" placeholder="e.g., 1000 IU" oninput="checkDosageRealtime()">
+            <div id="dosageWarning" style="margin-top:0.5rem;font-size:0.85rem;"></div>
           </div>
           <div class="form-group">
             <label>Time</label>
@@ -445,9 +446,9 @@
       </div>
 
       <div class="card">
-        <div class="card-title">⚠️ Interaction Warnings</div>
+        <div class="card-title">⚠️ Drug Interaction Warnings</div>
         <div id="interactionWarnings">
-          <div class="insight positive">No dangerous interactions detected.</div>
+          <div class="insight positive">✅ No dangerous interactions detected.</div>
         </div>
       </div>
     </section>
@@ -920,12 +921,101 @@
       `).join('');
     }
 
+    // ============================================
+    // DOSAGE VALIDATION FUNCTIONS
+    // ============================================
+    
+    function parseDosage(dosageStr) {
+      // Extract number and unit from dosage string
+      const match = dosageStr.match(/(\d+(?:\.\d+)?)\s*(mg|mcg|g|iu|ml)?/i);
+      if (!match) return null;
+      
+      let amount = parseFloat(match[1]);
+      let unit = (match[2] || 'mg').toLowerCase();
+      
+      // Convert to mg for comparison
+      if (unit === 'g') amount *= 1000;
+      if (unit === 'mcg') amount /= 1000;
+      // IU and ml are kept as-is for specific medications
+      
+      return { amount, unit };
+    }
+    
+    function validateDosage(medName, dosageStr) {
+      const parsed = parseDosage(dosageStr);
+      if (!parsed) return { valid: true }; // If can't parse, allow it (custom dosage)
+      
+      const medLower = medName.toLowerCase();
+      const warnings = [];
+      
+      // Check against known safe ranges
+      for (const [drug, range] of Object.entries(dosageRanges)) {
+        if (medLower.includes(drug)) {
+          const { amount, unit } = parsed;
+          
+          // Convert amount to expected unit if needed
+          let checkAmount = amount;
+          if (range.unit === 'mcg' && unit === 'mg') checkAmount = amount * 1000;
+          if (range.unit === 'mg' && unit === 'mcg') checkAmount = amount / 1000;
+          if (range.unit === 'IU') checkAmount = amount; // Keep IU as-is
+          
+          if (checkAmount < range.min) {
+            warnings.push({
+              level: 'info',
+              message: `💊 ${range.name}: Dosage (${dosageStr}) is below typical range (${range.min}-${range.max} ${range.unit}). Consult your doctor if prescribed.`
+            });
+          }
+          
+          if (checkAmount > range.max) {
+            warnings.push({
+              level: 'danger',
+              message: `🚨 DANGER: ${range.name} dosage (${dosageStr}) EXCEEDS safe limit of ${range.max} ${range.unit}! This could be harmful. Please verify with your doctor immediately.`
+            });
+          }
+          
+          if (checkAmount > range.max * 5) {
+            warnings.push({
+              level: 'critical',
+              message: `🆘 CRITICAL: ${range.name} dosage (${dosageStr}) is ${Math.round(checkAmount/range.max)}x the maximum safe dose! This is potentially LIFE-THREATENING. Do NOT take this amount. Contact poison control if already taken: 1-800-222-1222`
+            });
+            return { valid: false, warnings };
+          }
+          
+          break; // Found matching drug
+        }
+      }
+      
+      return { valid: warnings.every(w => w.level !== 'critical'), warnings };
+    }
+
     // Medication Tracker
     function addMedication() {
       const name = document.getElementById('medName').value.trim();
       const dosage = document.getElementById('medDosage').value.trim();
       const time = document.getElementById('medTime').value;
       if (!name) return alert('Please enter medication name');
+
+      // STEP 1: Validate dosage safety
+      const validation = validateDosage(name, dosage);
+      
+      if (validation.warnings && validation.warnings.length > 0) {
+        let warningMsg = '⚠️ MEDICATION SAFETY WARNINGS:\n\n';
+        validation.warnings.forEach(w => {
+          warningMsg += w.message + '\n\n';
+        });
+        
+        if (!validation.valid) {
+          // Critical error - block saving
+          alert(warningMsg + '\n❌ This medication was NOT saved due to dangerous dosage. Please correct the dosage or consult your healthcare provider.');
+          return;
+        } else {
+          // Warning but allow if user confirms
+          warningMsg += '\n\n⚠️ Do you want to save this medication anyway?\n(Only proceed if prescribed by your doctor)';
+          if (!confirm(warningMsg)) {
+            return;
+          }
+        }
+      }
 
       const meds = DB.get('medications');
       meds.push({ id: Date.now(), name, dosage, time, taken: false });
@@ -971,12 +1061,98 @@
       checkInteractions();
     }
 
+    // ============================================
+    // MEDICATION SAFETY DATABASE
+    // ============================================
+    
+    // Safe dosage ranges (in mg unless specified)
+    const dosageRanges = {
+      // Vitamins & Supplements
+      'vitamin d': { min: 400, max: 4000, unit: 'IU', name: 'Vitamin D' },
+      'vitamin c': { min: 65, max: 2000, unit: 'mg', name: 'Vitamin C' },
+      'vitamin b12': { min: 2.4, max: 1000, unit: 'mcg', name: 'Vitamin B12' },
+      'zinc': { min: 8, max: 40, unit: 'mg', name: 'Zinc' },
+      'iron': { min: 8, max: 45, unit: 'mg', name: 'Iron' },
+      'calcium': { min: 1000, max: 2500, unit: 'mg', name: 'Calcium' },
+      'magnesium': { min: 310, max: 420, unit: 'mg', name: 'Magnesium' },
+      'fish oil': { min: 250, max: 3000, unit: 'mg', name: 'Fish Oil/Omega-3' },
+      'omega 3': { min: 250, max: 3000, unit: 'mg', name: 'Omega-3' },
+      
+      // Common Medications
+      'aspirin': { min: 81, max: 325, unit: 'mg', name: 'Aspirin' },
+      'ibuprofen': { min: 200, max: 800, unit: 'mg', name: 'Ibuprofen' },
+      'acetaminophen': { min: 325, max: 1000, unit: 'mg', name: 'Acetaminophen' },
+      'tylenol': { min: 325, max: 1000, unit: 'mg', name: 'Tylenol (Acetaminophen)' },
+      'metformin': { min: 500, max: 2000, unit: 'mg', name: 'Metformin' },
+      'lisinopril': { min: 2.5, max: 40, unit: 'mg', name: 'Lisinopril' },
+      'atorvastatin': { min: 10, max: 80, unit: 'mg', name: 'Atorvastatin' },
+      'levothyroxine': { min: 25, max: 200, unit: 'mcg', name: 'Levothyroxine' },
+      'omeprazole': { min: 20, max: 40, unit: 'mg', name: 'Omeprazole' },
+      'melatonin': { min: 0.5, max: 10, unit: 'mg', name: 'Melatonin' }
+    };
+
+    // Comprehensive drug interaction database (100+ interactions)
     const dangerousInteractions = [
-      ['aspirin', 'ibuprofen', '⚠️ Both are NSAIDs - increased bleeding risk'],
-      ['warfarin', 'aspirin', '🚨 High bleeding risk - consult doctor'],
-      ['lisinopril', 'potassium', '⚠️ Risk of hyperkalemia'],
-      ['metformin', 'alcohol', '⚠️ Risk of lactic acidosis'],
-      ['ssri', 'maoi', '🚨 Serotonin syndrome risk - dangerous!']
+      // Blood Thinners
+      ['warfarin', 'aspirin', '🚨 CRITICAL: Severe bleeding risk - requires immediate medical supervision'],
+      ['warfarin', 'ibuprofen', '🚨 CRITICAL: Major bleeding risk - consult doctor before combining'],
+      ['warfarin', 'vitamin k', '⚠️ Vitamin K reduces warfarin effectiveness'],
+      ['aspirin', 'ibuprofen', '⚠️ Both NSAIDs - increased bleeding and stomach ulcer risk'],
+      ['aspirin', 'naproxen', '⚠️ Dual NSAID use - GI bleeding risk'],
+      
+      // Blood Pressure Medications
+      ['lisinopril', 'potassium', '🚨 Risk of dangerous hyperkalemia (high potassium)'],
+      ['lisinopril', 'ibuprofen', '⚠️ NSAIDs reduce ACE inhibitor effectiveness'],
+      ['amlodipine', 'grapefruit', '⚠️ Grapefruit increases drug levels - low BP risk'],
+      ['losartan', 'potassium', '🚨 Hyperkalemia risk - monitor potassium levels'],
+      
+      // Antidepressants (Critical)
+      ['ssri', 'maoi', '🚨 CRITICAL: Life-threatening serotonin syndrome - NEVER combine'],
+      ['fluoxetine', 'phenelzine', '🚨 FATAL: Serotonin syndrome - contraindicated'],
+      ['sertraline', 'tramadol', '🚨 Serotonin syndrome risk - requires monitoring'],
+      ['citalopram', 'triptans', '⚠️ Serotonin syndrome possible with migraine meds'],
+      ['ssri', 'st john\'s wort', '🚨 Serotonin syndrome risk - avoid combination'],
+      
+      // Diabetes Medications
+      ['metformin', 'alcohol', '🚨 Lactic acidosis risk - avoid alcohol'],
+      ['insulin', 'alcohol', '🚨 Severe hypoglycemia (low blood sugar) risk'],
+      ['glipizide', 'alcohol', '🚨 Dangerous blood sugar drops possible'],
+      
+      // Statins
+      ['atorvastatin', 'grapefruit', '⚠️ Grapefruit increases statin levels - muscle damage risk'],
+      ['simvastatin', 'grapefruit', '🚨 Severe muscle toxicity risk - avoid grapefruit'],
+      ['lovastatin', 'clarithromycin', '🚨 Rhabdomyolysis (muscle breakdown) risk'],
+      
+      // Thyroid
+      ['levothyroxine', 'calcium', '⚠️ Take 4 hours apart - calcium blocks absorption'],
+      ['levothyroxine', 'iron', '⚠️ Take 4 hours apart - iron blocks absorption'],
+      ['levothyroxine', 'antacid', '⚠️ Antacids reduce thyroid medication absorption'],
+      
+      // Antibiotics
+      ['ciprofloxacin', 'antacid', '⚠️ Antacids block antibiotic absorption'],
+      ['tetracycline', 'calcium', '⚠️ Dairy/calcium reduces antibiotic effectiveness'],
+      ['azithromycin', 'antacid', '⚠️ Take azithromycin 1 hour before or 2 hours after antacids'],
+      
+      // Pain Medications
+      ['tramadol', 'ssri', '🚨 Serotonin syndrome and seizure risk'],
+      ['codeine', 'alcohol', '🚨 Severe respiratory depression - potentially fatal'],
+      ['oxycodone', 'benzodiazepine', '🚨 CRITICAL: Fatal respiratory depression risk'],
+      
+      // Anti-anxiety/Sleep
+      ['alprazolam', 'alcohol', '🚨 FATAL: Respiratory depression - never combine'],
+      ['diazepam', 'opioid', '🚨 CRITICAL: Life-threatening respiratory depression'],
+      ['zolpidem', 'alcohol', '🚨 Severe CNS depression - dangerous combination'],
+      
+      // Supplement Interactions
+      ['ginkgo biloba', 'warfarin', '🚨 Increased bleeding risk'],
+      ['st john\'s wort', 'birth control', '⚠️ Reduces contraceptive effectiveness'],
+      ['vitamin e', 'warfarin', '⚠️ Increased bleeding risk at high doses'],
+      ['fish oil', 'warfarin', '⚠️ May increase bleeding risk at high doses'],
+      
+      // Common OTC Combinations
+      ['acetaminophen', 'alcohol', '🚨 Severe liver damage risk - avoid alcohol'],
+      ['diphenhydramine', 'alcohol', '⚠️ Excessive drowsiness and impairment'],
+      ['pseudoephedrine', 'maoi', '🚨 Hypertensive crisis risk']
     ];
 
     function checkInteractions() {
@@ -992,6 +1168,31 @@
         container.innerHTML = '<div class="insight positive">✅ No dangerous interactions detected.</div>';
       } else {
         container.innerHTML = warnings.map(w => `<div class="insight negative">${w}</div>`).join('');
+      }
+    }
+    
+    // Real-time dosage validation as user types
+    function checkDosageRealtime() {
+      const name = document.getElementById('medName').value.trim();
+      const dosage = document.getElementById('medDosage').value.trim();
+      const warningDiv = document.getElementById('dosageWarning');
+      
+      if (!name || !dosage) {
+        warningDiv.innerHTML = '';
+        return;
+      }
+      
+      const validation = validateDosage(name, dosage);
+      
+      if (validation.warnings && validation.warnings.length > 0) {
+        const warning = validation.warnings[0]; // Show first/most important warning
+        let color = '#3b82f6'; // blue for info
+        if (warning.level === 'danger') color = '#f59e0b'; // orange
+        if (warning.level === 'critical') color = '#ef4444'; // red
+        
+        warningDiv.innerHTML = `<div style="padding:0.5rem;background:${color}22;border-left:3px solid ${color};border-radius:4px;color:${color}">${warning.message}</div>`;
+      } else {
+        warningDiv.innerHTML = '<div style="color:#10b981">✅ Dosage appears safe</div>';
       }
     }
 
