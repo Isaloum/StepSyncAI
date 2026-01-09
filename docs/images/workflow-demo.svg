@@ -1,0 +1,97 @@
+<svg width="600" height="400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e293b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f172a;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Animations -->
+    <style>
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+      @keyframes slideIn {
+        from { transform: translateX(-100px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .pulse { animation: pulse 2s ease-in-out infinite; }
+      .slide { animation: slideIn 1s ease-out; }
+      .fade { animation: fadeIn 1.5s ease-in; }
+    </style>
+  </defs>
+  
+  <rect width="600" height="400" fill="url(#bgGrad)" rx="12"/>
+  
+  <!-- Title -->
+  <text x="300" y="40" font-family="Arial" font-size="20" fill="#3b82f6" font-weight="bold" text-anchor="middle" class="fade">
+    🏥 StepSyncAI Workflow Demo
+  </text>
+  
+  <!-- Step 1: Log Mood -->
+  <g class="slide">
+    <rect x="20" y="70" width="150" height="80" fill="#1e293b" rx="8" stroke="#3b82f6" stroke-width="2"/>
+    <text x="95" y="95" font-family="Arial" font-size="14" fill="#3b82f6" text-anchor="middle" font-weight="bold">STEP 1</text>
+    <text x="95" y="115" font-family="Arial" font-size="24" text-anchor="middle">😊</text>
+    <text x="95" y="140" font-family="Arial" font-size="12" fill="#f1f5f9" text-anchor="middle">Log Mood</text>
+  </g>
+  
+  <!-- Arrow 1 -->
+  <path d="M 180 110 L 210 110" stroke="#3b82f6" stroke-width="2" fill="none" class="fade"/>
+  <path d="M 205 105 L 210 110 L 205 115" stroke="#3b82f6" stroke-width="2" fill="none" class="fade"/>
+  
+  <!-- Step 2: Track Medication -->
+  <g class="slide" style="animation-delay: 0.3s">
+    <rect x="220" y="70" width="150" height="80" fill="#1e293b" rx="8" stroke="#10b981" stroke-width="2"/>
+    <text x="295" y="95" font-family="Arial" font-size="14" fill="#10b981" text-anchor="middle" font-weight="bold">STEP 2</text>
+    <text x="295" y="115" font-family="Arial" font-size="24" text-anchor="middle">💊</text>
+    <text x="295" y="140" font-family="Arial" font-size="12" fill="#f1f5f9" text-anchor="middle">Take Meds</text>
+  </g>
+  
+  <!-- Arrow 2 -->
+  <path d="M 380 110 L 410 110" stroke="#10b981" stroke-width="2" fill="none" class="fade" style="animation-delay: 0.3s"/>
+  <path d="M 405 105 L 410 110 L 405 115" stroke="#10b981" stroke-width="2" fill="none" class="fade" style="animation-delay: 0.3s"/>
+  
+  <!-- Step 3: Log Sleep -->
+  <g class="slide" style="animation-delay: 0.6s">
+    <rect x="420" y="70" width="150" height="80" fill="#1e293b" rx="8" stroke="#f59e0b" stroke-width="2"/>
+    <text x="495" y="95" font-family="Arial" font-size="14" fill="#f59e0b" text-anchor="middle" font-weight="bold">STEP 3</text>
+    <text x="495" y="115" font-family="Arial" font-size="24" text-anchor="middle">😴</text>
+    <text x="495" y="140" font-family="Arial" font-size="12" fill="#f1f5f9" text-anchor="middle">Log Sleep</text>
+  </g>
+  
+  <!-- Downward Arrow -->
+  <path d="M 300 160 L 300 200" stroke="#94a3b8" stroke-width="3" fill="none" class="fade" style="animation-delay: 0.9s"/>
+  <path d="M 295 195 L 300 200 L 305 195" stroke="#94a3b8" stroke-width="3" fill="none" class="fade" style="animation-delay: 0.9s"/>
+  
+  <!-- Dashboard Result -->
+  <g class="fade" style="animation-delay: 1.2s">
+    <rect x="100" y="220" width="400" height="140" fill="#0f172a" rx="12" stroke="#3b82f6" stroke-width="2"/>
+    
+    <text x="300" y="250" font-family="Arial" font-size="16" fill="#3b82f6" text-anchor="middle" font-weight="bold">
+      📊 Daily Wellness Dashboard
+    </text>
+    
+    <!-- Wellness Score -->
+    <circle cx="300" cy="305" r="35" fill="none" stroke="#10b981" stroke-width="6" class="pulse"/>
+    <text x="300" y="315" font-family="Arial" font-size="28" fill="#10b981" font-weight="bold" text-anchor="middle">85</text>
+    
+    <!-- Mini Stats -->
+    <rect x="120" y="285" width="70" height="40" fill="#1e293b" rx="6"/>
+    <text x="155" y="310" font-family="Arial" font-size="18" fill="#3b82f6" text-anchor="middle" font-weight="bold">8/10</text>
+    
+    <rect x="410" y="285" width="70" height="40" fill="#1e293b" rx="6"/>
+    <text x="445" y="310" font-family="Arial" font-size="18" fill="#10b981" text-anchor="middle" font-weight="bold">100%</text>
+    
+    <!-- Insight -->
+    <rect x="120" y="340" width="360" height="10" fill="#334155" rx="5"/>
+    <rect x="120" y="340" width="306" height="10" fill="#10b981" rx="5"/>
+    <text x="300" y="365" font-family="Arial" font-size="11" fill="#94a3b8" text-anchor="middle">
+      ✅ Great day! All goals met. Keep up the excellent work!
+    </text>
+  </g>
+</svg>
