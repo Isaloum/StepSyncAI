@@ -927,18 +927,16 @@
     
     function parseDosage(dosageStr) {
       // Extract number and unit from dosage string
-      const match = dosageStr.match(/(\d+(?:\.\d+)?)\s*(mg|mcg|g|iu|ml)?/i);
+      const match = dosageStr.match(/(\d+(?:\.\d+)?)\s*(mg|mcg|µg|g|iu|ml)?/i);
       if (!match) return null;
       
       let amount = parseFloat(match[1]);
       let unit = (match[2] || 'mg').toLowerCase();
       
-      // Convert to mg for comparison
-      if (unit === 'g') amount *= 1000;
-      if (unit === 'mcg') amount /= 1000;
-      // IU and ml are kept as-is for specific medications
+      // Normalize unit names
+      if (unit === 'µg') unit = 'mcg';
       
-      return { amount, unit };
+      return { amount, unit, originalUnit: unit };
     }
     
     function validateDosage(medName, dosageStr) {
@@ -947,17 +945,46 @@
       
       const medLower = medName.toLowerCase();
       const warnings = [];
+      let foundMatch = false;
       
       // Check against known safe ranges
       for (const [drug, range] of Object.entries(dosageRanges)) {
         if (medLower.includes(drug)) {
-          const { amount, unit } = parsed;
+          foundMatch = true;
+          let { amount, unit } = parsed;
           
-          // Convert amount to expected unit if needed
+          // Convert user's amount to the expected unit for this drug
           let checkAmount = amount;
-          if (range.unit === 'mcg' && unit === 'mg') checkAmount = amount * 1000;
-          if (range.unit === 'mg' && unit === 'mcg') checkAmount = amount / 1000;
-          if (range.unit === 'IU') checkAmount = amount; // Keep IU as-is
+          
+          // User entered in mg, drug expects mcg
+          if (unit === 'mg' && range.unit === 'mcg') {
+            checkAmount = amount * 1000; // Convert mg to mcg
+          }
+          // User entered in mcg, drug expects mg  
+          else if (unit === 'mcg' && range.unit === 'mg') {
+            checkAmount = amount / 1000; // Convert mcg to mg
+          }
+          // User entered in g, drug expects mg
+          else if (unit === 'g' && range.unit === 'mg') {
+            checkAmount = amount * 1000; // Convert g to mg
+          }
+          // User entered in mg, drug expects IU (can't convert, compare as-is)
+          else if (unit === 'mg' && range.unit === 'IU') {
+            // Can't reliably convert, use warning
+            warnings.push({
+              level: 'info',
+              message: `⚠️ ${range.name} is typically measured in ${range.unit}, not ${unit}. Please verify dosage with your doctor.`
+            });
+            break;
+          }
+          // User entered in IU, drug expects mg (can't convert)
+          else if (unit === 'iu' && range.unit === 'mg') {
+            warnings.push({
+              level: 'info',
+              message: `⚠️ ${range.name} is typically measured in ${range.unit}, not IU. Please verify dosage with your doctor.`
+            });
+            break;
+          }
           
           if (checkAmount < range.min) {
             warnings.push({
@@ -966,7 +993,7 @@
             });
           }
           
-          if (checkAmount > range.max) {
+          if (checkAmount > range.max && checkAmount <= range.max * 5) {
             warnings.push({
               level: 'danger',
               message: `🚨 DANGER: ${range.name} dosage (${dosageStr}) EXCEEDS safe limit of ${range.max} ${range.unit}! This could be harmful. Please verify with your doctor immediately.`
@@ -985,7 +1012,7 @@
         }
       }
       
-      return { valid: warnings.every(w => w.level !== 'critical'), warnings };
+      return { valid: warnings.every(w => w.level !== 'critical'), warnings, foundMatch };
     }
 
     // Medication Tracker
