@@ -12,6 +12,7 @@ StepSyncAI is a comprehensive, privacy-first Progressive Web App (PWA) that help
 - **[Features Overview](#features)** - What StepSyncAI can do
 - **[Architecture](Architecture)** - Technical details
 - **[Security & Privacy](Security-and-Privacy)** - Your data is safe
+- **[PWA Updates](PWA-Updates)** - How app updates work (new!)
 - **[FAQ](FAQ)** - Common questions
 - **[Contributing](Contributing)** - Help improve StepSyncAI
 
