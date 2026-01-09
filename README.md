@@ -14,9 +14,11 @@
 
 **A production-grade health tracking platform with 6 integrated applications, 1,927 automated tests, and comprehensive CI/CD pipeline.**
 
-🎯 **[Try it now → https://isaloum.github.io/StepSyncAI](https://isaloum.github.io/StepSyncAI)
+🎯 **[Try it now → https://isaloum.github.io/StepSyncAI](https://isaloum.github.io/StepSyncAI)**
 
-[Architecture](#-architecture) • [Features](#-features) • [Tech Stack](#-tech-stack)
+📚 **[Documentation](https://github.com/Isaloum/StepSyncAI/wiki)** • [Quick Start](https://github.com/Isaloum/StepSyncAI/wiki/Quick-Start) • [Architecture](https://github.com/Isaloum/StepSyncAI/wiki/Architecture) • [Privacy & Security](https://github.com/Isaloum/StepSyncAI/wiki/Security-and-Privacy) • [FAQ](https://github.com/Isaloum/StepSyncAI/wiki/FAQ)
+
+[Features](#-features) • [Tech Stack](#-tech-stack)
 
 </div>
 
