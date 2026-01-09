@@ -643,20 +643,32 @@
     // ============================================
     function showOnboarding() {
       const hasSeenOnboarding = DB.getOne('hasSeenOnboarding');
+      console.log('Onboarding check:', hasSeenOnboarding);
       if (!hasSeenOnboarding) {
         document.getElementById('onboardingOverlay').style.display = 'flex';
-        document.getElementById('userName').focus();
+        const userInput = document.getElementById('userName');
+        userInput.focus();
+        
+        // Add Enter key support
+        userInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            completeOnboarding();
+          }
+        });
       }
     }
 
     function completeOnboarding() {
       const userName = document.getElementById('userName').value.trim();
+      console.log('Completing onboarding with name:', userName);
       if (userName) {
         DB.setOne('userName', userName);
       }
       DB.setOne('hasSeenOnboarding', true);
+      console.log('Onboarding completed, hiding overlay');
       document.getElementById('onboardingOverlay').style.display = 'none';
       updateProfile();
+      updateDashboard();
     }
 
     // ============================================
