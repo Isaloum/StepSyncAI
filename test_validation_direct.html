@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Direct Validation Test</title></head>
+<body style="background:#0f172a;color:#f1f5f9;font-family:monospace;padding:20px">
+<h1>Direct Validation Test</h1>
+<button onclick="testValidation()">Run Test</button>
+<pre id="output"></pre>
+<script>
+// Copy the exact validation functions from your file
+function parseDosage(dosageStr) {
+  const match = dosageStr.match(/(\d+(?:\.\d+)?)\s*(mg|mcg|µg|g|iu|ml)?/i);
+  if (!match) return null;
+  let amount = parseFloat(match[1]);
+  let unit = (match[2] || 'mg').toLowerCase();
+  if (unit === 'µg') unit = 'mcg';
+  return { amount, unit, originalUnit: unit };
+}
+
+function testValidation() {
+  const output = document.getElementById('output');
+  let results = 'TEST RESULTS:\n\n';
+  
+  // Test cases
+  const tests = [
+    { name: 'Zinc', dose: '12222222' },
+    { name: 'A', dose: '2222222' },
+    { name: 'Tylanol', dose: '299999999999' }
+  ];
+  
+  tests.forEach(test => {
+    const parsed = parseDosage(test.dose);
+    results += `Medication: ${test.name}\n`;
+    results += `Dosage: ${test.dose}\n`;
+    results += `Parsed: ${JSON.stringify(parsed)}\n`;
+    
+    if (parsed) {
+      const amountInMg = parsed.amount;
+      results += `Amount in mg: ${amountInMg}\n`;
+      results += `> 50000? ${amountInMg > 50000}\n`;
+      results += `> 10000? ${amountInMg > 10000}\n`;
+      
+      if (amountInMg > 50000) {
+        results += '🚨 CRITICAL - SHOULD BLOCK!\n';
+      } else if (amountInMg > 10000) {
+        results += '⚠️ DANGER - SHOULD WARN!\n';
+      } else {
+        results += '✅ Safe\n';
+      }
+    }
+    results += '\n---\n\n';
+  });
+  
+  output.textContent = results;
+}
+</script>
+</body></html>

@@ -17,25 +17,23 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="StepSyncAI">
   <style>
-    /* Dark mode (default) - Professional minimal palette */
-    :root{--bg:#0a0e1a;--card:#14171f;--card-hover:#1a1d27;--accent:#6366f1;--accent-2:#818cf8;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--text:#f8fafc;--muted:#94a3b8;--border:#1f2937;--radius:16px;--shadow:0 4px 6px -1px rgba(0,0,0,.3),0 2px 4px -1px rgba(0,0,0,.2)}
-    /* Light mode - Clean professional */
-    [data-theme="light"]{--bg:#ffffff;--card:#f9fafb;--card-hover:#f3f4f6;--accent:#4f46e5;--accent-2:#6366f1;--success:#059669;--warning:#d97706;--danger:#dc2626;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--shadow:0 1px 3px 0 rgba(0,0,0,.1),0 1px 2px 0 rgba(0,0,0,.06)}
+    /* Dark mode (default) */
+    :root{--bg:#0f172a;--card:#1e293b;--card-hover:#273549;--accent:#3b82f6;--accent-2:#60a5fa;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--text:#f1f5f9;--muted:#94a3b8;--border:#334155;--radius:12px}
+    /* Light mode */
+    [data-theme="light"]{--bg:#f8fafc;--card:#ffffff;--card-hover:#f1f5f9;--accent:#2563eb;--accent-2:#3b82f6;--success:#059669;--warning:#d97706;--danger:#dc2626;--text:#0f172a;--muted:#64748b;--border:#e2e8f0}
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Roboto','Helvetica Neue',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased}
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
     .container{max-width:1200px;margin:0 auto;padding:1rem}
 
-    /* Header - Professional minimal */
-    header{background:var(--card);border-bottom:1px solid var(--border);padding:1.25rem 0;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);background:rgba(20,23,31,.85)}
-    [data-theme="light"] header{background:rgba(249,250,251,.95)}
+    /* Header */
+    header{background:var(--card);border-bottom:1px solid var(--border);padding:1rem 0;position:sticky;top:0;z-index:100}
     .header-content{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
-    .logo{display:flex;align-items:center;gap:.65rem;font-size:1.35rem;font-weight:700;color:var(--text);text-decoration:none;letter-spacing:-.02em}
-    .logo span{color:var(--accent)}
-    .badge{background:l- Modern minimal */
-    .nav-tabs{display:flex;gap:.35rem;flex-wrap:wrap;background:var(--bg);padding:.4rem;border-radius:12px;border:1px solid var(--border)}
-    .nav-tab{background:transparent;border:none;color:var(--muted);padding:.65rem 1.1rem;border-radius:10px;cursor:pointer;font-weight:600;transition:all .25s ease;font-size:.875rem;position:relative}
-    .nav-tab:hover{color:var(--text);background:var(--card-hover)}
-    .nav-tab.active{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(99,102,241,.3ted);padding:.5rem 1rem;border-radius:8px;cursor:pointer;font-weight:600;transition:all .2s;font-size:.875rem}
+    .logo{display:flex;align-items:center;gap:.75rem;font-size:1.5rem;font-weight:800;color:var(--accent);text-decoration:none}
+    .badge{background:var(--success);color:#fff;padding:.25rem .75rem;border-radius:999px;font-size:.75rem;font-weight:600}
+
+    /* Navigation Tabs */
+    .nav-tabs{display:flex;gap:.5rem;flex-wrap:wrap}
+    .nav-tab{background:transparent;border:1px solid var(--border);color:var(--muted);padding:.5rem 1rem;border-radius:8px;cursor:pointer;font-weight:600;transition:all .2s;font-size:.875rem}
     .nav-tab:hover{border-color:var(--accent);color:var(--accent)}
     .nav-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
     .nav-tab .icon{margin-right:.5rem}
@@ -45,30 +43,24 @@
     .app-section{display:none}
     .app-section.active{display:block}
 
-    /* Cards - Clean professional */
-    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.75rem;margin-bottom:1.5rem;box-shadow:var(--shadow);transition:all .3s ease}
-    .card:hover{border-color:var(--accent);box-shadow:0 8px 16px -4px rgba(99,102,241,.15)}
-    .card-title{font-size:1.1rem;font-weight:700;margin-bottom:1.25rem;display:flex;align-items:center;gap:.65rem;color:var(--text);letter-spacing:-.01em}
-- Professional inputs */
-    .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.1rem}
-    .form-group{margin-bottom:1.1rem}
-    .form-group label{display:block;font-weight:600;margin-bottom:.6rem;color:var(--muted);font-size:.82rem;letter-spacing:.01em;text-transform:uppercase}
-    input,select,textarea{width:100%;padding:.85rem 1rem;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:.95rem;transition:all .2s ease;font-family:inherit}
-    input:hover,select:hover,textarea:hover{border-color:var(--muted)}
-    input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.1;border-radius:8px;background:var(--bg);color:var(--text);font-size:1rem}
+    /* Cards */
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem}
+    .card-title{font-size:1.25rem;font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+
+    /* Forms */
+    .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem}
+    .form-group{margin-bottom:1rem}
+    .form-group label{display:block;font-weight:600;margin-bottom:.5rem;color:var(--muted);font-size:.875rem}
+    input,select,textarea{width:100%;padding:.75rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:1rem}
     input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
-    input[type=- Modern professional */
-    .btn{padding:.85rem 1.75rem;border-radius:10px;font-weight:700;cursor:pointer;transition:all .25s ease;border:none;font-size:.9rem;letter-spacing:.01em;box-shadow:var(--shadow);font-family:inherit}
-    .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff}
-    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 16px rgba(99,102,241,.3)}
-    .btn-primary:active{transform:translateY(0)}
+    input[type="range"]{padding:0}
+
+    /* Buttons */
+    .btn{padding:.75rem 1.5rem;border-radius:8px;font-weight:700;cursor:pointer;transition:all .2s;border:none;font-size:.9rem}
+    .btn-primary{background:var(--accent);color:#fff}
+    .btn-primary:hover{background:var(--accent-2)}
     .btn-success{background:var(--success);color:#fff}
-    .btn-success:hover{transform:translateY(-2px);box-shadow:0 8px 16px rgba(16,185,129,.3)}
     .btn-danger{background:var(--danger);color:#fff}
-    .btn-danger:hover{transform:translateY(-2px);box-shadow:0 8px 16px rgba(239,68,68,.3)}
-    .btn-secondary{background:var(--card);color:var(--text);border:1.5px solid var(--border)}
-    .btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
-    .btn-group{display:flex;gap:.6danger);color:#fff}
     .btn-secondary{background:var(--card);color:var(--text);border:1px solid var(--border)}
     .btn-group{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem}
 
@@ -1291,11 +1283,16 @@
       'z-pack': { min: 250, max: 500, unit: 'mg', name: 'Z-Pack (Azithromycin)' },
       'ciprofloxacin': { min: 250, max: 750, unit: 'mg', name: 'Ciprofloxacin' },
       'doxycycline': { min: 50, max: 200, unit: 'mg', name: 'Doxycycline' },
-      'cephalexin': { min: 250, max: 500, unit: 'mg', name: 'Cephalexin' },
-      
-      // ===== OMEGA-3 / FISH OIL =====
+      'cephalexin': { min: 250, max: 500, unit: 'mg', name: 'Cephalexin' }
       'fish oil': { min: 250, max: 3000, unit: 'mg', name: 'Fish Oil/Omega-3' },
-      'omega 3': { min: 250, max: 3000, unit: 'mg', name: 'Omega-3' }
+      'omega 3': { min: 250, max: 3000, unit: 'mg', name: 'Omega-3' },
+      
+      'amoxicillin': { min: 250, max: 875, unit: 'mg', name: 'Amoxicillin' },
+      'azithromycin': { min: 250, max: 500, unit: 'mg', name: 'Azithromycin' },
+      'z-pack': { min: 250, max: 500, unit: 'mg', name: 'Z-Pack (Azithromycin)' },
+      'ciprofloxacin': { min: 250, max: 750, unit: 'mg', name: 'Ciprofloxacin' },
+      'doxycycline': { min: 50, max: 200, unit: 'mg', name: 'Doxycycline' },
+      'cephalexin': { min: 250, max: 500, unit: 'mg', name: 'Cephalexin' }
     };
 
     // Comprehensive drug interaction database (100+ interactions)

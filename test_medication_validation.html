@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Medication Validation Test</title>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #0f172a; color: #f1f5f9; }
+    .test { margin: 10px 0; padding: 10px; border-radius: 4px; }
+    .pass { background: #10b98144; border-left: 3px solid #10b981; }
+    .fail { background: #ef444444; border-left: 3px solid #ef4444; }
+    .warn { background: #f59e0b44; border-left: 3px solid #f59e0b; }
+    h2 { color: #3b82f6; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Medication Validation Test Suite</h1>
+  <div id="results"></div>
+  
+  <script src="docs/index.html"></script>
+  <script>
+    // Extract functions from index.html
+    const dosageRanges = window.dosageRanges || {};
+    
+    const tests = [
+      // Universal safety checks
+      { name: 'Random Drug A', dose: '100000000mg', expected: 'CRITICAL', desc: 'Universal >50k mg check' },
+      { name: 'Unknown Drug X', dose: '15000mg', expected: 'DANGER', desc: 'Universal >10k mg warning' },
+      
+      // Vitamins
+      { name: 'Vitamin A', dose: '5000 mcg', expected: 'DANGER', desc: 'Vitamin A overdose' },
+      { name: 'Vitamin D', dose: '10000 IU', expected: 'DANGER', desc: 'Vitamin D over 4000 IU' },
+      { name: 'D3', dose: '2000 IU', expected: 'SAFE', desc: 'D3 alias within range' },
+      { name: 'Vitamin B12', dose: '2000 mcg', expected: 'DANGER', desc: 'B12 over 1000 mcg' },
+      { name: 'B12', dose: '500 mcg', expected: 'SAFE', desc: 'B12 alias safe' },
+      { name: 'Vitamin C', dose: '3000 mg', expected: 'DANGER', desc: 'Vitamin C over 2000mg' },
+      { name: 'Vitamin E', dose: '1500 mg', expected: 'DANGER', desc: 'Vitamin E toxic' },
+      { name: 'Vitamin K2', dose: '150 mcg', expected: 'SAFE', desc: 'K2 within range' },
+      
+      // Minerals
+      { name: 'Zinc', dose: '100 mg', expected: 'DANGER', desc: 'Zinc over 40mg' },
+      { name: 'Iron', dose: '100 mg', expected: 'DANGER', desc: 'Iron over 45mg' },
+      { name: 'Calcium', dose: '3000 mg', expected: 'DANGER', desc: 'Calcium over 2500mg' },
+      { name: 'Magnesium', dose: '500 mg', expected: 'DANGER', desc: 'Magnesium over 420mg' },
+      
+      // Brand names
+      { name: 'Advil', dose: '1000 mg', expected: 'DANGER', desc: 'Advil (Ibuprofen) over 800mg' },
+      { name: 'Tylenol', dose: '1500 mg', expected: 'DANGER', desc: 'Tylenol over 1000mg' },
+      { name: 'Lipitor', dose: '100 mg', expected: 'DANGER', desc: 'Lipitor over 80mg' },
+      
+      // Safe dosages
+      { name: 'Vitamin D', dose: '1000 IU', expected: 'SAFE', desc: 'Safe Vitamin D dose' },
+      { name: 'Zinc', dose: '25 mg', expected: 'SAFE', desc: 'Safe zinc dose' },
+      { name: 'Melatonin', dose: '5 mg', expected: 'SAFE', desc: 'Safe melatonin dose' }
+    ];
+    
+    function runTests() {
+      const resultsDiv = document.getElementById('results');
+      let passed = 0;
+      let failed = 0;
+      
+      tests.forEach((test, i) => {
+        const result = document.createElement('div');
+        
+        // Simulate validation (simplified)
+        let status = 'UNKNOWN';
+        const dosageNum = parseFloat(test.dose);
+        
+        if (dosageNum > 50000) status = 'CRITICAL';
+        else if (dosageNum > 10000) status = 'DANGER';
+        else {
+          // Check database
+          const nameLower = test.name.toLowerCase();
+          let found = false;
+          
+          for (const [drug, range] of Object.entries(dosageRanges)) {
+            if (nameLower.includes(drug) || drug.includes(nameLower)) {
+              found = true;
+              const max = range.max;
+              if (dosageNum > max * 5) status = 'CRITICAL';
+              else if (dosageNum > max) status = 'DANGER';
+              else status = 'SAFE';
+              break;
+            }
+          }
+          
+          if (!found) status = 'SAFE';
+        }
+        
+        const match = status === test.expected;
+        if (match) passed++; else failed++;
+        
+        result.className = `test ${match ? 'pass' : 'fail'}`;
+        result.innerHTML = `
+          <strong>Test ${i+1}:</strong> ${test.desc}<br>
+          Input: <code>${test.name}</code> @ <code>${test.dose}</code><br>
+          Expected: <strong>${test.expected}</strong> | Got: <strong>${status}</strong>
+          ${match ? ' ✅' : ' ❌'}
+        `;
+        resultsDiv.appendChild(result);
+      });
+      
+      const summary = document.createElement('h2');
+      summary.innerHTML = `<br>Results: ${passed} passed, ${failed} failed (${Math.round(passed/(passed+failed)*100)}%)`;
+      summary.style.color = failed === 0 ? '#10b981' : '#f59e0b';
+      resultsDiv.appendChild(summary);
+    }
+    
+    runTests();
+  </script>
+</body>
+</html>
