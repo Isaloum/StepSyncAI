@@ -122,28 +122,10 @@
 
     /* Responsive */
     @media(max-width:768px){
+      .nav-tabs{justify-content:center}
+      .nav-tab span:not(.icon){display:none}
       .header-content{justify-content:center}
       .stats-grid{grid-template-columns:repeat(2,1fr)}
-      
-      /* Hide desktop navigation on mobile */
-      .nav-tabs{display:none}
-      
-      /* Add space for bottom navigation */
-      main{padding-bottom:5rem}
-    }
-
-    /* Mobile Bottom Navigation */
-    .mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:2px solid var(--border);padding:.75rem 0;z-index:100;box-shadow:0 -4px 12px rgba(0,0,0,.15)}
-    .mobile-nav-inner{display:flex;justify-content:space-around;align-items:center;max-width:600px;margin:0 auto}
-    .mobile-nav-btn{display:flex;flex-direction:column;align-items:center;gap:.25rem;background:transparent;border:none;color:var(--muted);cursor:pointer;padding:.5rem;border-radius:8px;transition:all .2s;min-width:60px}
-    .mobile-nav-btn:active{transform:scale(.95)}
-    .mobile-nav-btn.active{color:var(--accent)}
-    .mobile-nav-btn.active .mobile-nav-icon{background:var(--accent);color:#fff}
-    .mobile-nav-icon{font-size:1.5rem;transition:all .2s}
-    .mobile-nav-label{font-size:.65rem;font-weight:600;text-align:center;line-height:1.1}
-    
-    @media(max-width:768px){
-      .mobile-nav{display:block}
     }
 
     /* Theme Toggle */
@@ -411,18 +393,18 @@
         <div class="form-group">
           <label id="symptoms-label">Any symptoms today?</label>
           <div class="btn-group" role="group" aria-labelledby="symptoms-label">
-            <button class="btn btn-secondary symptom-btn" data-symptom="anxiety" aria-label="Select anxiety symptom" aria-pressed="false">😰 Anxiety</button>
-            <button class="btn btn-secondary symptom-btn" data-symptom="stress" aria-label="Select stress symptom" aria-pressed="false">😫 Stress</button>
-            <button class="btn btn-secondary symptom-btn" data-symptom="fatigue" aria-label="Select fatigue symptom" aria-pressed="false">😴 Fatigue</button>
-            <button class="btn btn-secondary symptom-btn" data-symptom="irritability" aria-label="Select irritability symptom" aria-pressed="false">😤 Irritability</button>
-            <button class="btn btn-secondary symptom-btn" data-symptom="hopeful" aria-label="Select hopeful feeling" aria-pressed="false">🌟 Hopeful</button>
+            <button class="btn btn-secondary symptom-btn" data-symptom="anxiety">😰 Anxiety</button>
+            <button class="btn btn-secondary symptom-btn" data-symptom="stress">😫 Stress</button>
+            <button class="btn btn-secondary symptom-btn" data-symptom="fatigue">😴 Fatigue</button>
+            <button class="btn btn-secondary symptom-btn" data-symptom="irritability">😤 Irritability</button>
+            <button class="btn btn-secondary symptom-btn" data-symptom="hopeful">🌟 Hopeful</button>
           </div>
         </div>
         <div class="form-group">
           <label>Notes (optional)</label>
-          <textarea id="moodNotes" rows="3" placeholder="How was your day?" aria-label="Mood notes"></textarea>
+          <textarea id="moodNotes" rows="3" placeholder="How was your day?"></textarea>
         </div>
-        <button class="btn btn-primary" onclick="saveMood()" aria-label="Save mood entry">💾 Save Mood Entry</button>
+        <button class="btn btn-primary" onclick="saveMood()">💾 Save Mood Entry</button>
       </div>
 
       <div class="card">
@@ -455,7 +437,7 @@
             </select>
           </div>
         </div>
-        <button class="btn btn-primary" onclick="addMedication()" aria-label="Add medication to your daily list">➕ Add Medication</button>
+        <button class="btn btn-primary" onclick="addMedication()">➕ Add Medication</button>
       </div>
 
       <div class="card">
@@ -490,7 +472,7 @@
             <div class="mood-scale"><span>Poor</span><span>Average</span><span>Excellent</span></div>
           </div>
         </div>
-        <button class="btn btn-primary" onclick="saveSleep()" aria-label="Save sleep entry">💾 Save Sleep Entry</button>
+        <button class="btn btn-primary" onclick="saveSleep()">💾 Save Sleep Entry</button>
       </div>
 
       <div class="stats-grid">
@@ -537,7 +519,7 @@
             </select>
           </div>
         </div>
-        <button class="btn btn-primary" onclick="saveExercise()" aria-label="Log exercise activity">💾 Log Exercise</button>
+        <button class="btn btn-primary" onclick="saveExercise()">💾 Log Exercise</button>
       </div>
 
       <div class="stats-grid">
@@ -587,35 +569,6 @@
       </div>
     </div>
   </footer>
-
-  <!-- Mobile Bottom Navigation -->
-  <nav class="mobile-nav" role="navigation" aria-label="Mobile navigation">
-    <div class="mobile-nav-inner">
-      <button class="mobile-nav-btn active" data-tab="dashboard" aria-label="Dashboard" aria-current="page">
-        <span class="mobile-nav-icon" aria-hidden="true">📊</span>
-        <span class="mobile-nav-label">Dashboard</span>
-      </button>
-      <button class="mobile-nav-btn" data-tab="mental" aria-label="Mental Health">
-        <span class="mobile-nav-icon" aria-hidden="true">🧠</span>
-        <span class="mobile-nav-label">Mental Health</span>
-      </button>
-      <button class="mobile-nav-btn" data-tab="medication" aria-label="Medication">
-        <span class="mobile-nav-icon" aria-hidden="true">💊</span>
-        <span class="mobile-nav-label">Medication</span>
-      </button>
-      <button class="mobile-nav-btn" data-tab="sleep" aria-label="Sleep">
-        <span class="mobile-nav-icon" aria-hidden="true">😴</span>
-        <span class="mobile-nav-label">Sleep</span>
-      </button>
-      <button class="mobile-nav-btn" data-tab="exercise" aria-label="Exercise">
-        <span class="mobile-nav-icon" aria-hidden="true">🏃</span>
-        <span class="mobile-nav-label">Exercise</span>
-      </button>
-    </div>
-  </nav>
-
-  <!-- Install PWA Button -->
-  <button id="installPWA" class="install-pwa" aria-label="Install StepSyncAI as an app">📲 Install App</button>
 
   <script>
     // ============================================
@@ -669,6 +622,11 @@
       html.setAttribute('data-theme', newTheme);
       document.getElementById('themeIcon').textContent = newTheme === 'light' ? '🌙' : '☀️';
       DB.setOne('theme', newTheme);
+      
+      // Update Chart.js theme colors
+      if (wellnessChart) {
+        createWellnessTrendChart();
+      }
     }
 
     function initTheme() {
@@ -883,64 +841,17 @@
       setOne: (key, data) => localStorage.setItem('stepsync_' + key, JSON.stringify(data))
     };
 
-    // Tab Navigation (Desktop + Mobile)
-    function switchTab(tabName) {
-      // Update desktop navigation
-      document.querySelectorAll('.nav-tab').forEach(t => {
-        t.classList.remove('active');
-        t.removeAttribute('aria-current');
-      });
-      
-      // Update mobile navigation
-      document.querySelectorAll('.mobile-nav-btn').forEach(t => {
-        t.classList.remove('active');
-        t.removeAttribute('aria-current');
-      });
-      
-      // Update sections
-      document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
-      
-      // Activate selected tab (both desktop and mobile)
-      const desktopTab = document.querySelector(`.nav-tab[data-tab="${tabName}"]`);
-      const mobileTab = document.querySelector(`.mobile-nav-btn[data-tab="${tabName}"]`);
-      
-      if (desktopTab) {
-        desktopTab.classList.add('active');
-        desktopTab.setAttribute('aria-current', 'page');
-      }
-      
-      if (mobileTab) {
-        mobileTab.classList.add('active');
-        mobileTab.setAttribute('aria-current', 'page');
-      }
-      
-      document.getElementById(tabName).classList.add('active');
-      
-      // Scroll to top on mobile
-      if (window.innerWidth <= 768) {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    }
-
-    // Desktop navigation
+    // Tab Navigation
     document.querySelectorAll('.nav-tab').forEach(tab => {
       tab.addEventListener('click', () => {
-        switchTab(tab.dataset.tab);
-      });
-      
-      // Keyboard navigation
-      tab.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          tab.click();
-        }
-      });
-    });
-
-    // Mobile navigation
-    document.querySelectorAll('.mobile-nav-btn').forEach(tab => {
-      tab.addEventListener('click', () => {
-        switchTab(tab.dataset.tab);
+        document.querySelectorAll('.nav-tab').forEach(t => {
+          t.classList.remove('active');
+          t.removeAttribute('aria-current');
+        });
+        document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
+        tab.classList.add('active');
+        tab.setAttribute('aria-current', 'page');
+        document.getElementById(tab.dataset.tab).classList.add('active');
       });
       
       // Keyboard navigation
@@ -968,11 +879,6 @@
       btn.addEventListener('click', () => {
         btn.classList.toggle('btn-primary');
         btn.classList.toggle('btn-secondary');
-        
-        // Update aria-pressed for accessibility
-        const isPressed = btn.classList.contains('btn-primary');
-        btn.setAttribute('aria-pressed', isPressed);
-        
         const symptom = btn.dataset.symptom;
         if (selectedSymptoms.includes(symptom)) {
           selectedSymptoms = selectedSymptoms.filter(s => s !== symptom);
@@ -1209,19 +1115,10 @@
         <div class="med-card ${m.taken ? 'taken' : ''}">
           <div class="med-name">${m.name}</div>
           <div class="med-time">${m.dosage} • ${m.time}</div>
-          <button 
-            class="btn ${m.taken ? 'btn-success' : 'btn-secondary'}" 
-            onclick="toggleMed(${m.id})" 
-            aria-label="${m.taken ? 'Mark ' + m.name + ' as not taken' : 'Mark ' + m.name + ' as taken'}"
-            aria-pressed="${m.taken}"
-            style="margin-top:.5rem">
+          <button class="btn ${m.taken ? 'btn-success' : 'btn-secondary'}" onclick="toggleMed(${m.id})" style="margin-top:.5rem">
             ${m.taken ? '✅ Taken' : '⬜ Mark Taken'}
           </button>
-          <button 
-            class="btn btn-danger" 
-            onclick="deleteMed(${m.id})" 
-            aria-label="Delete ${m.name} from medication list"
-            style="margin-top:.5rem;margin-left:.5rem">🗑️</button>
+          <button class="btn btn-danger" onclick="deleteMed(${m.id})" style="margin-top:.5rem;margin-left:.5rem">🗑️</button>
         </div>
       `).join('');
       updateDashboard();
@@ -1601,6 +1498,179 @@
     }
 
 
+    // ============================================
+    // CHART.JS WELLNESS TRENDS VISUALIZATION
+    // ============================================
+    let wellnessChart = null;
+
+    function createWellnessTrendChart() {
+      const ctx = document.getElementById('wellnessTrendChart');
+      if (!ctx) return;
+
+      const moods = DB.get('moods');
+      const sleeps = DB.get('sleeps');
+      const exercises = DB.get('exercises');
+      const meds = DB.get('medications');
+
+      // Get last 7 days
+      const labels = [];
+      const moodData = [];
+      const sleepData = [];
+      const exerciseData = [];
+      const medicationData = [];
+
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toDateString();
+        
+        // Label (Mon, Tue, etc.)
+        labels.push(date.toLocaleDateString('en-US', { weekday: 'short' }));
+        
+        // Mood (0-10 scale)
+        const dayMood = moods.find(m => new Date(m.date).toDateString() === dateStr);
+        moodData.push(dayMood ? dayMood.mood : null);
+        
+        // Sleep (0-10 hours, normalized to 0-10 scale for chart)
+        const daySleep = sleeps.find(s => new Date(s.date).toDateString() === dateStr);
+        sleepData.push(daySleep ? Math.min(daySleep.hours, 10) : null);
+        
+        // Exercise (0-60 minutes, normalized to 0-10 scale)
+        const dayExercise = exercises.filter(e => new Date(e.date).toDateString() === dateStr)
+          .reduce((sum, e) => sum + e.duration, 0);
+        exerciseData.push(dayExercise > 0 ? Math.min(dayExercise / 6, 10) : null);
+        
+        // Medication adherence (0-100% as 0-10 scale)
+        const dayMedsTotal = meds.length;
+        const dayMedsTaken = meds.filter(m => m.taken).length;
+        medicationData.push(dayMedsTotal > 0 ? (dayMedsTaken / dayMedsTotal) * 10 : null);
+      }
+
+      // Destroy existing chart if it exists
+      if (wellnessChart) {
+        wellnessChart.destroy();
+      }
+
+      // Get theme colors
+      const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+      const textColor = isDark ? '#f1f5f9' : '#0f172a';
+      const gridColor = isDark ? '#334155' : '#e2e8f0';
+
+      // Create new chart
+      wellnessChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Mood',
+              data: moodData,
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'Sleep (hrs)',
+              data: sleepData,
+              borderColor: '#8b5cf6',
+              backgroundColor: 'rgba(139, 92, 246, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'Exercise (min/6)',
+              data: exerciseData,
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'Medication (%)',
+              data: medicationData,
+              borderColor: '#f59e0b',
+              backgroundColor: 'rgba(245, 158, 11, 0.1)',
+              tension: 0.4,
+              fill: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'bottom',
+              labels: {
+                color: textColor,
+                padding: 15,
+                font: {
+                  size: 12
+                }
+              }
+            },
+            tooltip: {
+              backgroundColor: isDark ? '#1e293b' : '#ffffff',
+              titleColor: textColor,
+              bodyColor: textColor,
+              borderColor: gridColor,
+              borderWidth: 1,
+              padding: 12,
+              displayColors: true,
+              callbacks: {
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  if (label) {
+                    label += ': ';
+                  }
+                  if (context.parsed.y !== null) {
+                    if (context.dataset.label === 'Mood') {
+                      label += context.parsed.y.toFixed(1) + '/10';
+                    } else if (context.dataset.label === 'Sleep (hrs)') {
+                      label += context.parsed.y.toFixed(1) + ' hours';
+                    } else if (context.dataset.label === 'Exercise (min/6)') {
+                      label += (context.parsed.y * 6).toFixed(0) + ' min';
+                    } else if (context.dataset.label === 'Medication (%)') {
+                      label += (context.parsed.y * 10).toFixed(0) + '%';
+                    }
+                  }
+                  return label;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 10,
+              ticks: {
+                color: textColor,
+                stepSize: 2
+              },
+              grid: {
+                color: gridColor
+              }
+            },
+            x: {
+              ticks: {
+                color: textColor
+              },
+              grid: {
+                color: gridColor
+              }
+            }
+          }
+        }
+      });
+    }
+
+
     function updateDashboard() {
       const moods = DB.get('moods');
       const sleeps = DB.get('sleeps');
@@ -1665,6 +1735,9 @@
       
       // Update streak chart when dashboard is updated
       updateStreakChart();
+      
+      // Update wellness trends chart
+      createWellnessTrendChart();
     }
 
     // Initialize
