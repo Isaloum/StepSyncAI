@@ -411,18 +411,18 @@
         <div class="form-group">
           <label id="symptoms-label">Any symptoms today?</label>
           <div class="btn-group" role="group" aria-labelledby="symptoms-label">
-            <button class="btn btn-secondary symptom-btn" data-symptom="anxiety">😰 Anxiety</button>
-            <button class="btn btn-secondary symptom-btn" data-symptom="stress">😫 Stress</button>
-            <button class="btn btn-secondary symptom-btn" data-symptom="fatigue">😴 Fatigue</button>
-            <button class="btn btn-secondary symptom-btn" data-symptom="irritability">😤 Irritability</button>
-            <button class="btn btn-secondary symptom-btn" data-symptom="hopeful">🌟 Hopeful</button>
+            <button class="btn btn-secondary symptom-btn" data-symptom="anxiety" aria-label="Select anxiety symptom" aria-pressed="false">😰 Anxiety</button>
+            <button class="btn btn-secondary symptom-btn" data-symptom="stress" aria-label="Select stress symptom" aria-pressed="false">😫 Stress</button>
+            <button class="btn btn-secondary symptom-btn" data-symptom="fatigue" aria-label="Select fatigue symptom" aria-pressed="false">😴 Fatigue</button>
+            <button class="btn btn-secondary symptom-btn" data-symptom="irritability" aria-label="Select irritability symptom" aria-pressed="false">😤 Irritability</button>
+            <button class="btn btn-secondary symptom-btn" data-symptom="hopeful" aria-label="Select hopeful feeling" aria-pressed="false">🌟 Hopeful</button>
           </div>
         </div>
         <div class="form-group">
           <label>Notes (optional)</label>
-          <textarea id="moodNotes" rows="3" placeholder="How was your day?"></textarea>
+          <textarea id="moodNotes" rows="3" placeholder="How was your day?" aria-label="Mood notes"></textarea>
         </div>
-        <button class="btn btn-primary" onclick="saveMood()">💾 Save Mood Entry</button>
+        <button class="btn btn-primary" onclick="saveMood()" aria-label="Save mood entry">💾 Save Mood Entry</button>
       </div>
 
       <div class="card">
@@ -455,7 +455,7 @@
             </select>
           </div>
         </div>
-        <button class="btn btn-primary" onclick="addMedication()">➕ Add Medication</button>
+        <button class="btn btn-primary" onclick="addMedication()" aria-label="Add medication to your daily list">➕ Add Medication</button>
       </div>
 
       <div class="card">
@@ -490,7 +490,7 @@
             <div class="mood-scale"><span>Poor</span><span>Average</span><span>Excellent</span></div>
           </div>
         </div>
-        <button class="btn btn-primary" onclick="saveSleep()">💾 Save Sleep Entry</button>
+        <button class="btn btn-primary" onclick="saveSleep()" aria-label="Save sleep entry">💾 Save Sleep Entry</button>
       </div>
 
       <div class="stats-grid">
@@ -537,7 +537,7 @@
             </select>
           </div>
         </div>
-        <button class="btn btn-primary" onclick="saveExercise()">💾 Log Exercise</button>
+        <button class="btn btn-primary" onclick="saveExercise()" aria-label="Log exercise activity">💾 Log Exercise</button>
       </div>
 
       <div class="stats-grid">
@@ -968,6 +968,11 @@
       btn.addEventListener('click', () => {
         btn.classList.toggle('btn-primary');
         btn.classList.toggle('btn-secondary');
+        
+        // Update aria-pressed for accessibility
+        const isPressed = btn.classList.contains('btn-primary');
+        btn.setAttribute('aria-pressed', isPressed);
+        
         const symptom = btn.dataset.symptom;
         if (selectedSymptoms.includes(symptom)) {
           selectedSymptoms = selectedSymptoms.filter(s => s !== symptom);
@@ -1204,10 +1209,19 @@
         <div class="med-card ${m.taken ? 'taken' : ''}">
           <div class="med-name">${m.name}</div>
           <div class="med-time">${m.dosage} • ${m.time}</div>
-          <button class="btn ${m.taken ? 'btn-success' : 'btn-secondary'}" onclick="toggleMed(${m.id})" style="margin-top:.5rem">
+          <button 
+            class="btn ${m.taken ? 'btn-success' : 'btn-secondary'}" 
+            onclick="toggleMed(${m.id})" 
+            aria-label="${m.taken ? 'Mark ' + m.name + ' as not taken' : 'Mark ' + m.name + ' as taken'}"
+            aria-pressed="${m.taken}"
+            style="margin-top:.5rem">
             ${m.taken ? '✅ Taken' : '⬜ Mark Taken'}
           </button>
-          <button class="btn btn-danger" onclick="deleteMed(${m.id})" style="margin-top:.5rem;margin-left:.5rem">🗑️</button>
+          <button 
+            class="btn btn-danger" 
+            onclick="deleteMed(${m.id})" 
+            aria-label="Delete ${m.name} from medication list"
+            style="margin-top:.5rem;margin-left:.5rem">🗑️</button>
         </div>
       `).join('');
       updateDashboard();
