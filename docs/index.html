@@ -1386,14 +1386,19 @@
         });
       }
       
-      // Better medication name matching
+      // Better medication name matching with word boundaries
       const aliases = {
         'd3': 'vitamin d',
         'd': 'vitamin d',
         'vit d': 'vitamin d',
-        'b12': 'vitamin b12',
+        'b12': 'vitamin b12',  // Exact match for b12 first
         'b-12': 'vitamin b12',
         'vit b12': 'vitamin b12',
+        'b1': 'vitamin b1',   // b1 comes after b12
+        'b2': 'vitamin b2',
+        'b3': 'vitamin b3',
+        'b6': 'vitamin b6',
+        'b9': 'vitamin b9',
         'vit c': 'vitamin c',
         'c': 'vitamin c',
         'k2': 'vitamin k',
@@ -1401,8 +1406,16 @@
       };
       
       let searchName = medLower;
+      // Use exact match or whole-word match to prevent "b12" from matching "b1"
       for (const [alias, canonical] of Object.entries(aliases)) {
-        if (medLower === alias || medLower.includes(alias)) {
+        // Exact match (e.g., "b12" === "b12")
+        if (medLower === alias) {
+          searchName = canonical;
+          break;
+        }
+        // Word boundary match (e.g., "vit b12" contains " b12 " as a word)
+        const wordRegex = new RegExp(`\\b${alias}\\b`, 'i');
+        if (wordRegex.test(medLower)) {
           searchName = canonical;
           break;
         }
