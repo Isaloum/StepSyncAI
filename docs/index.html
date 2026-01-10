@@ -226,6 +226,22 @@
     .footer-link:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-2px)}
     .tech-badge{display:inline-block;padding:.25rem .75rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:.75rem;color:var(--muted);font-weight:600}
     @media(max-width:768px){.footer-content{flex-direction:column;text-align:center}.footer-right{justify-content:center}}
+    
+    /* Edit Modal Styles */
+    .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;z-index:10000;padding:1rem;backdrop-filter:blur(4px)}
+    .modal-content{background:var(--card);border-radius:16px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);border:1px solid var(--border)}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;padding:1.5rem;border-bottom:1px solid var(--border)}
+    .modal-title{margin:0;font-size:1.5rem;color:var(--text)}
+    .modal-close{background:none;border:none;font-size:2rem;color:var(--muted);cursor:pointer;padding:0;width:2rem;height:2rem;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:all 0.2s}
+    .modal-close:hover{background:var(--bg);color:var(--text)}
+    .modal-body{padding:1.5rem}
+    .modal-footer{display:flex;justify-content:flex-end;gap:1rem;padding:1.5rem;border-top:1px solid var(--border)}
+    
+    /* Edit/Delete Button Styles */
+    .edit-btn,.delete-btn{background:none;border:1px solid var(--border);padding:0.4rem 0.75rem;border-radius:6px;cursor:pointer;transition:all 0.2s;font-size:0.875rem;color:var(--muted);display:inline-flex;align-items:center;gap:0.25rem}
+    .edit-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(59,130,246,0.1)}
+    .delete-btn:hover{border-color:#ef4444;color:#ef4444;background:rgba(239,68,68,0.1)}
+    .entry-actions{display:flex;gap:0.5rem;margin-top:0.5rem}
   </style>
 
 
@@ -268,6 +284,23 @@
       </div>
       <div class="onboarding-actions">
         <button class="btn btn-primary" onclick="completeOnboarding()" aria-label="Continue to start using StepSyncAI">Continue →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal (reusable for all health logs) -->
+  <div id="editModal" class="modal-overlay" style="display:none;" role="dialog" aria-labelledby="edit-modal-title" aria-modal="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="edit-modal-title" class="modal-title">Edit Entry</h2>
+        <button class="modal-close" onclick="closeEditModal()" aria-label="Close modal" title="Close">×</button>
+      </div>
+      <div id="editModalBody" class="modal-body">
+        <!-- Dynamic content will be inserted here -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+        <button id="saveEditBtn" class="btn btn-primary" onclick="saveEdit()">Save Changes</button>
       </div>
     </div>
   </div>
@@ -1054,6 +1087,228 @@
       updateDashboard();
     }
 
+    // ============================================
+    // EDIT MODAL SYSTEM (for all health logs)
+    // ============================================
+    let currentEditType = null;
+    let currentEditId = null;
+
+    function openEditModal(type, id) {
+      currentEditType = type;
+      currentEditId = id;
+      const modal = document.getElementById('editModal');
+      const modalBody = document.getElementById('editModalBody');
+      const modalTitle = document.getElementById('edit-modal-title');
+      
+      if (type === 'mood') {
+        const moods = DB.get('moods');
+        const mood = moods.find(m => m.date === id);
+        if (!mood) return;
+        
+        modalTitle.textContent = 'Edit Mood Entry';
+        modalBody.innerHTML = `
+          <div class="form-group">
+            <label for="editMoodSlider">How are you feeling? (1-10)</label>
+            <div style="text-align:center;font-size:4rem;margin:1rem 0" id="editMoodEmoji">${moodEmojis[mood.mood - 1]}</div>
+            <input type="range" id="editMoodSlider" min="1" max="10" value="${mood.mood}" class="mood-slider" oninput="document.getElementById('editMoodEmoji').textContent = moodEmojis[this.value - 1]">
+            <div style="display:flex;justify-content:space-between;margin-top:0.5rem;font-size:0.875rem;color:var(--muted)">
+              <span>1 - Very Low</span>
+              <span>5 - Neutral</span>
+              <span>10 - Excellent</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Symptoms (optional)</label>
+            <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+              ${['Anxiety', 'Stress', 'Fatigue', 'Irritability', 'Hopeful'].map(s => `
+                <button class="symptom-btn ${mood.symptoms.includes(s) ? 'btn-primary' : 'btn-secondary'}" data-symptom="${s}" onclick="this.classList.toggle('btn-primary'); this.classList.toggle('btn-secondary')">
+                  ${s}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="editMoodNotes">Notes (optional)</label>
+            <textarea id="editMoodNotes" placeholder="How was your day?" rows="3">${mood.notes || ''}</textarea>
+          </div>
+        `;
+      } else if (type === 'sleep') {
+        const sleeps = DB.get('sleeps');
+        const sleep = sleeps.find(s => s.date === id);
+        if (!sleep) return;
+        
+        modalTitle.textContent = 'Edit Sleep Entry';
+        modalBody.innerHTML = `
+          <div class="form-group">
+            <label for="editSleepBedtime">Bedtime</label>
+            <input type="time" id="editSleepBedtime" value="${sleep.bedtime}" required>
+          </div>
+          <div class="form-group">
+            <label for="editSleepWake">Wake Time</label>
+            <input type="time" id="editSleepWake" value="${sleep.wake}" required>
+          </div>
+          <div class="form-group">
+            <label for="editSleepQuality">Sleep Quality (1-10): <span id="editQualityValue">${sleep.quality}</span></label>
+            <input type="range" id="editSleepQuality" min="1" max="10" value="${sleep.quality}" oninput="document.getElementById('editQualityValue').textContent = this.value">
+          </div>
+        `;
+      } else if (type === 'exercise') {
+        const exercises = DB.get('exercises');
+        const exercise = exercises.find(e => e.date === id);
+        if (!exercise) return;
+        
+        modalTitle.textContent = 'Edit Exercise Entry';
+        modalBody.innerHTML = `
+          <div class="form-group">
+            <label for="editExerciseType">Activity Type</label>
+            <select id="editExerciseType">
+              <option value="Walking" ${exercise.type === 'Walking' ? 'selected' : ''}>🚶 Walking</option>
+              <option value="Running" ${exercise.type === 'Running' ? 'selected' : ''}>🏃 Running</option>
+              <option value="Cycling" ${exercise.type === 'Cycling' ? 'selected' : ''}>🚴 Cycling</option>
+              <option value="Swimming" ${exercise.type === 'Swimming' ? 'selected' : ''}>🏊 Swimming</option>
+              <option value="Yoga" ${exercise.type === 'Yoga' ? 'selected' : ''}>🧘 Yoga</option>
+              <option value="Gym" ${exercise.type === 'Gym' ? 'selected' : ''}>🏋️ Gym</option>
+              <option value="Sports" ${exercise.type === 'Sports' ? 'selected' : ''}>⚽ Sports</option>
+              <option value="Other" ${exercise.type === 'Other' ? 'selected' : ''}>💪 Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editExerciseDuration">Duration (minutes)</label>
+            <input type="number" id="editExerciseDuration" min="1" value="${exercise.duration}" required>
+          </div>
+          <div class="form-group">
+            <label for="editExerciseIntensity">Intensity</label>
+            <select id="editExerciseIntensity">
+              <option value="Low" ${exercise.intensity === 'Low' ? 'selected' : ''}>Low</option>
+              <option value="Moderate" ${exercise.intensity === 'Moderate' ? 'selected' : ''}>Moderate</option>
+              <option value="High" ${exercise.intensity === 'High' ? 'selected' : ''}>High</option>
+            </select>
+          </div>
+        `;
+      }
+      
+      modal.style.display = 'flex';
+      // Focus first input for accessibility
+      setTimeout(() => {
+        const firstInput = modalBody.querySelector('input, select, textarea');
+        if (firstInput) firstInput.focus();
+      }, 100);
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').style.display = 'none';
+      currentEditType = null;
+      currentEditId = null;
+    }
+
+    function saveEdit() {
+      if (!currentEditType || !currentEditId) return;
+      
+      if (currentEditType === 'mood') {
+        const moods = DB.get('moods');
+        const index = moods.findIndex(m => m.date === currentEditId);
+        if (index === -1) return;
+        
+        const moodValue = parseInt(document.getElementById('editMoodSlider').value);
+        const symptoms = Array.from(document.querySelectorAll('.symptom-btn.btn-primary')).map(btn => btn.dataset.symptom);
+        const notes = document.getElementById('editMoodNotes').value;
+        
+        moods[index] = {
+          ...moods[index],
+          mood: moodValue,
+          symptoms: symptoms,
+          notes: notes
+        };
+        
+        DB.set('moods', moods);
+        loadMoodHistory();
+        updateDashboard();
+        
+      } else if (currentEditType === 'sleep') {
+        const sleeps = DB.get('sleeps');
+        const index = sleeps.findIndex(s => s.date === currentEditId);
+        if (index === -1) return;
+        
+        const bedtime = document.getElementById('editSleepBedtime').value;
+        const wake = document.getElementById('editSleepWake').value;
+        const quality = parseInt(document.getElementById('editSleepQuality').value);
+        
+        const bedDate = new Date(`2000-01-01T${bedtime}`);
+        let wakeDate = new Date(`2000-01-01T${wake}`);
+        if (wakeDate < bedDate) wakeDate.setDate(wakeDate.getDate() + 1);
+        const hours = (wakeDate - bedDate) / (1000 * 60 * 60);
+        
+        sleeps[index] = {
+          ...sleeps[index],
+          bedtime: bedtime,
+          wake: wake,
+          hours: Math.round(hours * 10) / 10,
+          quality: quality
+        };
+        
+        DB.set('sleeps', sleeps);
+        loadSleepData();
+        updateDashboard();
+        
+      } else if (currentEditType === 'exercise') {
+        const exercises = DB.get('exercises');
+        const index = exercises.findIndex(e => e.date === currentEditId);
+        if (index === -1) return;
+        
+        exercises[index] = {
+          ...exercises[index],
+          type: document.getElementById('editExerciseType').value,
+          duration: parseInt(document.getElementById('editExerciseDuration').value),
+          intensity: document.getElementById('editExerciseIntensity').value
+        };
+        
+        DB.set('exercises', exercises);
+        loadExerciseData();
+        updateDashboard();
+      }
+      
+      closeEditModal();
+    }
+
+    // Delete functions for each log type
+    function deleteMoodEntry(id) {
+      if (!confirm('Delete this mood entry? This cannot be undone.')) return;
+      const moods = DB.get('moods').filter(m => m.date !== id);
+      DB.set('moods', moods);
+      loadMoodHistory();
+      updateDashboard();
+    }
+
+    function deleteSleepEntry(id) {
+      if (!confirm('Delete this sleep entry? This cannot be undone.')) return;
+      const sleeps = DB.get('sleeps').filter(s => s.date !== id);
+      DB.set('sleeps', sleeps);
+      loadSleepData();
+      updateDashboard();
+    }
+
+    function deleteExerciseEntry(id) {
+      if (!confirm('Delete this exercise entry? This cannot be undone.')) return;
+      const exercises = DB.get('exercises').filter(e => e.date !== id);
+      DB.set('exercises', exercises);
+      loadExerciseData();
+      updateDashboard();
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && document.getElementById('editModal').style.display === 'flex') {
+        closeEditModal();
+      }
+    });
+
+    // Close modal on background click
+    document.getElementById('editModal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'editModal') {
+        closeEditModal();
+      }
+    });
+
     function loadMoodHistory() {
       const moods = DB.get('moods');
       const container = document.getElementById('moodHistory');
@@ -1066,6 +1321,15 @@
           <div class="data-item-info">
             <div class="data-item-title">${moodEmojis[m.mood - 1]} Mood: ${m.mood}/10</div>
             <div class="data-item-meta">${new Date(m.date).toLocaleDateString()} ${m.symptoms.length ? '• ' + m.symptoms.join(', ') : ''}</div>
+            ${m.notes ? `<div style="margin-top:0.5rem;color:var(--muted);font-size:0.875rem">${m.notes}</div>` : ''}
+          </div>
+          <div class="entry-actions">
+            <button class="edit-btn" onclick="openEditModal('mood', '${m.date}')" aria-label="Edit mood entry" title="Edit">
+              ✏️ Edit
+            </button>
+            <button class="delete-btn" onclick="deleteMoodEntry('${m.date}')" aria-label="Delete mood entry" title="Delete">
+              🗑️ Delete
+            </button>
           </div>
         </div>
       `).join('');
@@ -1751,6 +2015,14 @@
             <div class="data-item-title">${s.hours}h sleep, Quality: ${s.quality}/10</div>
             <div class="data-item-meta">${new Date(s.date).toLocaleDateString()} • ${s.bedtime} - ${s.wake}</div>
           </div>
+          <div class="entry-actions">
+            <button class="edit-btn" onclick="openEditModal('sleep', '${s.date}')" aria-label="Edit sleep entry" title="Edit">
+              ✏️ Edit
+            </button>
+            <button class="delete-btn" onclick="deleteSleepEntry('${s.date}')" aria-label="Delete sleep entry" title="Delete">
+              🗑️ Delete
+            </button>
+          </div>
         </div>
       `).join('');
     }
@@ -1793,8 +2065,16 @@
       container.innerHTML = exercises.slice(0, 10).map(e => `
         <div class="data-item">
           <div class="data-item-info">
-            <div class="data-item-title">${typeIcons[e.type] || '🏃'} ${e.type} - ${e.duration} min</div>
+            <div class="data-item-title">${typeIcons[e.type.toLowerCase()] || '🏃'} ${e.type} - ${e.duration} min</div>
             <div class="data-item-meta">${new Date(e.date).toLocaleDateString()} • ${e.intensity} intensity</div>
+          </div>
+          <div class="entry-actions">
+            <button class="edit-btn" onclick="openEditModal('exercise', '${e.date}')" aria-label="Edit exercise entry" title="Edit">
+              ✏️ Edit
+            </button>
+            <button class="delete-btn" onclick="deleteExerciseEntry('${e.date}')" aria-label="Delete exercise entry" title="Delete">
+              🗑️ Delete
+            </button>
           </div>
         </div>
       `).join('');
