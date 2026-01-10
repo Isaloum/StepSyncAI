@@ -1422,8 +1422,18 @@
       }
       
       // Check against known safe ranges
+      // CRITICAL: Use word-boundary matching to prevent "vitamin b12" from matching "vitamin b1"
       for (const [drug, range] of Object.entries(dosageRanges)) {
-        if (searchName.includes(drug)) {
+        // Method 1: Exact match
+        let isMatch = searchName === drug;
+        
+        // Method 2: Word boundary match (e.g., "vitamin b12 supplement" contains "vitamin b12" as whole words)
+        if (!isMatch) {
+          const drugRegex = new RegExp(`\\b${drug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+          isMatch = drugRegex.test(searchName);
+        }
+        
+        if (isMatch) {
           foundMatch = true;
           
           // Convert user's amount to the expected unit for this drug
