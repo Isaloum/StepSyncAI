@@ -1211,14 +1211,82 @@
       return { valid: warnings.every(w => w.level !== 'critical'), warnings, foundMatch };
     }
 
-    // Medication Tracker
+    // ============================================
+    // MEDICATION SYSTEM (NEW - PERSISTENT DAILY LOGS)
+    // ============================================
+    
+    // Migrate old medications data on first load
+    function migrateMedicationsToDefinitions() {
+      // Check if migration already done
+      if (DB.getOne('medicationsMigrated')) return;
+      
+      const oldMeds = DB.get('medications');
+      if (oldMeds.length > 0) {
+        // Convert old format to medicationDefinitions
+        const definitions = oldMeds.map(m => ({
+          id: m.id || Date.now() + Math.random(),
+          name: m.name,
+          dosage: m.dosage,
+          scheduledTimes: [m.time || '9:00'], // Default time if missing
+          asNeeded: false
+        }));
+        DB.set('medicationDefinitions', definitions);
+        
+        // Clear old medications array
+        DB.set('medications', []);
+        DB.setOne('medicationsMigrated', true);
+        console.log('Migrated', definitions.length, 'medications to new system');
+      } else {
+        DB.setOne('medicationsMigrated', true);
+      }
+    }
+
+    // Generate today's pending doses from medication definitions
+    function generateTodaysDoses() {
+      const definitions = DB.get('medicationDefinitions');
+      const logs = DB.get('medicationLogs');
+      const today = new Date().toDateString();
+      
+      definitions.forEach(def => {
+        // For each scheduled time, check if log already exists for today
+        def.scheduledTimes.forEach(scheduledTime => {
+          const existingLog = logs.find(log => 
+            log.medId === def.id && 
+            new Date(log.scheduledFor).toDateString() === today &&
+            log.scheduledTime === scheduledTime
+          );
+          
+          if (!existingLog) {
+            // Create pending dose for today
+            const scheduledDate = new Date();
+            const [hours, minutes] = scheduledTime.split(':');
+            scheduledDate.setHours(parseInt(hours), parseInt(minutes || 0), 0, 0);
+            
+            logs.push({
+              id: Date.now() + Math.random(),
+              medId: def.id,
+              medName: def.name,
+              dosage: def.dosage,
+              scheduledFor: scheduledDate.toISOString(),
+              scheduledTime: scheduledTime,
+              status: 'pending', // pending, taken, missed, late
+              takenAt: null
+            });
+          }
+        });
+      });
+      
+      DB.set('medicationLogs', logs);
+    }
+
+    // Add new medication definition
     function addMedication() {
       const name = document.getElementById('medName').value.trim();
       const dosage = document.getElementById('medDosage').value.trim();
       const time = document.getElementById('medTime').value;
       if (!name) return alert('Please enter medication name');
 
-      // STEP 1: Validate dosage safety
+      // Validate dosage safety
       const validation = validateDosage(name, dosage);
       
       if (validation.warnings && validation.warnings.length > 0) {
@@ -1228,11 +1296,9 @@
         });
         
         if (!validation.valid) {
-          // Critical error - block saving
           alert(warningMsg + '\n❌ This medication was NOT saved due to dangerous dosage. Please correct the dosage or consult your healthcare provider.');
           return;
         } else {
-          // Warning but allow if user confirms
           warningMsg += '\n\n⚠️ Do you want to save this medication anyway?\n(Only proceed if prescribed by your doctor)';
           if (!confirm(warningMsg)) {
             return;
@@ -1240,46 +1306,136 @@
         }
       }
 
-      const meds = DB.get('medications');
-      meds.push({ id: Date.now(), name, dosage, time, taken: false });
-      DB.set('medications', meds);
+      // Add to medication definitions
+      const definitions = DB.get('medicationDefinitions');
+      definitions.push({ 
+        id: Date.now(), 
+        name, 
+        dosage, 
+        scheduledTimes: [time],
+        asNeeded: false
+      });
+      DB.set('medicationDefinitions', definitions);
+      
       document.getElementById('medName').value = '';
       document.getElementById('medDosage').value = '';
+      
+      // Generate today's dose for this new medication
+      generateTodaysDoses();
       loadMedications();
       checkInteractions();
     }
 
+    // Load and display today's medication doses
     function loadMedications() {
-      const meds = DB.get('medications');
+      generateTodaysDoses(); // Ensure today's doses exist
+      
+      const logs = DB.get('medicationLogs');
+      const today = new Date().toDateString();
+      const todaysLogs = logs.filter(log => 
+        new Date(log.scheduledFor).toDateString() === today
+      ).sort((a, b) => new Date(a.scheduledFor) - new Date(b.scheduledFor));
+      
       const container = document.getElementById('medList');
-      if (meds.length === 0) {
-        container.innerHTML = '<div class="insight">No medications added yet.</div>';
+      
+      if (todaysLogs.length === 0) {
+        container.innerHTML = '<div class="insight">No medications scheduled for today. Add a medication above to get started!</div>';
         return;
       }
-      container.innerHTML = meds.map(m => `
-        <div class="med-card ${m.taken ? 'taken' : ''}">
-          <div class="med-name">${m.name}</div>
-          <div class="med-time">${m.dosage} • ${m.time}</div>
-          <button class="btn ${m.taken ? 'btn-success' : 'btn-secondary'}" onclick="toggleMed(${m.id})" style="margin-top:.5rem">
-            ${m.taken ? '✅ Taken' : '⬜ Mark Taken'}
-          </button>
-          <button class="btn btn-danger" onclick="deleteMed(${m.id})" style="margin-top:.5rem;margin-left:.5rem">🗑️</button>
-        </div>
-      `).join('');
+
+      // Group by status for better UI
+      container.innerHTML = todaysLogs.map(log => {
+        const statusClass = log.status === 'taken' ? 'taken' : log.status === 'missed' ? 'missed' : '';
+        const statusIcon = log.status === 'taken' ? '✅' : log.status === 'missed' ? '❌' : log.status === 'late' ? '⏰' : '⬜';
+        const statusText = log.status === 'taken' ? 'Taken' : log.status === 'missed' ? 'Missed' : log.status === 'late' ? 'Taken Late' : 'Mark Taken';
+        
+        return `
+          <div class="med-card ${statusClass}">
+            <div class="med-name">${log.medName}</div>
+            <div class="med-time">${log.dosage} • ${log.scheduledTime}</div>
+            <div style="display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap">
+              ${log.status === 'pending' ? `
+                <button class="btn btn-success" onclick="markMedTaken(${log.id})" style="flex:1">
+                  ✅ Take Now
+                </button>
+                <button class="btn btn-secondary" onclick="markMedMissed(${log.id})" style="flex:1">
+                  ❌ Missed
+                </button>
+              ` : `
+                <button class="btn btn-secondary" onclick="markMedPending(${log.id})" style="flex:1">
+                  ${statusIcon} ${statusText} - Undo
+                </button>
+              `}
+              <button class="btn btn-danger" onclick="deleteMedLog(${log.id})" title="Delete this dose">
+                🗑️
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
       updateDashboard();
     }
 
-    function toggleMed(id) {
-      const meds = DB.get('medications');
-      const med = meds.find(m => m.id === id);
-      if (med) med.taken = !med.taken;
-      DB.set('medications', meds);
+    // Mark medication as taken
+    function markMedTaken(logId) {
+      const logs = DB.get('medicationLogs');
+      const log = logs.find(l => l.id === logId);
+      if (log) {
+        const now = new Date();
+        const scheduled = new Date(log.scheduledFor);
+        const minutesLate = (now - scheduled) / (1000 * 60);
+        
+        log.status = minutesLate > 30 ? 'late' : 'taken';
+        log.takenAt = now.toISOString();
+        
+        DB.set('medicationLogs', logs);
+        loadMedications();
+      }
+    }
+
+    // Mark medication as missed
+    function markMedMissed(logId) {
+      const logs = DB.get('medicationLogs');
+      const log = logs.find(l => l.id === logId);
+      if (log) {
+        log.status = 'missed';
+        log.takenAt = null;
+        DB.set('medicationLogs', logs);
+        loadMedications();
+      }
+    }
+
+    // Mark back to pending (undo)
+    function markMedPending(logId) {
+      const logs = DB.get('medicationLogs');
+      const log = logs.find(l => l.id === logId);
+      if (log) {
+        log.status = 'pending';
+        log.takenAt = null;
+        DB.set('medicationLogs', logs);
+        loadMedications();
+      }
+    }
+
+    // Delete a specific dose log
+    function deleteMedLog(logId) {
+      if (!confirm('Delete this dose? This will remove it from your history.')) return;
+      const logs = DB.get('medicationLogs').filter(l => l.id !== logId);
+      DB.set('medicationLogs', logs);
       loadMedications();
     }
 
-    function deleteMed(id) {
-      const meds = DB.get('medications').filter(m => m.id !== id);
-      DB.set('medications', meds);
+    // Delete medication definition (removes all future doses)
+    function deleteMedDefinition(defId) {
+      if (!confirm('Delete this medication entirely? This will remove all scheduled doses.')) return;
+      const definitions = DB.get('medicationDefinitions').filter(d => d.id !== defId);
+      DB.set('medicationDefinitions', definitions);
+      
+      // Also remove future logs for this medication
+      const logs = DB.get('medicationLogs').filter(l => l.medId !== defId);
+      DB.set('medicationLogs', logs);
+      
       loadMedications();
       checkInteractions();
     }
@@ -1505,7 +1661,9 @@
     ];
 
     function checkInteractions() {
-      const meds = DB.get('medications').map(m => m.name.toLowerCase());
+      // Use medication definitions (not individual logs) for interaction checking
+      const definitions = DB.get('medicationDefinitions');
+      const meds = definitions.map(d => d.name.toLowerCase());
       const warnings = [];
       dangerousInteractions.forEach(([drug1, drug2, warning]) => {
         if (meds.some(m => m.includes(drug1)) && meds.some(m => m.includes(drug2))) {
@@ -1820,14 +1978,19 @@
       const moods = DB.get('moods');
       const sleeps = DB.get('sleeps');
       const exercises = DB.get('exercises');
-      const meds = DB.get('medications');
-
+      
+      // Use medication logs for today's doses (new system)
+      const medLogs = DB.get('medicationLogs');
       const today = new Date().toDateString();
+      const todaysMedLogs = medLogs.filter(log => 
+        new Date(log.scheduledFor).toDateString() === today
+      );
+
       const todayMood = moods.find(m => new Date(m.date).toDateString() === today);
       const todaySleep = sleeps.find(s => new Date(s.date).toDateString() === today);
       const todayExercise = exercises.filter(e => new Date(e.date).toDateString() === today).reduce((a, e) => a + e.duration, 0);
-      const medsTaken = meds.filter(m => m.taken).length;
-      const medsTotal = meds.length;
+      const medsTaken = todaysMedLogs.filter(log => log.status === 'taken' || log.status === 'late').length;
+      const medsTotal = todaysMedLogs.length;
 
       // Stats
       document.getElementById('statMood').textContent = todayMood ? todayMood.mood + '/10' : '--';
@@ -1886,6 +2049,8 @@
     }
 
     // Initialize
+    migrateMedicationsToDefinitions(); // Migrate old medication data to new system
+    generateTodaysDoses(); // Auto-generate today's pending doses
     initTheme();
     displayTip();
     loadMoodHistory();
