@@ -122,11 +122,21 @@
 
     /* Responsive */
     @media(max-width:768px){
-      .nav-tabs{justify-content:center}
+      .nav-tabs{display:none}
       .nav-tab span:not(.icon){display:none}
       .header-content{justify-content:center}
       .stats-grid{grid-template-columns:repeat(2,1fr)}
+      main{padding-bottom:70px}
     }
+    
+    /* Mobile Bottom Navigation */
+    .mobile-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:2px solid var(--border);padding:.5rem;z-index:100;box-shadow:0 -4px 12px rgba(0,0,0,.3)}
+    .mobile-bottom-nav .nav-tabs{display:flex;justify-content:space-around;align-items:center;gap:.25rem;max-width:100%}
+    .mobile-bottom-nav .nav-tab{flex-direction:column;gap:.25rem;min-width:0;padding:.5rem .25rem;font-size:.65rem;border:none;background:transparent}
+    .mobile-bottom-nav .nav-tab .icon{font-size:1.5rem}
+    .mobile-bottom-nav .nav-tab span:not(.icon){display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+    .mobile-bottom-nav .nav-tab.active{color:var(--accent);background:var(--bg);border-radius:8px}
+    @media(max-width:768px){.mobile-bottom-nav{display:block}}
 
     /* Theme Toggle */
     .theme-toggle{background:var(--card);border:1px solid var(--border);color:var(--text);padding:.5rem;border-radius:8px;cursor:pointer;font-size:1.25rem;transition:all .2s;display:flex;align-items:center;justify-content:center;width:2.5rem;height:2.5rem}
@@ -546,6 +556,30 @@
     <span aria-hidden="true">📱</span> Install App
   </button>
 
+  <!-- Mobile Bottom Navigation -->
+  <nav class="mobile-bottom-nav" role="navigation" aria-label="Mobile navigation">
+    <button class="mobile-nav-btn active" data-tab="dashboard" aria-label="Dashboard">
+      <span class="icon" aria-hidden="true">📊</span>
+      <span class="label">Dashboard</span>
+    </button>
+    <button class="mobile-nav-btn" data-tab="mental" aria-label="Mental Health">
+      <span class="icon" aria-hidden="true">🧠</span>
+      <span class="label">Mental</span>
+    </button>
+    <button class="mobile-nav-btn" data-tab="medication" aria-label="Medication">
+      <span class="icon" aria-hidden="true">💊</span>
+      <span class="label">Meds</span>
+    </button>
+    <button class="mobile-nav-btn" data-tab="sleep" aria-label="Sleep">
+      <span class="icon" aria-hidden="true">😴</span>
+      <span class="label">Sleep</span>
+    </button>
+    <button class="mobile-nav-btn" data-tab="exercise" aria-label="Exercise">
+      <span class="icon" aria-hidden="true">🏃</span>
+      <span class="label">Exercise</span>
+    </button>
+  </nav>
+
   <footer>
     <div class="footer-content">
       <div class="footer-left">
@@ -927,17 +961,10 @@
       setOne: (key, data) => localStorage.setItem('stepsync_' + key, JSON.stringify(data))
     };
 
-    // Tab Navigation
+    // Tab Navigation (Desktop)
     document.querySelectorAll('.nav-tab').forEach(tab => {
       tab.addEventListener('click', () => {
-        document.querySelectorAll('.nav-tab').forEach(t => {
-          t.classList.remove('active');
-          t.removeAttribute('aria-current');
-        });
-        document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
-        tab.classList.add('active');
-        tab.setAttribute('aria-current', 'page');
-        document.getElementById(tab.dataset.tab).classList.add('active');
+        switchTab(tab.dataset.tab);
       });
       
       // Keyboard navigation
@@ -948,6 +975,38 @@
         }
       });
     });
+
+    // Tab Navigation (Mobile)
+    document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        switchTab(btn.dataset.tab);
+      });
+    });
+
+    // Centralized tab switching function
+    function switchTab(tabName) {
+      // Update desktop nav tabs
+      document.querySelectorAll('.nav-tab').forEach(t => {
+        t.classList.remove('active');
+        t.removeAttribute('aria-current');
+        if (t.dataset.tab === tabName) {
+          t.classList.add('active');
+          t.setAttribute('aria-current', 'page');
+        }
+      });
+      
+      // Update mobile nav buttons
+      document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.tab === tabName) {
+          btn.classList.add('active');
+        }
+      });
+      
+      // Update content sections
+      document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
+      document.getElementById(tabName).classList.add('active');
+    }
 
     // Mood Tracker
     const moodEmojis = ['😢','😞','😔','😕','😐','🙂','😊','😄','😁','🤩'];
