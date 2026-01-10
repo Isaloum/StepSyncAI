@@ -1479,6 +1479,38 @@
     // MEDICATION SYSTEM (NEW - PERSISTENT DAILY LOGS)
     // ============================================
     
+    // Helper function: Convert time preset to HH:MM format
+    function normalizeTimeValue(timeInput) {
+      // If already in HH:MM format (contains colon), return as-is
+      if (timeInput && timeInput.includes(':')) {
+        return timeInput;
+      }
+      
+      // Convert text presets to default times
+      const presetTimes = {
+        'morning': '08:00',
+        'afternoon': '12:00',
+        'evening': '18:00',
+        'night': '20:00'
+      };
+      
+      const normalized = presetTimes[timeInput.toLowerCase()];
+      if (normalized) {
+        return normalized;
+      }
+      
+      // Fallback: return default morning time
+      console.warn(`Unknown time value: "${timeInput}". Using default 09:00`);
+      return '09:00';
+    }
+    
+    // Helper function: Validate time string is in HH:MM format
+    function isValidTimeFormat(timeStr) {
+      if (!timeStr) return false;
+      const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      return timeRegex.test(timeStr);
+    }
+    
     // Migrate old medications data on first load
     function migrateMedicationsToDefinitions() {
       // Check if migration already done
@@ -1514,16 +1546,25 @@
       definitions.forEach(def => {
         // For each scheduled time, check if log already exists for today
         def.scheduledTimes.forEach(scheduledTime => {
+          // CRITICAL: Normalize time value before parsing
+          const normalizedTime = normalizeTimeValue(scheduledTime);
+          
+          // Validate time format
+          if (!isValidTimeFormat(normalizedTime)) {
+            console.error(`Invalid time format for medication "${def.name}": ${scheduledTime} → ${normalizedTime}`);
+            return; // Skip this dose
+          }
+          
           const existingLog = logs.find(log => 
             log.medId === def.id && 
             new Date(log.scheduledFor).toDateString() === today &&
-            log.scheduledTime === scheduledTime
+            log.scheduledTime === normalizedTime
           );
           
           if (!existingLog) {
             // Create pending dose for today
             const scheduledDate = new Date();
-            const [hours, minutes] = scheduledTime.split(':');
+            const [hours, minutes] = normalizedTime.split(':');
             scheduledDate.setHours(parseInt(hours), parseInt(minutes || 0), 0, 0);
             
             logs.push({
@@ -1532,7 +1573,7 @@
               medName: def.name,
               dosage: def.dosage,
               scheduledFor: scheduledDate.toISOString(),
-              scheduledTime: scheduledTime,
+              scheduledTime: normalizedTime,
               status: 'pending', // pending, taken, missed, late
               takenAt: null
             });
@@ -1549,6 +1590,14 @@
       const dosage = document.getElementById('medDosage').value.trim();
       const time = document.getElementById('medTime').value;
       if (!name) return alert('Please enter medication name');
+      
+      // CRITICAL: Normalize time value before storing
+      const normalizedTime = normalizeTimeValue(time);
+      
+      // Validate time format
+      if (!isValidTimeFormat(normalizedTime)) {
+        return alert(`Invalid time format: "${time}". Please select a valid time.`);
+      }
 
       // Validate dosage safety
       const validation = validateDosage(name, dosage);
@@ -1576,7 +1625,7 @@
         id: Date.now(), 
         name, 
         dosage, 
-        scheduledTimes: [time],
+        scheduledTimes: [normalizedTime], // Store normalized HH:MM format
         asNeeded: false
       });
       DB.set('medicationDefinitions', definitions);
