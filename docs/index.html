@@ -2251,12 +2251,6 @@
       }
     });
 
-    function loadMoodHistory() {
-      const moods = DB.get('moods');
-      // ...existing code for mood history rendering...
-      // (Removed illegal return statement outside function)
-    }
-
     // ============================================
     // THEME TOGGLE FUNCTION (fix ReferenceError)
     // ============================================
@@ -2484,9 +2478,9 @@
         ).join('');
       }
 
-    // ============================================
-    // DOSAGE VALIDATION FUNCTIONS
-    // ============================================
+    // Load and display mood history
+    function loadMoodHistory() {
+      const moods = DB.get('moods');
       const container = document.getElementById('moodHistory');
       if (moods.length === 0) {
         container.innerHTML = '<div class="insight">No mood entries yet. Start tracking!</div>';
