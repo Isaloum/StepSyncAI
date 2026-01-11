@@ -2292,17 +2292,22 @@
     }
     
     // Search medication using RxNorm API (NIH - Official drug names)
-    // Version: 2026-01-11-17:05 - Fixed scope and syntax issues
+    // Version: 2026-01-11-17:15 - Added debugging
     let searchTimeout;
     async function searchMedication() {
+      console.log('searchMedication called!');
       clearTimeout(searchTimeout);
       const query = document.getElementById('medName').value.trim();
+      console.log('Query:', query);
       const resultsContainer = document.getElementById('medSearchResults');
       const resultsList = document.getElementById('medSearchResultsList');
+      console.log('Containers found:', resultsContainer, resultsList);
       if (query.length < 3) {
+        console.log('Query too short, hiding dropdown');
         resultsContainer.style.display = 'none';
         return;
       }
+      console.log('Query length OK, starting search...');
       searchTimeout = setTimeout(async () => {
         try {
           if (MED_CACHE.rxnorm[query]) {
