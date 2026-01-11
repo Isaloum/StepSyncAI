@@ -2292,9 +2292,9 @@
     }
     
     // Search medication using RxNorm API (NIH - Official drug names)
-    // Version: 2026-01-11-17:15 - Added debugging
+    // Version: 2026-01-11-17:18 - Make explicitly global
     let searchTimeout;
-    async function searchMedication() {
+    window.searchMedication = async function searchMedication() {
       console.log('searchMedication called!');
       clearTimeout(searchTimeout);
       const query = document.getElementById('medName').value.trim();
@@ -2304,7 +2304,7 @@
       console.log('Containers found:', resultsContainer, resultsList);
       if (query.length < 3) {
         console.log('Query too short, hiding dropdown');
-        resultsContainer.style.display = 'none';
+        if (resultsContainer) resultsContainer.style.display = 'none';
         return;
       }
       console.log('Query length OK, starting search...');
