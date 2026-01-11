@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>StepSyncAI - Personal Health & Wellness Platform</title>
+  <title>MindTrackAI - Mental Health & Wellness Tracking Platform</title>
   <meta name="description" content="Track your mental health, medication, sleep, exercise, and get personalized wellness insights.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✨</text></svg>">
   
@@ -20,7 +20,7 @@
   <meta name="theme-color" content="#1e40af">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="StepSyncAI">
+  <meta name="apple-mobile-web-app-title" content="MindTrackAI">
   <style>
     /* Dribbble-Inspired Professional Health Dashboard */
     /* Light, minimal design with subtle accents */
@@ -1155,7 +1155,7 @@
     <div class="onboarding-modal">
       <div class="onboarding-header">
         <div class="onboarding-icon" role="img" aria-label="Welcome">✨</div>
-        <h2 id="onboarding-title" class="onboarding-title">Welcome to StepSyncAI!</h2>
+        <h2 id="onboarding-title" class="onboarding-title">Welcome to MindTrackAI!</h2>
         <p id="onboarding-subtitle" class="onboarding-subtitle">Your personal health and wellness companion</p>
       </div>
       <div class="onboarding-content">
@@ -1184,7 +1184,7 @@
         </div>
       </div>
       <div class="onboarding-actions">
-        <button class="btn btn-primary" onclick="completeOnboarding()" aria-label="Continue to start using StepSyncAI">Continue →</button>
+        <button class="btn btn-primary" onclick="completeOnboarding()" aria-label="Continue to start using MindTrackAI">Continue →</button>
       </div>
     </div>
   </div>
@@ -1209,7 +1209,7 @@
   <header>
     <div class="container">
       <div class="header-content">
-        <a href="#" class="logo" aria-label="StepSyncAI home">✨ StepSyncAI <span class="badge">LIVE</span></a>
+        <a href="#" class="logo" aria-label="MindTrackAI home">🧠 MindTrackAI <span class="badge">LIVE</span></a>
         <nav class="nav-tabs" role="navigation" aria-label="Main navigation">
           <button class="nav-tab active" data-tab="dashboard" aria-label="Dashboard" aria-current="page"><span class="icon" aria-hidden="true">📊</span><span>Dashboard</span></button>
           <button class="nav-tab" data-tab="mental" aria-label="Mental Health Tracker"><span class="icon" aria-hidden="true">🧠</span><span>Mental Health</span></button>
@@ -1315,10 +1315,10 @@
           <button class="action-btn" onclick="shareProgress()" aria-label="Share your progress">
             <span aria-hidden="true">📤</span> Share Progress
           </button>
-          <a class="action-btn" href="https://github.com/Isaloum/StepSyncAI/issues/new" target="_blank" rel="noopener noreferrer" aria-label="Send feedback (opens in new tab)">
+          <a class="action-btn" href="https://github.com/Isaloum/MindTrackAI/issues/new" target="_blank" rel="noopener noreferrer" aria-label="Send feedback (opens in new tab)">
             <span aria-hidden="true">💬</span> Send Feedback
           </a>
-          <a class="action-btn" href="https://github.com/Isaloum/StepSyncAI" target="_blank" rel="noopener noreferrer" aria-label="View source code on GitHub (opens in new tab)">
+          <a class="action-btn" href="https://github.com/Isaloum/MindTrackAI" target="_blank" rel="noopener noreferrer" aria-label="View source code on GitHub (opens in new tab)">
             <span aria-hidden="true">⭐</span> Star on GitHub
           </a>
           <button class="action-btn" onclick="exportData()" aria-label="Export your data">
@@ -1363,17 +1363,46 @@
 
     <!-- Medication -->
     <section id="medication" class="app-section">
+      <!-- MEDICAL DISCLAIMER - CRITICAL LEGAL PROTECTION -->
+      <div class="card" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem">
+          <div style="font-size:2rem">⚕️</div>
+          <div style="font-size:1.125rem;font-weight:700">Important Medical Disclaimer</div>
+        </div>
+        <div style="font-size:0.875rem;line-height:1.6;opacity:0.95">
+          <p style="margin:0 0 0.5rem"><strong>This tool is for informational purposes only and is NOT medical advice.</strong></p>
+          <p style="margin:0 0 0.5rem">• Always consult your healthcare provider before starting, stopping, or changing medications</p>
+          <p style="margin:0 0 0.5rem">• Drug information is sourced from FDA OpenFDA and NIH RxNorm APIs but may not be complete</p>
+          <p style="margin:0 0 0.5rem">• Interaction warnings are educational only - your doctor knows your full medical history</p>
+          <p style="margin:0"><strong>In case of emergency or overdose, call 911 or Poison Control: 1-800-222-1222</strong></p>
+        </div>
+      </div>
+
       <div class="card">
-        <div class="card-title">💊 Add Medication</div>
+        <div class="card-title">💊 Add Medication or Supplement</div>
         <div class="form-grid">
           <div class="form-group">
-            <label>Medication Name</label>
-            <input type="text" id="medName" placeholder="e.g., Vitamin D" oninput="checkDosageRealtime()">
+            <label>Type</label>
+            <select id="medType" onchange="updateMedTypePlaceholder()">
+              <option value="medication">💊 Medication (Prescription/OTC)</option>
+              <option value="supplement">🌿 Supplement (Vitamin/Mineral/Herb)</option>
+            </select>
+            <div style="margin-top:0.375rem;font-size:0.75rem;color:var(--text-secondary)">
+              <span id="medTypeHint">Prescription drugs or over-the-counter medications (e.g., Aspirin, Lisinopril)</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" id="medName" placeholder="e.g., Aspirin" oninput="searchMedication()" autocomplete="off">
+            <div id="medSearchResults" style="display:none;position:relative">
+              <div style="position:absolute;top:0.25rem;left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 4px 12px var(--shadow-md);max-height:200px;overflow-y:auto;z-index:1000"></div>
+            </div>
+            <div id="medInfoBox" style="margin-top:0.5rem;font-size:0.8125rem"></div>
           </div>
           <div class="form-group">
             <label>Dosage</label>
-            <input type="text" id="medDosage" placeholder="e.g., 1000 IU" oninput="checkDosageRealtime()">
-            <div id="dosageWarning" style="margin-top:0.5rem;font-size:0.85rem;"></div>
+            <input type="text" id="medDosage" placeholder="e.g., 81 mg" oninput="checkDosageRealtime()">
+            <div id="dosageWarning" style="margin-top:0.5rem;font-size:0.8125rem;"></div>
           </div>
           <div class="form-group">
             <label>Time</label>
@@ -1385,7 +1414,7 @@
             </select>
           </div>
         </div>
-        <button class="btn btn-primary" onclick="addMedication()">➕ Add Medication</button>
+        <button class="btn btn-primary" onclick="addMedication()">➕ Add to Tracker</button>
       </div>
 
       <div class="card">
@@ -1394,9 +1423,21 @@
       </div>
 
       <div class="card">
+        <div class="card-title">🌿 Supplements</div>
+        <div class="med-grid" id="supplementList"></div>
+      </div>
+
+      <div class="card">
         <div class="card-title">⚠️ Drug Interaction Warnings</div>
         <div id="interactionWarnings">
           <div class="insight positive">✅ No dangerous interactions detected.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🌿 Supplements</div>
+        <div id="supplementList">
+          <div class="insight">No supplements tracked. Add a supplement above.</div>
         </div>
       </div>
     </section>
@@ -1486,7 +1527,7 @@
   </main>
 
   <!-- Install PWA Button -->
-  <button id="installPWA" class="install-pwa" aria-label="Install StepSyncAI as app">
+  <button id="installPWA" class="install-pwa" aria-label="Install MindTrackAI as app">
     <span aria-hidden="true">📱</span> Install App
   </button>
 
@@ -1517,7 +1558,7 @@
   <footer>
     <div class="footer-content">
       <div class="footer-left">
-        <div class="footer-title">✨ StepSyncAI</div>
+        <div class="footer-title">🧠 MindTrackAI</div>
         <div class="footer-subtitle">Built by Ihab Saloum • Open Source Project</div>
         <div style="display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap">
           <span class="tech-badge">Node.js</span>
@@ -1531,7 +1572,7 @@
         <button class="footer-link" onclick="signOut()" style="cursor:pointer" aria-label="Sign out and clear all data">
           <span aria-hidden="true">🚪</span> Sign Out
         </button>
-        <a href="https://github.com/Isaloum/StepSyncAI" target="_blank" class="footer-link">
+        <a href="https://github.com/Isaloum/MindTrackAI" target="_blank" class="footer-link">
           <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
           View Source Code
         </a>
@@ -1682,7 +1723,7 @@
         // Clear all localStorage data safely
         const keysToRemove = Object.keys(localStorage).filter(key => key.startsWith('stepsync_'));
         
-        // Remove all StepSyncAI data
+        // Remove all MindTrackAI data
         keysToRemove.forEach(key => localStorage.removeItem(key));
         
         // Show success message
@@ -1737,17 +1778,17 @@
     // ============================================
     function shareProgress() {
       const wellness = document.getElementById('wellnessScore').textContent;
-      const text = `I'm tracking my wellness with StepSyncAI! My current wellness score is ${wellness}/100. ✨💪`;
+      const text = `I'm tracking my wellness with MindTrackAI! My current wellness score is ${wellness}/100. 🧠💪`;
       
       if (navigator.share) {
         navigator.share({
-          title: 'My StepSyncAI Progress',
+          title: 'My MindTrackAI Progress',
           text: text,
-          url: 'https://isaloum.github.io/StepSyncAI'
+          url: 'https://isaloum.github.io/MindTrackAI'
         }).catch(err => console.log('Share cancelled'));
       } else {
         // Fallback: copy to clipboard
-        navigator.clipboard.writeText(text + '\nhttps://isaloum.github.io/StepSyncAI')
+        navigator.clipboard.writeText(text + '\nhttps://isaloum.github.io/MindTrackAI')
           .then(() => alert('Progress copied to clipboard! 📋'))
           .catch(() => alert('Share text: ' + text));
       }
@@ -1845,7 +1886,7 @@
         <div style="flex: 1;">
           <strong>✨ Update Available</strong>
           <div style="font-size: 14px; opacity: 0.9; margin-top: 4px;">
-            A new version of StepSyncAI is ready!
+            A new version of MindTrackAI is ready!
           </div>
         </div>
         <button onclick="location.reload()" style="
@@ -2237,6 +2278,229 @@
     }
 
     // ============================================
+    // MEDICATION API INTEGRATION (FDA + NIH)
+    // ============================================
+    
+    // Medication search cache to reduce API calls
+    const MED_CACHE = {
+      rxnorm: {},
+      fda: {},
+      interactions: {}
+    };
+    
+    // Update placeholder text based on medication type
+    function updateMedTypePlaceholder() {
+      const type = document.getElementById('medType').value;
+      const nameInput = document.getElementById('medName');
+      const dosageInput = document.getElementById('medDosage');
+      const hint = document.getElementById('medTypeHint');
+      
+      if (type === 'medication') {
+        nameInput.placeholder = 'e.g., Aspirin, Lisinopril, Metformin';
+        dosageInput.placeholder = 'e.g., 81 mg, 10 mg';
+        hint.textContent = 'Prescription drugs or over-the-counter medications (e.g., Aspirin, Lisinopril)';
+      } else {
+        nameInput.placeholder = 'e.g., Vitamin D, Fish Oil, Magnesium';
+        dosageInput.placeholder = 'e.g., 1000 IU, 500 mg';
+        hint.textContent = 'Vitamins, minerals, herbs, or other dietary supplements';
+      }
+    }
+    
+    // Search medication using RxNorm API (NIH - Official drug names)
+    let searchTimeout;
+    async function searchMedication() {
+      clearTimeout(searchTimeout);
+      const query = document.getElementById('medName').value.trim();
+      const resultsDiv = document.getElementById('medSearchResults');
+      if (query.length < 3) {
+        resultsDiv.style.display = 'none';
+        return;
+      }
+      searchTimeout = setTimeout(async () => {
+        try {
+          if (MED_CACHE.rxnorm[query]) {
+            displaySearchResults(MED_CACHE.rxnorm[query]);
+            return;
+          }
+          const url = `https://rxnav.nlm.nih.gov/REST/approximateTerm.json?term=${encodeURIComponent(query)}&maxEntries=5`;
+          const response = await fetch(url);
+          if (!response.ok) {
+            resultsDiv.style.display = 'block';
+            resultsDiv.querySelector('div').innerHTML = '<div style="color:#ef4444;padding:0.75rem">⚠️ Unable to reach RxNorm API. Please check your internet connection or try again later.</div>';
+            return;
+          }
+          const data = await response.json();
+          const candidates = data.approximateGroup?.candidate || [];
+          MED_CACHE.rxnorm[query] = candidates;
+          displaySearchResults(candidates);
+        } catch (error) {
+          resultsDiv.style.display = 'block';
+          resultsDiv.querySelector('div').innerHTML = '<div style="color:#ef4444;padding:0.75rem">⚠️ Error searching for medication. Please try again later.</div>';
+        }
+      }, 500);
+    }
+    
+    function displaySearchResults(candidates) {
+      const container = document.getElementById('medSearchResults');
+      const resultsDiv = container.querySelector('div');
+      
+      if (!candidates || candidates.length === 0) {
+        container.style.display = 'none';
+        return;
+      }
+      
+      resultsDiv.innerHTML = candidates.slice(0, 5).map(c => `
+        <div style="padding:0.625rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);transition:var(--transition)" 
+             onmouseover="this.style.background='var(--bg-subtle)'"
+             onmouseout="this.style.background='transparent'"
+             onclick="selectMedication('${c.candidate.replace(/'/g, "\\'")}', ${c.rxcui})">
+          <div style="font-weight:600;color:var(--text)">${c.candidate}</div>
+          <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.125rem">RxCUI: ${c.rxcui}</div>
+        </div>
+      `).join('');
+      
+      container.style.display = 'block';
+    }
+    
+    async function selectMedication(name, rxcui) {
+      document.getElementById('medName').value = name;
+      document.getElementById('medSearchResults').style.display = 'none';
+      // Store RxCUI in a hidden field for later use
+      document.getElementById('medName').setAttribute('data-rxcui', rxcui);
+      await fetchDrugInformation(rxcui, name);
+    }
+    
+    async function fetchDrugInformation(rxcui, drugName) {
+      const infoBox = document.getElementById('medInfoBox');
+      infoBox.innerHTML = '<div style="color:var(--primary);font-size:0.75rem">⏳ Loading drug information from FDA...</div>';
+      try {
+        // Get drug properties from RxNorm
+        const propsUrl = `https://rxnav.nlm.nih.gov/REST/rxcui/${rxcui}/properties.json`;
+        const propsResponse = await fetch(propsUrl);
+        if (!propsResponse.ok) throw new Error('RxNorm properties failed');
+        const propsData = await propsResponse.json();
+        const drugInfo = propsData.properties;
+        // Try to get FDA label data
+        let fdaWarnings = [];
+        try {
+          const fdaUrl = `https://api.fda.gov/drug/label.json?search=openfda.brand_name:"${encodeURIComponent(drugName)}"&limit=1`;
+          const fdaResponse = await fetch(fdaUrl);
+          if (fdaResponse.ok) {
+            const fdaData = await fdaResponse.json();
+            if (fdaData.results && fdaData.results[0]) {
+              const label = fdaData.results[0];
+              if (label.warnings) {
+                fdaWarnings = label.warnings.slice(0, 3);
+              }
+              if (label.boxed_warning) {
+                fdaWarnings.unshift('⚠️ BLACK BOX WARNING: ' + label.boxed_warning[0].substring(0, 200) + '...');
+              }
+            }
+          }
+        } catch (fdaError) {
+          fdaWarnings.push('⚠️ FDA data not available for this drug.');
+        }
+        let html = '<div style="background:var(--bg-subtle);padding:0.75rem;border-radius:var(--radius-sm);border-left:3px solid var(--primary)">';
+        html += `<div style="font-weight:700;color:var(--primary);margin-bottom:0.5rem">✓ ${drugInfo.name}</div>`;
+        if (drugInfo.synonym) {
+          html += `<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:0.375rem">Also known as: ${drugInfo.synonym}</div>`;
+        }
+        if (fdaWarnings.length > 0) {
+          html += '<div style="margin-top:0.625rem;padding-top:0.625rem;border-top:1px solid var(--border)">';
+          html += '<div style="font-weight:600;font-size:0.8125rem;color:#ef4444;margin-bottom:0.375rem">⚠️ FDA Warnings:</div>';
+          fdaWarnings.forEach(w => {
+            const warningText = typeof w === 'string' ? w : w[0];
+            const truncated = warningText.substring(0, 150) + (warningText.length > 150 ? '...' : '');
+            html += `<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:0.25rem">• ${truncated}</div>`;
+          });
+          html += '</div>';
+        }
+        html += '<div style="margin-top:0.625rem;font-size:0.6875rem;color:var(--text-muted)">Source: NIH RxNorm + FDA OpenFDA</div>';
+        html += '</div>';
+        infoBox.innerHTML = html;
+        MED_CACHE.fda[rxcui] = { drugInfo, fdaWarnings };
+      } catch (error) {
+        console.error('Error fetching drug information:', error);
+        infoBox.innerHTML = '<div style="color:#ef4444;font-size:0.75rem">⚠️ Could not fetch official drug data. Please verify dosage with your doctor.</div>';
+      }
+    }
+    
+    // Check for drug interactions using RxNorm API
+      async function checkDrugInteractions(medicationList) {
+        // Only check for medications (not supplements)
+        const medsWithRxcui = medicationList.filter(m => m.type === 'medication' && m.rxcui);
+        if (medsWithRxcui.length < 2) return [];
+
+        const rxcuis = medsWithRxcui.map(m => m.rxcui).join('+');
+        try {
+          const url = `https://rxnav.nlm.nih.gov/REST/interaction/list.json?rxcuis=${rxcuis}`;
+          const response = await fetch(url);
+          if (!response.ok) throw new Error('RxNorm interaction API failed');
+          const data = await response.json();
+          const interactions = [];
+          const groups = data.fullInteractionTypeGroup || [];
+          groups.forEach(group => {
+            (group.fullInteractionType || []).forEach(type => {
+              (type.interactionPair || []).forEach(pair => {
+                interactions.push({
+                  description: pair.description,
+                  severity: pair.severity || 'N/A',
+                  source: pair.sourceName || 'RxNorm'
+                });
+              });
+            });
+          });
+          return interactions;
+        } catch (error) {
+          console.error('Interaction check error:', error);
+          return [];
+        }
+      }
+
+      // UI: Check and display drug interactions
+      async function checkInteractions() {
+        const definitions = DB.get('medicationDefinitions');
+        // Only check for medications with RxCUI
+        const interactions = await checkDrugInteractions(definitions);
+        const container = document.getElementById('interactionWarnings');
+        if (!container) return;
+        if (!interactions || interactions.length === 0) {
+          container.innerHTML = '<div class="insight positive">✅ No dangerous interactions detected.</div>';
+          return;
+        }
+        container.innerHTML = interactions.map(i =>
+          `<div class="insight warning"><strong>⚠️ Drug Interaction:</strong> ${i.description} <span style="color:#ef4444;font-weight:600">[${i.severity}]</span></div>`
+        ).join('');
+      }
+
+    // ============================================
+    // DOSAGE VALIDATION FUNCTIONS
+    // ============================================
+      const container = document.getElementById('moodHistory');
+      if (moods.length === 0) {
+        container.innerHTML = '<div class="insight">No mood entries yet. Start tracking!</div>';
+        return;
+      }
+      container.innerHTML = moods.slice(0, 10).map(m => `
+        <div class="data-item">
+          <div class="data-item-info">
+            <div class="data-item-title">${moodEmojis[m.mood - 1]} Mood: ${m.mood}/10</div>
+            <div class="data-item-meta">${new Date(m.date).toLocaleDateString()} ${m.symptoms.length ? '• ' + m.symptoms.join(', ') : ''}</div>
+            ${m.notes ? `<div style="margin-top:0.5rem;color:var(--muted);font-size:0.875rem">${m.notes}</div>` : ''}
+          </div>
+          <div class="entry-actions">
+            <button class="edit-btn" onclick="openEditModal('mood', '${m.date}')" aria-label="Edit mood entry" title="Edit">
+              ✏️ Edit
+            </button>
+            <button class="delete-btn" onclick="deleteMoodEntry('${m.date}')" aria-label="Delete mood entry" title="Delete">
+              🗑️ Delete
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ============================================
     // DOSAGE VALIDATION FUNCTIONS
     // ============================================
     
@@ -2510,10 +2774,14 @@
 
     // Add new medication definition
     function addMedication() {
-      const name = document.getElementById('medName').value.trim();
+      const type = document.getElementById('medType').value; // medication or supplement
+      const nameInput = document.getElementById('medName');
+      const name = nameInput.value.trim();
+      const rxcui = nameInput.getAttribute('data-rxcui') || null;
       const dosage = document.getElementById('medDosage').value.trim();
       const time = document.getElementById('medTime').value;
-      if (!name) return alert('Please enter medication name');
+      
+      if (!name) return alert('Please enter medication/supplement name');
       
       // CRITICAL: Normalize time value before storing
       const normalizedTime = normalizeTimeValue(time);
@@ -2523,20 +2791,47 @@
         return alert(`Invalid time format: "${time}". Please select a valid time.`);
       }
 
-      // Validate dosage safety
-      const validation = validateDosage(name, dosage);
-      
-      if (validation.warnings && validation.warnings.length > 0) {
-        let warningMsg = '⚠️ MEDICATION SAFETY WARNINGS:\n\n';
-        validation.warnings.forEach(w => {
-          warningMsg += w.message + '\n\n';
-        });
+      // CRITICAL: Different validation for medications vs supplements
+      if (type === 'medication') {
+        // Validate dosage safety for medications (stricter)
+        const validation = validateDosage(name, dosage);
         
-        if (!validation.valid) {
-          alert(warningMsg + '\n❌ This medication was NOT saved due to dangerous dosage. Please correct the dosage or consult your healthcare provider.');
-          return;
-        } else {
-          warningMsg += '\n\n⚠️ Do you want to save this medication anyway?\n(Only proceed if prescribed by your doctor)';
+        if (validation.warnings && validation.warnings.length > 0) {
+          let warningMsg = '⚠️ MEDICATION SAFETY WARNINGS:\n\n';
+          validation.warnings.forEach(w => {
+            warningMsg += w.message + '\n\n';
+          });
+          
+          if (!validation.valid) {
+            warningMsg += '\n❌ This medication was NOT saved due to dangerous dosage.\n\n';
+            warningMsg += '🏥 REQUIRED ACTIONS:\n';
+            warningMsg += '1. Verify dosage with your healthcare provider\n';
+            warningMsg += '2. If you believe this is an error, contact us\n';
+            warningMsg += '3. In case of overdose, call Poison Control: 1-800-222-1222';
+            alert(warningMsg);
+            return;
+          } else {
+            warningMsg += '\n\n⚠️ Do you want to save this medication anyway?\n';
+            warningMsg += '(Only proceed if prescribed by your healthcare provider)';
+            if (!confirm(warningMsg)) {
+              return;
+            }
+          }
+        }
+      } else {
+        // For supplements, show informational warning only
+        const validation = validateDosage(name, dosage);
+        if (validation.warnings && validation.warnings.some(w => w.level === 'danger' || w.level === 'critical')) {
+          let warningMsg = '⚠️ SUPPLEMENT DOSAGE NOTICE:\n\n';
+          validation.warnings.forEach(w => {
+            if (w.level === 'danger' || w.level === 'critical') {
+              warningMsg += w.message + '\n\n';
+            }
+          });
+          warningMsg += '\n🌿 Supplements can have side effects at high doses.\n';
+          warningMsg += 'Consult a healthcare provider before taking high-dose supplements.\n\n';
+          warningMsg += 'Continue adding this supplement?';
+          
           if (!confirm(warningMsg)) {
             return;
           }
@@ -2549,43 +2844,46 @@
         id: Date.now(), 
         name, 
         dosage, 
+        type: type, // 'medication' or 'supplement'
         scheduledTimes: [normalizedTime], // Store normalized HH:MM format
-        asNeeded: false
+        asNeeded: false,
+        rxcui: rxcui // Store RxCUI if available
       });
       DB.set('medicationDefinitions', definitions);
       
-      document.getElementById('medName').value = '';
+      // Clear form
+      nameInput.value = '';
+      nameInput.removeAttribute('data-rxcui');
       document.getElementById('medDosage').value = '';
+      document.getElementById('medInfoBox').innerHTML = '';
       
       // Generate today's dose for this new medication
       generateTodaysDoses();
       loadMedications();
+      loadSupplements();
       checkInteractions();
     }
 
     // Load and display today's medication doses
     function loadMedications() {
       generateTodaysDoses(); // Ensure today's doses exist
-      
       const logs = DB.get('medicationLogs');
       const today = new Date().toDateString();
+      // Only show medications (not supplements)
+      const definitions = DB.get('medicationDefinitions');
+      const medIds = definitions.filter(d => d.type === 'medication').map(d => d.id);
       const todaysLogs = logs.filter(log => 
-        new Date(log.scheduledFor).toDateString() === today
+        new Date(log.scheduledFor).toDateString() === today && medIds.includes(log.medId)
       ).sort((a, b) => new Date(a.scheduledFor) - new Date(b.scheduledFor));
-      
       const container = document.getElementById('medList');
-      
       if (todaysLogs.length === 0) {
         container.innerHTML = '<div class="insight">No medications scheduled for today. Add a medication above to get started!</div>';
         return;
       }
-
-      // Group by status for better UI
       container.innerHTML = todaysLogs.map(log => {
         const statusClass = log.status === 'taken' ? 'taken' : log.status === 'missed' ? 'missed' : '';
         const statusIcon = log.status === 'taken' ? '✅' : log.status === 'missed' ? '❌' : log.status === 'late' ? '⏰' : '⬜';
         const statusText = log.status === 'taken' ? 'Taken' : log.status === 'missed' ? 'Missed' : log.status === 'late' ? 'Taken Late' : 'Mark Taken';
-        
         return `
           <div class="med-card ${statusClass}">
             <div class="med-name">${log.medName}</div>
@@ -2610,8 +2908,37 @@
           </div>
         `;
       }).join('');
-      
       updateDashboard();
+    }
+
+    // Load and display supplements
+    function loadSupplements() {
+      const definitions = DB.get('medicationDefinitions');
+      const supplements = definitions.filter(d => d.type === 'supplement');
+      const container = document.getElementById('supplementList');
+      if (!container) return;
+      if (supplements.length === 0) {
+        container.innerHTML = '<div class="insight">No supplements tracked. Add a supplement above.</div>';
+        return;
+      }
+      container.innerHTML = supplements.map(sup => `
+        <div class="med-card">
+          <div class="med-name">${sup.name}</div>
+          <div class="med-time">${sup.dosage} • ${sup.scheduledTimes[0]}</div>
+          <div style="display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap">
+            <button class="btn btn-danger" onclick="deleteSupplement(${sup.id})" title="Delete this supplement">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function deleteSupplement(id) {
+      let definitions = DB.get('medicationDefinitions');
+      definitions = definitions.filter(d => d.id !== id);
+      DB.set('medicationDefinitions', definitions);
+      loadSupplements();
+      loadMedications();
+      checkInteractions();
     }
 
     // Mark medication as taken

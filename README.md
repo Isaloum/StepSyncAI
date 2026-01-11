@@ -1,22 +1,22 @@
-# 🏥 StepSyncAI - Personal Health & Wellness Platform
+# 🧠 MindTrackAI - Mental Health & Wellness Tracking Platform
 
 <div align="center">
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-3b82f6?style=for-the-badge&logo=google-chrome)](https://isaloum.github.io/StepSyncAI)
-[![GitHub](https://img.shields.io/badge/GitHub-View%20Source-181717?style=for-the-badge&logo=github)](https://github.com/Isaloum/StepSyncAI)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-3b82f6?style=for-the-badge&logo=google-chrome)](https://isaloum.github.io/MindTrackAI)
+[![GitHub](https://img.shields.io/badge/GitHub-View%20Source-181717?style=for-the-badge&logo=github)](https://github.com/Isaloum/MindTrackAI)
 
 
-[![Tests](https://img.shields.io/badge/tests-1927%20passing-brightgreen)](https://github.com/Isaloum/StepSyncAI)
-[![Coverage](https://img.shields.io/badge/coverage-82.55%25-green)](https://github.com/Isaloum/StepSyncAI)
+[![Tests](https://img.shields.io/badge/tests-1927%20passing-brightgreen)](https://github.com/Isaloum/MindTrackAI)
+[![Coverage](https://img.shields.io/badge/coverage-82.55%25-green)](https://github.com/Isaloum/MindTrackAI)
 [![Node](https://img.shields.io/badge/node-18.x%20%7C%2020.x-brightgreen)](https://nodejs.org/)
-[![CI/CD](https://img.shields.io/badge/CI%2FCD-passing-brightgreen)](https://github.com/Isaloum/StepSyncAI/actions)
+[![CI/CD](https://img.shields.io/badge/CI%2FCD-passing-brightgreen)](https://github.com/Isaloum/MindTrackAI/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**A production-grade health tracking platform with 6 integrated applications, 1,927 automated tests, and comprehensive CI/CD pipeline.**
+**A production-grade mental health & wellness tracking platform with AI-powered insights, FDA-validated medication safety, and comprehensive privacy protection.**
 
-🎯 **[Try it now → https://isaloum.github.io/StepSyncAI](https://isaloum.github.io/StepSyncAI)**
+🎯 **[Try it now → https://isaloum.github.io/MindTrackAI](https://isaloum.github.io/MindTrackAI)**
 
-📚 **[Documentation](https://github.com/Isaloum/StepSyncAI/wiki)** • [Quick Start](https://github.com/Isaloum/StepSyncAI/wiki/Quick-Start) • [Architecture](https://github.com/Isaloum/StepSyncAI/wiki/Architecture) • [Privacy & Security](https://github.com/Isaloum/StepSyncAI/wiki/Security-and-Privacy) • [FAQ](https://github.com/Isaloum/StepSyncAI/wiki/FAQ)
+📚 **[Documentation](https://github.com/Isaloum/MindTrackAI/wiki)** • [Quick Start](https://github.com/Isaloum/MindTrackAI/wiki/Quick-Start) • [Architecture](https://github.com/Isaloum/MindTrackAI/wiki/Architecture) • [Privacy & Security](https://github.com/Isaloum/MindTrackAI/wiki/Security-and-Privacy) • [FAQ](https://github.com/Isaloum/MindTrackAI/wiki/FAQ)
 
 [Features](#-features) • [Tech Stack](#-tech-stack)
 
