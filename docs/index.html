@@ -1391,11 +1391,11 @@
               <span id="medTypeHint">Prescription drugs or over-the-counter medications (e.g., Aspirin, Lisinopril)</span>
             </div>
           </div>
-          <div class="form-group">
+          <div class="form-group" style="position:relative;z-index:1001">
             <label>Name</label>
             <input type="text" id="medName" placeholder="e.g., Aspirin" oninput="searchMedication()" autocomplete="off">
-            <div id="medSearchResults" style="display:none;position:relative">
-              <div id="medSearchResultsList" style="position:absolute;top:0.25rem;left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 4px 12px var(--shadow-md);max-height:200px;overflow-y:auto;z-index:1000"></div>
+            <div id="medSearchResults" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:0.25rem;z-index:1002">
+              <div id="medSearchResultsList" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 4px 12px var(--shadow-md);max-height:200px;overflow-y:auto"></div>
             </div>
             <div id="medInfoBox" style="margin-top:0.5rem;font-size:0.8125rem"></div>
           </div>
@@ -2344,17 +2344,31 @@
         return;
       }
       
-      resultsList.innerHTML = candidates.slice(0, 5).map(c => `
-        <div style="padding:0.625rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);transition:var(--transition)" 
+      resultsList.innerHTML = candidates.slice(0, 5).map((c, index) => {
+        if (!c || !c.candidate || !c.rxcui) return '';
+        const safeCandidate = String(c.candidate).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+        const safeRxCUI = String(c.rxcui).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+        return `
+        <div data-candidate="${safeCandidate}" data-rxcui="${safeRxCUI}" 
+             style="padding:0.625rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);transition:var(--transition)" 
              onmouseover="this.style.background='var(--bg-subtle)'"
              onmouseout="this.style.background='transparent'"
-             onclick="selectMedication('${c.candidate.replace(/'/g, "\\'")}', ${c.rxcui})">
-          <div style="font-weight:600;color:var(--text)">${c.candidate}</div>
-          <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.125rem">RxCUI: ${c.rxcui}</div>
+             onclick="selectMedicationFromData(this)">
+          <div style="font-weight:600;color:var(--text)">${safeCandidate}</div>
+          <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.125rem">RxCUI: ${safeRxCUI}</div>
         </div>
-      `).join('');
+      `;
+      }).join('');
       
       container.style.display = 'block';
+    }
+    
+    function selectMedicationFromData(element) {
+      const candidate = element.getAttribute('data-candidate');
+      const rxcui = element.getAttribute('data-rxcui');
+      if (candidate && rxcui) {
+        selectMedication(candidate, parseInt(rxcui, 10));
+      }
     }
     
     async function selectMedication(name, rxcui) {
@@ -3637,6 +3651,17 @@
     updateStreakChart();
     moodEmoji.textContent = moodEmojis[4];
     showOnboarding();
+
+    // Close medication dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      const medNameInput = document.getElementById('medName');
+      const medSearchResults = document.getElementById('medSearchResults');
+      if (medSearchResults && medNameInput && 
+          !medNameInput.contains(e.target) && 
+          !medSearchResults.contains(e.target)) {
+        medSearchResults.style.display = 'none';
+      }
+    });
   </script>
 </body>
 </html>
