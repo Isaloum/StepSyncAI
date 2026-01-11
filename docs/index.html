@@ -1395,7 +1395,7 @@
             <label>Name</label>
             <input type="text" id="medName" placeholder="e.g., Aspirin" oninput="searchMedication()" autocomplete="off">
             <div id="medSearchResults" style="display:none;position:relative">
-              <div style="position:absolute;top:0.25rem;left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 4px 12px var(--shadow-md);max-height:200px;overflow-y:auto;z-index:1000"></div>
+              <div id="medSearchResultsList" style="position:absolute;top:0.25rem;left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 4px 12px var(--shadow-md);max-height:200px;overflow-y:auto;z-index:1000"></div>
             </div>
             <div id="medInfoBox" style="margin-top:0.5rem;font-size:0.8125rem"></div>
           </div>
@@ -2300,9 +2300,10 @@
     async function searchMedication() {
       clearTimeout(searchTimeout);
       const query = document.getElementById('medName').value.trim();
-      const resultsDiv = document.getElementById('medSearchResults');
+      const resultsContainer = document.getElementById('medSearchResults');
+      const resultsList = document.getElementById('medSearchResultsList');
       if (query.length < 3) {
-        resultsDiv.style.display = 'none';
+        resultsContainer.style.display = 'none';
         return;
       }
       searchTimeout = setTimeout(async () => {
@@ -2314,8 +2315,8 @@
           const url = `https://rxnav.nlm.nih.gov/REST/approximateTerm.json?term=${encodeURIComponent(query)}&maxEntries=5`;
           const response = await fetch(url);
           if (!response.ok) {
-            resultsDiv.style.display = 'block';
-            resultsDiv.querySelector('div').innerHTML = '<div style="color:#ef4444;padding:0.75rem">⚠️ Unable to reach RxNorm API. Please check your internet connection or try again later.</div>';
+            resultsContainer.style.display = 'block';
+            resultsList.innerHTML = '<div style="color:#ef4444;padding:0.75rem">⚠️ Unable to reach RxNorm API. Please check your internet connection or try again later.</div>';
             return;
           }
           const data = await response.json();
@@ -2323,22 +2324,27 @@
           MED_CACHE.rxnorm[query] = candidates;
           displaySearchResults(candidates);
         } catch (error) {
-          resultsDiv.style.display = 'block';
-          resultsDiv.querySelector('div').innerHTML = '<div style="color:#ef4444;padding:0.75rem">⚠️ Error searching for medication. Please try again later.</div>';
+          resultsContainer.style.display = 'block';
+          resultsList.innerHTML = '<div style="color:#ef4444;padding:0.75rem">⚠️ Error searching for medication. Please try again later.</div>';
         }
       }, 500);
     }
     
     function displaySearchResults(candidates) {
       const container = document.getElementById('medSearchResults');
-      const resultsDiv = container.querySelector('div');
+      const resultsList = document.getElementById('medSearchResultsList');
+      
+      if (!resultsList) {
+        console.error('medSearchResultsList element not found');
+        return;
+      }
       
       if (!candidates || candidates.length === 0) {
         container.style.display = 'none';
         return;
       }
       
-      resultsDiv.innerHTML = candidates.slice(0, 5).map(c => `
+      resultsList.innerHTML = candidates.slice(0, 5).map(c => `
         <div style="padding:0.625rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);transition:var(--transition)" 
              onmouseover="this.style.background='var(--bg-subtle)'"
              onmouseout="this.style.background='transparent'"
