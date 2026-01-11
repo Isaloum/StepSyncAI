@@ -2342,16 +2342,27 @@
       const container = document.getElementById('medSearchResults');
       const resultsList = document.getElementById('medSearchResultsList');
       
+      console.log('displaySearchResults called with:', candidates);
+      console.log('Container element:', container);
+      console.log('ResultsList element:', resultsList);
+      
+      if (!container) {
+        console.error('medSearchResults container not found!');
+        return;
+      }
+      
       if (!resultsList) {
         console.error('medSearchResultsList element not found');
         return;
       }
       
       if (!candidates || candidates.length === 0) {
+        console.log('No candidates, hiding dropdown');
         container.style.display = 'none';
         return;
       }
       
+      console.log('Building results HTML for', candidates.length, 'candidates');
       resultsList.innerHTML = candidates.slice(0, 5).map((c, index) => {
         if (!c || !c.candidate || !c.rxcui) return '';
         const safeCandidate = String(c.candidate).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
@@ -2368,7 +2379,9 @@
       `;
       }).join('');
       
+      console.log('Setting container display to block');
       container.style.display = 'block';
+      console.log('Dropdown should now be visible!');
     }
     
     function selectMedicationFromData(element) {
