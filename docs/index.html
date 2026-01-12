@@ -1406,7 +1406,7 @@
               <span id="medTypeHint">Medications requiring a doctor's prescription (e.g., Lisinopril, Metformin)</span>
             </div>
           </div>
-          <div class="form-group" id="medNameGroup">
+          <div class="form-group" id="medNameGroup" style="position:relative">
             <label>Name</label>
             <input type="text" id="medName" placeholder="e.g., Aspirin" oninput="searchMedication()" autocomplete="off">
             <div id="medSearchResults" style="display:none;position:absolute;z-index:10001;left:0;right:0;top:100%;margin-top:0.25rem">
@@ -3319,8 +3319,9 @@
       }
       if (typeValidation.warning) {
         if (!confirm('⚠️ TYPE VERIFICATION\n\n' + typeValidation.warning + '\n\nContinue anyway?')) {
-          return;
+          return; // User clicked Cancel
         }
+        // User clicked OK - continue with adding medication
       }
       
       // CRITICAL: Normalize time value before storing
