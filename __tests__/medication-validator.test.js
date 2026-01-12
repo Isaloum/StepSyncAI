@@ -1,3 +1,7 @@
+// Unmock to test real implementation
+jest.unmock('../medication-validator');
+jest.unmock('../enhanced-medication-manager');
+
 const MedicationValidator = require('../medication-validator');
 
 describe('MedicationValidator', () => {

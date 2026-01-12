@@ -1,3 +1,6 @@
+// Unmock to test real implementation
+jest.unmock('../enhanced-medication-manager');
+
 const EnhancedMedicationManager = require('../enhanced-medication-manager');
 
 describe('EnhancedMedicationManager', () => {

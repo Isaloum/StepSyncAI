@@ -1,7 +1,13 @@
 /**
  * Jest Setup File
  * Global mocks for all tests
+ * @jest-environment node
  */
+
+// Prevent Jest from treating this as a test suite
+if (typeof describe === 'undefined') {
+  global.describe = () => {};
+}
 
 // Mock Bumpie_Meds pregnancy modules globally
 jest.mock('bumpie-meds', () => ({
@@ -72,9 +78,24 @@ jest.mock('../medication-validator', () => {
         manufacturer: 'Generic'
       }
     })),
-    validateMultiple: jest.fn().mockReturnValue({ 
-      valid: true, 
-      errors: [] 
-    })
+    validateMultiple: jest.fn((medications) => {
+      if (!Array.isArray(medications)) {
+        return { 
+          valid: false, 
+          errors: ['Input must be an array'],
+          warnings: []
+        };
+      }
+      return { 
+        valid: true, 
+        errors: [],
+        warnings: []
+      };
+    }),
+    checkInteractions: jest.fn((medication, currentMedications) => ({
+      hasInteractions: false,
+      warnings: [],
+      severity: 'none'
+    }))
   }));
 });
