@@ -8,17 +8,13 @@
  * - Audit logging and tracking
  * 
  * Generated: 2026-01-12 03:46:35 UTC
- * 
- * NOTE: This test suite is currently skipped because it tests a different API
- * than what's implemented in medication-tracker-enhanced.js. The tests expect
- * an object-based API but the implementation uses a different structure.
- * TODO: Update tests to match actual implementation or update implementation
- * to match expected API.
  */
 
-const { EnhancedMedicationTracker, FDADatabaseManager, InMemoryAuditStore } = require('../medication-tracker-enhanced');
+const EnhancedMedicationTracker = require('../src/EnhancedMedicationTracker');
+const { AuditLogger } = require('../src/AuditLogger');
+const { FDAValidator } = require('../src/FDAValidator');
 
-describe.skip('EnhancedMedicationTracker', () => {
+describe('EnhancedMedicationTracker', () => {
   let tracker;
   let mockAuditLogger;
   let mockFDAValidator;
