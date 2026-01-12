@@ -3,6 +3,9 @@
  * Provides medication name/dosage parsing and validation
  */
 class EnhancedMedicationTracker {
+    // Valid frequency formats for medication administration
+    static VALID_FREQUENCIES = ['once daily', 'twice daily', 'three times daily', 'every 8 hours', 'as needed', 'weekly'];
+
     constructor(options = {}) {
         this.auditLogger = options.auditLogger;
         this.fdaValidator = options.fdaValidator;
@@ -230,8 +233,7 @@ class EnhancedMedicationTracker {
 
         // Validate frequency if provided
         if (medication.frequency) {
-            const validFrequencies = ['once daily', 'twice daily', 'three times daily', 'every 8 hours', 'as needed', 'weekly'];
-            if (!validFrequencies.includes(medication.frequency)) {
+            if (!EnhancedMedicationTracker.VALID_FREQUENCIES.includes(medication.frequency)) {
                 const error = new Error('Invalid frequency format');
                 this.logAction('VALIDATION_FAILED', { reason: error.message, frequency: medication.frequency });
                 throw error;
@@ -283,8 +285,7 @@ class EnhancedMedicationTracker {
 
         // Validate frequency if provided
         if (medication.frequency) {
-            const validFrequencies = ['once daily', 'twice daily', 'three times daily', 'every 8 hours', 'as needed', 'weekly'];
-            if (!validFrequencies.includes(medication.frequency)) {
+            if (!EnhancedMedicationTracker.VALID_FREQUENCIES.includes(medication.frequency)) {
                 throw new Error('Invalid frequency format');
             }
         }
