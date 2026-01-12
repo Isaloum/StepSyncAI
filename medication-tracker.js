@@ -598,53 +598,60 @@ class MedicationTracker {
             return false;
         }
 
-        // Enhanced validation using medication database
-        const validationResult = this.medicationValidator.validate(name, dosage, { checkPregnancy: true });
-        
-        if (!validationResult.valid) {
-            console.error('❌ Validation Error:');
-            validationResult.errors.forEach(err => console.error(`   ${err}`));
+        // Enhanced validation using medication database (only if database is loaded)
+        let validationResult = null;
+        if (this.medicationValidator && this.medicationValidator.medicationManager && 
+            this.medicationValidator.medicationManager.medications.length > 0) {
+            validationResult = this.medicationValidator.validate(name, dosage, { checkPregnancy: true });
             
-            // Show suggestions if available
-            if (validationResult.info && validationResult.info.suggestions) {
-                console.log('\n💡 Did you mean:');
-                validationResult.info.suggestions.forEach(s => console.log(`   - ${s}`));
+            if (!validationResult.valid) {
+                console.error('❌ Validation Error:');
+                validationResult.errors.forEach(err => console.error(`   ${err}`));
+                
+                // Show suggestions if available
+                if (validationResult.info && validationResult.info.suggestions) {
+                    console.log('\n💡 Did you mean:');
+                    validationResult.info.suggestions.forEach(s => console.log(`   - ${s}`));
+                }
+                
+                // Show valid dosages if medication found but dosage invalid
+                if (validationResult.info && validationResult.info.validDosages) {
+                    console.log(`\n💡 Valid dosages for ${name}:`);
+                    console.log(`   ${validationResult.info.validDosages.join(', ')}`);
+                }
+                
+                return false;
             }
-            
-            // Show valid dosages if medication found but dosage invalid
-            if (validationResult.info && validationResult.info.validDosages) {
-                console.log(`\n💡 Valid dosages for ${name}:`);
-                console.log(`   ${validationResult.info.validDosages.join(', ')}`);
-            }
-            
-            return false;
-        }
 
-        // Show validation warnings
-        if (validationResult.warnings && validationResult.warnings.length > 0) {
-            console.log('\n⚠️  Warnings:');
-            validationResult.warnings.forEach(w => {
-                console.log(`   ${w.message}`);
-            });
+            // Show validation warnings
+            if (validationResult.warnings && validationResult.warnings.length > 0) {
+                console.log('\n⚠️  Warnings:');
+                validationResult.warnings.forEach(w => {
+                    console.log(`   ${w.message}`);
+                });
+            }
         }
 
         // Check for interactions with current medications BEFORE adding
         const interactions = this.checkInteractions(name, false); // Don't display yet
 
-        // Check for duplicate medications
-        const existingMeds = this.data.medications
-            .filter(m => m.active)
-            .map(m => ({ name: m.name, dosage: m.dosage }));
-        
-        const duplicateCheck = this.medicationValidator.validateMultiple([
-            ...existingMeds,
-            { name: name, dosage: dosage }
-        ]);
+        // Check for duplicate medications (only if validator is available and has database)
+        if (this.medicationValidator && this.medicationValidator.medicationManager && 
+            this.medicationValidator.medicationManager.medications.length > 0) {
+            const existingMeds = this.data.medications
+                .filter(m => m.active)
+                .map(m => ({ name: m.name, dosage: m.dosage }));
+            
+            const duplicateCheck = this.medicationValidator.validateMultiple([
+                ...existingMeds,
+                { name: name, dosage: dosage }
+            ]);
 
-        if (!duplicateCheck.valid) {
-            console.error('❌ Duplicate medication detected:');
-            duplicateCheck.errors.forEach(err => console.error(`   ${err}`));
-            return false;
+            if (!duplicateCheck.valid) {
+                console.error('❌ Duplicate medication detected:');
+                duplicateCheck.errors.forEach(err => console.error(`   ${err}`));
+                return false;
+            }
         }
 
         const medication = {
@@ -658,7 +665,7 @@ class MedicationTracker {
         };
 
         // Add enhanced medication info if available
-        if (validationResult.medication) {
+        if (validationResult && validationResult.medication) {
             medication.category = validationResult.medication.category;
             medication.genericName = validationResult.medication.genericName;
             medication.manufacturer = validationResult.medication.manufacturer;
@@ -674,7 +681,7 @@ class MedicationTracker {
             console.log(`  Time: ${time}`);
             
             // Show medication details
-            if (validationResult.medication) {
+            if (validationResult && validationResult.medication) {
                 console.log(`  Category: ${validationResult.medication.category}`);
                 console.log(`  Generic: ${validationResult.medication.genericName}`);
             }
