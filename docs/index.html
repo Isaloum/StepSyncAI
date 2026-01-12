@@ -2579,6 +2579,14 @@
         return;
       }
       
+      // Position dropdown correctly relative to input field
+      const inputRect = inputField.getBoundingClientRect();
+      container.style.position = 'fixed';
+      container.style.left = inputRect.left + 'px';
+      container.style.top = (inputRect.bottom + 4) + 'px';
+      container.style.width = inputRect.width + 'px';
+      container.style.right = 'auto';
+      
       if (!medications || medications.length === 0) {
         resultsList.innerHTML = '<div style="padding:0.75rem;color:var(--text-secondary);text-align:center">No medications found in database.</div>';
         container.style.display = 'block';
@@ -2659,6 +2667,14 @@
       console.log('Container element:', container);
       console.log('Container display before:', container ? container.style.display : 'N/A');
       console.log('ResultsList element:', resultsList);
+      
+      // Position dropdown correctly relative to input field
+      const inputRect = inputField.getBoundingClientRect();
+      container.style.position = 'fixed';
+      container.style.left = inputRect.left + 'px';
+      container.style.top = (inputRect.bottom + 4) + 'px';
+      container.style.width = inputRect.width + 'px';
+      container.style.right = 'auto';
       
       if (!container) {
         console.error('❌ CRITICAL: medSearchResults container not found!');
@@ -3302,6 +3318,7 @@
 
     // Add new medication definition
     function addMedication() {
+      console.log('🔵 addMedication() called');
       const type = document.getElementById('medType').value; // prescription, otc, or supplement
       const nameInput = document.getElementById('medName');
       const name = nameInput.value.trim();
@@ -3309,19 +3326,26 @@
       const dosage = document.getElementById('medDosage').value.trim();
       const time = document.getElementById('medTime').value;
       
+      console.log('Form values:', { type, name, dosage, time });
+      
       if (!name) return alert('Please enter medication/supplement name');
       
       // CRITICAL: Validate medication type matches selection
       const typeValidation = validateMedicationType(name, type);
+      console.log('Type validation result:', typeValidation);
+      
       if (!typeValidation.valid) {
         alert('❌ TYPE MISMATCH\n\n' + typeValidation.message);
         return;
       }
       if (typeValidation.warning) {
-        if (!confirm('⚠️ TYPE VERIFICATION\n\n' + typeValidation.warning + '\n\nContinue anyway?')) {
+        const userConfirmed = confirm('⚠️ TYPE VERIFICATION\n\n' + typeValidation.warning + '\n\nContinue anyway?');
+        console.log('User confirmed type warning:', userConfirmed);
+        if (!userConfirmed) {
           return; // User clicked Cancel
         }
         // User clicked OK - continue with adding medication
+        console.log('✅ User confirmed, continuing to add medication');
       }
       
       // CRITICAL: Normalize time value before storing
@@ -3474,12 +3498,16 @@
       }
       
       // If not pregnant or is a supplement, proceed normally
+      console.log('🟢 Proceeding to add medication (not pregnant check or is supplement)');
       proceedWithAddingMedication();
       
       function proceedWithAddingMedication() {
+      console.log('🟢 proceedWithAddingMedication() CALLED');
 
       // Add to medication definitions
       const definitions = DB.get('medicationDefinitions');
+      console.log('Current definitions before adding:', definitions.length);
+      
       definitions.push({ 
         id: Date.now(), 
         name, 
@@ -3490,6 +3518,7 @@
         rxcui: rxcui // Store RxCUI if available
       });
       DB.set('medicationDefinitions', definitions);
+      console.log('✅ Medication added! New count:', definitions.length);
       
       // Clear form
       nameInput.value = '';
