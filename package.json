@@ -52,6 +52,7 @@
   },
   "jest": {
     "testEnvironment": "node",
+    "setupFilesAfterEnv": ["<rootDir>/__tests__/setup.js"],
     "coverageDirectory": "coverage",
     "collectCoverageFrom": [
       "*.js",
@@ -97,10 +98,6 @@
   ],
   "author": "",
   "license": "MIT",
-  "jest": {
-    "testEnvironment": "node",
-    "setupFilesAfterEnv": ["<rootDir>/__tests__/setup.js"]
-  },
   "devDependencies": {
     "jest": "^30.2.0"
   },

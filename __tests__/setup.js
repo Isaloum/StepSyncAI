@@ -47,7 +47,14 @@ jest.mock('../enhanced-medication-manager', () => {
     getMedicationInfo: jest.fn().mockReturnValue(null),
     getValidDosages: jest.fn().mockReturnValue([]),
     getMedicationDetails: jest.fn().mockReturnValue(null),
-    getMedicationsByCategory: jest.fn().mockReturnValue([])
+    getMedicationsByCategory: jest.fn().mockReturnValue([]),
+    getAllMedicationNames: jest.fn().mockReturnValue([]),
+    getStatistics: jest.fn().mockReturnValue({
+      totalMedications: 0,
+      totalCategories: 0,
+      categories: {}
+    }),
+    calculateMatchScore: jest.fn().mockReturnValue(0)
   }));
 });
 
