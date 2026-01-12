@@ -206,7 +206,8 @@ class EnhancedMedicationTracker {
         // 1. Name contains @ (never valid in medication names)
         // 2. Name contains {} (never valid in medication names)
         // 3. After sanitization, the name is suspiciously short or contains leftover slash from HTML tags
-        const tooShort = sanitizedName.length <= 4;
+        const MIN_VALID_NAME_LENGTH = 4;
+        const tooShort = sanitizedName.length <= MIN_VALID_NAME_LENGTH;
         const hasLeftoverSlash = sanitizedName.includes('/');
         
         if (/@/.test(medication.name) || /{/.test(medication.name) || /}/.test(medication.name) || 
@@ -268,7 +269,7 @@ class EnhancedMedicationTracker {
         const unit = unitMatch ? unitMatch[1] : null;
 
         const result = {
-            id: `med_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            id: `med_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
             name: sanitizedName,
             dosage: medication.dosage.trim(),
             frequency: medication.frequency,
@@ -312,7 +313,7 @@ class EnhancedMedicationTracker {
 
         // Create medication with ID
         const result = {
-            id: `med_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            id: `med_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
             name: this.sanitize(medication.name),
             dosage: medication.dosage,
             frequency: medication.frequency,
