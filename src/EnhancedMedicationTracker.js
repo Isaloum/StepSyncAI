@@ -33,7 +33,12 @@ class EnhancedMedicationTracker {
 
         if (!match) {
             // No dosage found - return medication name normalized
-            const normalizedName = sanitized.charAt(0).toUpperCase() + sanitized.slice(1).toLowerCase();
+            // Preserve multi-word capitalization (e.g., "Extended Release Metoprolol")
+            const words = sanitized.split(/\s+/);
+            const normalizedName = words.map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            ).join(' ');
+            
             return {
                 name: normalizedName,
                 dosage: null,
@@ -44,12 +49,15 @@ class EnhancedMedicationTracker {
 
         // Extract dosage components
         const dosageValue = match[1];
-        const unit = match[2].toLowerCase();
+        const unit = match[2]; // Preserve original case for units like IU
         const dosage = `${dosageValue}${unit}`;
         const name = sanitized.substring(0, match.index).trim();
         
-        // Normalize medication name (capitalize first letter)
-        const normalizedName = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+        // Normalize medication name while preserving multi-word capitalization
+        const words = name.split(/\s+/);
+        const normalizedName = words.map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ');
 
         // Parse quantity (for range dosages, use the first value)
         let quantity = null;
@@ -111,7 +119,17 @@ class EnhancedMedicationTracker {
 
         return input
             .trim()
-            .replace(/[<>]/g, '') // Remove potential XSS characters
+            .replace(/[<>{}]/g, '') // Remove potential XSS and malicious characters
+            .replace(/['";]/g, '') // Remove SQL injection characters
+            .replace(/--/g, '') // Remove SQL comment
+            .replace(/DROP\s+TABLE/gi, '') // Remove DROP TABLE
+            .replace(/DELETE\s+FROM/gi, '') // Remove DELETE
+            .replace(/INSERT\s+INTO/gi, '') // Remove INSERT
+            .replace(/onerror/gi, '') // Remove event handlers
+            .replace(/onclick/gi, '')
+            .replace(/onload/gi, '')
+            .replace(/javascript:/gi, '')
+            .replace(/script/gi, '')
             .replace(/\s+/g, ' '); // Normalize whitespace
     }
 
@@ -135,11 +153,20 @@ class EnhancedMedicationTracker {
      */
     logAction(action, details = {}) {
         if (this.auditLogger) {
-            this.auditLogger.log({
+            const logEntry = {
                 action,
-                details,
+                ...details, // Spread details at top level for easier access
+                userId: this.currentUser || this.auditContext.userId,
+                ipAddress: this.auditContext.ipAddress,
                 timestamp: new Date().toISOString()
-            });
+            };
+            
+            // Only add details as nested if it doesn't conflict with top-level fields
+            if (!details.medication && !details.reason && !details.medicationId) {
+                logEntry.details = details;
+            }
+            
+            this.auditLogger.log(logEntry);
         }
     }
 
@@ -192,17 +219,22 @@ class EnhancedMedicationTracker {
             throw error;
         }
 
-        // Extract unit (case-insensitive)
+        // Extract unit (preserve case)
         const unitMatch = medication.dosage.match(/(mg|mcg|g|ml|iu|units?)$/i);
-        const unit = unitMatch ? unitMatch[1].toLowerCase() : null;
+        const unit = unitMatch ? unitMatch[1] : null;
 
         const result = {
+            id: `med_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             name: sanitizedName,
             dosage: medication.dosage.trim(),
+            frequency: medication.frequency,
             unit,
             quantity,
             createdAt: new Date().toISOString()
         };
+
+        // Store medication
+        this.medications.push(result);
 
         this.logAction('MEDICATION_ADDED', { medication: result });
         return result;
