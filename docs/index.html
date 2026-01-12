@@ -546,6 +546,16 @@
       .card{padding:1.25rem}
       main{padding-bottom:80px;padding-top:1.5rem}
       .dashboard-grid{gap:1rem}
+      
+      /* Mobile: move disclaimer below on small screens */
+      #medication .disclaimer-info-box{
+        position:static !important;
+        max-width:100% !important;
+        margin-bottom:1rem !important;
+      }
+      #medication .card:first-of-type{
+        margin-top:0 !important;
+      }
     }
     
     /* Mobile Bottom Navigation - Clean, minimal */
@@ -1367,22 +1377,23 @@
 
     <!-- Medication -->
     <section id="medication" class="app-section">
-      <!-- MEDICAL DISCLAIMER - CRITICAL LEGAL PROTECTION -->
-      <div class="card" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none">
-        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem">
-          <div style="font-size:2rem">⚕️</div>
-          <div style="font-size:1.125rem;font-weight:700">Important Medical Disclaimer</div>
-        </div>
-        <div style="font-size:0.875rem;line-height:1.6;opacity:0.95">
-          <p style="margin:0 0 0.5rem"><strong>This tool is for informational purposes only and is NOT medical advice.</strong></p>
-          <p style="margin:0 0 0.5rem">• Always consult your healthcare provider before starting, stopping, or changing medications</p>
-          <p style="margin:0 0 0.5rem">• Drug information is sourced from FDA OpenFDA and NIH RxNorm APIs but may not be complete</p>
-          <p style="margin:0 0 0.5rem">• Interaction warnings are educational only - your doctor knows your full medical history</p>
-          <p style="margin:0"><strong>In case of emergency or overdose, call 911 or Poison Control: 1-800-222-1222</strong></p>
+      <!-- Medical Disclaimer - Subtle top-right info box (similar to healthypregnancyhub.ca) -->
+      <div style="position:relative;margin-bottom:1.5rem">
+        <div style="position:absolute;top:0;right:0;max-width:380px;background:#fff5f5;border:2px solid #ffcccc;border-radius:var(--radius);padding:1rem;box-shadow:0 2px 8px rgba(239,68,68,0.1)">
+          <div style="display:flex;align-items:flex-start;gap:0.75rem">
+            <div style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#ffebee;display:flex;align-items:center;justify-content:center;color:#d63031;font-size:1.25rem;border:2px solid #ffcccc">
+              ⓘ
+            </div>
+            <div style="flex:1">
+              <div style="font-size:0.8125rem;line-height:1.5;color:#2d3436">
+                This information is based on available published data. <strong>It should not take the place of medical care and advice from your healthcare provider.</strong> Always consult your doctor before starting, stopping, or changing medications.
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="card">
+      <div class="card" style="margin-top:80px">
         <div class="card-title">💊 Add Medication or Supplement</div>
         <div class="form-grid">
           <div class="form-group">
