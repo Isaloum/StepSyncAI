@@ -2286,7 +2286,7 @@
       if (LOCAL_MEDICATIONS_DB) return LOCAL_MEDICATIONS_DB;
       
       try {
-        const response = await fetch('../medications-db.json');
+        const response = await fetch('medications-db.json');
         if (!response.ok) throw new Error('Failed to load local medications database');
         const data = await response.json();
         LOCAL_MEDICATIONS_DB = data.medications || [];
