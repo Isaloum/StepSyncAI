@@ -1,776 +1,687 @@
 /**
- * Enhanced Medication Tracker Class
- * Provides comprehensive medication management functionality for mental health tracking
- * 
- * @author MindTrackAI Team
- * @version 2.0.0
- * @created 2026-01-12
+ * Enhanced Medication Tracking System for MindTrackAI
+ * Comprehensive medication management with scheduling, adherence tracking, and analysis
  */
 
-class EnhancedMedicationTracker {
-    constructor(options = {}) {
-        this.medications = new Map();
-        this.schedules = new Map();
-        this.adherenceHistory = new Map();
-        this.sideEffectsLog = new Map();
-        this.interactions = new Set();
-        this.reminders = new Map();
-        this.analytics = {
-            adherenceRates: {},
-            sideEffectTrends: {},
-            effectivenessScores: {}
-        };
-        
-        // Configuration options
-        this.config = {
-            reminderOffset: options.reminderOffset || 30, // minutes before dose
-            adherenceThreshold: options.adherenceThreshold || 0.8, // 80%
-            maxMissedDoses: options.maxMissedDoses || 3,
-            enableNotifications: options.enableNotifications !== false,
-            autoBackup: options.autoBackup !== false,
-            ...options
-        };
-        
-        // Event handlers
-        this.eventHandlers = new Map();
-        
-        // Initialize storage and load existing data
-        this.initializeStorage();
-        this.loadData();
-        
-        console.log('EnhancedMedicationTracker initialized successfully');
+// Medication class representing individual medications
+class Medication {
+    constructor({
+        id,
+        name,
+        genericName,
+        dosage,
+        unit,
+        frequency,
+        route,
+        prescribedBy,
+        startDate,
+        endDate = null,
+        instructions = '',
+        sideEffects = [],
+        contraindications = [],
+        interactions = []
+    }) {
+        this.id = id || this.generateId();
+        this.name = name;
+        this.genericName = genericName;
+        this.dosage = dosage;
+        this.unit = unit; // mg, ml, pills, etc.
+        this.frequency = frequency; // times per day
+        this.route = route; // oral, injection, topical, etc.
+        this.prescribedBy = prescribedBy;
+        this.startDate = new Date(startDate);
+        this.endDate = endDate ? new Date(endDate) : null;
+        this.instructions = instructions;
+        this.sideEffects = sideEffects;
+        this.contraindications = contraindications;
+        this.interactions = interactions;
+        this.isActive = true;
+        this.createdAt = new Date();
+        this.updatedAt = new Date();
     }
 
-    /**
-     * Initialize local storage for data persistence
-     */
-    initializeStorage() {
-        if (typeof localStorage !== 'undefined') {
-            this.storageKey = 'mindtrack_medications';
-            this.backupKey = 'mindtrack_medications_backup';
-        }
-    }
-
-    /**
-     * Add a new medication to the tracking system
-     */
-    addMedication(medicationData) {
-        try {
-            const medication = {
-                id: medicationData.id || this.generateId(),
-                name: medicationData.name,
-                genericName: medicationData.genericName,
-                dosage: medicationData.dosage,
-                unit: medicationData.unit || 'mg',
-                form: medicationData.form || 'tablet', // tablet, capsule, liquid, etc.
-                frequency: medicationData.frequency, // times per day
-                schedule: medicationData.schedule || [], // specific times
-                startDate: new Date(medicationData.startDate),
-                endDate: medicationData.endDate ? new Date(medicationData.endDate) : null,
-                prescribedBy: medicationData.prescribedBy,
-                purpose: medicationData.purpose,
-                instructions: medicationData.instructions || '',
-                sideEffects: medicationData.knownSideEffects || [],
-                contraindications: medicationData.contraindications || [],
-                isActive: true,
-                createdAt: new Date(),
-                updatedAt: new Date()
-            };
-
-            // Validate medication data
-            this.validateMedicationData(medication);
-            
-            // Check for potential interactions
-            this.checkInteractions(medication);
-            
-            // Store medication
-            this.medications.set(medication.id, medication);
-            
-            // Set up schedule
-            this.setupMedicationSchedule(medication);
-            
-            // Initialize adherence tracking
-            this.adherenceHistory.set(medication.id, {
-                doses: [],
-                missed: [],
-                totalScheduled: 0,
-                totalTaken: 0,
-                adherenceRate: 0
-            });
-            
-            // Initialize side effects log
-            this.sideEffectsLog.set(medication.id, []);
-            
-            // Save to storage
-            this.saveData();
-            
-            // Emit event
-            this.emit('medicationAdded', medication);
-            
-            console.log(`Medication "${medication.name}" added successfully`);
-            return medication;
-            
-        } catch (error) {
-            console.error('Error adding medication:', error);
-            throw new Error(`Failed to add medication: ${error.message}`);
-        }
-    }
-
-    /**
-     * Update an existing medication
-     */
-    updateMedication(medicationId, updates) {
-        try {
-            const medication = this.medications.get(medicationId);
-            if (!medication) {
-                throw new Error(`Medication with ID ${medicationId} not found`);
-            }
-
-            // Create updated medication object
-            const updatedMedication = {
-                ...medication,
-                ...updates,
-                id: medicationId, // Ensure ID doesn't change
-                updatedAt: new Date()
-            };
-
-            // Validate updated data
-            this.validateMedicationData(updatedMedication);
-            
-            // Check for new interactions if medication changed
-            if (updates.name || updates.genericName) {
-                this.checkInteractions(updatedMedication);
-            }
-            
-            // Update schedule if timing changed
-            if (updates.schedule || updates.frequency) {
-                this.updateMedicationSchedule(medicationId, updatedMedication);
-            }
-            
-            // Store updated medication
-            this.medications.set(medicationId, updatedMedication);
-            
-            // Save to storage
-            this.saveData();
-            
-            // Emit event
-            this.emit('medicationUpdated', updatedMedication);
-            
-            console.log(`Medication "${updatedMedication.name}" updated successfully`);
-            return updatedMedication;
-            
-        } catch (error) {
-            console.error('Error updating medication:', error);
-            throw new Error(`Failed to update medication: ${error.message}`);
-        }
-    }
-
-    /**
-     * Remove a medication from tracking
-     */
-    removeMedication(medicationId, reason = 'User requested') {
-        try {
-            const medication = this.medications.get(medicationId);
-            if (!medication) {
-                throw new Error(`Medication with ID ${medicationId} not found`);
-            }
-
-            // Mark as inactive instead of deleting (for historical data)
-            medication.isActive = false;
-            medication.discontinuedAt = new Date();
-            medication.discontinuationReason = reason;
-            
-            // Clear active reminders
-            this.clearReminders(medicationId);
-            
-            // Update storage
-            this.saveData();
-            
-            // Emit event
-            this.emit('medicationRemoved', { medication, reason });
-            
-            console.log(`Medication "${medication.name}" removed: ${reason}`);
-            return true;
-            
-        } catch (error) {
-            console.error('Error removing medication:', error);
-            throw new Error(`Failed to remove medication: ${error.message}`);
-        }
-    }
-
-    /**
-     * Record taking a dose
-     */
-    recordDose(medicationId, timestamp = new Date(), notes = '') {
-        try {
-            const medication = this.medications.get(medicationId);
-            if (!medication) {
-                throw new Error(`Medication with ID ${medicationId} not found`);
-            }
-
-            const doseRecord = {
-                id: this.generateId(),
-                medicationId,
-                timestamp: new Date(timestamp),
-                notes,
-                wasScheduled: this.wasScheduledDose(medicationId, timestamp),
-                createdAt: new Date()
-            };
-
-            // Update adherence history
-            const adherence = this.adherenceHistory.get(medicationId);
-            adherence.doses.push(doseRecord);
-            adherence.totalTaken++;
-            
-            // Recalculate adherence rate
-            this.updateAdherenceRate(medicationId);
-            
-            // Clear any active reminders for this dose
-            this.clearDoseReminder(medicationId, timestamp);
-            
-            // Save to storage
-            this.saveData();
-            
-            // Emit event
-            this.emit('doseRecorded', doseRecord);
-            
-            console.log(`Dose recorded for "${medication.name}" at ${timestamp}`);
-            return doseRecord;
-            
-        } catch (error) {
-            console.error('Error recording dose:', error);
-            throw new Error(`Failed to record dose: ${error.message}`);
-        }
-    }
-
-    /**
-     * Record a missed dose
-     */
-    recordMissedDose(medicationId, scheduledTime, reason = '') {
-        try {
-            const medication = this.medications.get(medicationId);
-            if (!medication) {
-                throw new Error(`Medication with ID ${medicationId} not found`);
-            }
-
-            const missedRecord = {
-                id: this.generateId(),
-                medicationId,
-                scheduledTime: new Date(scheduledTime),
-                missedAt: new Date(),
-                reason,
-                createdAt: new Date()
-            };
-
-            // Update adherence history
-            const adherence = this.adherenceHistory.get(medicationId);
-            adherence.missed.push(missedRecord);
-            
-            // Update total scheduled doses
-            adherence.totalScheduled++;
-            
-            // Recalculate adherence rate
-            this.updateAdherenceRate(medicationId);
-            
-            // Check if this triggers any alerts
-            this.checkMissedDoseAlerts(medicationId);
-            
-            // Save to storage
-            this.saveData();
-            
-            // Emit event
-            this.emit('doseMissed', missedRecord);
-            
-            console.log(`Missed dose recorded for "${medication.name}"`);
-            return missedRecord;
-            
-        } catch (error) {
-            console.error('Error recording missed dose:', error);
-            throw new Error(`Failed to record missed dose: ${error.message}`);
-        }
-    }
-
-    /**
-     * Record side effects
-     */
-    recordSideEffect(medicationId, sideEffectData) {
-        try {
-            const medication = this.medications.get(medicationId);
-            if (!medication) {
-                throw new Error(`Medication with ID ${medicationId} not found`);
-            }
-
-            const sideEffectRecord = {
-                id: this.generateId(),
-                medicationId,
-                effect: sideEffectData.effect,
-                severity: sideEffectData.severity, // mild, moderate, severe
-                onset: new Date(sideEffectData.onset || Date.now()),
-                duration: sideEffectData.duration, // minutes
-                notes: sideEffectData.notes || '',
-                reportedAt: new Date()
-            };
-
-            // Add to side effects log
-            const log = this.sideEffectsLog.get(medicationId);
-            log.push(sideEffectRecord);
-            
-            // Update analytics
-            this.updateSideEffectTrends(medicationId, sideEffectRecord);
-            
-            // Check if this requires immediate attention
-            if (sideEffectRecord.severity === 'severe') {
-                this.emit('severeSideEffect', sideEffectRecord);
-            }
-            
-            // Save to storage
-            this.saveData();
-            
-            // Emit event
-            this.emit('sideEffectRecorded', sideEffectRecord);
-            
-            console.log(`Side effect recorded for "${medication.name}": ${sideEffectData.effect}`);
-            return sideEffectRecord;
-            
-        } catch (error) {
-            console.error('Error recording side effect:', error);
-            throw new Error(`Failed to record side effect: ${error.message}`);
-        }
-    }
-
-    /**
-     * Get comprehensive medication report
-     */
-    getMedicationReport(medicationId) {
-        try {
-            const medication = this.medications.get(medicationId);
-            if (!medication) {
-                throw new Error(`Medication with ID ${medicationId} not found`);
-            }
-
-            const adherence = this.adherenceHistory.get(medicationId);
-            const sideEffects = this.sideEffectsLog.get(medicationId);
-            const schedule = this.schedules.get(medicationId);
-
-            return {
-                medication,
-                adherence: {
-                    ...adherence,
-                    recentDoses: adherence.doses.slice(-10), // Last 10 doses
-                    recentMissed: adherence.missed.slice(-5) // Last 5 missed doses
-                },
-                sideEffects: {
-                    total: sideEffects.length,
-                    recent: sideEffects.filter(se => 
-                        (Date.now() - se.reportedAt.getTime()) < (7 * 24 * 60 * 60 * 1000) // Last 7 days
-                    ),
-                    bySeverity: this.groupSideEffectsBySeverity(sideEffects)
-                },
-                schedule: schedule,
-                upcomingDoses: this.getUpcomingDoses(medicationId, 3), // Next 3 doses
-                analytics: this.getMedicationAnalytics(medicationId),
-                interactions: this.getMedicationInteractions(medicationId)
-            };
-            
-        } catch (error) {
-            console.error('Error generating medication report:', error);
-            throw new Error(`Failed to generate report: ${error.message}`);
-        }
-    }
-
-    /**
-     * Get overall tracking summary
-     */
-    getTrackingSummary() {
-        const activeMedications = Array.from(this.medications.values()).filter(med => med.isActive);
-        const totalAdherence = this.calculateOverallAdherence();
-        const recentSideEffects = this.getRecentSideEffects(7); // Last 7 days
-        const upcomingDoses = this.getAllUpcomingDoses(24); // Next 24 hours
-        
-        return {
-            activeMedications: activeMedications.length,
-            totalMedications: this.medications.size,
-            overallAdherenceRate: totalAdherence,
-            recentSideEffects: recentSideEffects.length,
-            upcomingDoses: upcomingDoses.length,
-            activeInteractions: this.interactions.size,
-            summary: {
-                medications: activeMedications.map(med => ({
-                    id: med.id,
-                    name: med.name,
-                    dosage: med.dosage,
-                    unit: med.unit,
-                    adherenceRate: this.adherenceHistory.get(med.id)?.adherenceRate || 0
-                })),
-                nextDose: upcomingDoses[0] || null,
-                alerts: this.getActiveAlerts()
-            }
-        };
-    }
-
-    /**
-     * Setup medication schedule and reminders
-     */
-    setupMedicationSchedule(medication) {
-        const schedule = {
-            medicationId: medication.id,
-            times: medication.schedule,
-            frequency: medication.frequency,
-            reminders: [],
-            nextDose: null
-        };
-
-        // Calculate next dose time
-        schedule.nextDose = this.calculateNextDose(medication);
-        
-        // Set up reminders if enabled
-        if (this.config.enableNotifications) {
-            this.setupReminders(medication.id, schedule);
-        }
-        
-        this.schedules.set(medication.id, schedule);
-    }
-
-    /**
-     * Check for drug interactions
-     */
-    checkInteractions(newMedication) {
-        const activeMedications = Array.from(this.medications.values())
-            .filter(med => med.isActive && med.id !== newMedication.id);
-            
-        for (const medication of activeMedications) {
-            const interaction = this.detectInteraction(newMedication, medication);
-            if (interaction) {
-                this.interactions.add(interaction);
-                this.emit('interactionDetected', interaction);
-            }
-        }
-    }
-
-    /**
-     * Calculate adherence rate for a medication
-     */
-    updateAdherenceRate(medicationId) {
-        const adherence = this.adherenceHistory.get(medicationId);
-        if (!adherence) return 0;
-        
-        const totalScheduled = adherence.totalScheduled;
-        const totalTaken = adherence.totalTaken;
-        
-        if (totalScheduled === 0) {
-            adherence.adherenceRate = 0;
-        } else {
-            adherence.adherenceRate = Math.round((totalTaken / totalScheduled) * 100) / 100;
-        }
-        
-        return adherence.adherenceRate;
-    }
-
-    /**
-     * Export tracking data
-     */
-    exportData(format = 'json') {
-        const data = {
-            medications: Array.from(this.medications.entries()),
-            adherenceHistory: Array.from(this.adherenceHistory.entries()),
-            sideEffectsLog: Array.from(this.sideEffectsLog.entries()),
-            schedules: Array.from(this.schedules.entries()),
-            interactions: Array.from(this.interactions),
-            analytics: this.analytics,
-            exportedAt: new Date(),
-            version: '2.0.0'
-        };
-
-        switch (format.toLowerCase()) {
-            case 'json':
-                return JSON.stringify(data, null, 2);
-            case 'csv':
-                return this.convertToCSV(data);
-            default:
-                throw new Error(`Unsupported export format: ${format}`);
-        }
-    }
-
-    /**
-     * Import tracking data
-     */
-    importData(data, options = {}) {
-        try {
-            const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
-            
-            if (options.merge) {
-                // Merge with existing data
-                this.mergeImportedData(parsedData);
-            } else {
-                // Replace existing data
-                this.replaceWithImportedData(parsedData);
-            }
-            
-            this.saveData();
-            this.emit('dataImported', { recordCount: this.medications.size });
-            
-        } catch (error) {
-            console.error('Error importing data:', error);
-            throw new Error(`Failed to import data: ${error.message}`);
-        }
-    }
-
-    /**
-     * Event handling system
-     */
-    on(event, handler) {
-        if (!this.eventHandlers.has(event)) {
-            this.eventHandlers.set(event, []);
-        }
-        this.eventHandlers.get(event).push(handler);
-    }
-
-    emit(event, data) {
-        const handlers = this.eventHandlers.get(event) || [];
-        handlers.forEach(handler => {
-            try {
-                handler(data);
-            } catch (error) {
-                console.error(`Error in event handler for ${event}:`, error);
-            }
-        });
-    }
-
-    /**
-     * Data persistence methods
-     */
-    saveData() {
-        if (typeof localStorage !== 'undefined') {
-            try {
-                const data = {
-                    medications: Array.from(this.medications.entries()),
-                    adherenceHistory: Array.from(this.adherenceHistory.entries()),
-                    sideEffectsLog: Array.from(this.sideEffectsLog.entries()),
-                    schedules: Array.from(this.schedules.entries()),
-                    interactions: Array.from(this.interactions),
-                    analytics: this.analytics,
-                    savedAt: new Date()
-                };
-                
-                localStorage.setItem(this.storageKey, JSON.stringify(data));
-                
-                // Create backup if auto-backup is enabled
-                if (this.config.autoBackup) {
-                    localStorage.setItem(this.backupKey, JSON.stringify(data));
-                }
-                
-            } catch (error) {
-                console.error('Error saving data:', error);
-            }
-        }
-    }
-
-    loadData() {
-        if (typeof localStorage !== 'undefined') {
-            try {
-                const savedData = localStorage.getItem(this.storageKey);
-                if (savedData) {
-                    const data = JSON.parse(savedData);
-                    
-                    this.medications = new Map(data.medications || []);
-                    this.adherenceHistory = new Map(data.adherenceHistory || []);
-                    this.sideEffectsLog = new Map(data.sideEffectsLog || []);
-                    this.schedules = new Map(data.schedules || []);
-                    this.interactions = new Set(data.interactions || []);
-                    this.analytics = data.analytics || this.analytics;
-                    
-                    // Restore reminders for active medications
-                    this.restoreReminders();
-                }
-            } catch (error) {
-                console.error('Error loading data:', error);
-                this.loadBackupData();
-            }
-        }
-    }
-
-    // Utility methods
     generateId() {
         return 'med_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     }
 
-    validateMedicationData(medication) {
-        const required = ['name', 'dosage', 'frequency'];
-        for (const field of required) {
-            if (!medication[field]) {
-                throw new Error(`Required field missing: ${field}`);
+    update(updates) {
+        Object.keys(updates).forEach(key => {
+            if (this.hasOwnProperty(key)) {
+                this[key] = updates[key];
             }
-        }
-        
-        if (medication.frequency <= 0) {
-            throw new Error('Frequency must be greater than 0');
-        }
-        
-        if (medication.dosage <= 0) {
-            throw new Error('Dosage must be greater than 0');
-        }
+        });
+        this.updatedAt = new Date();
     }
 
-    calculateNextDose(medication) {
-        if (!medication.schedule || medication.schedule.length === 0) {
-            return null;
-        }
-        
+    deactivate() {
+        this.isActive = false;
+        this.updatedAt = new Date();
+    }
+
+    getDailyDosage() {
+        return this.dosage * this.frequency;
+    }
+
+    isCurrentlyPrescribed() {
         const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        
-        // Find next scheduled time today or tomorrow
-        for (const timeStr of medication.schedule) {
-            const [hours, minutes] = timeStr.split(':').map(Number);
-            const scheduleTime = new Date(today);
-            scheduleTime.setHours(hours, minutes, 0, 0);
-            
-            if (scheduleTime > now) {
-                return scheduleTime;
-            }
-        }
-        
-        // No more doses today, get first dose tomorrow
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const [hours, minutes] = medication.schedule[0].split(':').map(Number);
-        tomorrow.setHours(hours, minutes, 0, 0);
-        
-        return tomorrow;
+        return this.isActive && 
+               this.startDate <= now && 
+               (!this.endDate || this.endDate >= now);
     }
 
-    wasScheduledDose(medicationId, timestamp) {
-        const schedule = this.schedules.get(medicationId);
-        if (!schedule) return false;
-        
-        const doseTime = new Date(timestamp);
-        const timeStr = `${doseTime.getHours()}:${doseTime.getMinutes().toString().padStart(2, '0')}`;
-        
-        return schedule.times.includes(timeStr);
-    }
-
-    setupReminders(medicationId, schedule) {
-        // Implementation for setting up medication reminders
-        // This would integrate with the system's notification API
-        console.log(`Setting up reminders for medication ${medicationId}`);
-    }
-
-    clearReminders(medicationId) {
-        // Implementation for clearing medication reminders
-        console.log(`Clearing reminders for medication ${medicationId}`);
-    }
-
-    detectInteraction(med1, med2) {
-        // Simplified interaction detection
-        // In a real implementation, this would check against a comprehensive drug interaction database
-        const commonInteractions = [
-            { drugs: ['warfarin', 'aspirin'], severity: 'major', description: 'Increased bleeding risk' },
-            { drugs: ['lithium', 'ibuprofen'], severity: 'moderate', description: 'Increased lithium levels' }
-        ];
-        
-        for (const interaction of commonInteractions) {
-            if (interaction.drugs.includes(med1.name.toLowerCase()) && 
-                interaction.drugs.includes(med2.name.toLowerCase())) {
-                return {
-                    id: this.generateId(),
-                    medication1: med1.id,
-                    medication2: med2.id,
-                    severity: interaction.severity,
-                    description: interaction.description,
-                    detectedAt: new Date()
-                };
-            }
-        }
-        
-        return null;
-    }
-
-    getActiveAlerts() {
-        const alerts = [];
-        
-        // Check for missed doses
-        for (const [medId, adherence] of this.adherenceHistory) {
-            if (adherence.missed.length > this.config.maxMissedDoses) {
-                alerts.push({
-                    type: 'adherence',
-                    severity: 'warning',
-                    message: `Multiple missed doses for ${this.medications.get(medId)?.name}`,
-                    medicationId: medId
-                });
-            }
-        }
-        
-        // Check for severe side effects
-        for (const [medId, sideEffects] of this.sideEffectsLog) {
-            const recentSevere = sideEffects.filter(se => 
-                se.severity === 'severe' && 
-                (Date.now() - se.reportedAt.getTime()) < (24 * 60 * 60 * 1000)
-            );
-            
-            if (recentSevere.length > 0) {
-                alerts.push({
-                    type: 'sideEffect',
-                    severity: 'critical',
-                    message: `Severe side effects reported for ${this.medications.get(medId)?.name}`,
-                    medicationId: medId
-                });
-            }
-        }
-        
-        // Check for interactions
-        if (this.interactions.size > 0) {
-            alerts.push({
-                type: 'interaction',
-                severity: 'warning',
-                message: `${this.interactions.size} potential drug interactions detected`,
-                count: this.interactions.size
-            });
-        }
-        
-        return alerts;
-    }
-
-    // Additional helper methods would be implemented here...
-    calculateOverallAdherence() {
-        const rates = Array.from(this.adherenceHistory.values())
-            .map(ah => ah.adherenceRate)
-            .filter(rate => rate > 0);
-            
-        if (rates.length === 0) return 0;
-        
-        return rates.reduce((sum, rate) => sum + rate, 0) / rates.length;
-    }
-
-    getRecentSideEffects(days) {
-        const cutoff = Date.now() - (days * 24 * 60 * 60 * 1000);
-        const recent = [];
-        
-        for (const sideEffects of this.sideEffectsLog.values()) {
-            recent.push(...sideEffects.filter(se => se.reportedAt.getTime() > cutoff));
-        }
-        
-        return recent;
-    }
-
-    getAllUpcomingDoses(hours) {
-        const upcoming = [];
-        const cutoff = Date.now() + (hours * 60 * 60 * 1000);
-        
-        for (const [medId, schedule] of this.schedules) {
-            if (schedule.nextDose && schedule.nextDose.getTime() <= cutoff) {
-                const medication = this.medications.get(medId);
-                upcoming.push({
-                    medicationId: medId,
-                    medicationName: medication?.name,
-                    scheduledTime: schedule.nextDose,
-                    dosage: medication?.dosage,
-                    unit: medication?.unit
-                });
-            }
-        }
-        
-        return upcoming.sort((a, b) => a.scheduledTime - b.scheduledTime);
+    toJSON() {
+        return {
+            id: this.id,
+            name: this.name,
+            genericName: this.genericName,
+            dosage: this.dosage,
+            unit: this.unit,
+            frequency: this.frequency,
+            route: this.route,
+            prescribedBy: this.prescribedBy,
+            startDate: this.startDate,
+            endDate: this.endDate,
+            instructions: this.instructions,
+            sideEffects: this.sideEffects,
+            contraindications: this.contraindications,
+            interactions: this.interactions,
+            isActive: this.isActive,
+            createdAt: this.createdAt,
+            updatedAt: this.updatedAt
+        };
     }
 }
 
-export default EnhancedMedicationTracker;
+// Medication schedule for tracking doses
+class MedicationSchedule {
+    constructor(medicationId, times = []) {
+        this.medicationId = medicationId;
+        this.times = times; // Array of time strings like ["08:00", "20:00"]
+        this.scheduledDoses = [];
+        this.completedDoses = [];
+        this.missedDoses = [];
+    }
+
+    addScheduledTime(time) {
+        if (!this.times.includes(time)) {
+            this.times.push(time);
+            this.times.sort();
+        }
+    }
+
+    removeScheduledTime(time) {
+        this.times = this.times.filter(t => t !== time);
+    }
+
+    generateDailySchedule(date = new Date()) {
+        const dateStr = date.toDateString();
+        this.times.forEach(time => {
+            const [hours, minutes] = time.split(':');
+            const scheduledTime = new Date(date);
+            scheduledTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+            
+            const dose = {
+                id: this.generateDoseId(),
+                medicationId: this.medicationId,
+                scheduledTime: scheduledTime,
+                actualTime: null,
+                status: 'scheduled', // scheduled, taken, missed, skipped
+                notes: '',
+                sideEffectsReported: []
+            };
+            
+            this.scheduledDoses.push(dose);
+        });
+    }
+
+    generateDoseId() {
+        return 'dose_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    markDoseTaken(doseId, actualTime = new Date(), notes = '', sideEffects = []) {
+        const dose = this.scheduledDoses.find(d => d.id === doseId);
+        if (dose) {
+            dose.status = 'taken';
+            dose.actualTime = actualTime;
+            dose.notes = notes;
+            dose.sideEffectsReported = sideEffects;
+            this.completedDoses.push(dose);
+        }
+    }
+
+    markDoseMissed(doseId, reason = '') {
+        const dose = this.scheduledDoses.find(d => d.id === doseId);
+        if (dose) {
+            dose.status = 'missed';
+            dose.notes = reason;
+            this.missedDoses.push(dose);
+        }
+    }
+
+    getUpcomingDoses(hours = 24) {
+        const now = new Date();
+        const futureTime = new Date(now.getTime() + (hours * 60 * 60 * 1000));
+        
+        return this.scheduledDoses.filter(dose => 
+            dose.status === 'scheduled' && 
+            dose.scheduledTime > now && 
+            dose.scheduledTime <= futureTime
+        );
+    }
+
+    getOverdueDoses() {
+        const now = new Date();
+        return this.scheduledDoses.filter(dose => 
+            dose.status === 'scheduled' && 
+            dose.scheduledTime < now
+        );
+    }
+}
+
+// Side effect tracking
+class SideEffectTracker {
+    constructor() {
+        this.reports = [];
+        this.commonSideEffects = new Map();
+    }
+
+    reportSideEffect({
+        medicationId,
+        effect,
+        severity, // 1-10 scale
+        duration,
+        timestamp = new Date(),
+        notes = ''
+    }) {
+        const report = {
+            id: this.generateReportId(),
+            medicationId,
+            effect,
+            severity,
+            duration,
+            timestamp,
+            notes
+        };
+
+        this.reports.push(report);
+        this.updateCommonSideEffects(effect);
+        return report.id;
+    }
+
+    generateReportId() {
+        return 'side_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    updateCommonSideEffects(effect) {
+        if (this.commonSideEffects.has(effect)) {
+            this.commonSideEffects.set(effect, this.commonSideEffects.get(effect) + 1);
+        } else {
+            this.commonSideEffects.set(effect, 1);
+        }
+    }
+
+    getSideEffectsForMedication(medicationId) {
+        return this.reports.filter(report => report.medicationId === medicationId);
+    }
+
+    getSevereSideEffects(minSeverity = 7) {
+        return this.reports.filter(report => report.severity >= minSeverity);
+    }
+
+    getRecentSideEffects(hours = 24) {
+        const cutoff = new Date(Date.now() - (hours * 60 * 60 * 1000));
+        return this.reports.filter(report => report.timestamp > cutoff);
+    }
+
+    getMostCommonSideEffects(limit = 10) {
+        return Array.from(this.commonSideEffects.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, limit);
+    }
+}
+
+// Adherence analysis
+class AdherenceAnalyzer {
+    constructor() {
+        this.adherenceHistory = [];
+    }
+
+    calculateAdherenceRate(medicationId, days = 30) {
+        const cutoff = new Date(Date.now() - (days * 24 * 60 * 60 * 1000));
+        
+        // This would integrate with MedicationSchedule to get actual data
+        // For now, we'll simulate the calculation structure
+        const totalScheduledDoses = this.getTotalScheduledDoses(medicationId, cutoff);
+        const takenDoses = this.getTakenDoses(medicationId, cutoff);
+        
+        if (totalScheduledDoses === 0) return 100;
+        
+        return (takenDoses / totalScheduledDoses) * 100;
+    }
+
+    getTotalScheduledDoses(medicationId, since) {
+        // Implementation would query actual scheduled doses
+        return 0;
+    }
+
+    getTakenDoses(medicationId, since) {
+        // Implementation would query actual taken doses
+        return 0;
+    }
+
+    getAdherencePattern(medicationId, days = 30) {
+        // Returns daily adherence pattern
+        const pattern = [];
+        const now = new Date();
+        
+        for (let i = 0; i < days; i++) {
+            const date = new Date(now.getTime() - (i * 24 * 60 * 60 * 1000));
+            const dayAdherence = this.calculateDayAdherence(medicationId, date);
+            pattern.unshift({
+                date: date.toDateString(),
+                adherence: dayAdherence,
+                status: dayAdherence >= 80 ? 'good' : dayAdherence >= 60 ? 'fair' : 'poor'
+            });
+        }
+        
+        return pattern;
+    }
+
+    calculateDayAdherence(medicationId, date) {
+        // Calculate adherence for specific day
+        return Math.random() * 100; // Placeholder
+    }
+
+    identifyAdherenceIssues(medicationId) {
+        const issues = [];
+        const adherenceRate = this.calculateAdherenceRate(medicationId);
+        
+        if (adherenceRate < 80) {
+            issues.push({
+                type: 'low_adherence',
+                severity: adherenceRate < 50 ? 'high' : 'medium',
+                description: `Adherence rate is ${adherenceRate.toFixed(1)}%`,
+                recommendations: this.getAdherenceRecommendations(adherenceRate)
+            });
+        }
+        
+        return issues;
+    }
+
+    getAdherenceRecommendations(rate) {
+        if (rate < 50) {
+            return [
+                'Consider setting more frequent reminders',
+                'Discuss dosing schedule with healthcare provider',
+                'Use a pill organizer',
+                'Identify and address barriers to taking medication'
+            ];
+        } else if (rate < 80) {
+            return [
+                'Set consistent daily reminders',
+                'Link medication taking to daily routines',
+                'Track progress with a medication diary'
+            ];
+        }
+        return ['Continue current adherence practices'];
+    }
+}
+
+// Drug interaction checker
+class InteractionChecker {
+    constructor() {
+        this.knownInteractions = new Map();
+        this.initializeInteractionDatabase();
+    }
+
+    initializeInteractionDatabase() {
+        // Initialize with common drug interactions
+        // This would typically be loaded from a comprehensive drug database
+        this.knownInteractions.set('warfarin', [
+            'aspirin', 'ibuprofen', 'naproxen', 'cimetidine'
+        ]);
+        this.knownInteractions.set('lithium', [
+            'hydrochlorothiazide', 'lisinopril', 'ibuprofen'
+        ]);
+        // Add more interactions...
+    }
+
+    checkInteractions(medications) {
+        const interactions = [];
+        const medicationNames = medications.map(med => 
+            med.genericName ? med.genericName.toLowerCase() : med.name.toLowerCase()
+        );
+
+        for (let i = 0; i < medicationNames.length; i++) {
+            for (let j = i + 1; j < medicationNames.length; j++) {
+                const interaction = this.findInteraction(medicationNames[i], medicationNames[j]);
+                if (interaction) {
+                    interactions.push(interaction);
+                }
+            }
+        }
+
+        return interactions;
+    }
+
+    findInteraction(drug1, drug2) {
+        if (this.knownInteractions.has(drug1) && 
+            this.knownInteractions.get(drug1).includes(drug2)) {
+            return {
+                drug1,
+                drug2,
+                severity: 'moderate', // would be determined by actual interaction
+                description: `Potential interaction between ${drug1} and ${drug2}`,
+                recommendation: 'Consult healthcare provider'
+            };
+        }
+        
+        if (this.knownInteractions.has(drug2) && 
+            this.knownInteractions.get(drug2).includes(drug1)) {
+            return {
+                drug1: drug2,
+                drug2: drug1,
+                severity: 'moderate',
+                description: `Potential interaction between ${drug2} and ${drug1}`,
+                recommendation: 'Consult healthcare provider'
+            };
+        }
+
+        return null;
+    }
+
+    addInteraction(drug1, drug2, details) {
+        if (!this.knownInteractions.has(drug1)) {
+            this.knownInteractions.set(drug1, []);
+        }
+        this.knownInteractions.get(drug1).push(drug2);
+    }
+}
+
+// Main Enhanced Medication Tracker class
+class EnhancedMedicationTracker {
+    constructor() {
+        this.medications = new Map();
+        this.schedules = new Map();
+        this.sideEffectTracker = new SideEffectTracker();
+        this.adherenceAnalyzer = new AdherenceAnalyzer();
+        this.interactionChecker = new InteractionChecker();
+        this.reminders = [];
+        this.notifications = [];
+    }
+
+    // Medication management
+    addMedication(medicationData) {
+        const medication = new Medication(medicationData);
+        this.medications.set(medication.id, medication);
+        
+        // Check for interactions with existing medications
+        this.checkNewMedicationInteractions(medication);
+        
+        return medication.id;
+    }
+
+    updateMedication(medicationId, updates) {
+        const medication = this.medications.get(medicationId);
+        if (medication) {
+            medication.update(updates);
+            return true;
+        }
+        return false;
+    }
+
+    removeMedication(medicationId) {
+        const medication = this.medications.get(medicationId);
+        if (medication) {
+            medication.deactivate();
+            return true;
+        }
+        return false;
+    }
+
+    getMedication(medicationId) {
+        return this.medications.get(medicationId);
+    }
+
+    getAllMedications() {
+        return Array.from(this.medications.values());
+    }
+
+    getActiveMedications() {
+        return Array.from(this.medications.values())
+            .filter(med => med.isCurrentlyPrescribed());
+    }
+
+    // Schedule management
+    createSchedule(medicationId, times) {
+        const schedule = new MedicationSchedule(medicationId, times);
+        this.schedules.set(medicationId, schedule);
+        return schedule;
+    }
+
+    updateSchedule(medicationId, times) {
+        const schedule = this.schedules.get(medicationId);
+        if (schedule) {
+            schedule.times = times;
+            return true;
+        }
+        return false;
+    }
+
+    recordDoseTaken(medicationId, doseId, actualTime, notes, sideEffects) {
+        const schedule = this.schedules.get(medicationId);
+        if (schedule) {
+            schedule.markDoseTaken(doseId, actualTime, notes, sideEffects);
+            
+            // Record side effects if any
+            if (sideEffects && sideEffects.length > 0) {
+                sideEffects.forEach(effect => {
+                    this.sideEffectTracker.reportSideEffect({
+                        medicationId,
+                        effect: effect.name,
+                        severity: effect.severity,
+                        duration: effect.duration,
+                        notes: effect.notes
+                    });
+                });
+            }
+            
+            return true;
+        }
+        return false;
+    }
+
+    recordDoseMissed(medicationId, doseId, reason) {
+        const schedule = this.schedules.get(medicationId);
+        if (schedule) {
+            schedule.markDoseMissed(doseId, reason);
+            return true;
+        }
+        return false;
+    }
+
+    // Analysis and reporting
+    getAdherenceReport(medicationId, days = 30) {
+        return {
+            medicationId,
+            adherenceRate: this.adherenceAnalyzer.calculateAdherenceRate(medicationId, days),
+            pattern: this.adherenceAnalyzer.getAdherencePattern(medicationId, days),
+            issues: this.adherenceAnalyzer.identifyAdherenceIssues(medicationId)
+        };
+    }
+
+    getSideEffectReport(medicationId) {
+        return {
+            medicationId,
+            allSideEffects: this.sideEffectTracker.getSideEffectsForMedication(medicationId),
+            severeSideEffects: this.sideEffectTracker.getSevereSideEffects(),
+            recentSideEffects: this.sideEffectTracker.getRecentSideEffects(),
+            commonSideEffects: this.sideEffectTracker.getMostCommonSideEffects()
+        };
+    }
+
+    getInteractionReport() {
+        const activeMedications = this.getActiveMedications();
+        return this.interactionChecker.checkInteractions(activeMedications);
+    }
+
+    // Notifications and reminders
+    getUpcomingDoses(hours = 24) {
+        const upcomingDoses = [];
+        
+        this.schedules.forEach((schedule, medicationId) => {
+            const medication = this.medications.get(medicationId);
+            if (medication && medication.isCurrentlyPrescribed()) {
+                const doses = schedule.getUpcomingDoses(hours);
+                doses.forEach(dose => {
+                    upcomingDoses.push({
+                        ...dose,
+                        medicationName: medication.name,
+                        dosage: medication.dosage,
+                        unit: medication.unit
+                    });
+                });
+            }
+        });
+
+        return upcomingDoses.sort((a, b) => a.scheduledTime - b.scheduledTime);
+    }
+
+    getOverdueDoses() {
+        const overdueDoses = [];
+        
+        this.schedules.forEach((schedule, medicationId) => {
+            const medication = this.medications.get(medicationId);
+            if (medication && medication.isCurrentlyPrescribed()) {
+                const doses = schedule.getOverdueDoses();
+                doses.forEach(dose => {
+                    overdueDoses.push({
+                        ...dose,
+                        medicationName: medication.name,
+                        dosage: medication.dosage,
+                        unit: medication.unit
+                    });
+                });
+            }
+        });
+
+        return overdueDoses.sort((a, b) => b.scheduledTime - a.scheduledTime);
+    }
+
+    // Utility methods
+    checkNewMedicationInteractions(newMedication) {
+        const activeMedications = this.getActiveMedications();
+        activeMedications.push(newMedication);
+        
+        const interactions = this.interactionChecker.checkInteractions(activeMedications);
+        
+        if (interactions.length > 0) {
+            this.notifications.push({
+                type: 'interaction_warning',
+                message: `Potential interactions detected with ${newMedication.name}`,
+                interactions,
+                timestamp: new Date(),
+                priority: 'high'
+            });
+        }
+    }
+
+    exportData() {
+        return {
+            medications: Array.from(this.medications.values()).map(med => med.toJSON()),
+            schedules: Array.from(this.schedules.entries()),
+            sideEffects: this.sideEffectTracker.reports,
+            notifications: this.notifications,
+            exportedAt: new Date()
+        };
+    }
+
+    importData(data) {
+        // Import medications
+        if (data.medications) {
+            data.medications.forEach(medData => {
+                const medication = new Medication(medData);
+                this.medications.set(medication.id, medication);
+            });
+        }
+
+        // Import schedules
+        if (data.schedules) {
+            data.schedules.forEach(([medicationId, scheduleData]) => {
+                const schedule = new MedicationSchedule(medicationId, scheduleData.times);
+                Object.assign(schedule, scheduleData);
+                this.schedules.set(medicationId, schedule);
+            });
+        }
+
+        // Import side effects
+        if (data.sideEffects) {
+            this.sideEffectTracker.reports = data.sideEffects;
+        }
+
+        return true;
+    }
+
+    // Health insights
+    getHealthInsights() {
+        const activeMedications = this.getActiveMedications();
+        const insights = [];
+
+        // Adherence insights
+        activeMedications.forEach(med => {
+            const adherenceRate = this.adherenceAnalyzer.calculateAdherenceRate(med.id);
+            if (adherenceRate < 80) {
+                insights.push({
+                    type: 'adherence_concern',
+                    medication: med.name,
+                    value: adherenceRate,
+                    message: `Adherence for ${med.name} is ${adherenceRate.toFixed(1)}%`
+                });
+            }
+        });
+
+        // Side effect insights
+        const recentSideEffects = this.sideEffectTracker.getRecentSideEffects(48);
+        if (recentSideEffects.length > 0) {
+            insights.push({
+                type: 'recent_side_effects',
+                count: recentSideEffects.length,
+                message: `${recentSideEffects.length} side effects reported in last 48 hours`
+            });
+        }
+
+        // Interaction insights
+        const interactions = this.getInteractionReport();
+        if (interactions.length > 0) {
+            insights.push({
+                type: 'drug_interactions',
+                count: interactions.length,
+                message: `${interactions.length} potential drug interactions detected`
+            });
+        }
+
+        return insights;
+    }
+}
+
+// Export classes for use in other modules
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        EnhancedMedicationTracker,
+        Medication,
+        MedicationSchedule,
+        SideEffectTracker,
+        AdherenceAnalyzer,
+        InteractionChecker
+    };
+}
+
+// For browser environments
+if (typeof window !== 'undefined') {
+    window.EnhancedMedicationTracker = EnhancedMedicationTracker;
+    window.Medication = Medication;
+    window.MedicationSchedule = MedicationSchedule;
+    window.SideEffectTracker = SideEffectTracker;
+    window.AdherenceAnalyzer = AdherenceAnalyzer;
+    window.InteractionChecker = InteractionChecker;
+}
