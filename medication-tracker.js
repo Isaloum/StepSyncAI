@@ -4,6 +4,8 @@ const ChartUtils = require('./chart-utils');
 const PDFDocument = require('pdfkit');
 const ReminderService = require('./reminder-service');
 const ValidationUtils = require('./validation-utils');
+const EnhancedMedicationManager = require('./enhanced-medication-manager');
+const MedicationValidator = require('./medication-validator');
 
 class MedicationTracker {
     constructor(dataFile = 'medications.json') {
@@ -12,6 +14,10 @@ class MedicationTracker {
         this.reminderService = new ReminderService();
         this.interactions = this.loadInteractions();
         this.idCounter = Date.now();
+        
+        // Initialize enhanced medication manager and validator
+        this.medicationManager = new EnhancedMedicationManager();
+        this.medicationValidator = new MedicationValidator();
     }
 
     generateId() {
@@ -592,8 +598,61 @@ class MedicationTracker {
             return false;
         }
 
+        // Enhanced validation using medication database (only if database is loaded)
+        let validationResult = null;
+        if (this.medicationValidator && this.medicationValidator.medicationManager && 
+            this.medicationValidator.medicationManager.medications.length > 0) {
+            validationResult = this.medicationValidator.validate(name, dosage, { checkPregnancy: true });
+            
+            if (!validationResult.valid) {
+                console.error('❌ Validation Error:');
+                validationResult.errors.forEach(err => console.error(`   ${err}`));
+                
+                // Show suggestions if available
+                if (validationResult.info && validationResult.info.suggestions) {
+                    console.log('\n💡 Did you mean:');
+                    validationResult.info.suggestions.forEach(s => console.log(`   - ${s}`));
+                }
+                
+                // Show valid dosages if medication found but dosage invalid
+                if (validationResult.info && validationResult.info.validDosages) {
+                    console.log(`\n💡 Valid dosages for ${name}:`);
+                    console.log(`   ${validationResult.info.validDosages.join(', ')}`);
+                }
+                
+                return false;
+            }
+
+            // Show validation warnings
+            if (validationResult.warnings && validationResult.warnings.length > 0) {
+                console.log('\n⚠️  Warnings:');
+                validationResult.warnings.forEach(w => {
+                    console.log(`   ${w.message}`);
+                });
+            }
+        }
+
         // Check for interactions with current medications BEFORE adding
         const interactions = this.checkInteractions(name, false); // Don't display yet
+
+        // Check for duplicate medications (only if validator is available and has database)
+        if (this.medicationValidator && this.medicationValidator.medicationManager && 
+            this.medicationValidator.medicationManager.medications.length > 0) {
+            const existingMeds = this.data.medications
+                .filter(m => m.active)
+                .map(m => ({ name: m.name, dosage: m.dosage }));
+            
+            const duplicateCheck = this.medicationValidator.validateMultiple([
+                ...existingMeds,
+                { name: name, dosage: dosage }
+            ]);
+
+            if (!duplicateCheck.valid) {
+                console.error('❌ Duplicate medication detected:');
+                duplicateCheck.errors.forEach(err => console.error(`   ${err}`));
+                return false;
+            }
+        }
 
         const medication = {
             id: this.generateId(),
@@ -605,6 +664,13 @@ class MedicationTracker {
             active: true
         };
 
+        // Add enhanced medication info if available
+        if (validationResult && validationResult.medication) {
+            medication.category = validationResult.medication.category;
+            medication.genericName = validationResult.medication.genericName;
+            medication.manufacturer = validationResult.medication.manufacturer;
+        }
+
         this.data.medications.push(medication);
 
         if (this.saveData()) {
@@ -613,6 +679,12 @@ class MedicationTracker {
             console.log(`  Dosage: ${dosage}`);
             console.log(`  Frequency: ${frequency}`);
             console.log(`  Time: ${time}`);
+            
+            // Show medication details
+            if (validationResult && validationResult.medication) {
+                console.log(`  Category: ${validationResult.medication.category}`);
+                console.log(`  Generic: ${validationResult.medication.genericName}`);
+            }
 
             // Now display interaction warnings if any were found
             if (interactions.length > 0) {
@@ -637,6 +709,89 @@ class MedicationTracker {
             return medication;
         }
         return null;
+    }
+
+    /**
+     * Search medications in database
+     * @param {string} query - Search query
+     * @param {number} limit - Maximum results
+     * @returns {Array} Search results
+     */
+    searchMedicationDatabase(query, limit = 10) {
+        return this.medicationManager.searchMedications(query, limit);
+    }
+
+    /**
+     * Get valid dosages for a medication
+     * @param {string} medicationName - Medication name
+     * @returns {Array} Valid dosages
+     */
+    getValidDosages(medicationName) {
+        return this.medicationManager.getValidDosages(medicationName);
+    }
+
+    /**
+     * Get medication details from database
+     * @param {string} medicationName - Medication name
+     * @returns {Object|null} Medication details
+     */
+    getMedicationDetails(medicationName) {
+        return this.medicationManager.getMedicationDetails(medicationName);
+    }
+
+    /**
+     * List all available medications from database
+     * @param {string} category - Optional category filter
+     * @returns {Array} List of medications
+     */
+    listAvailableMedications(category = null) {
+        if (category) {
+            const meds = this.medicationManager.getMedicationsByCategory(category);
+            console.log(`\n💊 Available ${category} Medications:`);
+            console.log('═'.repeat(60));
+            meds.forEach(med => {
+                console.log(`\n${med.name} (${med.genericName})`);
+                console.log(`  Dosages: ${med.dosages.join(', ')}`);
+                console.log(`  Brand Names: ${med.brandNames.join(', ')}`);
+            });
+        } else {
+            const names = this.medicationManager.getAllMedicationNames();
+            console.log(`\n💊 Available Medications (${names.length} total):`);
+            console.log('═'.repeat(60));
+            
+            // Group by category
+            const byCategory = {};
+            names.forEach(med => {
+                if (!byCategory[med.category]) {
+                    byCategory[med.category] = [];
+                }
+                byCategory[med.category].push(med.name);
+            });
+
+            Object.keys(byCategory).sort().forEach(cat => {
+                console.log(`\n${cat}:`);
+                byCategory[cat].forEach(name => {
+                    console.log(`  • ${name}`);
+                });
+            });
+        }
+        console.log('═'.repeat(60));
+    }
+
+    /**
+     * Show database statistics
+     */
+    showDatabaseStats() {
+        const stats = this.medicationManager.getStatistics();
+        console.log('\n📊 Medication Database Statistics:');
+        console.log('═'.repeat(60));
+        console.log(`Total Medications: ${stats.totalMedications}`);
+        console.log(`Categories: ${stats.totalCategories}`);
+        console.log('\nMedications by Category:');
+        Object.entries(stats.categories).forEach(([cat, count]) => {
+            console.log(`  ${cat}: ${count}`);
+        });
+        console.log('═'.repeat(60));
     }
 
     listMedications(activeOnly = true) {
@@ -1287,8 +1442,10 @@ Usage: node medication-tracker.js <command> [options]
 
 Commands:
   add <name> <dosage> <frequency> <time>
-      Add a new medication
-      Example: node medication-tracker.js add "Aspirin" "100mg" "daily" "08:00"
+      Add a new medication with enhanced validation
+      Uses comprehensive medication database (55 medications)
+      Validates name/dosage combinations automatically
+      Example: node medication-tracker.js add "Sertraline" "50mg" "daily" "08:00"
 
   list
       List all active medications
@@ -1319,6 +1476,28 @@ Commands:
 
   adherence [days]
       Visualize medication adherence with charts (default: 30 days)
+
+  search <query>
+      Search medication database with fuzzy matching
+      Example: node medication-tracker.js search "zoloft"
+
+  valid-dosages <medication-name>
+      Get valid dosages for a specific medication
+      Example: node medication-tracker.js valid-dosages "Sertraline"
+
+  med-details <medication-name>
+      Get detailed information about a medication
+      Includes dosages, category, manufacturer, pregnancy safety
+      Example: node medication-tracker.js med-details "Fluoxetine"
+
+  list-available [category]
+      List all available medications in database
+      Optional: filter by category (SSRI, SNRI, Benzodiazepine, etc.)
+      Example: node medication-tracker.js list-available SSRI
+
+  database-stats
+      Show medication database statistics
+      Displays total medications and breakdown by category
 
   set-refill <id> <pill-count> [pills-per-dose] [refill-threshold-days]
       Enable refill tracking for a medication
@@ -1371,6 +1550,15 @@ Commands:
   help
       Show this help message
 
+═══════════════════════════════════════════════════════════
+Enhanced Features:
+  ✓ Comprehensive medication database (55 medications)
+  ✓ Smart name/dosage validation
+  ✓ Fuzzy search with suggestions
+  ✓ Duplicate medication prevention
+  ✓ Pregnancy safety warnings
+  ✓ Dosage warnings (high/low alerts)
+  ✓ Category-based organization
 ═══════════════════════════════════════════════════════════
 `);
 }
@@ -1445,6 +1633,90 @@ function main() {
                 fieldName: 'days'
             });
             tracker.visualizeAdherence(adherenceDays);
+            break;
+
+        case 'search':
+            if (!args[1]) {
+                console.log('Usage: node medication-tracker.js search <query>');
+                console.log('Example: node medication-tracker.js search "zoloft"');
+                break;
+            }
+            const query = args.slice(1).join(' ');
+            const searchResults = tracker.searchMedicationDatabase(query);
+            
+            if (searchResults.length === 0) {
+                console.log(`\n❌ No medications found matching "${query}"`);
+            } else {
+                console.log(`\n🔍 Search Results for "${query}":`);
+                console.log('═'.repeat(60));
+                searchResults.forEach((med, index) => {
+                    console.log(`\n${index + 1}. ${med.matchedName}${med.isBrandName ? ' (Brand)' : ''}`);
+                    console.log(`   Generic: ${med.genericName}`);
+                    console.log(`   Category: ${med.category}`);
+                    console.log(`   Dosages: ${med.dosages.join(', ')}`);
+                });
+            }
+            console.log('═'.repeat(60));
+            break;
+
+        case 'valid-dosages':
+            if (!args[1]) {
+                console.log('Usage: node medication-tracker.js valid-dosages <medication-name>');
+                console.log('Example: node medication-tracker.js valid-dosages "Sertraline"');
+                break;
+            }
+            const medName = args.slice(1).join(' ');
+            const dosages = tracker.getValidDosages(medName);
+            
+            if (dosages.length === 0) {
+                console.log(`\n❌ Medication "${medName}" not found or has no dosage information`);
+            } else {
+                console.log(`\n💊 Valid dosages for ${medName}:`);
+                console.log('═'.repeat(60));
+                dosages.forEach((d, i) => {
+                    console.log(`  ${i + 1}. ${d.label}`);
+                });
+            }
+            console.log('═'.repeat(60));
+            break;
+
+        case 'med-details':
+            if (!args[1]) {
+                console.log('Usage: node medication-tracker.js med-details <medication-name>');
+                console.log('Example: node medication-tracker.js med-details "Fluoxetine"');
+                break;
+            }
+            const detailMedName = args.slice(1).join(' ');
+            const details = tracker.getMedicationDetails(detailMedName);
+            
+            if (!details) {
+                console.log(`\n❌ Medication "${detailMedName}" not found in database`);
+            } else {
+                console.log(`\n💊 Medication Details: ${details.name}`);
+                console.log('═'.repeat(60));
+                console.log(`Generic Name: ${details.genericName}`);
+                console.log(`Brand Names: ${details.brandNames.join(', ')}`);
+                console.log(`Manufacturer: ${details.manufacturer}`);
+                console.log(`Category: ${details.category}`);
+                console.log(`\nDosages: ${details.dosages.join(', ')}`);
+                console.log(`Forms: ${details.forms.join(', ')}`);
+                console.log(`Frequency: ${details.frequency}`);
+                console.log(`Max Daily Dose: ${details.maxDailyDose}`);
+                console.log(`\nPregnancy Category: ${details.pregnancyCategory}`);
+                console.log(`Lactation Safety: ${details.lactationSafety}`);
+                console.log(`FDA Approval: ${details.fdaApprovalDate}`);
+                console.log(`RxNorm ID: ${details.rxnormId}`);
+            }
+            console.log('═'.repeat(60));
+            break;
+
+        case 'list-available':
+            const category = args[1] || null;
+            tracker.listAvailableMedications(category);
+            break;
+
+        case 'database-stats':
+            tracker.showDatabaseStats();
             break;
 
         case 'export':
