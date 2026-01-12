@@ -737,8 +737,9 @@ describe('EnhancedMedicationTracker', () => {
 
       // Ensure sensitive data is not logged in plain text
       const logCall = mockAuditLogger.log.mock.calls[0][0];
-      expect(logCall).not.toContain('password');
-      expect(logCall).not.toContain('ssn');
+      const logString = JSON.stringify(logCall);
+      expect(logString).not.toContain('password');
+      expect(logString).not.toContain('ssn');
     });
 
     test('should sanitize input to prevent SQL injection', () => {

@@ -230,7 +230,7 @@ class EnhancedMedicationTracker {
 
         // Validate frequency if provided
         if (medication.frequency) {
-            const validFrequencies = ['once daily', 'twice daily', 'three times daily', 'as needed', 'weekly'];
+            const validFrequencies = ['once daily', 'twice daily', 'three times daily', 'every 8 hours', 'as needed', 'weekly'];
             if (!validFrequencies.includes(medication.frequency)) {
                 const error = new Error('Invalid frequency format');
                 this.logAction('VALIDATION_FAILED', { reason: error.message, frequency: medication.frequency });
@@ -241,7 +241,8 @@ class EnhancedMedicationTracker {
         // Check for duplicate medications
         const duplicate = this.medications.find(m => 
             m.name.toLowerCase() === sanitizedName.toLowerCase() && 
-            m.dosage === medication.dosage.trim()
+            m.dosage === medication.dosage.trim() &&
+            m.frequency === medication.frequency
         );
         if (duplicate) {
             const error = new Error('Duplicate medication entry');
@@ -283,7 +284,7 @@ class EnhancedMedicationTracker {
 
         // Validate frequency if provided
         if (medication.frequency) {
-            const validFrequencies = ['once daily', 'twice daily', 'three times daily', 'as needed', 'weekly'];
+            const validFrequencies = ['once daily', 'twice daily', 'three times daily', 'every 8 hours', 'as needed', 'weekly'];
             if (!validFrequencies.includes(medication.frequency)) {
                 throw new Error('Invalid frequency format');
             }
