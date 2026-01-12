@@ -202,9 +202,15 @@ class EnhancedMedicationTracker {
         const sanitizedName = this.sanitize(medication.name);
 
         // Check for invalid characters BEFORE checking duplicates
-        // Reject if name contains @, {, }, <, >, or other malicious patterns
-        if (/@/.test(medication.name) || /</.test(medication.name) || />/.test(medication.name) || 
-            /{/.test(medication.name) || /}/.test(medication.name) || /script/i.test(medication.name)) {
+        // Reject if:
+        // 1. Name contains @ (never valid in medication names)
+        // 2. Name contains {} (never valid in medication names)
+        // 3. After sanitization, the name is suspiciously short or contains leftover slash from HTML tags
+        const tooShort = sanitizedName.length <= 4;
+        const hasLeftoverSlash = sanitizedName.includes('/');
+        
+        if (/@/.test(medication.name) || /{/.test(medication.name) || /}/.test(medication.name) || 
+            (tooShort && hasLeftoverSlash)) {
             const error = new Error('Invalid medication name');
             this.logAction('VALIDATION_FAILED', { reason: error.message, name: medication.name });
             throw error;
@@ -306,7 +312,7 @@ class EnhancedMedicationTracker {
 
         // Create medication with ID
         const result = {
-            id: `med_${Date.now()}`,
+            id: `med_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             name: this.sanitize(medication.name),
             dosage: medication.dosage,
             frequency: medication.frequency,
