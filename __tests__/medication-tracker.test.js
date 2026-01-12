@@ -4,6 +4,56 @@ const MedicationTracker = require('../medication-tracker');
 // Mock fs module
 jest.mock('fs');
 
+// Mock EnhancedMedicationManager
+jest.mock('../enhanced-medication-manager', () => {
+  return jest.fn().mockImplementation(() => ({
+    searchMedications: jest.fn().mockReturnValue([]),
+    getMedicationInfo: jest.fn().mockReturnValue(null)
+  }));
+});
+
+// Mock MedicationValidator
+jest.mock('../medication-validator', () => {
+  return jest.fn().mockImplementation(() => ({
+    validate: jest.fn((name, dosage) => ({ 
+      valid: true, 
+      errors: [], 
+      warnings: [],
+      medication: {
+        name: name,
+        genericName: name,
+        category: 'general',
+        manufacturer: 'Generic'
+      }
+    })),
+    validateMultiple: jest.fn().mockReturnValue({ 
+      valid: true, 
+      errors: [] 
+    })
+  }));
+});
+
+// Mock Bumpie_Meds pregnancy modules
+jest.mock('bumpie-meds', () => ({
+  PregnancySafetyEngine: jest.fn().mockImplementation(() => ({
+    checkMedicationSafety: jest.fn().mockResolvedValue({
+      safe: true,
+      fdaCategory: 'B',
+      riskLevel: 'low',
+      recommendation: 'Safe to use'
+    })
+  })),
+  PregnancyInteractionChecker: jest.fn().mockImplementation(() => ({
+    checkPregnancyInteractions: jest.fn().mockResolvedValue({
+      hasInteractions: false
+    })
+  })),
+  PregnancyRiskCalculator: jest.fn().mockImplementation(() => ({})),
+  PregnancyAuditLogger: jest.fn().mockImplementation(() => ({
+    logSafetyCheck: jest.fn().mockResolvedValue({})
+  }))
+}));
+
 describe('MedicationTracker', () => {
   let tracker;
   let consoleLogSpy;

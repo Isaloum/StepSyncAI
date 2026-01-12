@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "setup": "node setup.js",
+    "start": "node pregnancy-api-server.js",
+    "dev": "nodemon pregnancy-api-server.js",
     "mental": "node mental-health-tracker.js",
     "med": "node medication-tracker.js",
     "aws": "node aws-for-kids.js",
@@ -95,13 +97,19 @@
   ],
   "author": "",
   "license": "MIT",
+  "jest": {
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": ["<rootDir>/__tests__/setup.js"]
+  },
   "devDependencies": {
     "jest": "^30.2.0"
   },
   "dependencies": {
     "asciichart": "^1.5.25",
+    "bumpie-meds": "file:../Bumpie_Meds",
     "chalk": "^4.1.2",
     "cli-table3": "^0.6.5",
+    "express": "^5.2.1",
     "node-cron": "^4.2.1",
     "node-notifier": "^10.0.1",
     "pdfkit": "^0.17.2"

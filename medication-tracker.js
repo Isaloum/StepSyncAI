@@ -7,6 +7,14 @@ const ValidationUtils = require('./validation-utils');
 const EnhancedMedicationManager = require('./enhanced-medication-manager');
 const MedicationValidator = require('./medication-validator');
 
+// Pregnancy Safety Integration
+const { 
+    PregnancySafetyEngine, 
+    PregnancyInteractionChecker,
+    PregnancyRiskCalculator,
+    PregnancyAuditLogger 
+} = require('bumpie-meds');
+
 class MedicationTracker {
     constructor(dataFile = 'medications.json') {
         this.dataFile = dataFile;
@@ -18,6 +26,12 @@ class MedicationTracker {
         // Initialize enhanced medication manager and validator
         this.medicationManager = new EnhancedMedicationManager();
         this.medicationValidator = new MedicationValidator();
+        
+        // Initialize pregnancy safety modules
+        this.pregnancySafety = new PregnancySafetyEngine();
+        this.pregnancyInteractions = new PregnancyInteractionChecker();
+        this.pregnancyRisk = new PregnancyRiskCalculator();
+        this.pregnancyAudit = new PregnancyAuditLogger();
     }
 
     generateId() {
@@ -709,6 +723,66 @@ class MedicationTracker {
             return medication;
         }
         return null;
+    }
+
+    /**
+     * Check pregnancy medication safety
+     * @param {string} medicationName - Medication name
+     * @param {number} weekOfPregnancy - Week of pregnancy (1-42)
+     * @param {Object} options - Additional options
+     * @returns {Promise<Object>} Safety assessment
+     */
+    async checkPregnancySafety(medicationName, weekOfPregnancy, options = {}) {
+        try {
+            const safetyResult = await this.pregnancySafety.checkMedicationSafety(
+                medicationName,
+                weekOfPregnancy
+            );
+
+            // Check for pregnancy-specific interactions if taking other medications
+            if (this.data.medications && this.data.medications.length > 0) {
+                const currentMeds = this.data.medications
+                    .filter(m => m.active)
+                    .map(m => m.name);
+                
+                if (currentMeds.length > 0) {
+                    const interactions = await this.pregnancyInteractions.checkPregnancyInteractions(
+                        [...currentMeds, medicationName],
+                        weekOfPregnancy
+                    );
+                    
+                    if (interactions.hasInteractions) {
+                        safetyResult.pregnancyInteractions = interactions;
+                    }
+                }
+            }
+
+            // Log to audit trail
+            if (options.patientId) {
+                await this.pregnancyAudit.logSafetyCheck({
+                    patientId: options.patientId,
+                    medicationName,
+                    weekOfPregnancy,
+                    trimester: safetyResult.trimester,
+                    riskScore: safetyResult.riskScore,
+                    riskLevel: safetyResult.riskLevel,
+                    fdaCategory: safetyResult.fdaCategory,
+                    safe: safetyResult.safe,
+                    warnings: safetyResult.warnings || [],
+                    recommendation: safetyResult.recommendation,
+                    sessionId: options.sessionId || null
+                });
+            }
+
+            return safetyResult;
+        } catch (error) {
+            console.error('❌ Pregnancy safety check error:', error.message);
+            return {
+                safe: false,
+                error: error.message,
+                recommendation: 'Unable to assess safety - consult healthcare provider'
+            };
+        }
     }
 
     /**
