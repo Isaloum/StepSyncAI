@@ -2425,9 +2425,22 @@
       console.log('Building results HTML for', candidates.length, 'candidates');
       const htmlParts = [];
       candidates.slice(0, 5).forEach((c, index) => {
-        if (!c || !c.candidate || !c.rxcui) return;
-        const safeCandidate = String(c.candidate).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
-        const safeRxCUI = String(c.rxcui).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+        console.log(`  Candidate ${index}:`, c);
+        // RxNorm API returns either c.candidate OR c.name depending on the endpoint
+        const medName = c.candidate || c.name;
+        const medRxcui = c.rxcui;
+        
+        if (!c || !medName || !medRxcui) {
+          console.warn(`  Skipping invalid candidate at index ${index}:`, {
+            hasCandidate: !!c?.candidate,
+            hasName: !!c?.name,
+            hasRxcui: !!c?.rxcui
+          });
+          return;
+        }
+        
+        const safeCandidate = String(medName).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+        const safeRxCUI = String(medRxcui).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
         htmlParts.push(`
         <div data-candidate="${safeCandidate}" data-rxcui="${safeRxCUI}" 
              style="padding:0.625rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);transition:var(--transition)" 
