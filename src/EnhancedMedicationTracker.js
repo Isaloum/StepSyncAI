@@ -119,15 +119,46 @@ class EnhancedMedicationTracker {
       throw new Error('Invalid medication name');
     }
     
-    // Sanitize name (remove script tags, SQL injection, and dangerous content)
-    let sanitizedName = medicationData.name
-      .replace(/<script[^>]*>.*?<\/script>/gi, '')
-      .replace(/<[^>]+>/g, '')
-      .replace(/javascript:/gi, '')
-      .replace(/on\w+\s*=/gi, '')
-      .replace(/';?\s*DROP\s+TABLE/gi, '')
-      .replace(/--/g, '')
-      .replace(/;/g, '');
+    // Sanitize name - comprehensive defense-in-depth approach to prevent XSS and injection attacks
+    // Note: The final whitelist step at the end provides the ultimate protection
+    // Multiple passes to handle nested/obfuscated attacks
+    let sanitizedName = medicationData.name;
+    
+    // Remove all URL schemes (javascript:, data:, vbscript:, etc.)
+    sanitizedName = sanitizedName.replace(/\b(javascript|data|vbscript):/gi, '');
+    
+    // Remove event handlers - multiple passes to catch nested patterns
+    for (let i = 0; i < 2; i++) {
+      sanitizedName = sanitizedName.replace(/on\w+\s*=\s*["']?[^"']*["']?/gi, '');
+      sanitizedName = sanitizedName.replace(/on\w+/gi, ''); // Remove any remaining "on" attributes
+    }
+    
+    // Remove script tags with all variations including malformed ones
+    // Multiple passes to handle nested tags
+    for (let i = 0; i < 3; i++) {
+      sanitizedName = sanitizedName.replace(/<\s*script[\s\S]*?<\s*\/\s*script\s*>/gis, '');
+      sanitizedName = sanitizedName.replace(/<\s*script[\s\S]*?>/gis, ''); // Remove unclosed script tags
+    }
+    
+    // Remove all HTML tags (multiple passes)
+    for (let i = 0; i < 2; i++) {
+      sanitizedName = sanitizedName.replace(/<[^>]*>/g, '');
+      sanitizedName = sanitizedName.replace(/<[\s\S]*?>/g, ''); // Catch tags with newlines
+    }
+    
+    // Remove SQL injection patterns
+    sanitizedName = sanitizedName.replace(/';?\s*DROP\s+TABLE/gi, '');
+    sanitizedName = sanitizedName.replace(/--/g, '');
+    sanitizedName = sanitizedName.replace(/;/g, '');
+    
+    // FINAL SECURITY STEP: Whitelist-based sanitization
+    // Only keep safe characters: alphanumeric, spaces, hyphens, and parentheses
+    // This provides ultimate protection against any XSS or injection attacks
+    // that might have bypassed the previous steps
+    sanitizedName = sanitizedName.replace(/[^a-zA-Z0-9\s\-()]/g, '');
+    
+    // Final trim
+    sanitizedName = sanitizedName.trim();
     
     // After sanitization, check if the name is suspicious (mostly tags, very short, etc.)
     if (medicationData.name.includes('<script>') && sanitizedName.length < 5) {
