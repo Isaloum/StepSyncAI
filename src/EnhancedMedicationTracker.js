@@ -136,8 +136,24 @@ class EnhancedMedicationTracker {
       const match = processedData.dosage.match(dosagePattern);
       if (match) {
         processedData.dosage = parseFloat(match[1]);
-        processedData.unit = match[2].toLowerCase();
+        processedData.unit = match[2]; // Preserve original case
+      } else {
+        // Invalid dosage format - string doesn't match expected pattern
+        result.validationErrors.push('Invalid dosage format');
       }
+    }
+
+    // Set defaults for optional fields
+    if (!processedData.frequency) {
+      processedData.frequency = 'as needed';
+    }
+
+    // Sanitize medication name - remove script tags and dangerous characters
+    if (processedData.name) {
+      // Remove script tags and their content
+      processedData.name = processedData.name.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+      // Remove other dangerous characters
+      processedData.name = processedData.name.replace(/[<>@{}]/g, '');
     }
 
     // Validate required fields
@@ -147,20 +163,11 @@ class EnhancedMedicationTracker {
     if (processedData.dosage === undefined || processedData.dosage === null) {
       result.validationErrors.push('Dosage is required');
     }
-    if (processedData.dosage && processedData.dosage <= 0) {
+    if (processedData.dosage && typeof processedData.dosage === 'number' && processedData.dosage <= 0) {
       result.validationErrors.push('Dosage quantity must be positive');
     }
     if (!processedData.unit) {
       result.validationErrors.push('Dosage unit is required');
-    }
-    if (!processedData.frequency) {
-      result.validationErrors.push('Frequency is required');
-    }
-
-    // Validate medication name contains no invalid characters
-    const invalidCharsPattern = /[<>@{}]/;
-    if (processedData.name && invalidCharsPattern.test(processedData.name)) {
-      result.validationErrors.push('Invalid medication name');
     }
 
     // Validate dosage format
@@ -192,7 +199,7 @@ class EnhancedMedicationTracker {
         data: processedData,
         errors: result.validationErrors
       });
-      return result;
+      throw new Error(result.validationErrors.join('; '));
     }
 
     // Validate frequency
@@ -204,7 +211,7 @@ class EnhancedMedicationTracker {
         data: processedData,
         errors: result.validationErrors
       });
-      return result;
+      throw new Error(result.validationErrors.join('; '));
     }
 
     // Check for duplicates
@@ -273,7 +280,7 @@ class EnhancedMedicationTracker {
       prescriber: medication.prescriber
     });
 
-    return result;
+    return medication;
   }
 
   async addMedicationWithFDAVerification(medicationData) {
@@ -284,11 +291,11 @@ class EnhancedMedicationTracker {
         throw new Error(validation.reason || 'FDA validation failed');
       }
 
-      const result = this.addMedication(medicationData);
+      const medication = this.addMedication(medicationData);
       
-      if (result.success && validation.warnings) {
-        result.data.warnings = validation.warnings;
-        result.data.pregnancyCategory = validation.pregnancyCategory;
+      if (validation.warnings) {
+        medication.warnings = validation.warnings;
+        medication.pregnancyCategory = validation.pregnancyCategory;
       }
 
       if (this.auditLogger) {
@@ -299,10 +306,10 @@ class EnhancedMedicationTracker {
         });
       }
 
-      return result.data;
+      return medication;
     }
 
-    return this.addMedication(medicationData).data;
+    return this.addMedication(medicationData);
   }
 
   async checkMedicationInteractions(medicationName, otherMedications) {
