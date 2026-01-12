@@ -61,15 +61,23 @@ class MedicationValidator {
         const dosageTrim = dosage.trim();
         const validDosages = medication.dosages || [];
 
-        if (!validDosages.includes(dosageTrim)) {
+        // Case-insensitive dosage matching
+        const dosageMatch = validDosages.find(d => d.toLowerCase() === dosageTrim.toLowerCase());
+        
+        if (!dosageMatch) {
             result.valid = false;
             result.errors.push(`Invalid dosage "${dosageTrim}" for ${medication.name}`);
             result.info.validDosages = validDosages;
+            result.info.category = medication.category;
+            result.info.manufacturer = medication.manufacturer;
             return result;
         }
 
+        // Use the correct case from the database
+        const correctDosage = dosageMatch;
+
         // Check dosage warnings
-        this.checkDosageWarnings(medication, dosageTrim, result);
+        this.checkDosageWarnings(medication, correctDosage, result);
 
         // Check pregnancy safety if requested
         if (options.checkPregnancy) {
@@ -81,6 +89,7 @@ class MedicationValidator {
         result.info.manufacturer = medication.manufacturer;
         result.info.frequency = medication.frequency;
         result.info.forms = medication.forms;
+        result.info.dosage = correctDosage;
 
         return result;
     }

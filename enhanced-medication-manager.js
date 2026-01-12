@@ -106,7 +106,7 @@ class EnhancedMedicationManager {
             }
         });
 
-        return names.sort((a, b) => a.name.localeCompare(b.name));
+        return names.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
     }
 
     /**
