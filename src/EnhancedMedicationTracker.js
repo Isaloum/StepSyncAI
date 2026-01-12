@@ -26,8 +26,8 @@ class EnhancedMedicationTracker {
         const sanitized = medicationString.trim();
 
         // Extract dosage pattern - handles regular, range, and decimal dosages
-        // Patterns: "10mg", "2.5mg", "200-400mg"
-        const dosagePattern = /(\d+(?:\.\d+)?(?:-\d+(?:\.\d+)?)?)\s*(mg|mcg|g|ml|iu|units?)$/i;
+        // Patterns: "10mg", "2.5mg", "200-400mg", "500mg/ml"
+        const dosagePattern = /(\d+(?:\.\d+)?(?:-\d+(?:\.\d+)?)?)\s*(mg|mcg|g|ml|iu|units?)(?:\/\w+)?$/i;
         const match = sanitized.match(dosagePattern);
 
         if (!match) {
@@ -168,7 +168,13 @@ class EnhancedMedicationTracker {
                 logEntry.details = details;
             }
             
-            this.auditLogger.log(logEntry);
+            try {
+                this.auditLogger.log(logEntry);
+            } catch (error) {
+                // Gracefully degrade when audit logging fails
+                // Log to console but don't crash the application
+                console.error('Audit logging failed:', error.message);
+            }
         }
     }
 
@@ -195,8 +201,10 @@ class EnhancedMedicationTracker {
         // Sanitize name (remove dangerous characters)
         const sanitizedName = this.sanitize(medication.name);
 
-        // Check for @ in sanitized name (@ is not removed by sanitize, so reject it)
-        if (/@/.test(sanitizedName)) {
+        // Check for invalid characters BEFORE checking duplicates
+        // Reject if name contains @, {, }, <, >, or other malicious patterns
+        if (/@/.test(medication.name) || /</.test(medication.name) || />/.test(medication.name) || 
+            /{/.test(medication.name) || /}/.test(medication.name) || /script/i.test(medication.name)) {
             const error = new Error('Invalid medication name');
             this.logAction('VALIDATION_FAILED', { reason: error.message, name: medication.name });
             throw error;
@@ -238,7 +246,7 @@ class EnhancedMedicationTracker {
             }
         }
 
-        // Check for duplicate medications
+        // Check for duplicate medications (AFTER validation)
         const duplicate = this.medications.find(m => 
             m.name.toLowerCase() === sanitizedName.toLowerCase() && 
             m.dosage === medication.dosage.trim()
