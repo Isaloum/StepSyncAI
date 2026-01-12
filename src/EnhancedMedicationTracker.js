@@ -132,7 +132,7 @@ class EnhancedMedicationTracker {
     // Parse dosage if provided as combined string (e.g., "10mg")
     let processedData = { ...medicationData };
     if (processedData.dosage && typeof processedData.dosage === 'string' && !processedData.unit) {
-      const dosagePattern = /^(\d+\.?\d*)\s*([a-zA-Z%\/]+)$/;
+      const dosagePattern = /^(-?\d+\.?\d*)\s*([a-zA-Z%\/]+)$/;
       const match = processedData.dosage.match(dosagePattern);
       if (match) {
         processedData.dosage = parseFloat(match[1]);
@@ -163,7 +163,7 @@ class EnhancedMedicationTracker {
     if (processedData.dosage === undefined || processedData.dosage === null) {
       result.validationErrors.push('Dosage is required');
     }
-    if (processedData.dosage && typeof processedData.dosage === 'number' && processedData.dosage <= 0) {
+    if (typeof processedData.dosage === 'number' && processedData.dosage <= 0) {
       result.validationErrors.push('Dosage quantity must be positive');
     }
     if (!processedData.unit) {
