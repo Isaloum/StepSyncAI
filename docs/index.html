@@ -1589,6 +1589,14 @@
 
   <script>
     // ============================================
+    // INITIALIZATION & DEBUG LOGGING
+    // ============================================
+    console.log('=== MindTrackAI Loading ===');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('User Agent:', navigator.userAgent);
+    console.log('Document ready state:', document.readyState);
+    
+    // ============================================
     // WELLNESS TIPS SYSTEM
     // ============================================
     const wellnessTips = [
@@ -2296,77 +2304,143 @@
     }
     
     // Search medication using RxNorm API (NIH - Official drug names)
-    // Version: 2026-01-11-17:18 - Make explicitly global
+    // Version: 2026-01-12 - Enhanced debugging and reliability
     let searchTimeout;
     window.searchMedication = async function searchMedication() {
-      console.log('searchMedication called!');
+      console.log('=== searchMedication called ===');
+      console.log('Timestamp:', new Date().toISOString());
+      
       clearTimeout(searchTimeout);
-      const query = document.getElementById('medName').value.trim();
-      console.log('Query:', query);
+      
+      const medNameInput = document.getElementById('medName');
       const resultsContainer = document.getElementById('medSearchResults');
       const resultsList = document.getElementById('medSearchResultsList');
-      console.log('Containers found:', resultsContainer, resultsList);
-      if (query.length < 3) {
-        console.log('Query too short, hiding dropdown');
-        if (resultsContainer) resultsContainer.style.display = 'none';
+      
+      console.log('medName input:', medNameInput);
+      console.log('medSearchResults container:', resultsContainer);
+      console.log('medSearchResultsList:', resultsList);
+      
+      if (!medNameInput) {
+        console.error('❌ CRITICAL: medName input not found!');
         return;
       }
-      console.log('Query length OK, starting search...');
+      if (!resultsContainer) {
+        console.error('❌ CRITICAL: medSearchResults container not found!');
+        return;
+      }
+      if (!resultsList) {
+        console.error('❌ CRITICAL: medSearchResultsList not found!');
+        return;
+      }
+      
+      const query = medNameInput.value.trim();
+      console.log('Search query:', query, 'Length:', query.length);
+      
+      if (query.length < 3) {
+        console.log('Query too short (<3 chars), hiding dropdown');
+        resultsContainer.style.display = 'none';
+        return;
+      }
+      
+      console.log('✓ Query length OK (>=3 chars), starting search...');
+      console.log('Setting timeout for 500ms...');
+      
       searchTimeout = setTimeout(async () => {
+        console.log('Timeout triggered, executing search...');
         try {
+          // Check cache first
           if (MED_CACHE.rxnorm[query]) {
-            console.log('Found in cache:', MED_CACHE.rxnorm[query]);
+            console.log('✓ Found in cache:', MED_CACHE.rxnorm[query].length, 'results');
             displaySearchResults(MED_CACHE.rxnorm[query]);
             return;
           }
+          
           const url = `https://rxnav.nlm.nih.gov/REST/approximateTerm.json?term=${encodeURIComponent(query)}&maxEntries=5`;
-          console.log('Fetching:', url);
+          console.log('Fetching from RxNorm API:', url);
+          
           const response = await fetch(url);
-          console.log('Response status:', response.status);
+          console.log('Response received - Status:', response.status, 'OK:', response.ok);
+          
           if (!response.ok) {
+            console.warn('⚠️ API response not OK:', response.status);
             resultsContainer.style.display = 'block';
             resultsList.innerHTML = '<div style="color:#ef4444;padding:0.75rem">⚠️ Unable to reach RxNorm API. Please check your internet connection or try again later.</div>';
             return;
           }
+          
           const data = await response.json();
-          console.log('API data:', data);
+          console.log('✓ API data received:', data);
+          
           const candidates = data.approximateGroup?.candidate || [];
-          console.log('Candidates:', candidates);
+          console.log('✓ Candidates found:', candidates.length);
+          console.log('Candidate details:', candidates);
+          
+          // Cache the results
           MED_CACHE.rxnorm[query] = candidates;
+          
+          // Display results
           displaySearchResults(candidates);
+          
         } catch (error) {
-          console.error('API Error:', error);
+          console.error('❌ API Error:', error);
+          console.error('Error stack:', error.stack);
           resultsContainer.style.display = 'block';
           resultsList.innerHTML = '<div style="color:#ef4444;padding:0.75rem">⚠️ Error searching for medication. Please try again later.</div>';
         }
       }, 500);
+      
+      console.log('=== searchMedication end ===');
     }
     
     function displaySearchResults(candidates) {
+      console.log('=== displaySearchResults called ===');
+      console.log('Candidates received:', candidates);
+      console.log('Candidates count:', candidates ? candidates.length : 0);
+      
       const container = document.getElementById('medSearchResults');
       const resultsList = document.getElementById('medSearchResultsList');
       const inputField = document.getElementById('medName');
       
-      console.log('displaySearchResults called with:', candidates);
       console.log('Container element:', container);
+      console.log('Container display before:', container ? container.style.display : 'N/A');
       console.log('ResultsList element:', resultsList);
       
       if (!container) {
-        console.error('medSearchResults container not found!');
+        console.error('❌ CRITICAL: medSearchResults container not found!');
         return;
       }
       
       if (!resultsList) {
-        console.error('medSearchResultsList element not found');
+        console.error('❌ CRITICAL: medSearchResultsList element not found!');
         return;
       }
       
       if (!candidates || candidates.length === 0) {
-        console.log('No candidates, hiding dropdown');
-        container.style.display = 'none';
+        console.log('No candidates found, showing "no results" message');
+        resultsList.innerHTML = '<div style="padding:0.75rem;color:var(--text-secondary);text-align:center">No medications found. Try a different search term.</div>';
+        container.style.display = 'block';
+        console.log('Container display set to: block (no results message)');
         return;
       }
       
+copilot/fix-medications-dropdown-issue
+      console.log('✓ Building results HTML for', candidates.length, 'candidates');
+      
+      const htmlParts = [];
+      candidates.slice(0, 5).forEach((c, index) => {
+        console.log(`  Candidate ${index}:`, c);
+        // RxNorm API returns either c.candidate OR c.name depending on the endpoint
+        const medName = c.candidate || c.name;
+        if (!c || !medName || !c.rxcui) {
+          console.warn(`  Skipping invalid candidate at index ${index}:`, {
+            hasCandidate: !!c?.candidate,
+            hasName: !!c?.name,
+            hasRxcui: !!c?.rxcui
+          });
+          return;
+        }
+        const safeCandidate = String(medName).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+
       // Position dropdown below input field
       const rect = inputField.getBoundingClientRect();
       container.style.top = (rect.bottom + 4) + 'px';
@@ -2377,8 +2451,9 @@
       resultsList.innerHTML = candidates.slice(0, 5).map((c, index) => {
         if (!c || !c.candidate || !c.rxcui) return '';
         const safeCandidate = String(c.candidate).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+      main
         const safeRxCUI = String(c.rxcui).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
-        return `
+        htmlParts.push(`
         <div data-candidate="${safeCandidate}" data-rxcui="${safeRxCUI}" 
              style="padding:0.625rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);transition:var(--transition)" 
              onmouseover="this.style.background='var(--bg-subtle)'"
@@ -2387,12 +2462,23 @@
           <div style="font-weight:600;color:var(--text)">${safeCandidate}</div>
           <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.125rem">RxCUI: ${safeRxCUI}</div>
         </div>
-      `;
-      }).join('');
+      `);
+      });
       
-      console.log('Setting container display to block');
+      resultsList.innerHTML = htmlParts.join('');
+      console.log('✓ HTML set, innerHTML length:', resultsList.innerHTML.length);
+      
+      // Force display
       container.style.display = 'block';
-      console.log('Dropdown should now be visible!');
+      console.log('✓ Container display set to: block');
+      console.log('Container display after:', container.style.display);
+      console.log('Container computed style:', window.getComputedStyle(container).display);
+      console.log('Container visibility:', window.getComputedStyle(container).visibility);
+      console.log('Container opacity:', window.getComputedStyle(container).opacity);
+      console.log('Container position:', window.getComputedStyle(container).position);
+      console.log('Container z-index:', window.getComputedStyle(container).zIndex);
+      
+      console.log('=== displaySearchResults complete - Dropdown should be visible! ===');
     }
     
     function selectMedicationFromData(element) {
@@ -3670,6 +3756,7 @@
     }
 
     // Initialize
+    console.log('=== Starting initialization ===');
     migrateMedicationsToDefinitions(); // Migrate old medication data to new system
     generateTodaysDoses(); // Auto-generate today's pending doses
     initTheme();
@@ -3683,17 +3770,47 @@
     updateStreakChart();
     moodEmoji.textContent = moodEmojis[4];
     showOnboarding();
+    
+    // Verify medication search elements after initialization
+    console.log('=== Verifying medication search elements ===');
+    const verifyMedName = document.getElementById('medName');
+    const verifyMedType = document.getElementById('medType');
+    const verifyMedTypeHint = document.getElementById('medTypeHint');
+    const verifyMedDosage = document.getElementById('medDosage');
+    const verifyMedSearchResults = document.getElementById('medSearchResults');
+    const verifyMedSearchResultsList = document.getElementById('medSearchResultsList');
+    const verifyMedInfoBox = document.getElementById('medInfoBox');
+    
+    console.log('medName:', verifyMedName ? '✓ Found' : '❌ NOT FOUND');
+    console.log('medType:', verifyMedType ? '✓ Found' : '❌ NOT FOUND');
+    console.log('medTypeHint:', verifyMedTypeHint ? '✓ Found' : '❌ NOT FOUND');
+    console.log('medDosage:', verifyMedDosage ? '✓ Found' : '❌ NOT FOUND');
+    console.log('medSearchResults:', verifyMedSearchResults ? '✓ Found' : '❌ NOT FOUND');
+    console.log('medSearchResultsList:', verifyMedSearchResultsList ? '✓ Found' : '❌ NOT FOUND');
+    console.log('medInfoBox:', verifyMedInfoBox ? '✓ Found' : '❌ NOT FOUND');
+    
+    if (verifyMedName) {
+      console.log('medName input value:', verifyMedName.value);
+      console.log('medName oninput handler:', verifyMedName.oninput);
+      console.log('medName getAttribute("oninput"):', verifyMedName.getAttribute('oninput'));
+    }
 
     // Close medication dropdown when clicking outside
     document.addEventListener('click', (e) => {
       const medNameInput = document.getElementById('medName');
       const medSearchResults = document.getElementById('medSearchResults');
+      
       if (medSearchResults && medNameInput && 
           !medNameInput.contains(e.target) && 
           !medSearchResults.contains(e.target)) {
+        console.log('Click outside detected, hiding dropdown');
         medSearchResults.style.display = 'none';
       }
     });
+    
+    console.log('✓ Medication search initialization complete');
+    console.log('✓ Click-outside handler registered');
+    console.log('✓ searchMedication function:', typeof window.searchMedication);
   </script>
 </body>
 </html>
