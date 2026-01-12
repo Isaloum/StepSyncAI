@@ -221,6 +221,7 @@ describe('EnhancedMedicationTracker', () => {
     });
 
     test('should validate frequency format', () => {
+      // Use different medication names to avoid duplicate detection (same name + dosage = duplicate)
       const validFrequencies = [
         { med: 'Lisinopril', freq: 'once daily' },
         { med: 'Metformin', freq: 'twice daily' },
