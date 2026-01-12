@@ -1067,6 +1067,7 @@
       width:100%;
       max-height:90vh;
       overflow-y:auto;
+      overflow-x:visible;
       box-shadow:0 20px 60px var(--shadow-lg);
       border:1px solid var(--border);
       animation:fadeIn 0.25s ease-out;
@@ -1104,7 +1105,10 @@
       background:var(--bg-subtle);
       color:var(--text);
     }
-    .modal-body{padding:1.5rem}
+    .modal-body{
+      padding:1.5rem;
+      overflow:visible;
+    }
     .modal-footer{
       display:flex;
       justify-content:flex-end;
