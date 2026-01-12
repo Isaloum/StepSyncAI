@@ -195,7 +195,7 @@ class EnhancedMedicationTracker {
         // Sanitize name (remove dangerous characters)
         const sanitizedName = this.sanitize(medication.name);
 
-        // Check for@ in sanitized name (@ is not removed by sanitize, so reject it)
+        // Check for @ in sanitized name (@ is not removed by sanitize, so reject it)
         if (/@/.test(sanitizedName)) {
             const error = new Error('Invalid medication name');
             this.logAction('VALIDATION_FAILED', { reason: error.message, name: medication.name });
