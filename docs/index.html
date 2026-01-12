@@ -1148,7 +1148,7 @@
       margin-top:0.625rem;
     }
   </style>
-
+</head>
 
 <body>
   <!-- Accessibility: Skip to main content -->
@@ -2264,15 +2264,8 @@
     });
 
     // ============================================
-    // THEME TOGGLE FUNCTION (fix ReferenceError)
+    // THEME TOGGLE FUNCTION - Duplicate removed (use one at line ~1643)
     // ============================================
-    function toggleTheme() {
-      const current = document.documentElement.getAttribute('data-theme');
-      const next = current === 'light' ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('stepsync_theme', JSON.stringify(next));
-      document.getElementById('themeIcon').textContent = next === 'light' ? '🌙' : '☀️';
-    }
 
     // ============================================
     // MEDICATION API INTEGRATION (FDA + NIH)
@@ -2423,24 +2416,6 @@
         return;
       }
       
-copilot/fix-medications-dropdown-issue
-      console.log('✓ Building results HTML for', candidates.length, 'candidates');
-      
-      const htmlParts = [];
-      candidates.slice(0, 5).forEach((c, index) => {
-        console.log(`  Candidate ${index}:`, c);
-        // RxNorm API returns either c.candidate OR c.name depending on the endpoint
-        const medName = c.candidate || c.name;
-        if (!c || !medName || !c.rxcui) {
-          console.warn(`  Skipping invalid candidate at index ${index}:`, {
-            hasCandidate: !!c?.candidate,
-            hasName: !!c?.name,
-            hasRxcui: !!c?.rxcui
-          });
-          return;
-        }
-        const safeCandidate = String(medName).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
-
       // Position dropdown below input field
       const rect = inputField.getBoundingClientRect();
       container.style.top = (rect.bottom + 4) + 'px';
@@ -2448,11 +2423,24 @@ copilot/fix-medications-dropdown-issue
       container.style.width = rect.width + 'px';
       
       console.log('Building results HTML for', candidates.length, 'candidates');
-      resultsList.innerHTML = candidates.slice(0, 5).map((c, index) => {
-        if (!c || !c.candidate || !c.rxcui) return '';
-        const safeCandidate = String(c.candidate).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
-      main
-        const safeRxCUI = String(c.rxcui).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+      const htmlParts = [];
+      candidates.slice(0, 5).forEach((c, index) => {
+        console.log(`  Candidate ${index}:`, c);
+        // RxNorm API returns either c.candidate OR c.name depending on the endpoint
+        const medName = c.candidate || c.name;
+        const medRxcui = c.rxcui;
+        
+        if (!c || !medName || !medRxcui) {
+          console.warn(`  Skipping invalid candidate at index ${index}:`, {
+            hasCandidate: !!c?.candidate,
+            hasName: !!c?.name,
+            hasRxcui: !!c?.rxcui
+          });
+          return;
+        }
+        
+        const safeCandidate = String(medName).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+        const safeRxCUI = String(medRxcui).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
         htmlParts.push(`
         <div data-candidate="${safeCandidate}" data-rxcui="${safeRxCUI}" 
              style="padding:0.625rem 0.75rem;cursor:pointer;border-bottom:1px solid var(--border);transition:var(--transition)" 
