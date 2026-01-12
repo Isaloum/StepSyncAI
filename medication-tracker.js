@@ -7,13 +7,11 @@ const ValidationUtils = require('./validation-utils');
 const EnhancedMedicationManager = require('./enhanced-medication-manager');
 const MedicationValidator = require('./medication-validator');
 
-// Pregnancy Safety Integration
-const { 
-    PregnancySafetyEngine, 
-    PregnancyInteractionChecker,
-    PregnancyRiskCalculator,
-    PregnancyAuditLogger 
-} = require('bumpie-meds');
+// Pregnancy Safety Integration - Import as modules, not classes
+const PregnancySafetyEngine = require('bumpie-meds/src/services/pregnancy-safety-engine');
+const PregnancyInteractionChecker = require('bumpie-meds/src/services/pregnancy-interaction-checker');
+const PregnancyRiskCalculator = require('bumpie-meds/src/services/pregnancy-risk-calculator');
+const PregnancyAuditLogger = require('bumpie-meds/src/services/pregnancy-audit-logger');
 
 class MedicationTracker {
     constructor(dataFile = 'medications.json') {
@@ -27,11 +25,11 @@ class MedicationTracker {
         this.medicationManager = new EnhancedMedicationManager();
         this.medicationValidator = new MedicationValidator();
         
-        // Initialize pregnancy safety modules
-        this.pregnancySafety = new PregnancySafetyEngine();
-        this.pregnancyInteractions = new PregnancyInteractionChecker();
-        this.pregnancyRisk = new PregnancyRiskCalculator();
-        this.pregnancyAudit = new PregnancyAuditLogger();
+        // Pregnancy safety modules are functional, not class-based
+        this.pregnancySafety = PregnancySafetyEngine;
+        this.pregnancyInteractions = PregnancyInteractionChecker;
+        this.pregnancyRisk = PregnancyRiskCalculator;
+        this.pregnancyAudit = PregnancyAuditLogger;
     }
 
     generateId() {
