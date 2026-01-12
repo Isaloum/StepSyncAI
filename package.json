@@ -50,8 +50,32 @@
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch"
   },
+  "keywords": [
+    "mental-health",
+    "ptsd",
+    "anxiety",
+    "recovery",
+    "workplace-accident",
+    "medication",
+    "tracker",
+    "health",
+    "wellness",
+    "aws",
+    "cloud",
+    "learning",
+    "education",
+    "certification",
+    "cloud-practitioner"
+  ],
+  "author": "",
+  "license": "MIT",
   "jest": {
     "testEnvironment": "node",
+    "setupFilesAfterEnv": ["<rootDir>/__tests__/setup.js"],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/__tests__/setup.js"
+    ],
     "coverageDirectory": "coverage",
     "collectCoverageFrom": [
       "*.js",
@@ -74,32 +98,9 @@
       }
     },
     "testMatch": [
-      "**/__tests__/**/*.js",
+      "**/__tests__/**/*.test.js",
       "**/?(*.)+(spec|test).js"
     ]
-  },
-  "keywords": [
-    "mental-health",
-    "ptsd",
-    "anxiety",
-    "recovery",
-    "workplace-accident",
-    "medication",
-    "tracker",
-    "health",
-    "wellness",
-    "aws",
-    "cloud",
-    "learning",
-    "education",
-    "certification",
-    "cloud-practitioner"
-  ],
-  "author": "",
-  "license": "MIT",
-  "jest": {
-    "testEnvironment": "node",
-    "setupFilesAfterEnv": ["<rootDir>/__tests__/setup.js"]
   },
   "devDependencies": {
     "jest": "^30.2.0"

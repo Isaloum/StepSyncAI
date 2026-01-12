@@ -39,35 +39,3 @@ jest.mock('bumpie-meds', () => ({
     logRiskCalculation: jest.fn().mockResolvedValue({})
   }))
 }));
-
-// Mock EnhancedMedicationManager globally
-jest.mock('../enhanced-medication-manager', () => {
-  return jest.fn().mockImplementation(() => ({
-    searchMedications: jest.fn().mockReturnValue([]),
-    getMedicationInfo: jest.fn().mockReturnValue(null),
-    getValidDosages: jest.fn().mockReturnValue([]),
-    getMedicationDetails: jest.fn().mockReturnValue(null),
-    getMedicationsByCategory: jest.fn().mockReturnValue([])
-  }));
-});
-
-// Mock MedicationValidator globally
-jest.mock('../medication-validator', () => {
-  return jest.fn().mockImplementation(() => ({
-    validate: jest.fn((name, dosage) => ({ 
-      valid: true, 
-      errors: [], 
-      warnings: [],
-      medication: {
-        name: name,
-        genericName: name,
-        category: 'general',
-        manufacturer: 'Generic'
-      }
-    })),
-    validateMultiple: jest.fn().mockReturnValue({ 
-      valid: true, 
-      errors: [] 
-    })
-  }));
-});
