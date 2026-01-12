@@ -1406,10 +1406,10 @@
               <span id="medTypeHint">Medications requiring a doctor's prescription (e.g., Lisinopril, Metformin)</span>
             </div>
           </div>
-          <div class="form-group" style="position:relative;z-index:1001" id="medNameGroup">
+          <div class="form-group" id="medNameGroup">
             <label>Name</label>
             <input type="text" id="medName" placeholder="e.g., Aspirin" oninput="searchMedication()" autocomplete="off">
-            <div id="medSearchResults" style="display:none;position:fixed;z-index:10001">
+            <div id="medSearchResults" style="display:none;position:absolute;z-index:10001;left:0;right:0;top:100%;margin-top:0.25rem">
               <div id="medSearchResultsList" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 4px 12px var(--shadow-md);max-height:200px;overflow-y:auto"></div>
             </div>
             <div id="medInfoBox" style="margin-top:0.5rem;font-size:0.8125rem"></div>
@@ -1476,13 +1476,6 @@
         <div class="card-title">⚠️ Drug Interaction Warnings</div>
         <div id="interactionWarnings">
           <div class="insight positive">✅ No dangerous interactions detected.</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">🌿 Supplements</div>
-        <div id="supplementList">
-          <div class="insight">No supplements tracked. Add a supplement above.</div>
         </div>
       </div>
     </section>
@@ -2411,12 +2404,13 @@
     function validateMedicationType(medicationName, selectedType) {
       const name = medicationName.toLowerCase().trim();
       
-      // Common prescription medications
+      // Common prescription medications (strict matching)
       const prescriptionMeds = [
         'lisinopril', 'metformin', 'atorvastatin', 'amlodipine', 'metoprolol',
         'omeprazole', 'albuterol', 'gabapentin', 'hydrochlorothiazide', 'sertraline',
         'levothyroxine', 'losartan', 'simvastatin', 'warfarin', 'furosemide',
-        'pantoprazole', 'prednisone', 'amoxicillin', 'azithromycin', 'ciprofloxacin'
+        'pantoprazole', 'prednisone', 'amoxicillin', 'azithromycin', 'ciprofloxacin',
+        'statin' // catches all statins (atorvastatin, rosuvastatin, pravastatin, etc.)
       ];
       
       // Common OTC medications
@@ -3035,7 +3029,15 @@
     
     function validateDosage(medName, dosageStr) {
       const parsed = parseDosage(dosageStr);
-      if (!parsed) return { valid: true }; // If can't parse, allow it (custom dosage)
+      if (!parsed) {
+        return { 
+          valid: false, 
+          warnings: [{
+            level: 'critical',
+            message: `❌ INVALID DOSAGE: "${dosageStr}" must contain a number (e.g., 25mg, 500mg, 10ml). Letters-only dosages are not allowed.`
+          }]
+        };
+      }
       
       const medLower = medName.toLowerCase();
       const warnings = [];
