@@ -221,16 +221,21 @@ describe('EnhancedMedicationTracker', () => {
     });
 
     test('should validate frequency format', () => {
-      const validFrequencies = ['once daily', 'twice daily', 'every 8 hours', 'as needed'];
+      const validFrequencies = [
+        { med: 'Lisinopril', freq: 'once daily' },
+        { med: 'Metformin', freq: 'twice daily' },
+        { med: 'Atorvastatin', freq: 'three times daily' },
+        { med: 'Aspirin', freq: 'as needed' }
+      ];
 
-      validFrequencies.forEach(frequency => {
+      validFrequencies.forEach(({ med, freq }) => {
         const medication = tracker.addMedication({
-          name: 'Lisinopril',
+          name: med,
           dosage: '10mg',
-          frequency,
+          frequency: freq,
         });
 
-        expect(medication.frequency).toBe(frequency);
+        expect(medication.frequency).toBe(freq);
       });
     });
 
@@ -737,8 +742,9 @@ describe('EnhancedMedicationTracker', () => {
 
       // Ensure sensitive data is not logged in plain text
       const logCall = mockAuditLogger.log.mock.calls[0][0];
-      expect(logCall).not.toContain('password');
-      expect(logCall).not.toContain('ssn');
+      const logCallString = JSON.stringify(logCall);
+      expect(logCallString).not.toContain('password');
+      expect(logCallString).not.toContain('ssn');
     });
 
     test('should sanitize input to prevent SQL injection', () => {
