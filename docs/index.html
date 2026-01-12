@@ -1395,10 +1395,10 @@
               <span id="medTypeHint">Prescription drugs or over-the-counter medications (e.g., Aspirin, Lisinopril)</span>
             </div>
           </div>
-          <div class="form-group" style="position:relative;z-index:1001">
+          <div class="form-group" style="position:relative;z-index:1001" id="medNameGroup">
             <label>Name</label>
             <input type="text" id="medName" placeholder="e.g., Aspirin" oninput="searchMedication()" autocomplete="off">
-            <div id="medSearchResults" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:0.25rem;z-index:1002">
+            <div id="medSearchResults" style="display:none;position:fixed;z-index:10001">
               <div id="medSearchResultsList" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 4px 12px var(--shadow-md);max-height:200px;overflow-y:auto"></div>
             </div>
             <div id="medInfoBox" style="margin-top:0.5rem;font-size:0.8125rem"></div>
@@ -2345,6 +2345,7 @@
     function displaySearchResults(candidates) {
       const container = document.getElementById('medSearchResults');
       const resultsList = document.getElementById('medSearchResultsList');
+      const inputField = document.getElementById('medName');
       
       console.log('displaySearchResults called with:', candidates);
       console.log('Container element:', container);
@@ -2365,6 +2366,12 @@
         container.style.display = 'none';
         return;
       }
+      
+      // Position dropdown below input field
+      const rect = inputField.getBoundingClientRect();
+      container.style.top = (rect.bottom + 4) + 'px';
+      container.style.left = rect.left + 'px';
+      container.style.width = rect.width + 'px';
       
       console.log('Building results HTML for', candidates.length, 'candidates');
       resultsList.innerHTML = candidates.slice(0, 5).map((c, index) => {
