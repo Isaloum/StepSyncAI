@@ -190,15 +190,15 @@ class EnhancedMedicationTracker {
             throw error;
         }
 
-        // Sanitize name (remove dangerous characters)
-        const sanitizedName = this.sanitize(medication.name);
-        
-        // Validate name doesn't contain invalid characters
-        if (/[@{}<>]/.test(sanitizedName)) {
+        // Check for invalid characters BEFORE sanitizing
+        if (/[@{}<>]/.test(medication.name)) {
             const error = new Error('Invalid medication name');
             this.logAction('VALIDATION_FAILED', { reason: error.message, name: medication.name });
             throw error;
         }
+
+        // Sanitize name (remove dangerous characters)
+        const sanitizedName = this.sanitize(medication.name);
 
         // Validate dosage format
         const dosagePattern = /^-?\d+(?:\.\d+)?(?:-\d+(?:\.\d+)?)?\s*(mg|mcg|g|ml|iu|units?)$/i;
@@ -216,6 +216,34 @@ class EnhancedMedicationTracker {
         if (quantity <= 0) {
             const error = new Error('Dosage quantity must be positive');
             this.logAction('VALIDATION_FAILED', { reason: error.message, dosage: medication.dosage });
+            throw error;
+        }
+
+        // Validate maximum dosage limits (simple check)
+        if (quantity > 10000) {
+            const error = new Error('Dosage exceeds maximum safe limit');
+            this.logAction('VALIDATION_FAILED', { reason: error.message, dosage: medication.dosage });
+            throw error;
+        }
+
+        // Validate frequency if provided
+        if (medication.frequency) {
+            const validFrequencies = ['once daily', 'twice daily', 'three times daily', 'as needed', 'weekly'];
+            if (!validFrequencies.includes(medication.frequency)) {
+                const error = new Error('Invalid frequency format');
+                this.logAction('VALIDATION_FAILED', { reason: error.message, frequency: medication.frequency });
+                throw error;
+            }
+        }
+
+        // Check for duplicate medications
+        const duplicate = this.medications.find(m => 
+            m.name.toLowerCase() === sanitizedName.toLowerCase() && 
+            m.dosage === medication.dosage.trim()
+        );
+        if (duplicate) {
+            const error = new Error('Duplicate medication entry');
+            this.logAction('VALIDATION_FAILED', { reason: error.message, name: sanitizedName, dosage: medication.dosage });
             throw error;
         }
 
