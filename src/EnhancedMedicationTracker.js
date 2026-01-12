@@ -242,7 +242,7 @@ class EnhancedMedicationTracker {
         const duplicate = this.medications.find(m => 
             m.name.toLowerCase() === sanitizedName.toLowerCase() && 
             m.dosage === medication.dosage.trim() &&
-            m.frequency === medication.frequency
+            (m.frequency || '') === (medication.frequency || '')
         );
         if (duplicate) {
             const error = new Error('Duplicate medication entry');
