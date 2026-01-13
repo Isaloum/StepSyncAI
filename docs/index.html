@@ -3525,13 +3525,18 @@
       const definitions = DB.get('medicationDefinitions');
       console.log('Current definitions before adding:', definitions.length);
       
-      // Check for duplicate by name and type
+      // CRITICAL: Check for duplicate by name (case-insensitive)
       const duplicate = definitions.find(d => 
-        d.name.toLowerCase() === name.toLowerCase() && d.type === type
+        d.name.toLowerCase().trim() === name.toLowerCase().trim()
       );
       
       if (duplicate) {
-        alert('⚠️ This medication is already in your list!');
+        alert('⚠️ "' + name + '" is already in your list!');
+        // Clear form after duplicate detection
+        nameInput.value = '';
+        nameInput.removeAttribute('data-rxcui');
+        document.getElementById('medDosage').value = '';
+        document.getElementById('medInfoBox').innerHTML = '';
         return;
       }
       
@@ -3547,11 +3552,14 @@
       DB.set('medicationDefinitions', definitions);
       console.log('✅ Medication added! New count:', definitions.length);
       
-      // Clear form
+      // CRITICAL: Clear ALL form fields and validation messages
       nameInput.value = '';
       nameInput.removeAttribute('data-rxcui');
       document.getElementById('medDosage').value = '';
+      document.getElementById('medDosage').classList.remove('valid');
       document.getElementById('medInfoBox').innerHTML = '';
+      document.getElementById('dosageWarning').innerHTML = ''; // Clear dosage validation message
+      document.getElementById('medType').value = 'prescription';
       
       // Clear pregnancy fields
       if (document.getElementById('isPregnant').checked) {
