@@ -3557,10 +3557,16 @@
       // CRITICAL: Clear ALL form fields and validation messages
       nameInput.value = '';
       nameInput.removeAttribute('data-rxcui');
-      document.getElementById('medDosage').value = '';
-      document.getElementById('medDosage').classList.remove('valid');
-      document.getElementById('medInfoBox').innerHTML = '';
-      document.getElementById('dosageWarning').innerHTML = ''; // Clear dosage validation message
+      const dosageInput = document.getElementById('medDosage');
+      const infoBox = document.getElementById('medInfoBox');
+      const warningBox = document.getElementById('dosageWarning');
+      
+      dosageInput.value = '';
+      dosageInput.classList.remove('valid');
+      if (infoBox) infoBox.innerHTML = '';
+      if (warningBox) warningBox.innerHTML = '';
+      
+      // Reset type dropdown to default
       document.getElementById('medType').value = 'prescription';
       
       // Clear pregnancy fields
@@ -3573,6 +3579,14 @@
       loadMedications();
       loadSupplements();
       checkInteractions();
+      
+      // Scroll to medication list to show it was added
+      setTimeout(() => {
+        const medList = document.getElementById('medList');
+        if (medList) {
+          medList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
       }
     }
 
