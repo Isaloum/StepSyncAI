@@ -2416,7 +2416,7 @@
         'amitriptyline', 'nortriptyline', 'doxepin', 'trazodone', 'fluoxetine', 'escitalopram',
         'citalopram', 'paroxetine', 'venlafaxine', 'duloxetine', 'bupropion', 'mirtazapine',
         'quetiapine', 'risperidone', 'olanzapine', 'aripiprazole', 'ziprasidone', 'lurasidone',
-        'lamotrigine', 'valproate', 'lithium', 'carbamazepine', 'topiramate',
+        'lamotrigine', 'valproate', 'valproic', 'divalproex', 'lithium', 'carbamazepine', 'topiramate',
         'statin', 'pril', 'sartan', 'olol', 'prazole' // catches drug classes
       ];
       
@@ -3337,6 +3337,23 @@
       
       if (!name) return alert('Please enter medication/supplement name');
       
+      // CRITICAL: Check for duplicate FIRST (before any validation)
+      const definitions = DB.get('medicationDefinitions');
+      const duplicate = definitions.find(d => 
+        d.name.toLowerCase().trim() === name.toLowerCase().trim()
+      );
+      
+      if (duplicate) {
+        alert('⚠️ "' + name + '" is already in your list!\n\nPlease check "Your Medications" section below.');
+        // Clear form
+        nameInput.value = '';
+        nameInput.removeAttribute('data-rxcui');
+        document.getElementById('medDosage').value = '';
+        document.getElementById('medInfoBox').innerHTML = '';
+        document.getElementById('dosageWarning').innerHTML = '';
+        return;
+      }
+      
       // CRITICAL: Validate dosage FIRST (before anything else)
       if (!dosage) {
         return alert('❌ REQUIRED\n\nPlease enter a dosage amount.');
@@ -3521,24 +3538,9 @@
       function proceedWithAddingMedication() {
       console.log('🟢 proceedWithAddingMedication() CALLED');
 
-      // Add to medication definitions
+      // Add to medication definitions (duplicate check already done at start)
       const definitions = DB.get('medicationDefinitions');
       console.log('Current definitions before adding:', definitions.length);
-      
-      // CRITICAL: Check for duplicate by name (case-insensitive)
-      const duplicate = definitions.find(d => 
-        d.name.toLowerCase().trim() === name.toLowerCase().trim()
-      );
-      
-      if (duplicate) {
-        alert('⚠️ "' + name + '" is already in your list!');
-        // Clear form after duplicate detection
-        nameInput.value = '';
-        nameInput.removeAttribute('data-rxcui');
-        document.getElementById('medDosage').value = '';
-        document.getElementById('medInfoBox').innerHTML = '';
-        return;
-      }
       
       definitions.push({ 
         id: Date.now(), 
