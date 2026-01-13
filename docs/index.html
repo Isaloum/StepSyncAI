@@ -2413,7 +2413,11 @@
         'omeprazole', 'albuterol', 'gabapentin', 'hydrochlorothiazide', 'sertraline',
         'levothyroxine', 'losartan', 'simvastatin', 'warfarin', 'furosemide',
         'pantoprazole', 'prednisone', 'amoxicillin', 'azithromycin', 'ciprofloxacin',
-        'statin' // catches all statins (atorvastatin, rosuvastatin, pravastatin, etc.)
+        'amitriptyline', 'nortriptyline', 'doxepin', 'trazodone', 'fluoxetine', 'escitalopram',
+        'citalopram', 'paroxetine', 'venlafaxine', 'duloxetine', 'bupropion', 'mirtazapine',
+        'quetiapine', 'risperidone', 'olanzapine', 'aripiprazole', 'ziprasidone', 'lurasidone',
+        'lamotrigine', 'valproate', 'lithium', 'carbamazepine', 'topiramate',
+        'statin', 'pril', 'sartan', 'olol', 'prazole' // catches drug classes
       ];
       
       // Common OTC medications
@@ -3520,6 +3524,16 @@
       // Add to medication definitions
       const definitions = DB.get('medicationDefinitions');
       console.log('Current definitions before adding:', definitions.length);
+      
+      // Check for duplicate by name and type
+      const duplicate = definitions.find(d => 
+        d.name.toLowerCase() === name.toLowerCase() && d.type === type
+      );
+      
+      if (duplicate) {
+        alert('⚠️ This medication is already in your list!');
+        return;
+      }
       
       definitions.push({ 
         id: Date.now(), 
