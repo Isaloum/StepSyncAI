@@ -2952,8 +2952,8 @@
     
     // Check for drug interactions using RxNorm API
       async function checkDrugInteractions(medicationList) {
-        // Only check for medications (not supplements)
-        const medsWithRxcui = medicationList.filter(m => m.type === 'medication' && m.rxcui);
+        // Only check for medications (prescription/OTC, not supplements)
+        const medsWithRxcui = medicationList.filter(m => (m.type === 'prescription' || m.type === 'otc') && m.rxcui);
         if (medsWithRxcui.length < 2) return [];
 
         const rxcuis = medsWithRxcui.map(m => m.rxcui).join('+');
@@ -3546,7 +3546,7 @@
       const today = new Date().toDateString();
       // Only show medications (not supplements)
       const definitions = DB.get('medicationDefinitions');
-      const medIds = definitions.filter(d => d.type === 'medication').map(d => d.id);
+      const medIds = definitions.filter(d => d.type === 'prescription' || d.type === 'otc').map(d => d.id);
       const todaysLogs = logs.filter(log => 
         new Date(log.scheduledFor).toDateString() === today && medIds.includes(log.medId)
       ).sort((a, b) => new Date(a.scheduledFor) - new Date(b.scheduledFor));
