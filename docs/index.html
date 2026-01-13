@@ -3330,6 +3330,16 @@
       
       if (!name) return alert('Please enter medication/supplement name');
       
+      // CRITICAL: Validate dosage FIRST (before anything else)
+      if (!dosage) {
+        return alert('❌ REQUIRED\n\nPlease enter a dosage amount.');
+      }
+      
+      // Check if dosage contains ANY number at all
+      if (!/\d/.test(dosage)) {
+        return alert('❌ INVALID DOSAGE\n\nDosage must contain a number (e.g., "500mg", "1 tablet", "5ml").\n\nYou entered: "' + dosage + '"');
+      }
+      
       // CRITICAL: Validate medication type matches selection
       const typeValidation = validateMedicationType(name, type);
       console.log('Type validation result:', typeValidation);
@@ -4314,6 +4324,55 @@
     });
     
     migrateMedicationsToDefinitions(); // Migrate old medication data to new system
+    
+    // CRITICAL: Migrate old medication types
+    function migrateMedicationTypes() {
+      const definitions = DB.get('medicationDefinitions');
+      let migrated = false;
+      
+      // Common prescription keywords
+      const prescriptionKeywords = ['statin', 'pril', 'sartan', 'olol', 'prazole', 'prednisone', 'metformin', 'warfarin', 'albuterol', 'gabapentin', 'sertraline', 'levothyroxine', 'furosemide', 'amoxicillin', 'azithromycin', 'ciprofloxacin'];
+      
+      // Common OTC keywords
+      const otcKeywords = ['aspirin', 'ibuprofen', 'acetaminophen', 'tylenol', 'advil', 'motrin', 'aleve', 'naproxen', 'benadryl', 'zyrtec', 'claritin', 'allegra', 'mucinex', 'tums', 'pepto'];
+      
+      // Common supplement keywords
+      const supplementKeywords = ['vitamin', 'fish oil', 'omega', 'magnesium', 'calcium', 'zinc', 'iron', 'probiotic', 'multivitamin', 'b12', 'b6', 'coq10', 'turmeric', 'ginkgo'];
+      
+      definitions.forEach(def => {
+        if (def.type === 'medication') {
+          migrated = true;
+          const nameLower = def.name.toLowerCase();
+          
+          // Check if it's a supplement
+          if (supplementKeywords.some(kw => nameLower.includes(kw))) {
+            def.type = 'supplement';
+          }
+          // Check if it's OTC
+          else if (otcKeywords.some(kw => nameLower.includes(kw))) {
+            def.type = 'otc';
+          }
+          // Check if it's prescription
+          else if (prescriptionKeywords.some(kw => nameLower.includes(kw))) {
+            def.type = 'prescription';
+          }
+          // Default to prescription for unknown medications (safer)
+          else {
+            def.type = 'prescription';
+          }
+          
+          console.log(`Migrated "${def.name}" from 'medication' to '${def.type}'`);
+        }
+      });
+      
+      if (migrated) {
+        DB.set('medicationDefinitions', definitions);
+        console.log('✅ Medication types migrated successfully');
+      }
+    }
+    
+    migrateMedicationTypes(); // Run migration
+    
     generateTodaysDoses(); // Auto-generate today's pending doses
     initTheme();
     displayTip();
