@@ -3571,20 +3571,24 @@
         return;
       }
       
-      // Show medication definitions with delete option
-      let html = '<div style="margin-bottom:1.5rem"><h3 style="font-size:1rem;margin-bottom:0.75rem;color:var(--text-light)">📋 Your Medications</h3>';
+      // Show medication list at top (compact)
+      let html = '<div style="background:var(--card-bg);padding:1rem;border-radius:8px;margin-bottom:1.5rem;border:1px solid var(--border)">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">';
+      html += '<h3 style="font-size:0.9rem;margin:0;color:var(--text-light);font-weight:600">📋 YOUR MEDICATIONS</h3>';
+      html += '</div>';
+      html += '<div style="display:flex;flex-direction:column;gap:0.5rem">';
       html += medications.map(med => `
-        <div class="med-card" style="margin-bottom:0.5rem">
-          <div class="med-name">${med.name}</div>
-          <div class="med-time">${med.dosage} • ${med.scheduledTimes.join(', ')}</div>
-          <div style="margin-top:0.5rem">
-            <button class="btn btn-danger" onclick="deleteMedicationDefinition(${med.id})" title="Delete this medication permanently">
-              🗑️ Delete Medication
-            </button>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem;background:var(--bg);border-radius:4px">
+          <div style="flex:1">
+            <div style="font-weight:500;font-size:0.9rem">${med.name}</div>
+            <div style="font-size:0.8rem;color:var(--text-light)">${med.dosage} • ${med.scheduledTimes.join(', ')}</div>
           </div>
+          <button onclick="window.deleteMedicationDefinition(${med.id})" style="background:transparent;border:none;color:var(--danger);cursor:pointer;padding:0.25rem 0.5rem;font-size:1.2rem" title="Delete medication">
+            🗑️
+          </button>
         </div>
       `).join('');
-      html += '</div>';
+      html += '</div></div>';
       
       // Show today's doses
       if (todaysLogs.length === 0) {
@@ -3650,7 +3654,7 @@
     }
 
     // Delete medication definition permanently
-    function deleteMedicationDefinition(id) {
+    window.deleteMedicationDefinition = function(id) {
       if (!confirm('⚠️ Delete this medication permanently?\n\nThis will remove the medication and all its dose history.')) {
         return;
       }
@@ -3667,6 +3671,7 @@
       
       // Reload views
       loadMedications();
+      loadSupplements();
       updateDashboard();
     }
     
