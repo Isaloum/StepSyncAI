@@ -3609,34 +3609,16 @@
         return;
       }
       
-      // Show medication list at top (compact)
-      let html = '<div style="background:var(--card-bg);padding:1rem;border-radius:8px;margin-bottom:1.5rem;border:1px solid var(--border)">';
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">';
-      html += '<h3 style="font-size:0.9rem;margin:0;color:var(--text-light);font-weight:600">📋 YOUR MEDICATIONS</h3>';
-      html += '</div>';
-      html += '<div style="display:flex;flex-direction:column;gap:0.5rem">';
-      html += medications.map(med => `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem;background:var(--bg);border-radius:4px">
-          <div style="flex:1">
-            <div style="font-weight:500;font-size:0.9rem">${med.name}</div>
-            <div style="font-size:0.8rem;color:var(--text-light)">${med.dosage} • ${med.scheduledTimes.join(', ')}</div>
-          </div>
-          <button onclick="window.deleteMedicationDefinition(${med.id})" style="background:transparent;border:none;color:var(--danger);cursor:pointer;padding:0.25rem 0.5rem;font-size:1.2rem" title="Delete medication">
-            🗑️
-          </button>
-        </div>
-      `).join('');
-      html += '</div></div>';
+      // Don't show medication list - only today's doses
+      let html = '';
       
       // Show today's doses
       if (todaysLogs.length === 0) {
-        html += '<h3 style="font-size:1rem;margin-bottom:0.75rem;color:var(--text-light)">📅 Today\'s Doses</h3>';
         html += '<div class="insight">No doses scheduled for today.</div>';
         container.innerHTML = html;
         return;
       }
       
-      html += '<h3 style="font-size:1rem;margin-bottom:0.75rem;color:var(--text-light)">📅 Today\'s Doses</h3>';
       html += todaysLogs.map(log => {
         const statusClass = log.status === 'taken' ? 'taken' : log.status === 'missed' ? 'missed' : '';
         const statusIcon = log.status === 'taken' ? '✅' : log.status === 'missed' ? '❌' : log.status === 'late' ? '⏰' : '⬜';
