@@ -2027,6 +2027,9 @@
       // Update content sections
       document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
       document.getElementById(tabName).classList.add('active');
+      
+      // Save active tab to localStorage
+      localStorage.setItem('mindtrack_activeTab', tabName);
     }
 
     // Mood Tracker
@@ -3556,16 +3559,43 @@
       const today = new Date().toDateString();
       // Only show medications (not supplements)
       const definitions = DB.get('medicationDefinitions');
-      const medIds = definitions.filter(d => d.type === 'prescription' || d.type === 'otc').map(d => d.id);
+      const medications = definitions.filter(d => d.type === 'prescription' || d.type === 'otc');
+      const medIds = medications.map(d => d.id);
       const todaysLogs = logs.filter(log => 
         new Date(log.scheduledFor).toDateString() === today && medIds.includes(log.medId)
       ).sort((a, b) => new Date(a.scheduledFor) - new Date(b.scheduledFor));
       const container = document.getElementById('medList');
-      if (todaysLogs.length === 0) {
-        container.innerHTML = '<div class="insight">No medications scheduled for today. Add a medication above to get started!</div>';
+      
+      if (medications.length === 0) {
+        container.innerHTML = '<div class="insight">No medications tracked. Add a medication above to get started!</div>';
         return;
       }
-      container.innerHTML = todaysLogs.map(log => {
+      
+      // Show medication definitions with delete option
+      let html = '<div style="margin-bottom:1.5rem"><h3 style="font-size:1rem;margin-bottom:0.75rem;color:var(--text-light)">📋 Your Medications</h3>';
+      html += medications.map(med => `
+        <div class="med-card" style="margin-bottom:0.5rem">
+          <div class="med-name">${med.name}</div>
+          <div class="med-time">${med.dosage} • ${med.scheduledTimes.join(', ')}</div>
+          <div style="margin-top:0.5rem">
+            <button class="btn btn-danger" onclick="deleteMedicationDefinition(${med.id})" title="Delete this medication permanently">
+              🗑️ Delete Medication
+            </button>
+          </div>
+        </div>
+      `).join('');
+      html += '</div>';
+      
+      // Show today's doses
+      if (todaysLogs.length === 0) {
+        html += '<h3 style="font-size:1rem;margin-bottom:0.75rem;color:var(--text-light)">📅 Today\'s Doses</h3>';
+        html += '<div class="insight">No doses scheduled for today.</div>';
+        container.innerHTML = html;
+        return;
+      }
+      
+      html += '<h3 style="font-size:1rem;margin-bottom:0.75rem;color:var(--text-light)">📅 Today\'s Doses</h3>';
+      html += todaysLogs.map(log => {
         const statusClass = log.status === 'taken' ? 'taken' : log.status === 'missed' ? 'missed' : '';
         const statusIcon = log.status === 'taken' ? '✅' : log.status === 'missed' ? '❌' : log.status === 'late' ? '⏰' : '⬜';
         const statusText = log.status === 'taken' ? 'Taken' : log.status === 'missed' ? 'Missed' : log.status === 'late' ? 'Taken Late' : 'Mark Taken';
@@ -3593,6 +3623,8 @@
           </div>
         `;
       }).join('');
+      
+      container.innerHTML = html;
       updateDashboard();
     }
 
@@ -3617,6 +3649,27 @@
       `).join('');
     }
 
+    // Delete medication definition permanently
+    function deleteMedicationDefinition(id) {
+      if (!confirm('⚠️ Delete this medication permanently?\n\nThis will remove the medication and all its dose history.')) {
+        return;
+      }
+      
+      // Remove from definitions
+      const definitions = DB.get('medicationDefinitions');
+      const filtered = definitions.filter(d => d.id !== id);
+      DB.set('medicationDefinitions', filtered);
+      
+      // Remove all associated logs
+      const logs = DB.get('medicationLogs');
+      const filteredLogs = logs.filter(log => log.medId !== id);
+      DB.set('medicationLogs', filteredLogs);
+      
+      // Reload views
+      loadMedications();
+      updateDashboard();
+    }
+    
     function deleteSupplement(id) {
       let definitions = DB.get('medicationDefinitions');
       definitions = definitions.filter(d => d.id !== id);
@@ -4385,6 +4438,12 @@
     updateStreakChart();
     moodEmoji.textContent = moodEmojis[4];
     showOnboarding();
+    
+    // Restore last active tab
+    const savedTab = localStorage.getItem('mindtrack_activeTab');
+    if (savedTab) {
+      switchTab(savedTab);
+    }
     
     // Verify medication search elements after initialization
     console.log('=== Verifying medication search elements ===');
