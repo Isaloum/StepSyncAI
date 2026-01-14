@@ -2968,6 +2968,39 @@
       }
     }
     
+    // Migrate existing medications to add RxCUI codes if missing
+    async function migrateRxCUICodes() {
+      const definitions = DB.get('medicationDefinitions');
+      let updated = false;
+      
+      for (const med of definitions) {
+        // Only for medications without RxCUI
+        if ((med.type === 'prescription' || med.type === 'otc') && !med.rxcui) {
+          try {
+            const url = `https://rxnav.nlm.nih.gov/REST/approximateTerm.json?term=${encodeURIComponent(med.name)}&maxEntries=1`;
+            const response = await fetch(url);
+            const data = await response.json();
+            const candidates = data.approximateGroup?.candidate || [];
+            
+            if (candidates.length > 0 && candidates[0].rxcui) {
+              med.rxcui = candidates[0].rxcui;
+              updated = true;
+              console.log(`✅ Added RxCUI ${med.rxcui} for ${med.name}`);
+            }
+          } catch (error) {
+            console.error(`Failed to fetch RxCUI for ${med.name}:`, error);
+          }
+        }
+      }
+      
+      if (updated) {
+        DB.set('medicationDefinitions', definitions);
+        console.log('✅ RxCUI migration completed');
+      }
+      
+      return updated;
+    }
+    
     // Check for drug interactions using RxNorm API
       async function checkDrugInteractions(medicationList) {
         // Only check for medications (prescription/OTC, not supplements)
@@ -4589,8 +4622,11 @@
     loadMedications();
     loadMedicationHistory(); // Load history view
     
-    // Check drug interactions on page load
-    setTimeout(() => checkInteractions(), 500);
+    // Migrate RxCUI codes for existing medications, then check interactions
+    (async () => {
+      await migrateRxCUICodes();
+      await checkInteractions();
+    })();
     
     loadSleepData();
     loadExerciseData();
