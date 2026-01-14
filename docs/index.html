@@ -1455,6 +1455,11 @@
         <div class="card-title">🌿 Supplements</div>
         <div class="med-grid" id="supplementList"></div>
       </div>
+      
+      <div class="card">
+        <div class="card-title">📊 Medication History (Last 7 Days)</div>
+        <div id="medicationHistory"></div>
+      </div>
 
       <div class="card">
         <div class="card-title">⚠️ Drug Interaction Warnings</div>
@@ -3577,6 +3582,7 @@
       // Generate today's dose for this new medication
       generateTodaysDoses();
       loadMedications();
+      loadMedicationHistory(); // Update history view
       loadSupplements();
       checkInteractions();
       
@@ -3654,6 +3660,66 @@
       
       container.innerHTML = html;
       updateDashboard();
+    }
+    
+    // Load medication history for past 7 days
+    function loadMedicationHistory() {
+      const logs = DB.get('medicationLogs');
+      const definitions = DB.get('medicationDefinitions');
+      const container = document.getElementById('medicationHistory');
+      
+      if (!container) return;
+      
+      // Get last 7 days
+      const days = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        days.push(date.toDateString());
+      }
+      
+      let html = '<div style="display:flex;flex-direction:column;gap:1rem">';
+      
+      days.forEach(dayString => {
+        const dayLogs = logs.filter(log => new Date(log.scheduledFor).toDateString() === dayString);
+        const dayDate = new Date(dayString);
+        const isToday = dayString === new Date().toDateString();
+        const dateLabel = isToday ? 'Today' : dayDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        
+        const totalDoses = dayLogs.length;
+        const takenDoses = dayLogs.filter(log => log.status === 'taken').length;
+        const missedDoses = dayLogs.filter(log => log.status === 'missed').length;
+        const adherence = totalDoses > 0 ? Math.round((takenDoses / totalDoses) * 100) : 0;
+        
+        const adherenceColor = adherence >= 80 ? '#00b894' : adherence >= 50 ? '#fdcb6e' : '#d63031';
+        
+        html += `
+          <div style="padding:1rem;background:var(--card-bg);border-radius:8px;border:1px solid var(--border)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+              <div>
+                <div style="font-weight:600;font-size:0.95rem">${dateLabel}</div>
+                <div style="font-size:0.8rem;color:var(--text-light)">${totalDoses} doses scheduled</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:1.5rem;font-weight:700;color:${adherenceColor}">${adherence}%</div>
+                <div style="font-size:0.75rem;color:var(--text-light)">adherence</div>
+              </div>
+            </div>
+            ${dayLogs.length > 0 ? `
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+                ${dayLogs.map(log => {
+                  const icon = log.status === 'taken' ? '✅' : log.status === 'missed' ? '❌' : '⏰';
+                  const color = log.status === 'taken' ? '#00b894' : log.status === 'missed' ? '#d63031' : '#95a5a6';
+                  return `<span style="font-size:0.85rem;padding:0.25rem 0.5rem;background:${color}22;color:${color};border-radius:4px">${icon} ${log.medName}</span>`;
+                }).join('')}
+              </div>
+            ` : '<div style="font-size:0.85rem;color:var(--text-light)">No medications scheduled</div>'}
+          </div>
+        `;
+      });
+      
+      html += '</div>';
+      container.innerHTML = html;
     }
 
     // Load and display supplements
@@ -4460,6 +4526,7 @@
     displayTip();
     loadMoodHistory();
     loadMedications();
+    loadMedicationHistory(); // Load history view
     loadSleepData();
     loadExerciseData();
     updateDashboard();
@@ -4473,6 +4540,42 @@
     if (savedTab) {
       switchTab(savedTab);
     }
+    
+    // Auto-refresh on new day detection
+    let lastCheckedDate = new Date().toDateString();
+    
+    // Check for new day when tab becomes visible
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        const currentDate = new Date().toDateString();
+        if (currentDate !== lastCheckedDate) {
+          console.log('🔄 New day detected! Refreshing medication data...');
+          lastCheckedDate = currentDate;
+          
+          // Regenerate today's doses for the new day
+          generateTodaysDoses();
+          loadMedications();
+          loadSupplements();
+          updateDashboard();
+          
+          // Show notification
+          alert('📅 Good morning! Your medication schedule has been updated for today.');
+        }
+      }
+    });
+    
+    // Also check every hour in case tab stays open
+    setInterval(() => {
+      const currentDate = new Date().toDateString();
+      if (currentDate !== lastCheckedDate) {
+        console.log('🔄 New day detected (periodic check)! Refreshing...');
+        lastCheckedDate = currentDate;
+        generateTodaysDoses();
+        loadMedications();
+        loadSupplements();
+        updateDashboard();
+      }
+    }, 3600000); // Check every hour
     
     // Verify medication search elements after initialization
     console.log('=== Verifying medication search elements ===');
