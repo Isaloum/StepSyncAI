@@ -3625,9 +3625,16 @@
         const statusText = log.status === 'taken' ? 'Taken' : log.status === 'missed' ? 'Missed' : log.status === 'late' ? 'Taken Late' : 'Mark Taken';
         return `
           <div class="med-card ${statusClass}">
-            <div class="med-name">${log.medName}</div>
-            <div class="med-time">${log.dosage} • ${log.scheduledTime}</div>
-            <div style="display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem">
+              <div>
+                <div class="med-name">${log.medName}</div>
+                <div class="med-time">${log.dosage} • ${log.scheduledTime}</div>
+              </div>
+              <button onclick="window.deleteMedicationDefinition(${log.medId})" style="background:transparent;border:none;color:var(--danger);cursor:pointer;padding:0.25rem;font-size:1.2rem;opacity:0.7" title="Delete medication permanently">
+                🗑️
+              </button>
+            </div>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
               ${log.status === 'pending' ? `
                 <button class="btn btn-success" onclick="markMedTaken(${log.id})" style="flex:1">
                   ✅ Take Now
@@ -3640,9 +3647,6 @@
                   ${statusIcon} ${statusText} - Undo
                 </button>
               `}
-              <button class="btn btn-danger" onclick="deleteMedLog(${log.id})" title="Delete this dose">
-                🗑️
-              </button>
             </div>
           </div>
         `;
