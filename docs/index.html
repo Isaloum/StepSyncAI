@@ -1375,24 +1375,26 @@
 
     <!-- Medication -->
     <section id="medication" class="app-section">
-      <!-- Medical Disclaimer - Fixed to right side -->
-      <div style="position:relative;margin-bottom:1.5rem">
-        <div class="disclaimer-info-box" style="position:absolute;top:0;right:0;width:360px;background:#fff5f5;border:2px solid #ffcccc;border-radius:var(--radius);padding:1rem;box-shadow:0 2px 8px rgba(239,68,68,0.1);z-index:10">
-          <div style="display:flex;align-items:flex-start;gap:0.75rem">
-            <div style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:#ffebee;display:flex;align-items:center;justify-content:center;color:#d63031;font-size:1.25rem;border:2px solid #ffcccc">
-              ⓘ
-            </div>
-            <div style="flex:1">
-              <div style="font-size:0.8125rem;line-height:1.5;color:#2d3436">
-                This information is based on available published data. <strong>It should not take the place of medical care and advice from your healthcare provider.</strong> Always consult your doctor before starting, stopping, or changing medications.
+      
+      <div class="card">
+        <div style="display:flex;gap:1.5rem;align-items:flex-start;margin-bottom:1rem">
+          <div style="flex:1">
+            <div class="card-title">💊 Add Medication or Supplement</div>
+          </div>
+          <!-- Medical Disclaimer - Right side -->
+          <div class="disclaimer-info-box" style="flex-shrink:0;width:340px;background:#fff5f5;border:2px solid #ffcccc;border-radius:var(--radius);padding:0.875rem;box-shadow:0 2px 8px rgba(239,68,68,0.1)">
+            <div style="display:flex;align-items:flex-start;gap:0.625rem">
+              <div style="flex-shrink:0;width:28px;height:28px;border-radius:50%;background:#ffebee;display:flex;align-items:center;justify-content:center;color:#d63031;font-size:1.125rem;border:2px solid #ffcccc">
+                ⓘ
+              </div>
+              <div style="flex:1">
+                <div style="font-size:0.75rem;line-height:1.4;color:#2d3436">
+                  This information is based on available published data. <strong>It should not take the place of medical care and advice from your healthcare provider.</strong> Always consult your doctor before starting, stopping, or changing medications.
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">💊 Add Medication or Supplement</div>
         <div class="form-grid">
           <div class="form-group">
             <label>Type</label>
