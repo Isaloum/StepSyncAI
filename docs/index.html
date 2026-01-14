@@ -1464,15 +1464,11 @@
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
           <div class="card-title">⚠️ Drug Interaction Warnings</div>
-          <div style="display:flex;gap:0.5rem">
-            <button class="btn" onclick="debugMedications()" style="font-size:0.8125rem;padding:0.375rem 0.75rem">🔍 Debug</button>
-            <button class="btn" onclick="checkInteractions()" style="font-size:0.8125rem;padding:0.375rem 0.75rem">🔄 Refresh</button>
-          </div>
+          <button class="btn" onclick="checkInteractions()" style="font-size:0.8125rem;padding:0.375rem 0.75rem">🔄 Check Now</button>
         </div>
         <div style="margin-bottom:1rem;padding:0.75rem;background:var(--bg-subtle);border-radius:var(--radius-sm);font-size:0.8125rem;color:var(--text-secondary)">
-          <strong>ℹ️ What this checks:</strong> Automatic screening for known interactions between your prescription and OTC medications using RxNorm clinical data.
+          <strong>ℹ️ Clinical Data:</strong> Powered by RxNorm API (National Library of Medicine). Checks for known drug-drug interactions between prescription and OTC medications.
         </div>
-        <div id="medicationDebugInfo" style="display:none;margin-bottom:1rem;padding:0.75rem;background:#fef3c7;border:1px solid #fbbf24;border-radius:var(--radius-sm);font-size:0.75rem;font-family:monospace;white-space:pre-wrap;max-height:200px;overflow-y:auto"></div>
         <div id="interactionWarnings">
           <div class="insight" style="color:var(--text-secondary)">⏳ Checking for drug interactions...</div>
         </div>
@@ -2974,28 +2970,18 @@
     
     // Check for drug interactions using RxNorm API
       async function checkDrugInteractions(medicationList) {
-        console.log('🔍 checkDrugInteractions() called with', medicationList.length, 'medications');
         // Only check for medications (prescription/OTC, not supplements)
         const medsWithRxcui = medicationList.filter(m => (m.type === 'prescription' || m.type === 'otc') && m.rxcui);
-        console.log('💊 Filtered medications with RxCUI:', medsWithRxcui.length);
         
-        if (medsWithRxcui.length < 2) {
-          console.log('⚠️ Not enough medications to check interactions (need at least 2)');
-          return [];
-        }
+        if (medsWithRxcui.length < 2) return [];
 
         const rxcuis = medsWithRxcui.map(m => m.rxcui).join('+');
-        console.log('🔗 RxCUI string:', rxcuis);
         
         try {
           const url = `https://rxnav.nlm.nih.gov/REST/interaction/list.json?rxcuis=${rxcuis}`;
-          console.log('📡 Calling RxNorm API:', url);
           const response = await fetch(url);
-          console.log('📥 Response status:', response.status, response.statusText);
-          
-          if (!response.ok) throw new Error('RxNorm interaction API failed');
+          if (!response.ok) throw new Error('RxNorm API failed');
           const data = await response.json();
-          console.log('📦 API response data:', data);
           const interactions = [];
           const groups = data.fullInteractionTypeGroup || [];
           console.log('📊 Interaction groups:', groups.length);
@@ -3027,67 +3013,20 @@
         }
       }
 
-      // Debug function to show medication data
-      function debugMedications() {
-        const definitions = DB.get('medicationDefinitions');
-        const debugContainer = document.getElementById('medicationDebugInfo');
-        
-        let debugText = `📊 MEDICATION DATABASE DEBUG\n\n`;
-        debugText += `Total medications: ${definitions.length}\n\n`;
-        
-        definitions.forEach((med, index) => {
-          debugText += `${index + 1}. ${med.name}\n`;
-          debugText += `   Type: ${med.type}\n`;
-          debugText += `   RxCUI: ${med.rxcui || 'NOT SET ❌'}\n`;
-          debugText += `   Dosage: ${med.dosage}\n`;
-          debugText += `   Times: ${med.scheduledTimes?.join(', ')}\n`;
-          debugText += `\n`;
-        });
-        
-        const medsWithRxcui = definitions.filter(d => (d.type === 'prescription' || d.type === 'otc') && d.rxcui);
-        debugText += `\n⚠️ Medications with RxCUI codes: ${medsWithRxcui.length}\n`;
-        debugText += `❗ Medications missing RxCUI: ${definitions.filter(d => (d.type === 'prescription' || d.type === 'otc') && !d.rxcui).map(d => d.name).join(', ') || 'None'}\n`;
-        debugText += `\n💡 Interaction checking requires at least 2 medications with RxCUI codes.\n`;
-        
-        debugContainer.textContent = debugText;
-        debugContainer.style.display = 'block';
-        
-        console.log(debugText);
-        console.log('Full medication data:', definitions);
-      }
-
       // UI: Check and display drug interactions
       async function checkInteractions() {
-        console.log('🔍 checkInteractions() called');
         const definitions = DB.get('medicationDefinitions');
-        console.log('📦 Total medications:', definitions.length);
-        
         const container = document.getElementById('interactionWarnings');
-        if (!container) {
-          console.error('❌ interactionWarnings container not found!');
-          return;
-        }
+        if (!container) return;
         
         // Show loading state
-        container.innerHTML = '<div class="insight" style="color:var(--text-secondary)">⏳ Checking for drug interactions...</div>';
+        container.innerHTML = '<div class="insight" style="color:var(--text-secondary)">⏳ Checking interactions with RxNorm API...</div>';
         
-        // Filter medications with RxCUI
-        const medsWithRxcui = definitions.filter(d => (d.type === 'prescription' || d.type === 'otc') && d.rxcui);
-        console.log('💊 Medications with RxCUI:', medsWithRxcui.length, medsWithRxcui.map(m => ({name: m.name, rxcui: m.rxcui})));
-        
-        // If no medications or less than 2, show message
-        if (medsWithRxcui.length < 2) {
-          console.log('ℹ️ Not enough medications with RxCUI to check interactions');
-          container.innerHTML = '<div class="insight positive">✅ No dangerous interactions detected. (Need at least 2 medications with RxCUI codes)</div>';
-          return;
-        }
-        
-        // Only check for medications with RxCUI
+        // Check for interactions
         const interactions = await checkDrugInteractions(definitions);
-        console.log('⚠️ Interactions found:', interactions.length, interactions);
         
         if (!interactions || interactions.length === 0) {
-          container.innerHTML = '<div class="insight positive">✅ No dangerous interactions detected between your medications.</div>';
+          container.innerHTML = '<div class="insight positive">✅ No dangerous interactions detected between your current medications.</div>';
           return;
         }
         
@@ -4650,16 +4589,8 @@
     loadMedications();
     loadMedicationHistory(); // Load history view
     
-    // Check drug interactions on page load (with error handling)
-    (async () => {
-      try {
-        console.log('🚀 Starting interaction check on page load...');
-        await checkInteractions();
-        console.log('✅ Interaction check completed');
-      } catch (error) {
-        console.error('❌ Error during interaction check:', error);
-      }
-    })();
+    // Check drug interactions on page load
+    setTimeout(() => checkInteractions(), 500);
     
     loadSleepData();
     loadExerciseData();
