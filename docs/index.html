@@ -3026,109 +3026,90 @@
       return updated;
     }
     
-    // Check for drug interactions using RxNorm API
+    // Check for drug interactions.
+    // NOTE (2026): RxNorm's interactions endpoint used previously is returning 404 consistently.
+    // To keep the app reliable (and avoid noisy 404 console entries), we use the local interaction database.
       async function checkDrugInteractions(medicationList) {
-        // Only check for medications (prescription/OTC, not supplements)
-        const medsWithRxcui = medicationList.filter(m => (m.type === 'prescription' || m.type === 'otc') && m.rxcui);
+        const medications = medicationList.filter(m => m.type === 'prescription' || m.type === 'otc');
 
-        console.log('🔍 Medications with RxCUI:', medsWithRxcui.map(m => ({ name: m.name, rxcui: m.rxcui, type: typeof m.rxcui })));
-
-        if (medsWithRxcui.length < 2) {
-          console.log(`⚠️ Need at least 2 medications with RxCUI codes. Found: ${medsWithRxcui.length}`);
+        if (medications.length < 2) {
           return [];
         }
 
-        // Ensure RxCUI values are clean strings/numbers, handle potential objects
-        const rxcuis = medsWithRxcui.map(m => {
-          let rxcui = m.rxcui;
-          // If it's an object, try to extract the rxcui property
-          if (typeof rxcui === 'object' && rxcui !== null) {
-            rxcui = rxcui.rxcui || rxcui.toString();
-          }
-          // Convert to string, remove any non-numeric characters and colons
-          const cleaned = String(rxcui).trim().split(':')[0].replace(/[^0-9]/g, '');
-          return cleaned;
-        }).filter(Boolean).join('+'); // Filter out empty strings
+        return checkLocalInteractionsFromDatabase(medications);
+      }
 
-        console.log('📋 RxCUI string for API:', rxcuis);
+      function checkLocalInteractionsFromDatabase(medications) {
+        // Tag common med classes so rules like ['ssri','maoi',...] work with real drug names.
+        const ssris = ['fluoxetine', 'sertraline', 'citalopram', 'escitalopram', 'paroxetine', 'fluvoxamine'];
+        const maois = ['phenelzine', 'tranylcypromine', 'isocarboxazid', 'selegiline'];
+        const benzos = ['alprazolam', 'diazepam', 'lorazepam', 'clonazepam', 'temazepam', 'oxazepam', 'chlordiazepoxide'];
+        const opioids = ['oxycodone', 'hydrocodone', 'morphine', 'codeine', 'tramadol', 'fentanyl', 'methadone'];
 
-        try {
-          const url = `https://rxnav.nlm.nih.gov/REST/interaction/list.json?rxcuis=${rxcuis}`;
-          console.log('🌐 API URL:', url);
-          const response = await fetch(url);
+        const normalize = (s) => String(s || '').toLowerCase().trim();
+        const classify = (name) => {
+          const n = normalize(name);
+          const tags = new Set([n]);
+          if (ssris.some(x => n.includes(x))) tags.add('ssri');
+          if (maois.some(x => n.includes(x))) tags.add('maoi');
+          if (benzos.some(x => n.includes(x))) tags.add('benzodiazepine');
+          if (opioids.some(x => n.includes(x))) tags.add('opioid');
+          return tags;
+        };
 
-          if (!response.ok) {
-            console.warn(`⚠️ RxNorm API returned ${response.status}: ${response.statusText}`);
-            console.log('⚠️ RxNorm API failed, falling back to local interaction database');
-            // Don't throw - just return empty array and let local database handle it
-            return [];
-          }
+        const meds = medications.map(m => ({
+          name: m.name,
+          norm: normalize(m.name),
+          tags: classify(m.name)
+        }));
 
-          const data = await response.json();
-          const interactions = [];
-          const groups = data.fullInteractionTypeGroup || [];
-          console.log('📊 Interaction groups:', groups.length);
+        const matchToken = (med, token) => {
+          const t = normalize(token);
+          if (!t) return false;
+          if (med.tags.has(t)) return true;
+          return med.norm.includes(t);
+        };
 
-          groups.forEach(group => {
-            (group.fullInteractionType || []).forEach(type => {
-              (type.interactionPair || []).forEach(pair => {
-                // Find the actual medication names from our list
-                const drug1 = medsWithRxcui.find(m => String(m.rxcui).trim() === String(pair.interactionConcept?.[0]?.minConceptItem?.rxcui).trim());
-                const drug2 = medsWithRxcui.find(m => String(m.rxcui).trim() === String(pair.interactionConcept?.[1]?.minConceptItem?.rxcui).trim());
+        const results = [];
+        for (let i = 0; i < meds.length; i++) {
+          for (let j = i + 1; j < meds.length; j++) {
+            const a = meds[i];
+            const b = meds[j];
 
-                const interaction = {
-                  drug1Name: drug1?.name || pair.interactionConcept?.[0]?.minConceptItem?.name || 'Unknown',
-                  drug2Name: drug2?.name || pair.interactionConcept?.[1]?.minConceptItem?.name || 'Unknown',
-                  description: pair.description,
-                  severity: pair.severity || 'N/A',
-                  source: pair.sourceName || 'RxNorm'
-                };
-                interactions.push(interaction);
-                console.log('⚠️ Found interaction:', interaction);
+            dangerousInteractions.forEach(([drug1, drug2, warning]) => {
+              const isMatch = (matchToken(a, drug1) && matchToken(b, drug2)) || (matchToken(a, drug2) && matchToken(b, drug1));
+              if (!isMatch) return;
+
+              const severity = warning.includes('🆘') || warning.includes('CRITICAL') || warning.includes('FATAL') || warning.includes('🚨')
+                ? 'HIGH'
+                : warning.includes('⚠️')
+                  ? 'MODERATE'
+                  : 'INFO';
+
+              results.push({
+                drug1Name: a.name,
+                drug2Name: b.name,
+                description: warning,
+                severity,
+                source: 'Local Database'
               });
             });
-          });
-          console.log('✅ Total interactions found:', interactions.length);
-          return interactions;
-        } catch (error) {
-          console.warn('⚠️ RxNorm API error (will use local database):', error.message);
+          }
         }
 
-        // FALLBACK: Check critical interactions locally (always runs as backup)
-        console.log('🔍 Checking local interaction database...');
-        const localInteractions = [
-          { drugs: ['warfarin', 'aspirin'], description: 'May increase bleeding risk. Both medications thin the blood and can cause serious bleeding when combined. Monitor closely and report any unusual bruising or bleeding.', severity: 'HIGH' },
-          { drugs: ['warfarin', 'ibuprofen'], description: 'Increased risk of bleeding. NSAIDs like ibuprofen can increase warfarin effects.', severity: 'HIGH' },
-          { drugs: ['aspirin', 'ibuprofen'], description: 'May increase risk of gastrointestinal bleeding and reduce the heart-protective effects of aspirin.', severity: 'MODERATE' },
-          { drugs: ['lisinopril', 'ibuprofen'], description: 'NSAIDs can reduce the effectiveness of blood pressure medications and may affect kidney function.', severity: 'MODERATE' },
-          { drugs: ['metformin', 'alcohol'], description: 'Alcohol may increase risk of lactic acidosis and hypoglycemia.', severity: 'MODERATE' }
-        ];
-
-        const medications = medicationList.filter(m => m.type === 'prescription' || m.type === 'otc');
-        const foundInteractions = [];
-
-        medications.forEach((med1, i) => {
-          medications.slice(i + 1).forEach(med2 => {
-            const name1 = med1.name.toLowerCase().trim();
-            const name2 = med2.name.toLowerCase().trim();
-
-            localInteractions.forEach(int => {
-              const match = (int.drugs.some(d => name1.includes(d)) && int.drugs.some(d => name2.includes(d)));
-              if (match) {
-                foundInteractions.push({
-                  drug1Name: med1.name,
-                  drug2Name: med2.name,
-                  description: int.description,
-                  severity: int.severity,
-                  source: 'Local Database'
-                });
-              }
-            });
-          });
+        // Deduplicate by pair + description
+        const seen = new Set();
+        const unique = [];
+        results.forEach(r => {
+          const k1 = `${normalize(r.drug1Name)}|${normalize(r.drug2Name)}|${normalize(r.description)}`;
+          const k2 = `${normalize(r.drug2Name)}|${normalize(r.drug1Name)}|${normalize(r.description)}`;
+          if (seen.has(k1) || seen.has(k2)) return;
+          seen.add(k1);
+          unique.push(r);
         });
 
-        console.log(`✅ Found ${foundInteractions.length} interactions in local database`);
-        return foundInteractions;
+        console.log(`✅ Found ${unique.length} interactions in local database`);
+        return unique;
       }
 
       // UI: Check and display drug interactions
