@@ -4175,23 +4175,9 @@
       ['pseudoephedrine', 'maoi', '🚨 Hypertensive crisis risk']
     ];
 
-    function checkInteractions() {
-      // Use medication definitions (not individual logs) for interaction checking
-      const definitions = DB.get('medicationDefinitions');
-      const meds = definitions.map(d => d.name.toLowerCase());
-      const warnings = [];
-      dangerousInteractions.forEach(([drug1, drug2, warning]) => {
-        if (meds.some(m => m.includes(drug1)) && meds.some(m => m.includes(drug2))) {
-          warnings.push(warning);
-        }
-      });
-      const container = document.getElementById('interactionWarnings');
-      if (warnings.length === 0) {
-        container.innerHTML = '<div class="insight positive">✅ No dangerous interactions detected.</div>';
-      } else {
-        container.innerHTML = warnings.map(w => `<div class="insight negative">${w}</div>`).join('');
-      }
-    }
+    // REMOVED: Old checkInteractions() function that was overriding the RxNorm API version
+    // The proper async checkInteractions() function is defined at line 3062
+    // It uses the National Library of Medicine RxNorm API for comprehensive interaction checking
     
     // Real-time dosage validation as user types
     function checkDosageRealtime() {
