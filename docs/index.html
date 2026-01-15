@@ -3092,44 +3092,44 @@
           return interactions;
         } catch (error) {
           console.warn('⚠️ RxNorm API error (will use local database):', error.message);
-          // Don't throw - just return empty array and let local database handle it
-          return [];
+        }
 
-          // FALLBACK: Check critical interactions locally when API fails
-          const localInteractions = [
-            { drugs: ['warfarin', 'aspirin'], description: 'May increase bleeding risk. Both medications thin the blood and can cause serious bleeding when combined. Monitor closely and report any unusual bruising or bleeding.', severity: 'HIGH' },
-            { drugs: ['warfarin', 'ibuprofen'], description: 'Increased risk of bleeding. NSAIDs like ibuprofen can increase warfarin effects.', severity: 'HIGH' },
-            { drugs: ['aspirin', 'ibuprofen'], description: 'May increase risk of gastrointestinal bleeding and reduce the heart-protective effects of aspirin.', severity: 'MODERATE' },
-            { drugs: ['lisinopril', 'ibuprofen'], description: 'NSAIDs can reduce the effectiveness of blood pressure medications and may affect kidney function.', severity: 'MODERATE' },
-            { drugs: ['metformin', 'alcohol'], description: 'Alcohol may increase risk of lactic acidosis and hypoglycemia.', severity: 'MODERATE' }
-          ];
+        // FALLBACK: Check critical interactions locally (always runs as backup)
+        console.log('🔍 Checking local interaction database...');
+        const localInteractions = [
+          { drugs: ['warfarin', 'aspirin'], description: 'May increase bleeding risk. Both medications thin the blood and can cause serious bleeding when combined. Monitor closely and report any unusual bruising or bleeding.', severity: 'HIGH' },
+          { drugs: ['warfarin', 'ibuprofen'], description: 'Increased risk of bleeding. NSAIDs like ibuprofen can increase warfarin effects.', severity: 'HIGH' },
+          { drugs: ['aspirin', 'ibuprofen'], description: 'May increase risk of gastrointestinal bleeding and reduce the heart-protective effects of aspirin.', severity: 'MODERATE' },
+          { drugs: ['lisinopril', 'ibuprofen'], description: 'NSAIDs can reduce the effectiveness of blood pressure medications and may affect kidney function.', severity: 'MODERATE' },
+          { drugs: ['metformin', 'alcohol'], description: 'Alcohol may increase risk of lactic acidosis and hypoglycemia.', severity: 'MODERATE' }
+        ];
 
-          const medications = medicationList.filter(m => m.type === 'prescription' || m.type === 'otc');
-          const foundInteractions = [];
+        const medications = medicationList.filter(m => m.type === 'prescription' || m.type === 'otc');
+        const foundInteractions = [];
 
-          medications.forEach((med1, i) => {
-            medications.slice(i + 1).forEach(med2 => {
-              const name1 = med1.name.toLowerCase().trim();
-              const name2 = med2.name.toLowerCase().trim();
+        medications.forEach((med1, i) => {
+          medications.slice(i + 1).forEach(med2 => {
+            const name1 = med1.name.toLowerCase().trim();
+            const name2 = med2.name.toLowerCase().trim();
 
-              localInteractions.forEach(int => {
-                const match = (int.drugs.some(d => name1.includes(d)) && int.drugs.some(d => name2.includes(d)));
-                if (match) {
-                  foundInteractions.push({
-                    drug1Name: med1.name,
-                    drug2Name: med2.name,
-                    description: int.description,
-                    severity: int.severity,
-                    source: 'Local Database (API Unavailable)'
-                  });
-                }
-              });
+            localInteractions.forEach(int => {
+              const match = (int.drugs.some(d => name1.includes(d)) && int.drugs.some(d => name2.includes(d)));
+              if (match) {
+                foundInteractions.push({
+                  drug1Name: med1.name,
+                  drug2Name: med2.name,
+                  description: int.description,
+                  severity: int.severity,
+                  source: 'Local Database'
+                });
+              }
             });
           });
+        });
 
-          console.log(`✅ Found ${foundInteractions.length} interactions in local database`);
-          return foundInteractions;
-        }
+        console.log(`✅ Found ${foundInteractions.length} interactions in local database`);
+        return foundInteractions;
+      }
       }
 
       // UI: Check and display drug interactions
