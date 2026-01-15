@@ -3032,9 +3032,10 @@
           if (typeof rxcui === 'object' && rxcui !== null) {
             rxcui = rxcui.rxcui || rxcui.toString();
           }
-          // Convert to string and remove any non-numeric characters except the rxcui itself
-          return String(rxcui).trim();
-        }).join('+');
+          // Convert to string, remove any non-numeric characters and colons
+          const cleaned = String(rxcui).trim().split(':')[0].replace(/[^0-9]/g, '');
+          return cleaned;
+        }).filter(Boolean).join('+'); // Filter out empty strings
 
         console.log('📋 RxCUI string for API:', rxcuis);
 
