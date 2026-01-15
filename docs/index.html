@@ -3658,7 +3658,7 @@
       console.log('🟢 Proceeding to add medication (not pregnant check or is supplement)');
       proceedWithAddingMedication();
       
-      async function proceedWithAddingMedication() {
+      function proceedWithAddingMedication() {
       console.log('🟢 proceedWithAddingMedication() CALLED');
 
       // Add to medication definitions (duplicate check already done at start)
@@ -3679,26 +3679,35 @@
       DB.set('medicationDefinitions', definitions);
       console.log('✅ Medication added! New count:', definitions.length);
 
-      // CRITICAL: Fetch RxCUI code if missing for prescription/OTC medications
+      // CRITICAL: Fetch RxCUI code if missing for prescription/OTC medications (async, non-blocking)
       const isMedication = (type === 'prescription' || type === 'otc');
       if (isMedication && !rxcui) {
-        console.log(`🔎 Fetching RxCUI for newly added medication: ${name}...`);
-        try {
-          const url = `https://rxnav.nlm.nih.gov/REST/approximateTerm.json?term=${encodeURIComponent(name)}&maxEntries=1`;
-          const response = await fetch(url);
-          const data = await response.json();
-          const candidates = data.approximateGroup?.candidate || [];
+        (async () => {
+          console.log(`🔎 Fetching RxCUI for newly added medication: ${name}...`);
+          try {
+            const url = `https://rxnav.nlm.nih.gov/REST/approximateTerm.json?term=${encodeURIComponent(name)}&maxEntries=1`;
+            const response = await fetch(url);
+            const data = await response.json();
+            const candidates = data.approximateGroup?.candidate || [];
 
-          if (candidates.length > 0 && candidates[0].rxcui) {
-            newMed.rxcui = candidates[0].rxcui;
-            DB.set('medicationDefinitions', definitions);
-            console.log(`✅ Added RxCUI ${newMed.rxcui} for ${name}`);
-          } else {
-            console.warn(`⚠️ No RxCUI found for ${name}`);
+            if (candidates.length > 0 && candidates[0].rxcui) {
+              newMed.rxcui = candidates[0].rxcui;
+              const updatedDefinitions = DB.get('medicationDefinitions');
+              const medToUpdate = updatedDefinitions.find(m => m.id === newMed.id);
+              if (medToUpdate) {
+                medToUpdate.rxcui = candidates[0].rxcui;
+                DB.set('medicationDefinitions', updatedDefinitions);
+                console.log(`✅ Added RxCUI ${medToUpdate.rxcui} for ${name}`);
+                // Re-check interactions after RxCUI is fetched
+                await checkInteractions();
+              }
+            } else {
+              console.warn(`⚠️ No RxCUI found for ${name}`);
+            }
+          } catch (error) {
+            console.error(`❌ Failed to fetch RxCUI for ${name}:`, error);
           }
-        } catch (error) {
-          console.error(`❌ Failed to fetch RxCUI for ${name}:`, error);
-        }
+        })();
       }
 
       // CRITICAL: Clear ALL form fields and validation messages
@@ -3726,7 +3735,7 @@
       loadMedications();
       loadMedicationHistory(); // Update history view
       loadSupplements();
-      await checkInteractions(); // Wait for interactions check to complete
+      checkInteractions(); // Initial check with existing RxCUI codes
 
       // Scroll to medication list to show it was added
       setTimeout(() => {
