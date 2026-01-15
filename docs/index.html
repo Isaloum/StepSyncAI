@@ -3126,7 +3126,7 @@
           }
           
           // Show loading state
-          container.innerHTML = '<div class="insight" style="color:var(--text-secondary)">⏳ Checking interactions with RxNorm API...</div>';
+          container.innerHTML = '<div class="insight" style="color:var(--text-secondary)">⏳ Checking interactions...</div>';
           
           // Check for interactions
           console.log('📡 Calling checkDrugInteractions...');
@@ -4229,6 +4229,8 @@
       // Statins
       ['atorvastatin', 'grapefruit', '⚠️ Grapefruit increases statin levels - muscle damage risk'],
       ['simvastatin', 'grapefruit', '🚨 Severe muscle toxicity risk - avoid grapefruit'],
+      ['simvastatin', 'clarithromycin', '🚨 CRITICAL: Clarithromycin can dangerously increase simvastatin levels - high rhabdomyolysis risk (often contraindicated)'],
+      ['atorvastatin', 'clarithromycin', '🚨 CRITICAL: Clarithromycin can increase atorvastatin levels - myopathy/rhabdomyolysis risk; avoid or monitor closely'],
       ['lovastatin', 'clarithromycin', '🚨 Rhabdomyolysis (muscle breakdown) risk'],
       
       // Thyroid
