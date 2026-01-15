@@ -2974,17 +2974,29 @@
       console.log('🔄 Starting RxCUI migration...');
       const definitions = DB.get('medicationDefinitions');
       console.log(`📊 Found ${definitions.length} total medications in database`);
-      
-      const medsNeedingRxcui = definitions.filter(m => (m.type === 'prescription' || m.type === 'otc') && !m.rxcui);
+
+      // List of known corrupted RxCUI codes to fix
+      const corruptedCodes = ['703', '3407', '5640:1', '29046:1'];
+
+      const medsNeedingRxcui = definitions.filter(m => {
+        if (m.type !== 'prescription' && m.type !== 'otc') return false;
+        // Need fixing if: no RxCUI, or has corrupted RxCUI code
+        const needsFix = !m.rxcui || corruptedCodes.includes(String(m.rxcui).trim());
+        if (needsFix && m.rxcui) {
+          console.log(`🔧 Detected corrupted RxCUI ${m.rxcui} for ${m.name}, will re-fetch`);
+        }
+        return needsFix;
+      });
+
       console.log(`🔍 ${medsNeedingRxcui.length} medications need RxCUI codes:`, medsNeedingRxcui.map(m => m.name));
-      
+
       if (medsNeedingRxcui.length === 0) {
         console.log('✅ All medications already have RxCUI codes');
         return false;
       }
-      
+
       let updated = false;
-      
+
       for (const med of medsNeedingRxcui) {
         try {
           console.log(`🔎 Fetching RxCUI for: ${med.name}...`);
