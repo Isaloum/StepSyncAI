@@ -2988,13 +2988,14 @@
       for (const med of medsNeedingRxcui) {
         try {
           console.log(`🔎 Fetching RxCUI for: ${med.name}...`);
-          const url = `https://rxnav.nlm.nih.gov/REST/approximateTerm.json?term=${encodeURIComponent(med.name)}&maxEntries=1`;
+          // Use rxcui.json for exact name matching instead of approximateTerm
+          const url = `https://rxnav.nlm.nih.gov/REST/rxcui.json?name=${encodeURIComponent(med.name)}`;
           const response = await fetch(url);
           const data = await response.json();
-          const candidates = data.approximateGroup?.candidate || [];
-          
-          if (candidates.length > 0 && candidates[0].rxcui) {
-            med.rxcui = candidates[0].rxcui;
+          const rxcui = data.idGroup?.rxnormId?.[0];
+
+          if (rxcui) {
+            med.rxcui = rxcui;
             updated = true;
             console.log(`✅ Added RxCUI ${med.rxcui} for ${med.name}`);
           } else {
@@ -3709,17 +3710,18 @@
         (async () => {
           console.log(`🔎 Fetching RxCUI for newly added medication: ${name}...`);
           try {
-            const url = `https://rxnav.nlm.nih.gov/REST/approximateTerm.json?term=${encodeURIComponent(name)}&maxEntries=1`;
+            // Use rxcui.json for exact name matching instead of approximateTerm
+            const url = `https://rxnav.nlm.nih.gov/REST/rxcui.json?name=${encodeURIComponent(name)}`;
             const response = await fetch(url);
             const data = await response.json();
-            const candidates = data.approximateGroup?.candidate || [];
+            const rxcuiResult = data.idGroup?.rxnormId?.[0];
 
-            if (candidates.length > 0 && candidates[0].rxcui) {
-              newMed.rxcui = candidates[0].rxcui;
+            if (rxcuiResult) {
+              newMed.rxcui = rxcuiResult;
               const updatedDefinitions = DB.get('medicationDefinitions');
               const medToUpdate = updatedDefinitions.find(m => m.id === newMed.id);
               if (medToUpdate) {
-                medToUpdate.rxcui = candidates[0].rxcui;
+                medToUpdate.rxcui = rxcuiResult;
                 DB.set('medicationDefinitions', updatedDefinitions);
                 console.log(`✅ Added RxCUI ${medToUpdate.rxcui} for ${name}`);
                 // Re-check interactions after RxCUI is fetched
