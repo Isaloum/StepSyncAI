@@ -3058,8 +3058,10 @@
           const response = await fetch(url);
 
           if (!response.ok) {
-            console.error(`❌ RxNorm API returned ${response.status}: ${response.statusText}`);
-            throw new Error(`RxNorm API failed with status ${response.status}`);
+            console.warn(`⚠️ RxNorm API returned ${response.status}: ${response.statusText}`);
+            console.log('⚠️ RxNorm API failed, falling back to local interaction database');
+            // Don't throw - just return empty array and let local database handle it
+            return [];
           }
 
           const data = await response.json();
@@ -3089,9 +3091,9 @@
           console.log('✅ Total interactions found:', interactions.length);
           return interactions;
         } catch (error) {
-          console.error('❌ Interaction check error:', error);
-          console.error('Error details:', error.message, error.stack);
-          console.log('⚠️ RxNorm API failed, falling back to local interaction database');
+          console.warn('⚠️ RxNorm API error (will use local database):', error.message);
+          // Don't throw - just return empty array and let local database handle it
+          return [];
 
           // FALLBACK: Check critical interactions locally when API fails
           const localInteractions = [
