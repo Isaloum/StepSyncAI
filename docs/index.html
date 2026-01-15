@@ -3059,20 +3059,33 @@
 
       // UI: Check and display drug interactions
       async function checkInteractions() {
-        const definitions = DB.get('medicationDefinitions');
-        const container = document.getElementById('interactionWarnings');
-        if (!container) return;
-        
-        // Show loading state
-        container.innerHTML = '<div class="insight" style="color:var(--text-secondary)">⏳ Checking interactions with RxNorm API...</div>';
-        
-        // Check for interactions
-        const interactions = await checkDrugInteractions(definitions);
-        
-        if (!interactions || interactions.length === 0) {
-          container.innerHTML = '<div class="insight positive">✅ No dangerous interactions detected between your current medications.</div>';
-          return;
+        console.log('🔵 checkInteractions() called');
+        try {
+          const definitions = DB.get('medicationDefinitions');
+          console.log(`📊 Total medications: ${definitions.length}`);
+          
+          const container = document.getElementById('interactionWarnings');
+          if (!container) {
+            console.error('❌ Container not found!');
+            return;
+          }
+          
+          // Show loading state
+          container.innerHTML = '<div class="insight" style="color:var(--text-secondary)">⏳ Checking interactions with RxNorm API...</div>';
+          
+          // Check for interactions
+          console.log('📡 Calling checkDrugInteractions...');
+          const interactions = await checkDrugInteractions(definitions);
+          console.log(`📦 Received ${interactions.length} interactions`);
+          
+          if (!interactions || interactions.length === 0) {
+            container.innerHTML = '<div class="insight positive">✅ No dangerous interactions detected between your current medications.</div>';
+            return;
+          }
+        } catch (error) {
+          console.error('❌ Error in checkInteractions:', error);
         }
+      }
         
         // Map severity to colors and icons
         const getSeverityStyle = (severity) => {
