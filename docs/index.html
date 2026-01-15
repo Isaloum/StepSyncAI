@@ -1468,7 +1468,7 @@
           <button class="btn" onclick="checkInteractions()" style="font-size:0.8125rem;padding:0.375rem 0.75rem">🔄 Check Now</button>
         </div>
         <div style="margin-bottom:1rem;padding:0.75rem;background:var(--bg-subtle);border-radius:var(--radius-sm);font-size:0.8125rem;color:var(--text-secondary)">
-          <strong>ℹ️ Clinical Data:</strong> Powered by RxNorm API (National Library of Medicine). Checks for known drug-drug interactions between prescription and OTC medications.
+          <strong>ℹ️ Clinical Data:</strong> Powered by a local interaction database (offline). Checks common prescription/OTC/supplement interactions, but it is not exhaustive.
         </div>
         <div id="interactionWarnings">
           <div class="insight" style="color:var(--text-secondary)">⏳ Checking for drug interactions...</div>
@@ -3030,7 +3030,13 @@
     // NOTE (2026): RxNorm's interactions endpoint used previously is returning 404 consistently.
     // To keep the app reliable (and avoid noisy 404 console entries), we use the local interaction database.
       async function checkDrugInteractions(medicationList) {
-        const medications = medicationList.filter(m => m.type === 'prescription' || m.type === 'otc');
+        const medications = (medicationList || []).filter(m => {
+          if (!m || !m.name) return false;
+          const t = String(m.type || '').toLowerCase().trim();
+          // Treat unknown/blank types as medications so we don't silently skip interaction checks.
+          if (!t) return true;
+          return t === 'prescription' || t === 'otc' || t === 'supplement';
+        });
 
         if (medications.length < 2) {
           return [];
@@ -3040,6 +3046,24 @@
       }
 
       function checkLocalInteractionsFromDatabase(medications) {
+        const interactionAliases = {
+          // Common brands → generics
+          'lipitor': 'atorvastatin',
+          'biaxin': 'clarithromycin',
+          'synthroid': 'levothyroxine',
+          'levoxyl': 'levothyroxine',
+          'advil': 'ibuprofen',
+          'motrin': 'ibuprofen',
+          'tylenol': 'acetaminophen',
+          'coumadin': 'warfarin',
+          'prozac': 'fluoxetine',
+          'zoloft': 'sertraline',
+          'ultram': 'tramadol',
+          // Common name variants / salts
+          'atorvastatin calcium': 'atorvastatin',
+          'levothyroxine sodium': 'levothyroxine'
+        };
+
         // Tag common med classes so rules like ['ssri','maoi',...] work with real drug names.
         const ssris = ['fluoxetine', 'sertraline', 'citalopram', 'escitalopram', 'paroxetine', 'fluvoxamine'];
         const maois = ['phenelzine', 'tranylcypromine', 'isocarboxazid', 'selegiline'];
@@ -3047,8 +3071,31 @@
         const opioids = ['oxycodone', 'hydrocodone', 'morphine', 'codeine', 'tramadol', 'fentanyl', 'methadone'];
 
         const normalize = (s) => String(s || '').toLowerCase().trim();
+        const stripDose = (s) => {
+          const n = normalize(s);
+          return n
+            .replace(/\b\d+(?:\.\d+)?\s*(mg|mcg|µg|g|iu|units?|ml)\b/gi, ' ')
+            .replace(/[(),.;:]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+        };
+
+        const canonicalize = (name) => {
+          let n = stripDose(name);
+          // Remove common salt words if present
+          n = n.replace(/\b(calcium|sodium|hydrochloride|hcl)\b/gi, ' ').replace(/\s+/g, ' ').trim();
+          // Alias exact match
+          if (interactionAliases[n]) return interactionAliases[n];
+          // Alias word-boundary match (e.g., "take Lipitor 20mg")
+          for (const [alias, canonical] of Object.entries(interactionAliases)) {
+            const re = new RegExp(`\\b${alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+            if (re.test(n)) return canonical;
+          }
+          return n;
+        };
+
         const classify = (name) => {
-          const n = normalize(name);
+          const n = canonicalize(name);
           const tags = new Set([n]);
           if (ssris.some(x => n.includes(x))) tags.add('ssri');
           if (maois.some(x => n.includes(x))) tags.add('maoi');
@@ -3057,11 +3104,17 @@
           return tags;
         };
 
-        const meds = medications.map(m => ({
-          name: m.name,
-          norm: normalize(m.name),
-          tags: classify(m.name)
-        }));
+        const meds = medications.map(m => {
+          const canonical = canonicalize(m.name);
+          const tags = classify(canonical);
+          // Keep the raw normalized form as an additional tag for fuzzy matching
+          tags.add(normalize(m.name));
+          return {
+            name: m.name,
+            norm: canonical,
+            tags
+          };
+        });
 
         const matchToken = (med, token) => {
           const t = normalize(token);
@@ -3113,9 +3166,12 @@
       }
 
       // UI: Check and display drug interactions
+      let lastInteractionCheckId = 0;
+
       async function checkInteractions() {
         console.log('🔵 checkInteractions() called');
         try {
+          const checkId = ++lastInteractionCheckId;
           const definitions = DB.get('medicationDefinitions');
           console.log(`📊 Total medications: ${definitions.length}`);
           
@@ -3131,10 +3187,11 @@
           // Check for interactions
           console.log('📡 Calling checkDrugInteractions...');
           const interactions = await checkDrugInteractions(definitions);
+          if (checkId !== lastInteractionCheckId) return; // newer check already started
           console.log(`📦 Received ${interactions.length} interactions`);
           
           if (!interactions || interactions.length === 0) {
-            container.innerHTML = '<div class="insight positive">✅ No dangerous interactions detected between your current medications.</div>';
+            container.innerHTML = '<div class="insight positive">✅ No interactions found in the local database for your current list. This does not guarantee safety—always confirm with a clinician/pharmacist.</div>';
             return;
           }
           
@@ -3753,8 +3810,6 @@
                 medToUpdate.rxcui = rxcuiResult;
                 DB.set('medicationDefinitions', updatedDefinitions);
                 console.log(`✅ Added RxCUI ${medToUpdate.rxcui} for ${name}`);
-                // Re-check interactions after RxCUI is fetched
-                await checkInteractions();
               }
             } else {
               console.warn(`⚠️ No RxCUI found for ${name}`);
