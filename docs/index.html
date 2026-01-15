@@ -3658,52 +3658,76 @@
       console.log('🟢 Proceeding to add medication (not pregnant check or is supplement)');
       proceedWithAddingMedication();
       
-      function proceedWithAddingMedication() {
+      async function proceedWithAddingMedication() {
       console.log('🟢 proceedWithAddingMedication() CALLED');
 
       // Add to medication definitions (duplicate check already done at start)
       const definitions = DB.get('medicationDefinitions');
       console.log('Current definitions before adding:', definitions.length);
-      
-      definitions.push({ 
-        id: Date.now(), 
-        name, 
-        dosage, 
+
+      const newMed = {
+        id: Date.now(),
+        name,
+        dosage,
         type: type, // 'prescription', 'otc', or 'supplement'
         scheduledTimes: [normalizedTime], // Store normalized HH:MM format
         asNeeded: false,
         rxcui: rxcui // Store RxCUI if available
-      });
+      };
+
+      definitions.push(newMed);
       DB.set('medicationDefinitions', definitions);
       console.log('✅ Medication added! New count:', definitions.length);
-      
+
+      // CRITICAL: Fetch RxCUI code if missing for prescription/OTC medications
+      const isMedication = (type === 'prescription' || type === 'otc');
+      if (isMedication && !rxcui) {
+        console.log(`🔎 Fetching RxCUI for newly added medication: ${name}...`);
+        try {
+          const url = `https://rxnav.nlm.nih.gov/REST/approximateTerm.json?term=${encodeURIComponent(name)}&maxEntries=1`;
+          const response = await fetch(url);
+          const data = await response.json();
+          const candidates = data.approximateGroup?.candidate || [];
+
+          if (candidates.length > 0 && candidates[0].rxcui) {
+            newMed.rxcui = candidates[0].rxcui;
+            DB.set('medicationDefinitions', definitions);
+            console.log(`✅ Added RxCUI ${newMed.rxcui} for ${name}`);
+          } else {
+            console.warn(`⚠️ No RxCUI found for ${name}`);
+          }
+        } catch (error) {
+          console.error(`❌ Failed to fetch RxCUI for ${name}:`, error);
+        }
+      }
+
       // CRITICAL: Clear ALL form fields and validation messages
       nameInput.value = '';
       nameInput.removeAttribute('data-rxcui');
       const dosageInput = document.getElementById('medDosage');
       const infoBox = document.getElementById('medInfoBox');
       const warningBox = document.getElementById('dosageWarning');
-      
+
       dosageInput.value = '';
       dosageInput.classList.remove('valid');
       if (infoBox) infoBox.innerHTML = '';
       if (warningBox) warningBox.innerHTML = '';
-      
+
       // Reset type dropdown to default
       document.getElementById('medType').value = 'prescription';
-      
+
       // Clear pregnancy fields
       if (document.getElementById('isPregnant').checked) {
         document.getElementById('pregnancyWarning').style.display = 'none';
       }
-      
+
       // Generate today's dose for this new medication
       generateTodaysDoses();
       loadMedications();
       loadMedicationHistory(); // Update history view
       loadSupplements();
-      checkInteractions();
-      
+      await checkInteractions(); // Wait for interactions check to complete
+
       // Scroll to medication list to show it was added
       setTimeout(() => {
         const medList = document.getElementById('medList');
