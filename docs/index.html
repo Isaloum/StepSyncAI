@@ -1455,15 +1455,20 @@
           <button class="btn" onclick="checkInteractions()" style="font-size:0.8125rem;padding:0.375rem 0.75rem">🔄 Check Now</button>
         </div>
         <div style="margin-bottom:0.75rem;padding:0.75rem;background:var(--bg-subtle);border-radius:var(--radius-sm);font-size:0.8125rem;color:var(--text-secondary)">
-          <strong>ℹ️ Clinical Data:</strong> This feature is a screening tool and is not exhaustive. Use it to surface potential issues to discuss with a clinician/pharmacist.
+          <strong>ℹ️ Screening tool (not medical advice):</strong> Use this to surface potential issues to discuss with a clinician/pharmacist. It is not exhaustive and does not guarantee safety.
+          <div style="margin-top:0.375rem;font-size:0.75rem;color:var(--text-muted)">
+            Transparency: When enabled, we cite publicly available FDA drug labeling text via <a href="https://open.fda.gov/" target="_blank" rel="noopener">openFDA</a>. This app is <strong>not affiliated with or endorsed by the FDA</strong>.
+          </div>
         </div>
 
         <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem">
           <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.8125rem;color:var(--text-secondary)">
             <input type="checkbox" id="useFdaEvidence" checked>
-            Evidence-backed (FDA labels via openFDA)
+            Show FDA label excerpts (details)
           </label>
-          <div style="font-size:0.75rem;color:var(--text-muted)">When available, shows interaction evidence from FDA labeling text (openFDA).</div>
+          <div style="font-size:0.75rem;color:var(--text-muted)">
+            Less clutter when off. When on, shows citations from FDA labeling text via openFDA.
+          </div>
         </div>
         <div id="interactionWarnings">
           <div class="insight" style="color:var(--text-secondary)">⏳ Checking for drug interactions...</div>
