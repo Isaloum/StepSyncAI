@@ -1463,7 +1463,7 @@
 
         <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem">
           <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.8125rem;color:var(--text-secondary)">
-            <input type="checkbox" id="useFdaEvidence" checked>
+            <input type="checkbox" id="useFdaEvidence">
             Show FDA label excerpts (details)
           </label>
           <div style="font-size:0.75rem;color:var(--text-muted)">
@@ -3140,10 +3140,22 @@
         const checkbox = document.getElementById('useFdaEvidence');
         if (!checkbox) return;
         const saved = localStorage.getItem(INTERACTION_PREF_KEY);
+        // Default OFF to reduce decision fatigue and network latency.
+        // Users can opt-in (and we persist their choice).
         if (saved !== null) checkbox.checked = saved === '1';
+        else checkbox.checked = false;
         checkbox.addEventListener('change', () => {
           localStorage.setItem(INTERACTION_PREF_KEY, checkbox.checked ? '1' : '0');
         });
+      }
+
+      function enableFdaEvidenceAndRecheck() {
+        const checkbox = document.getElementById('useFdaEvidence');
+        if (checkbox) {
+          checkbox.checked = true;
+          localStorage.setItem(INTERACTION_PREF_KEY, '1');
+        }
+        checkInteractions();
       }
 
       const INTERACTION_ALIASES = {
@@ -3584,7 +3596,7 @@
           const useFdaEvidence = !!(evidenceCheckbox && evidenceCheckbox.checked);
           
           // Show loading state
-          container.innerHTML = `<div class="insight" style="color:var(--text-secondary)">⏳ Checking interactions${useFdaEvidence ? ' (local + FDA label evidence)…' : '…'}</div>`;
+          container.innerHTML = `<div class="insight" style="color:var(--text-secondary)">⏳ Checking interactions${useFdaEvidence ? ' (local + FDA label citations)…' : '…'}</div>`;
           
           // Check for interactions
           console.log('📡 Calling checkDrugInteractions...');
@@ -3655,7 +3667,7 @@
           mergedPairs.sort((x, y) => severityRank(y.severity) - severityRank(x.severity));
           
           if (!mergedPairs || mergedPairs.length === 0) {
-            container.innerHTML = `<div class="insight positive">✅ No interactions found${useFdaEvidence ? ' in the local screening rules or FDA label evidence' : ' in the local database'} for your current list. This does not guarantee safety—always confirm with a clinician/pharmacist.</div>`;
+            container.innerHTML = `<div class="insight positive">✅ No interactions found${useFdaEvidence ? ' in local screening rules or FDA label citations' : ' in the local database'} for your current list. This does not guarantee safety—always confirm with a clinician/pharmacist.</div>`;
             return;
           }
           
@@ -3674,13 +3686,24 @@
             return { color: '#64748b', bg: '#f8fafc', icon: 'ℹ️', label: 'INFO' };
           };
           
-          container.innerHTML = mergedPairs.map(p => {
+          const citationsBanner = !useFdaEvidence
+            ? `
+              <div style="margin-bottom:0.75rem;padding:0.75rem;border-radius:var(--radius-sm);background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);color:#0f172a;display:flex;align-items:center;justify-content:space-between;gap:0.75rem;flex-wrap:wrap">
+                <div style="font-size:0.8125rem">
+                  <strong>Want citations?</strong> Show FDA labeling text excerpts via openFDA (public data).
+                </div>
+                <button class="btn" onclick="enableFdaEvidenceAndRecheck()" style="font-size:0.8125rem;padding:0.375rem 0.75rem">Show FDA label citations</button>
+              </div>
+            `
+            : '';
+
+          container.innerHTML = citationsBanner + mergedPairs.map(p => {
             const style = getSeverityStyle(p.severity);
 
             const categorizeSource = (source) => {
               const s = String(source || '').toLowerCase();
-              if (s.includes('local')) return 'Local Database';
-              if (s.includes('fda')) return 'FDA label (openFDA)';
+              if (s.includes('local')) return 'Local screening rules';
+              if (s.includes('fda')) return 'FDA labeling text citation (openFDA)';
               return source || 'Other';
             };
 
