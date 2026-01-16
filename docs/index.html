@@ -13,8 +13,51 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        const meds = buildInteractionMeds(medications);
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --bg-subtle:#f1f5f9;
+      --card:#ffffff;
+      --border:#e2e8f0;
+      --text:#0f172a;
+      --text-secondary:#334155;
+      --text-muted:#64748b;
+      --primary:#2563eb;
+      --primary-hover:#1d4ed8;
+      --primary-light:#60a5fa;
+      --accent:#10b981;
+      --accent-hover:#059669;
+      --warning:#f59e0b;
+      --danger:#ef4444;
+      --shadow:rgba(15,23,42,0.06);
+      --shadow-md:rgba(15,23,42,0.12);
+      --radius:10px;
+      --radius-sm:8px;
+      --radius-lg:16px;
+      --radius-full:999px;
+      --transition:all .2s ease;
     }
+    html[data-theme="dark"]{
+      --bg:#0b1220;
+      --bg-subtle:#0f172a;
+      --card:#111827;
+      --border:rgba(148,163,184,0.25);
+      --text:#e2e8f0;
+      --text-secondary:#cbd5e1;
+      --text-muted:#94a3b8;
+      --shadow:rgba(0,0,0,0.35);
+      --shadow-md:rgba(0,0,0,0.50);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+      background:var(--bg);
+      color:var(--text);
+    }
+    a{color:var(--primary)}
     .grid-col-12{grid-column:span 12}
     .grid-col-8{grid-column:span 8}
     .grid-col-6{grid-column:span 6}
@@ -3136,55 +3179,6 @@
             const s = String(t || '').trim();
             if (s) parts.push(`${prefix}: ${s}`);
           });
-        claude/fix-medication-warnings-I6Jxp
-          console.log('✅ Total interactions found:', interactions.length);
-          return interactions;
-        } catch (error) {
-          console.error('❌ Interaction check error:', error);
-          console.error('Error details:', error.message, error.stack);
-          console.log('⚠️ RxNorm API failed, falling back to local interaction database');
-
-          // FALLBACK: Load and check full local interaction database
-          try {
-            const dbResponse = await fetch('medication-interactions.json');
-            const dbData = await dbResponse.json();
-            const localInteractions = dbData.interactions;
-            console.log(`📚 Loaded ${localInteractions.length} interactions from local database`);
-
-            const medications = medicationList.filter(m => m.type === 'prescription' || m.type === 'otc');
-            const foundInteractions = [];
-
-            medications.forEach((med1, i) => {
-              medications.slice(i + 1).forEach(med2 => {
-                const name1 = med1.name.toLowerCase().trim();
-                const name2 = med2.name.toLowerCase().trim();
-
-                localInteractions.forEach(int => {
-                  const drug1Lower = int.drug1.toLowerCase().trim();
-                  const drug2Lower = int.drug2.toLowerCase().trim();
-
-                  const match = (name1.includes(drug1Lower) && name2.includes(drug2Lower)) ||
-                                (name1.includes(drug2Lower) && name2.includes(drug1Lower));
-
-                  if (match) {
-                    foundInteractions.push({
-                      drug1Name: med1.name,
-                      drug2Name: med2.name,
-                      description: int.description,
-                      severity: int.severity,
-                      source: 'Local Database'
-                    });
-                  }
-                });
-              });
-            });
-
-            console.log(`✅ Found ${foundInteractions.length} interactions in local database`);
-            return foundInteractions;
-          } catch (dbError) {
-            console.error('❌ Failed to load local database:', dbError);
-            return [];
-
         };
         pushSection('boxed_warning', 'BOXED WARNING');
         pushSection('contraindications', 'CONTRAINDICATIONS');
@@ -3489,7 +3483,6 @@
                 source: 'Local Database'
               });
             });
-       main
           }
         }
 
