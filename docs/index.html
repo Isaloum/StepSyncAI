@@ -3093,40 +3093,47 @@
           console.error('Error details:', error.message, error.stack);
           console.log('⚠️ RxNorm API failed, falling back to local interaction database');
 
-          // FALLBACK: Check critical interactions locally when API fails
-          const localInteractions = [
-            { drugs: ['warfarin', 'aspirin'], description: 'May increase bleeding risk. Both medications thin the blood and can cause serious bleeding when combined. Monitor closely and report any unusual bruising or bleeding.', severity: 'HIGH' },
-            { drugs: ['warfarin', 'ibuprofen'], description: 'Increased risk of bleeding. NSAIDs like ibuprofen can increase warfarin effects.', severity: 'HIGH' },
-            { drugs: ['aspirin', 'ibuprofen'], description: 'May increase risk of gastrointestinal bleeding and reduce the heart-protective effects of aspirin.', severity: 'MODERATE' },
-            { drugs: ['lisinopril', 'ibuprofen'], description: 'NSAIDs can reduce the effectiveness of blood pressure medications and may affect kidney function.', severity: 'MODERATE' },
-            { drugs: ['metformin', 'alcohol'], description: 'Alcohol may increase risk of lactic acidosis and hypoglycemia.', severity: 'MODERATE' }
-          ];
+          // FALLBACK: Load and check full local interaction database
+          try {
+            const dbResponse = await fetch('medication-interactions.json');
+            const dbData = await dbResponse.json();
+            const localInteractions = dbData.interactions;
+            console.log(`📚 Loaded ${localInteractions.length} interactions from local database`);
 
-          const medications = medicationList.filter(m => m.type === 'prescription' || m.type === 'otc');
-          const foundInteractions = [];
+            const medications = medicationList.filter(m => m.type === 'prescription' || m.type === 'otc');
+            const foundInteractions = [];
 
-          medications.forEach((med1, i) => {
-            medications.slice(i + 1).forEach(med2 => {
-              const name1 = med1.name.toLowerCase().trim();
-              const name2 = med2.name.toLowerCase().trim();
+            medications.forEach((med1, i) => {
+              medications.slice(i + 1).forEach(med2 => {
+                const name1 = med1.name.toLowerCase().trim();
+                const name2 = med2.name.toLowerCase().trim();
 
-              localInteractions.forEach(int => {
-                const match = (int.drugs.some(d => name1.includes(d)) && int.drugs.some(d => name2.includes(d)));
-                if (match) {
-                  foundInteractions.push({
-                    drug1Name: med1.name,
-                    drug2Name: med2.name,
-                    description: int.description,
-                    severity: int.severity,
-                    source: 'Local Database (API Unavailable)'
-                  });
-                }
+                localInteractions.forEach(int => {
+                  const drug1Lower = int.drug1.toLowerCase().trim();
+                  const drug2Lower = int.drug2.toLowerCase().trim();
+
+                  const match = (name1.includes(drug1Lower) && name2.includes(drug2Lower)) ||
+                                (name1.includes(drug2Lower) && name2.includes(drug1Lower));
+
+                  if (match) {
+                    foundInteractions.push({
+                      drug1Name: med1.name,
+                      drug2Name: med2.name,
+                      description: int.description,
+                      severity: int.severity,
+                      source: 'Local Database'
+                    });
+                  }
+                });
               });
             });
-          });
 
-          console.log(`✅ Found ${foundInteractions.length} interactions in local database`);
-          return foundInteractions;
+            console.log(`✅ Found ${foundInteractions.length} interactions in local database`);
+            return foundInteractions;
+          } catch (dbError) {
+            console.error('❌ Failed to load local database:', dbError);
+            return [];
+          }
         }
       }
 
