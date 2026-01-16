@@ -3093,9 +3093,15 @@
         // Other high-signal interactors
         const levothyroxines = ['levothyroxine'];
         const mineralsBindingAbsorption = ['calcium', 'iron', 'magnesium', 'aluminum'];
-        const antacids = ['antacid', 'calcium carbonate', 'aluminum hydroxide', 'magnesium hydroxide', 'omeprazole', 'pantoprazole'];
+        // True antacids (polyvalent cations) that can chelate certain antibiotics.
+        // NOTE: PPIs (e.g., omeprazole) are NOT antacids for chelation purposes.
+        const antacids = ['antacid', 'calcium carbonate', 'aluminum hydroxide', 'magnesium hydroxide'];
+        const ppis = ['omeprazole', 'esomeprazole', 'lansoprazole', 'pantoprazole', 'rabeprazole'];
         const tetracyclines = ['tetracycline', 'doxycycline', 'minocycline'];
         const fluoroquinolones = ['ciprofloxacin', 'levofloxacin', 'moxifloxacin'];
+
+        // Narrow high-signal interactors
+        const theophyllines = ['theophylline'];
 
         const triptans = ['sumatriptan', 'rizatriptan', 'zolmitriptan', 'eletriptan', 'almotriptan', 'naratriptan', 'frovatriptan'];
         const serotonergicAddOns = ['tramadol', 'dextromethorphan', 'linezolid', 'methylene blue'];
@@ -3167,8 +3173,11 @@
           if (levothyroxines.some(x => n.includes(x))) tags.add('thyroid_hormone');
           if (mineralsBindingAbsorption.some(x => n.includes(x))) tags.add('mineral');
           if (antacids.some(x => n.includes(x))) tags.add('antacid');
+          if (ppis.some(x => n.includes(x))) tags.add('ppi');
           if (tetracyclines.some(x => n.includes(x))) tags.add('tetracycline');
           if (fluoroquinolones.some(x => n.includes(x))) tags.add('fluoroquinolone');
+
+          if (theophyllines.some(x => n.includes(x))) tags.add('theophylline');
 
           if (triptans.some(x => n.includes(x))) tags.add('triptan');
           if (serotonergicAddOns.some(x => n.includes(x))) tags.add('serotonergic');
@@ -4391,6 +4400,12 @@
       ['tetracycline', 'mineral', '⚠️ Minerals (calcium/iron/magnesium) can block tetracycline absorption; separate by several hours.'],
       ['fluoroquinolone', 'mineral', '⚠️ Minerals (calcium/iron/magnesium) can block fluoroquinolone absorption; separate by several hours.'],
       ['fluoroquinolone', 'antacid', '⚠️ Antacids can reduce fluoroquinolone absorption; separate by several hours.'],
+
+      // Antibiotics + narrow-therapeutic-index drugs
+      ['fluoroquinolone', 'theophylline', '🚨 CRITICAL: Ciprofloxacin/other fluoroquinolones can increase theophylline levels and cause toxicity (nausea, tremor, arrhythmias, seizures). Requires monitoring/avoidance.'],
+
+      // Antiplatelets + PPIs (CYP2C19 inhibition)
+      ['clopidogrel', 'ppi', '⚠️ Some PPIs (especially omeprazole/esomeprazole) can reduce clopidogrel activation and effectiveness. Consider an alternative PPI per clinician/pharmacist.'],
 
       // Diabetes + alcohol
       ['insulin', 'alcohol', '🚨 Severe hypoglycemia risk when insulin is combined with alcohol.'],
