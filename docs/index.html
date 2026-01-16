@@ -33,6 +33,7 @@
       --danger:#ef4444;
       --shadow:rgba(15,23,42,0.06);
       --shadow-md:rgba(15,23,42,0.12);
+      --shadow-lg:rgba(15,23,42,0.18);
       --radius:10px;
       --radius-sm:8px;
       --radius-lg:16px;
@@ -49,6 +50,7 @@
       --text-muted:#94a3b8;
       --shadow:rgba(0,0,0,0.35);
       --shadow-md:rgba(0,0,0,0.50);
+      --shadow-lg:rgba(0,0,0,0.60);
     }
     *{box-sizing:border-box}
     body{
@@ -58,6 +60,108 @@
       color:var(--text);
     }
     a{color:var(--primary)}
+
+    /* Layout */
+    .container{
+      max-width:1120px;
+      margin:0 auto;
+      padding:0 1.5rem;
+    }
+    main{
+      padding:1.75rem 0 3rem;
+    }
+
+    /* Header + Top Tabs */
+    header{
+      position:sticky;
+      top:0;
+      z-index:200;
+      background:rgba(248,250,252,0.86);
+      border-bottom:1px solid var(--border);
+      backdrop-filter:blur(12px);
+    }
+    html[data-theme="dark"] header{
+      background:rgba(11,18,32,0.86);
+    }
+    .header-content{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:1rem;
+      padding:0.875rem 0;
+    }
+    .logo{
+      display:flex;
+      align-items:center;
+      gap:0.5rem;
+      font-weight:800;
+      letter-spacing:-0.02em;
+      text-decoration:none;
+      color:var(--text);
+      white-space:nowrap;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      padding:0.125rem 0.5rem;
+      border-radius:var(--radius-full);
+      font-size:0.6875rem;
+      font-weight:800;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+      color:#fff;
+      background:linear-gradient(135deg,var(--accent),var(--accent-hover));
+      box-shadow:0 2px 8px rgba(16,185,129,0.25);
+    }
+    .nav-tabs{
+      display:flex;
+      align-items:center;
+      gap:1.25rem;
+      padding:0;
+      border:none;
+      background:transparent;
+      overflow:auto;
+      scrollbar-width:none;
+    }
+    .nav-tabs::-webkit-scrollbar{display:none}
+    .nav-tab{
+      appearance:none;
+      background:transparent;
+      color:var(--text-secondary);
+      border:none;
+      border-radius:0;
+      padding:0.5rem 0;
+      cursor:pointer;
+      font-weight:700;
+      font-size:0.9rem;
+      display:inline-flex;
+      align-items:center;
+      gap:0.5rem;
+      transition:var(--transition);
+      white-space:nowrap;
+      line-height:1;
+      position:relative;
+    }
+    .nav-tab .icon{
+      display:none;
+    }
+    .nav-tab:hover{
+      color:var(--text);
+    }
+    .nav-tab.active{
+      color:var(--primary);
+      font-weight:800;
+    }
+    .nav-tab.active::after{
+      content:"";
+      position:absolute;
+      left:0;
+      right:0;
+      bottom:-0.65rem;
+      height:2px;
+      background:var(--primary);
+      border-radius:2px;
+    }
     .grid-col-12{grid-column:span 12}
     .grid-col-8{grid-column:span 8}
     .grid-col-6{grid-column:span 6}
@@ -66,6 +170,10 @@
     @media(max-width:1024px){
       .grid-col-8,.grid-col-6,.grid-col-4,.grid-col-3{grid-column:span 12}
     }
+
+    /* App Sections (Tabs) */
+    .app-section{display:none}
+    .app-section.active{display:block}
 
     /* Cards - White, minimal shadow, subtle border */
     .card{
@@ -445,42 +553,45 @@
       padding:.875rem .5rem;
       z-index:100;
       box-shadow:0 -2px 12px var(--shadow-md);
-    }
-    .mobile-bottom-nav .nav-tabs{
-      display:flex;
+      gap:0.25rem;
       justify-content:space-around;
       align-items:center;
-      gap:.25rem;
-      max-width:100%;
     }
-    .mobile-bottom-nav .nav-tab{
-      flex-direction:column;
-      gap:.25rem;
+    .mobile-nav-btn{
+      flex:1;
       min-width:0;
-      padding:.5rem .25rem;
-      font-size:.6875rem;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:0.25rem;
+      padding:0.5rem 0.25rem;
       border:none;
       background:transparent;
       border-radius:var(--radius);
-      font-weight:600;
+      color:var(--text-secondary);
+      font-weight:700;
+      font-size:0.6875rem;
+      cursor:pointer;
+      transition:var(--transition);
     }
-    .mobile-bottom-nav .nav-tab .icon{
+    .mobile-nav-btn .icon{
       font-size:1.25rem;
-      opacity:1;
-      width:auto;
+      line-height:1;
     }
-    .mobile-bottom-nav .nav-tab span:not(.icon){
+    .mobile-nav-btn .label{
       display:block;
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
       max-width:100%;
+      line-height:1.1;
     }
-    .mobile-bottom-nav .nav-tab.active{
+    .mobile-nav-btn.active{
       color:var(--primary);
       background:var(--bg-subtle);
     }
-    @media(max-width:768px){.mobile-bottom-nav{display:block}}
+    @media(max-width:768px){.mobile-bottom-nav{display:flex}}
 
     /* Theme Toggle - Minimal */
     .theme-toggle{
@@ -1172,7 +1283,7 @@
         <div class="streak-chart" id="streakChart" role="img" aria-label="30-day activity streak visualization">
           <!-- Streak days will be added by JavaScript -->
         </div>
-        <p style="text-align:center;font-size:.875rem;color:var(--muted);margin-top:.5rem">Last 30 days activity • Green = Active day</p>
+        <p style="text-align:center;font-size:.875rem;color:var(--text-muted);margin-top:.5rem">Last 30 days activity • Green = Active day</p>
       </div>
 
       <div class="card">
@@ -1619,6 +1730,14 @@
       const moods = DB.get('moods');
       const sleeps = DB.get('sleeps');
       const exercises = DB.get('exercises');
+      // Pre-index activity dates (avoids expensive nested loops on large histories)
+      const toDayKey = (d) => {
+        try { return new Date(d).toDateString(); } catch { return ''; }
+      };
+      const moodDates = new Set(moods.map(m => toDayKey(m.date)).filter(Boolean));
+      const sleepDates = new Set(sleeps.map(s => toDayKey(s.date)).filter(Boolean));
+      const exerciseDates = new Set(exercises.map(e => toDayKey(e.date)).filter(Boolean));
+      const activityDates = new Set([...moodDates, ...sleepDates, ...exerciseDates]);
       
       // Calculate streak (consecutive days with any activity)
       const today = new Date();
@@ -1628,9 +1747,7 @@
         checkDate.setDate(checkDate.getDate() - i);
         const dateStr = checkDate.toDateString();
         
-        const hasActivity = moods.some(m => new Date(m.date).toDateString() === dateStr) ||
-                           sleeps.some(s => new Date(s.date).toDateString() === dateStr) ||
-                           exercises.some(e => new Date(e.date).toDateString() === dateStr);
+        const hasActivity = activityDates.has(dateStr);
         
         if (hasActivity) {
           streak++;
@@ -1683,6 +1800,12 @@
       const moods = DB.get('moods');
       const sleeps = DB.get('sleeps');
       const exercises = DB.get('exercises');
+      const toDayKey = (d) => {
+        try { return new Date(d).toDateString(); } catch { return ''; }
+      };
+      const moodDates = new Set(moods.map(m => toDayKey(m.date)).filter(Boolean));
+      const sleepDates = new Set(sleeps.map(s => toDayKey(s.date)).filter(Boolean));
+      const exerciseDates = new Set(exercises.map(e => toDayKey(e.date)).filter(Boolean));
       
       const container = document.getElementById('streakChart');
       container.innerHTML = '';
@@ -1695,9 +1818,9 @@
         
         // Count activities for this day
         let activityCount = 0;
-        if (moods.some(m => new Date(m.date).toDateString() === dateStr)) activityCount++;
-        if (sleeps.some(s => new Date(s.date).toDateString() === dateStr)) activityCount++;
-        if (exercises.some(e => new Date(e.date).toDateString() === dateStr)) activityCount++;
+        if (moodDates.has(dateStr)) activityCount++;
+        if (sleepDates.has(dateStr)) activityCount++;
+        if (exerciseDates.has(dateStr)) activityCount++;
         // Note: Medications are not tracked historically (design limitation), 
         // so we can't include them in the streak chart
         
@@ -1784,10 +1907,10 @@
           .then(reg => {
             console.log('[App] Service Worker registered');
             
-            // Check for updates every 60 seconds
+            // Check for updates periodically (avoid constant polling)
             setInterval(() => {
-              reg.update();
-            }, 60000);
+              if (!document.hidden) reg.update();
+            }, 10 * 60 * 1000);
             
             // Listen for updates from the service worker
             navigator.serviceWorker.addEventListener('message', (event) => {
@@ -1868,6 +1991,33 @@
       }, 30000);
     }
 
+    // Lightweight non-blocking toast (used instead of alert() in auto-refresh flows)
+    function showToast(message, { timeout = 4500 } = {}) {
+      const existing = document.getElementById('app-toast');
+      if (existing) existing.remove();
+
+      const toast = document.createElement('div');
+      toast.id = 'app-toast';
+      toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        max-width: min(420px, calc(100vw - 40px));
+        background: var(--card);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 14px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+        z-index: 10001;
+        font-size: 0.9rem;
+        line-height: 1.35;
+      `;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), timeout);
+    }
+
     // ============================================
     // DATA STORAGE (ORIGINAL)
     // ============================================
@@ -1922,7 +2072,17 @@
       
       // Update content sections
       document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
-      document.getElementById(tabName).classList.add('active');
+
+      const nextSection = document.getElementById(tabName);
+      if (nextSection) {
+        nextSection.classList.add('active');
+        nextSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        console.warn('Unknown tab section:', tabName);
+      }
+
+      const main = document.getElementById('main-content');
+      if (main && main.focus) main.focus({ preventScroll: true });
       
       // Save active tab to localStorage
       localStorage.setItem('mindtrack_activeTab', tabName);
@@ -1998,7 +2158,7 @@
             <label for="editMoodSlider">How are you feeling? (1-10)</label>
             <div style="text-align:center;font-size:4rem;margin:1rem 0" id="editMoodEmoji">${moodEmojis[mood.mood - 1]}</div>
             <input type="range" id="editMoodSlider" min="1" max="10" value="${mood.mood}" class="mood-slider" oninput="document.getElementById('editMoodEmoji').textContent = moodEmojis[this.value - 1]">
-            <div style="display:flex;justify-content:space-between;margin-top:0.5rem;font-size:0.875rem;color:var(--muted)">
+            <div style="display:flex;justify-content:space-between;margin-top:0.5rem;font-size:0.875rem;color:var(--text-muted)">
               <span>1 - Very Low</span>
               <span>5 - Neutral</span>
               <span>10 - Excellent</span>
@@ -3238,7 +3398,15 @@
       }
 
       async function checkFdaLabelEvidenceInteractions(medications) {
-        const meds = buildInteractionMeds(medications);
+        // openFDA labels are for drugs; supplements typically won't have label data.
+        // Keep evidence fetching focused on Rx/OTC to avoid noisy 404s and delays.
+        const evidenceMeds = (medications || []).filter(m => {
+          if (!m || !m.name) return false;
+          const t = String(m.type || '').toLowerCase().trim();
+          return t === 'prescription' || t === 'otc' || !t;
+        });
+
+        const meds = buildInteractionMeds(evidenceMeds);
         const labels = await Promise.all(meds.map(async (m) => {
           const label = await fetchFdaLabelForDrug(m.norm || m.name);
           const text = extractLabelText(label);
@@ -3289,217 +3457,65 @@
       }
 
       function checkLocalInteractionsFromDatabase(medications) {
-        const interactionAliases = {
-          // Common brands → generics
-          'lipitor': 'atorvastatin',
-          'biaxin': 'clarithromycin',
-          'synthroid': 'levothyroxine',
-          'levoxyl': 'levothyroxine',
-          'advil': 'ibuprofen',
-          'motrin': 'ibuprofen',
-          'tylenol': 'acetaminophen',
-          'coumadin': 'warfarin',
-          'prozac': 'fluoxetine',
-          'zoloft': 'sertraline',
-          'ultram': 'tramadol',
-          // Common name variants / salts
-          'atorvastatin calcium': 'atorvastatin',
-          'levothyroxine sodium': 'levothyroxine'
+        const meds = buildInteractionMeds(medications);
+
+        const severityRank = (sev) => {
+          const s = String(sev || '').toUpperCase();
+          if (s.includes('HIGH') || s.includes('SEVERE') || s.includes('MAJOR')) return 3;
+          if (s.includes('MODERATE')) return 2;
+          if (s.includes('MINOR') || s.includes('LOW')) return 1;
+          return 0;
         };
 
-        // Tag common med classes so rule tokens like ['ssri','maoi',...] work with real drug names.
-        // This is intentionally conservative and focuses on high-value/commonly-used classes.
-        const ssris = ['fluoxetine', 'sertraline', 'citalopram', 'escitalopram', 'paroxetine', 'fluvoxamine'];
-        const snris = ['venlafaxine', 'desvenlafaxine', 'duloxetine'];
-        const tcas = ['amitriptyline', 'nortriptyline', 'imipramine', 'clomipramine', 'doxepin'];
-        const maois = ['phenelzine', 'tranylcypromine', 'isocarboxazid', 'selegiline'];
-
-        const nsaids = ['ibuprofen', 'naproxen', 'diclofenac', 'indomethacin', 'meloxicam', 'celecoxib', 'ketorolac'];
-        const antiplatelets = ['aspirin', 'clopidogrel', 'prasugrel', 'ticagrelor'];
-        const anticoagulants = ['warfarin', 'apixaban', 'rivaroxaban', 'dabigatran', 'edoxaban', 'heparin', 'enoxaparin'];
-
-        const aceInhibitors = ['lisinopril', 'enalapril', 'ramipril', 'benazepril', 'captopril'];
-        const arbs = ['losartan', 'valsartan', 'candesartan', 'irbesartan', 'olmesartan'];
-        const potassiumSparingDiuretics = ['spironolactone', 'eplerenone', 'amiloride', 'triamterene'];
-        const diuretics = ['furosemide', 'torsemide', 'bumetanide', 'hydrochlorothiazide', 'chlorthalidone'];
-
-        const benzos = ['alprazolam', 'diazepam', 'lorazepam', 'clonazepam', 'temazepam', 'oxazepam', 'chlordiazepoxide'];
-        const zDrugs = ['zolpidem', 'zaleplon', 'eszopiclone'];
-        const opioids = ['oxycodone', 'hydrocodone', 'morphine', 'codeine', 'tramadol', 'fentanyl', 'methadone', 'hydromorphone'];
-        const sedatingAntihistamines = ['diphenhydramine', 'doxylamine', 'hydroxyzine'];
-
-        // Antibiotics / inhibitors commonly involved in significant interactions
-        const macrolides = ['clarithromycin', 'erythromycin', 'azithromycin'];
-        const strongCyp3a4Inhibitors = ['clarithromycin', 'erythromycin', 'ketoconazole', 'itraconazole', 'voriconazole', 'posaconazole', 'ritonavir', 'cobicistat'];
-        const azoleAntifungals = ['fluconazole', 'ketoconazole', 'itraconazole', 'voriconazole', 'posaconazole'];
-
-        // Other high-signal interactors
-        const levothyroxines = ['levothyroxine'];
-        const mineralsBindingAbsorption = ['calcium', 'iron', 'magnesium', 'aluminum'];
-        // True antacids (polyvalent cations) that can chelate certain antibiotics.
-        // NOTE: PPIs (e.g., omeprazole) are NOT antacids for chelation purposes.
-        const antacids = ['antacid', 'calcium carbonate', 'aluminum hydroxide', 'magnesium hydroxide'];
-        const ppis = ['omeprazole', 'esomeprazole', 'lansoprazole', 'pantoprazole', 'rabeprazole'];
-        const tetracyclines = ['tetracycline', 'doxycycline', 'minocycline'];
-        const fluoroquinolones = ['ciprofloxacin', 'levofloxacin', 'moxifloxacin'];
-
-        // Narrow high-signal interactors
-        const theophyllines = ['theophylline'];
-
-        const triptans = ['sumatriptan', 'rizatriptan', 'zolmitriptan', 'eletriptan', 'almotriptan', 'naratriptan', 'frovatriptan'];
-        const serotonergicAddOns = ['tramadol', 'dextromethorphan', 'linezolid', 'methylene blue'];
-
-        const statinsCyp3a4 = ['simvastatin', 'lovastatin', 'atorvastatin'];
-        const grapefruitAgents = ['grapefruit'];
-
-        const diabetesInsulins = ['insulin'];
-        const sulfonylureas = ['glipizide', 'glyburide', 'glimepiride'];
-        const metforminAgents = ['metformin'];
-
-        const alcoholAgents = ['alcohol', 'ethanol'];
-        const stJohnsWortAgents = ["st john's wort", 'st. john\'s wort'];
-        const ginkgoAgents = ['ginkgo', 'ginkgo biloba'];
-        const fishOilAgents = ['fish oil', 'omega 3', 'omega-3'];
-        const vitaminKAgents = ['vitamin k', 'vitamin k1', 'vitamin k2'];
-
-        const normalize = (s) => String(s || '').toLowerCase().trim();
-        const stripDose = (s) => {
-          const n = normalize(s);
-          return n
-            .replace(/\b\d+(?:\.\d+)?\s*(mg|mcg|µg|g|iu|units?|ml)\b/gi, ' ')
-            .replace(/[(),.;:]/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim();
+        const deriveSeverityFromWarning = (warning) => {
+          const w = String(warning || '');
+          return (w.includes('🆘') || w.includes('CRITICAL') || w.includes('FATAL') || w.includes('🚨'))
+            ? 'HIGH'
+            : w.includes('⚠️')
+              ? 'MODERATE'
+              : 'INFO';
         };
 
-        const canonicalize = (name) => {
-          let n = stripDose(name);
-          // Remove common salt words if present
-          n = n.replace(/\b(calcium|sodium|hydrochloride|hcl)\b/gi, ' ').replace(/\s+/g, ' ').trim();
-          // Alias exact match
-          if (interactionAliases[n]) return interactionAliases[n];
-          // Alias word-boundary match (e.g., "take Lipitor 20mg")
-          for (const [alias, canonical] of Object.entries(interactionAliases)) {
-            const re = new RegExp(`\\b${alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-            if (re.test(n)) return canonical;
-          }
-          return n;
-        };
-
-        const classify = (name) => {
-          const n = canonicalize(name);
-          const tags = new Set([n]);
-
-          if (ssris.some(x => n.includes(x))) tags.add('ssri');
-          if (snris.some(x => n.includes(x))) tags.add('snri');
-          if (tcas.some(x => n.includes(x))) tags.add('tca');
-          if (maois.some(x => n.includes(x))) tags.add('maoi');
-
-          if (nsaids.some(x => n.includes(x))) tags.add('nsaid');
-          if (antiplatelets.some(x => n.includes(x))) tags.add('antiplatelet');
-          if (anticoagulants.some(x => n.includes(x))) tags.add('anticoagulant');
-
-          if (aceInhibitors.some(x => n.includes(x))) tags.add('ace_inhibitor');
-          if (arbs.some(x => n.includes(x))) tags.add('arb');
-          if (potassiumSparingDiuretics.some(x => n.includes(x))) tags.add('potassium_sparing_diuretic');
-          if (diuretics.some(x => n.includes(x))) tags.add('diuretic');
-
-          if (benzos.some(x => n.includes(x))) tags.add('benzodiazepine');
-          if (zDrugs.some(x => n.includes(x))) tags.add('z_drug');
-          if (opioids.some(x => n.includes(x))) tags.add('opioid');
-          if (sedatingAntihistamines.some(x => n.includes(x))) tags.add('sedating_antihistamine');
-
-          if (macrolides.some(x => n.includes(x))) tags.add('macrolide');
-          if (strongCyp3a4Inhibitors.some(x => n.includes(x))) tags.add('cyp3a4_inhibitor_strong');
-          if (azoleAntifungals.some(x => n.includes(x))) tags.add('azole');
-
-          if (levothyroxines.some(x => n.includes(x))) tags.add('thyroid_hormone');
-          if (mineralsBindingAbsorption.some(x => n.includes(x))) tags.add('mineral');
-          if (antacids.some(x => n.includes(x))) tags.add('antacid');
-          if (ppis.some(x => n.includes(x))) tags.add('ppi');
-          if (tetracyclines.some(x => n.includes(x))) tags.add('tetracycline');
-          if (fluoroquinolones.some(x => n.includes(x))) tags.add('fluoroquinolone');
-
-          if (theophyllines.some(x => n.includes(x))) tags.add('theophylline');
-
-          if (triptans.some(x => n.includes(x))) tags.add('triptan');
-          if (serotonergicAddOns.some(x => n.includes(x))) tags.add('serotonergic');
-
-          if (statinsCyp3a4.some(x => n.includes(x))) tags.add('statin_cyp3a4');
-          if (grapefruitAgents.some(x => n.includes(x))) tags.add('grapefruit');
-
-          if (diabetesInsulins.some(x => n.includes(x))) tags.add('insulin');
-          if (sulfonylureas.some(x => n.includes(x))) tags.add('sulfonylurea');
-          if (metforminAgents.some(x => n.includes(x))) tags.add('metformin');
-
-          if (alcoholAgents.some(x => n.includes(x))) tags.add('alcohol');
-          if (stJohnsWortAgents.some(x => n.includes(x))) tags.add('st_johns_wort');
-          if (ginkgoAgents.some(x => n.includes(x))) tags.add('ginkgo');
-          if (fishOilAgents.some(x => n.includes(x))) tags.add('fish_oil');
-          if (vitaminKAgents.some(x => n.includes(x))) tags.add('vitamin_k');
-
-          return tags;
-        };
-
-        const meds = medications.map(m => {
-          const canonical = canonicalize(m.name);
-          const tags = classify(canonical);
-          // Keep the raw normalized form as an additional tag for fuzzy matching
-          tags.add(normalize(m.name));
-          return {
-            name: m.name,
-            norm: canonical,
-            tags
-          };
-        });
-
-        const matchToken = (med, token) => {
-          const t = normalize(token);
-          if (!t) return false;
-          if (med.tags.has(t)) return true;
-          return med.norm.includes(t);
-        };
-
-        const results = [];
+        // Aggregate to keep output clean: one result per med-pair, with multiple rule hits merged.
+        const pairMap = new Map();
         for (let i = 0; i < meds.length; i++) {
           for (let j = i + 1; j < meds.length; j++) {
             const a = meds[i];
             const b = meds[j];
+            const pairKey = [String(a.norm || a.name), String(b.norm || b.name)].sort().join('|');
 
             dangerousInteractions.forEach(([drug1, drug2, warning]) => {
-              const isMatch = (matchInteractionToken(a, drug1) && matchInteractionToken(b, drug2)) || (matchInteractionToken(a, drug2) && matchInteractionToken(b, drug1));
+              const isMatch = (matchInteractionToken(a, drug1) && matchInteractionToken(b, drug2)) ||
+                              (matchInteractionToken(a, drug2) && matchInteractionToken(b, drug1));
               if (!isMatch) return;
 
-              const severity = warning.includes('🆘') || warning.includes('CRITICAL') || warning.includes('FATAL') || warning.includes('🚨')
-                ? 'HIGH'
-                : warning.includes('⚠️')
-                  ? 'MODERATE'
-                  : 'INFO';
-
-              results.push({
+              const sev = deriveSeverityFromWarning(warning);
+              const entry = pairMap.get(pairKey) || {
                 drug1Name: a.name,
                 drug2Name: b.name,
-                description: warning,
-                severity,
+                severity: sev,
+                warnings: new Set(),
                 source: 'Local Database'
-              });
+              };
+
+              if (severityRank(sev) > severityRank(entry.severity)) entry.severity = sev;
+              entry.warnings.add(String(warning));
+              pairMap.set(pairKey, entry);
             });
           }
         }
 
-        // Deduplicate by pair + description
-        const seen = new Set();
-        const unique = [];
-        results.forEach(r => {
-          const k1 = `${normalizeInteraction(r.drug1Name)}|${normalizeInteraction(r.drug2Name)}|${normalizeInteraction(r.description)}`;
-          const k2 = `${normalizeInteraction(r.drug2Name)}|${normalizeInteraction(r.drug1Name)}|${normalizeInteraction(r.description)}`;
-          if (seen.has(k1) || seen.has(k2)) return;
-          seen.add(k1);
-          unique.push(r);
-        });
+        const merged = Array.from(pairMap.values()).map(e => ({
+          drug1Name: e.drug1Name,
+          drug2Name: e.drug2Name,
+          severity: e.severity,
+          source: e.source,
+          description: Array.from(e.warnings).map(w => `• ${w}`).join('<br>')
+        }));
 
-        console.log(`✅ Found ${unique.length} interactions in local database`);
-        return unique;
+        merged.sort((x, y) => severityRank(y.severity) - severityRank(x.severity));
+        console.log(`✅ Found ${merged.length} interaction pair(s) in local screening rules`);
+        return merged;
       }
 
       // UI: Check and display drug interactions
@@ -3515,6 +3531,11 @@
           const container = document.getElementById('interactionWarnings');
           if (!container) {
             console.error('❌ Container not found!');
+            return;
+          }
+
+          if (!definitions || definitions.length < 2) {
+            container.innerHTML = `<div class="insight">Add at least <strong>two</strong> medications/supplements to check for interactions.</div>`;
             return;
           }
 
@@ -3610,6 +3631,10 @@
           }).join('');
         } catch (error) {
           console.error('❌ Error in checkInteractions:', error);
+          const container = document.getElementById('interactionWarnings');
+          if (container) {
+            container.innerHTML = `<div class="insight negative">❌ Unable to check interactions right now. Please try again. (${String(error?.message || error)})</div>`;
+          }
         }
       }
 
@@ -3626,7 +3651,7 @@
           <div class="data-item-info">
             <div class="data-item-title">${moodEmojis[m.mood - 1]} Mood: ${m.mood}/10</div>
             <div class="data-item-meta">${new Date(m.date).toLocaleDateString()} ${m.symptoms.length ? '• ' + m.symptoms.join(', ') : ''}</div>
-            ${m.notes ? `<div style="margin-top:0.5rem;color:var(--muted);font-size:0.875rem">${m.notes}</div>` : ''}
+            ${m.notes ? `<div style="margin-top:0.5rem;color:var(--text-muted);font-size:0.875rem">${m.notes}</div>` : ''}
           </div>
           <div class="entry-actions">
             <button class="edit-btn" onclick="openEditModal('mood', '${m.date}')" aria-label="Edit mood entry" title="Edit">
@@ -4329,15 +4354,15 @@
         const adherenceColor = adherence >= 80 ? '#00b894' : adherence >= 50 ? '#fdcb6e' : '#d63031';
         
         html += `
-          <div style="padding:1rem;background:var(--card-bg);border-radius:8px;border:1px solid var(--border)">
+          <div style="padding:1rem;background:var(--card);border-radius:8px;border:1px solid var(--border)">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
               <div>
                 <div style="font-weight:600;font-size:0.95rem">${dateLabel}</div>
-                <div style="font-size:0.8rem;color:var(--text-light)">${totalDoses} doses scheduled</div>
+                <div style="font-size:0.8rem;color:var(--text-muted)">${totalDoses} doses scheduled</div>
               </div>
               <div style="text-align:right">
                 <div style="font-size:1.5rem;font-weight:700;color:${adherenceColor}">${adherence}%</div>
-                <div style="font-size:0.75rem;color:var(--text-light)">adherence</div>
+                <div style="font-size:0.75rem;color:var(--text-muted)">adherence</div>
               </div>
             </div>
             ${dayLogs.length > 0 ? `
@@ -4348,7 +4373,7 @@
                   return `<span style="font-size:0.85rem;padding:0.25rem 0.5rem;background:${color}22;color:${color};border-radius:4px">${icon} ${log.medName}</span>`;
                 }).join('')}
               </div>
-            ` : '<div style="font-size:0.85rem;color:var(--text-light)">No medications scheduled</div>'}
+            ` : '<div style="font-size:0.85rem;color:var(--text-muted)">No medications scheduled</div>'}
           </div>
         `;
       });
@@ -4913,13 +4938,55 @@
     let wellnessChart = null;
 
     function createWellnessTrendChart() {
+      if (typeof Chart === 'undefined') return;
       const ctx = document.getElementById('wellnessTrendChart');
       if (!ctx) return;
 
       const moods = DB.get('moods');
       const sleeps = DB.get('sleeps');
       const exercises = DB.get('exercises');
-      const meds = DB.get('medications');
+      const medicationLogs = DB.get('medicationLogs');
+      const definitions = DB.get('medicationDefinitions');
+
+      const toDayKey = (d) => {
+        try { return new Date(d).toDateString(); } catch { return ''; }
+      };
+
+      const moodByDay = new Map();
+      moods.forEach(m => {
+        const k = toDayKey(m.date);
+        if (!k) return;
+        if (!moodByDay.has(k)) moodByDay.set(k, m);
+      });
+
+      const sleepByDay = new Map();
+      sleeps.forEach(s => {
+        const k = toDayKey(s.date);
+        if (!k) return;
+        if (!sleepByDay.has(k)) sleepByDay.set(k, s);
+      });
+
+      const exerciseMinutesByDay = new Map();
+      exercises.forEach(e => {
+        const k = toDayKey(e.date);
+        if (!k) return;
+        exerciseMinutesByDay.set(k, (exerciseMinutesByDay.get(k) || 0) + (Number(e.duration) || 0));
+      });
+
+      const medIds = new Set((definitions || [])
+        .filter(d => d.type === 'prescription' || d.type === 'otc')
+        .map(d => d.id));
+
+      const medAdherenceByDay = new Map();
+      (medicationLogs || []).forEach(log => {
+        if (!medIds.has(log.medId)) return;
+        const k = toDayKey(log.scheduledFor);
+        if (!k) return;
+        const rec = medAdherenceByDay.get(k) || { total: 0, taken: 0 };
+        rec.total += 1;
+        if (log.status === 'taken') rec.taken += 1;
+        medAdherenceByDay.set(k, rec);
+      });
 
       // Get last 7 days
       const labels = [];
@@ -4937,22 +5004,20 @@
         labels.push(date.toLocaleDateString('en-US', { weekday: 'short' }));
         
         // Mood (0-10 scale)
-        const dayMood = moods.find(m => new Date(m.date).toDateString() === dateStr);
+        const dayMood = moodByDay.get(dateStr);
         moodData.push(dayMood ? dayMood.mood : null);
         
         // Sleep (0-10 hours, normalized to 0-10 scale for chart)
-        const daySleep = sleeps.find(s => new Date(s.date).toDateString() === dateStr);
+        const daySleep = sleepByDay.get(dateStr);
         sleepData.push(daySleep ? Math.min(daySleep.hours, 10) : null);
         
         // Exercise (0-60 minutes, normalized to 0-10 scale)
-        const dayExercise = exercises.filter(e => new Date(e.date).toDateString() === dateStr)
-          .reduce((sum, e) => sum + e.duration, 0);
+        const dayExercise = exerciseMinutesByDay.get(dateStr) || 0;
         exerciseData.push(dayExercise > 0 ? Math.min(dayExercise / 6, 10) : null);
         
         // Medication adherence (0-100% as 0-10 scale)
-        const dayMedsTotal = meds.length;
-        const dayMedsTaken = meds.filter(m => m.taken).length;
-        medicationData.push(dayMedsTotal > 0 ? (dayMedsTaken / dayMedsTotal) * 10 : null);
+        const rec = medAdherenceByDay.get(dateStr);
+        medicationData.push(rec && rec.total > 0 ? (rec.taken / rec.total) * 10 : null);
       }
 
       // Destroy existing chart if it exists
@@ -5146,12 +5211,13 @@
       if (insights.length === 0) insights.push({ type: 'info', text: '📊 Start logging data to see personalized insights!' });
 
       document.getElementById('insightsList').innerHTML = insights.map(i => `<div class="insight ${i.type}">${i.text}</div>`).join('');
-      
-      // Update streak chart when dashboard is updated
-      updateStreakChart();
-      
-      // Update wellness trends chart
-      createWellnessTrendChart();
+
+      // Charts can be expensive; only update when Dashboard is the active tab.
+      const dashboardSection = document.getElementById('dashboard');
+      if (dashboardSection && dashboardSection.classList.contains('active')) {
+        updateStreakChart();
+        createWellnessTrendChart();
+      }
     }
 
     // Initialize
@@ -5232,7 +5298,6 @@
     loadExerciseData();
     updateDashboard();
     updateProfile();
-    updateStreakChart();
     moodEmoji.textContent = moodEmojis[4];
     showOnboarding();
     
@@ -5260,7 +5325,7 @@
           updateDashboard();
           
           // Show notification
-          alert('📅 Good morning! Your medication schedule has been updated for today.');
+          showToast('📅 Good morning! Your medication schedule has been updated for today.');
         }
       }
     });
