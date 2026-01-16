@@ -1900,35 +1900,50 @@
       installBtn.classList.remove('show');
     });
 
-    // Register Service Worker with update notification
-    // NOTE: GitHub Pages/CDNs can aggressively cache `service-worker.js`.
-    // Adding a version query param ensures clients fetch the latest SW script.
-    const SW_VERSION = 'mindtrack-v7-2026-01-16';
+      // Register Service Worker with update notification
+      // NOTE: GitHub Pages/CDNs can aggressively cache `service-worker.js`.
+      // Adding a version query param ensures clients fetch the latest SW script.
+      const SW_VERSION = 'mindtrack-v8-2026-01-16';
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register(`service-worker.js?v=${encodeURIComponent(SW_VERSION)}`)
-          .then(reg => {
+          navigator.serviceWorker.register(`service-worker.js?v=${encodeURIComponent(SW_VERSION)}`)
+            .then((reg) => {
             console.log('[App] Service Worker registered');
             
             // Check for updates periodically (avoid constant polling)
             setInterval(() => {
               if (!document.hidden) reg.update();
             }, 10 * 60 * 1000);
-            
-            // Listen for updates from the service worker
-            navigator.serviceWorker.addEventListener('message', (event) => {
-              if (event.data && event.data.type === 'SW_UPDATED') {
-                console.log('[App] New version available:', event.data.version);
-                showUpdateNotification();
-              }
-            });
+
+              // Standard update detection flow:
+              // - only prompt when an update is installed AND an existing SW is controlling the page
+              reg.addEventListener('updatefound', () => {
+                const newWorker = reg.installing;
+                if (!newWorker) return;
+
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed') {
+                    if (navigator.serviceWorker.controller) {
+                      showUpdateNotification(reg);
+                    }
+                  }
+                });
+              });
+
+              // When the new SW takes control, reload once to ensure the latest UI/assets.
+              let swReloading = false;
+              navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (swReloading) return;
+                swReloading = true;
+                window.location.reload();
+              });
           })
           .catch(err => console.log('[App] SW registration failed:', err));
       });
     }
 
     // Show update notification when new version is available
-    function showUpdateNotification() {
+    function showUpdateNotification(registration) {
       // Check if notification already exists
       if (document.getElementById('sw-update-notification')) return;
       
@@ -1957,7 +1972,7 @@
             A new version of MindTrackAI is ready!
           </div>
         </div>
-        <button onclick="location.reload()" style="
+        <button id="sw-update-reload" style="
           background: white;
           color: var(--primary);
           border: none;
@@ -1984,6 +1999,24 @@
       `;
       
       document.body.appendChild(notification);
+
+      const reloadBtn = document.getElementById('sw-update-reload');
+      if (reloadBtn) {
+        reloadBtn.addEventListener('click', () => {
+          // If an updated SW is waiting, ask it to activate immediately.
+          // The page will reload via `controllerchange` once it takes control.
+          if (registration && registration.waiting) {
+            try {
+              registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+              showToast('Updating…', { timeout: 2500 });
+            } catch (e) {
+              window.location.reload();
+            }
+          } else {
+            window.location.reload();
+          }
+        });
+      }
       
       // Auto-dismiss after 30 seconds if user doesn't interact
       setTimeout(() => {

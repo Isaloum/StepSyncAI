@@ -1,6 +1,6 @@
 // Service Worker for MindTrackAI PWA
 // Version: Increment this on every deploy to force cache updates
-const CACHE_VERSION = 'mindtrack-v7-2026-01-16';
+const CACHE_VERSION = 'mindtrack-v8-2026-01-16';
 const CACHE_ASSETS = [
   './',
   // Avoid pinning a potentially stale HTML shell; we always prefer network for HTML.
@@ -47,18 +47,16 @@ self.addEventListener('activate', (event) => {
       console.log('[SW] Claiming all clients');
       return self.clients.claim();
     })
-    // Notify all clients that a new version is active
-    .then(() => {
-      return self.clients.matchAll().then(clients => {
-        clients.forEach(client => {
-          client.postMessage({
-            type: 'SW_UPDATED',
-            version: CACHE_VERSION
-          });
-        });
-      });
-    })
   );
+});
+
+// Allow the page to request immediate activation of an updated service worker.
+self.addEventListener('message', (event) => {
+  if (!event.data) return;
+  if (event.data.type === 'SKIP_WAITING') {
+    console.log('[SW] Received SKIP_WAITING');
+    self.skipWaiting();
+  }
 });
 
 // Fetch event - NETWORK-FIRST strategy for HTML/CSS/JS to prevent stale UI bug
