@@ -1,9 +1,9 @@
-// Service Worker for StepSyncAI PWA
+// Service Worker for MindTrackAI PWA
 // Version: Increment this on every deploy to force cache updates
-const CACHE_VERSION = 'stepsync-v5-quick-wins'; // Changed from v4 to v5
+const CACHE_VERSION = 'mindtrack-v6-2026-01-15';
 const CACHE_ASSETS = [
   './',
-  './index.html',
+  // Avoid pinning a potentially stale HTML shell; we always prefer network for HTML.
   // CSS and JS are NOT cached here - they use network-first strategy below
   // This ensures users always get the latest styles and functionality
 ];
@@ -72,12 +72,12 @@ self.addEventListener('fetch', (event) => {
       event.request.url.includes('.css') || 
       event.request.url.includes('.js') ||
       url.pathname === '/' ||
-      url.pathname === '/StepSyncAI/' ||
+      url.pathname === '/MindTrackAI/' ||
       url.pathname.endsWith('/')) {
     
     event.respondWith(
       // Try network first
-      fetch(event.request)
+      fetch(new Request(event.request, { cache: 'reload' }))
         .then((networkResponse) => {
           // Network success: update cache and return response
           if (networkResponse && networkResponse.status === 200) {
@@ -92,7 +92,7 @@ self.addEventListener('fetch', (event) => {
           // Network failed: fallback to cache (offline mode)
           console.log('[SW] Network failed, serving from cache:', event.request.url);
           return caches.match(event.request).then((cachedResponse) => {
-            return cachedResponse || caches.match('./index.html');
+            return cachedResponse || caches.match('./');
           });
         })
     );
