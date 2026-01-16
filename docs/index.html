@@ -3064,11 +3064,54 @@
           'levothyroxine sodium': 'levothyroxine'
         };
 
-        // Tag common med classes so rules like ['ssri','maoi',...] work with real drug names.
+        // Tag common med classes so rule tokens like ['ssri','maoi',...] work with real drug names.
+        // This is intentionally conservative and focuses on high-value/commonly-used classes.
         const ssris = ['fluoxetine', 'sertraline', 'citalopram', 'escitalopram', 'paroxetine', 'fluvoxamine'];
+        const snris = ['venlafaxine', 'desvenlafaxine', 'duloxetine'];
+        const tcas = ['amitriptyline', 'nortriptyline', 'imipramine', 'clomipramine', 'doxepin'];
         const maois = ['phenelzine', 'tranylcypromine', 'isocarboxazid', 'selegiline'];
+
+        const nsaids = ['ibuprofen', 'naproxen', 'diclofenac', 'indomethacin', 'meloxicam', 'celecoxib', 'ketorolac'];
+        const antiplatelets = ['aspirin', 'clopidogrel', 'prasugrel', 'ticagrelor'];
+        const anticoagulants = ['warfarin', 'apixaban', 'rivaroxaban', 'dabigatran', 'edoxaban', 'heparin', 'enoxaparin'];
+
+        const aceInhibitors = ['lisinopril', 'enalapril', 'ramipril', 'benazepril', 'captopril'];
+        const arbs = ['losartan', 'valsartan', 'candesartan', 'irbesartan', 'olmesartan'];
+        const potassiumSparingDiuretics = ['spironolactone', 'eplerenone', 'amiloride', 'triamterene'];
+        const diuretics = ['furosemide', 'torsemide', 'bumetanide', 'hydrochlorothiazide', 'chlorthalidone'];
+
         const benzos = ['alprazolam', 'diazepam', 'lorazepam', 'clonazepam', 'temazepam', 'oxazepam', 'chlordiazepoxide'];
-        const opioids = ['oxycodone', 'hydrocodone', 'morphine', 'codeine', 'tramadol', 'fentanyl', 'methadone'];
+        const zDrugs = ['zolpidem', 'zaleplon', 'eszopiclone'];
+        const opioids = ['oxycodone', 'hydrocodone', 'morphine', 'codeine', 'tramadol', 'fentanyl', 'methadone', 'hydromorphone'];
+        const sedatingAntihistamines = ['diphenhydramine', 'doxylamine', 'hydroxyzine'];
+
+        // Antibiotics / inhibitors commonly involved in significant interactions
+        const macrolides = ['clarithromycin', 'erythromycin', 'azithromycin'];
+        const strongCyp3a4Inhibitors = ['clarithromycin', 'erythromycin', 'ketoconazole', 'itraconazole', 'voriconazole', 'posaconazole', 'ritonavir', 'cobicistat'];
+        const azoleAntifungals = ['fluconazole', 'ketoconazole', 'itraconazole', 'voriconazole', 'posaconazole'];
+
+        // Other high-signal interactors
+        const levothyroxines = ['levothyroxine'];
+        const mineralsBindingAbsorption = ['calcium', 'iron', 'magnesium', 'aluminum'];
+        const antacids = ['antacid', 'calcium carbonate', 'aluminum hydroxide', 'magnesium hydroxide', 'omeprazole', 'pantoprazole'];
+        const tetracyclines = ['tetracycline', 'doxycycline', 'minocycline'];
+        const fluoroquinolones = ['ciprofloxacin', 'levofloxacin', 'moxifloxacin'];
+
+        const triptans = ['sumatriptan', 'rizatriptan', 'zolmitriptan', 'eletriptan', 'almotriptan', 'naratriptan', 'frovatriptan'];
+        const serotonergicAddOns = ['tramadol', 'dextromethorphan', 'linezolid', 'methylene blue'];
+
+        const statinsCyp3a4 = ['simvastatin', 'lovastatin', 'atorvastatin'];
+        const grapefruitAgents = ['grapefruit'];
+
+        const diabetesInsulins = ['insulin'];
+        const sulfonylureas = ['glipizide', 'glyburide', 'glimepiride'];
+        const metforminAgents = ['metformin'];
+
+        const alcoholAgents = ['alcohol', 'ethanol'];
+        const stJohnsWortAgents = ["st john's wort", 'st. john\'s wort'];
+        const ginkgoAgents = ['ginkgo', 'ginkgo biloba'];
+        const fishOilAgents = ['fish oil', 'omega 3', 'omega-3'];
+        const vitaminKAgents = ['vitamin k', 'vitamin k1', 'vitamin k2'];
 
         const normalize = (s) => String(s || '').toLowerCase().trim();
         const stripDose = (s) => {
@@ -3097,10 +3140,52 @@
         const classify = (name) => {
           const n = canonicalize(name);
           const tags = new Set([n]);
+
           if (ssris.some(x => n.includes(x))) tags.add('ssri');
+          if (snris.some(x => n.includes(x))) tags.add('snri');
+          if (tcas.some(x => n.includes(x))) tags.add('tca');
           if (maois.some(x => n.includes(x))) tags.add('maoi');
+
+          if (nsaids.some(x => n.includes(x))) tags.add('nsaid');
+          if (antiplatelets.some(x => n.includes(x))) tags.add('antiplatelet');
+          if (anticoagulants.some(x => n.includes(x))) tags.add('anticoagulant');
+
+          if (aceInhibitors.some(x => n.includes(x))) tags.add('ace_inhibitor');
+          if (arbs.some(x => n.includes(x))) tags.add('arb');
+          if (potassiumSparingDiuretics.some(x => n.includes(x))) tags.add('potassium_sparing_diuretic');
+          if (diuretics.some(x => n.includes(x))) tags.add('diuretic');
+
           if (benzos.some(x => n.includes(x))) tags.add('benzodiazepine');
+          if (zDrugs.some(x => n.includes(x))) tags.add('z_drug');
           if (opioids.some(x => n.includes(x))) tags.add('opioid');
+          if (sedatingAntihistamines.some(x => n.includes(x))) tags.add('sedating_antihistamine');
+
+          if (macrolides.some(x => n.includes(x))) tags.add('macrolide');
+          if (strongCyp3a4Inhibitors.some(x => n.includes(x))) tags.add('cyp3a4_inhibitor_strong');
+          if (azoleAntifungals.some(x => n.includes(x))) tags.add('azole');
+
+          if (levothyroxines.some(x => n.includes(x))) tags.add('thyroid_hormone');
+          if (mineralsBindingAbsorption.some(x => n.includes(x))) tags.add('mineral');
+          if (antacids.some(x => n.includes(x))) tags.add('antacid');
+          if (tetracyclines.some(x => n.includes(x))) tags.add('tetracycline');
+          if (fluoroquinolones.some(x => n.includes(x))) tags.add('fluoroquinolone');
+
+          if (triptans.some(x => n.includes(x))) tags.add('triptan');
+          if (serotonergicAddOns.some(x => n.includes(x))) tags.add('serotonergic');
+
+          if (statinsCyp3a4.some(x => n.includes(x))) tags.add('statin_cyp3a4');
+          if (grapefruitAgents.some(x => n.includes(x))) tags.add('grapefruit');
+
+          if (diabetesInsulins.some(x => n.includes(x))) tags.add('insulin');
+          if (sulfonylureas.some(x => n.includes(x))) tags.add('sulfonylurea');
+          if (metforminAgents.some(x => n.includes(x))) tags.add('metformin');
+
+          if (alcoholAgents.some(x => n.includes(x))) tags.add('alcohol');
+          if (stJohnsWortAgents.some(x => n.includes(x))) tags.add('st_johns_wort');
+          if (ginkgoAgents.some(x => n.includes(x))) tags.add('ginkgo');
+          if (fishOilAgents.some(x => n.includes(x))) tags.add('fish_oil');
+          if (vitaminKAgents.some(x => n.includes(x))) tags.add('vitamin_k');
+
           return tags;
         };
 
@@ -4256,6 +4341,70 @@
 
     // Comprehensive drug interaction database (100+ interactions)
     const dangerousInteractions = [
+      // ===== CLASS-BASED HIGH-VALUE RULES (scales to many meds) =====
+      // Anticoagulants / antiplatelets / NSAIDs
+      ['anticoagulant', 'nsaid', '🚨 CRITICAL: Bleeding risk increases significantly when blood thinners are combined with NSAIDs. Avoid unless clinician approves.'],
+      ['anticoagulant', 'antiplatelet', '🚨 CRITICAL: Dual blood-thinning effect (anticoagulant + antiplatelet) increases bleeding risk. Requires medical supervision.'],
+      ['antiplatelet', 'nsaid', '⚠️ Increased bleeding and GI ulcer risk when antiplatelets are combined with NSAIDs.'],
+
+      // Kidney / blood pressure effects
+      ['ace_inhibitor', 'nsaid', '⚠️ NSAIDs can reduce ACE inhibitor effect and increase kidney injury risk (especially with dehydration/older age).'],
+      ['arb', 'nsaid', '⚠️ NSAIDs can reduce ARB effect and increase kidney injury risk (especially with dehydration/older age).'],
+      ['diuretic', 'nsaid', '⚠️ Increased kidney injury risk when diuretics are combined with NSAIDs.'],
+
+      // Potassium / hyperkalemia
+      ['ace_inhibitor', 'potassium', '🚨 Hyperkalemia risk: ACE inhibitors + potassium supplements/salt substitutes can dangerously raise potassium.'],
+      ['arb', 'potassium', '🚨 Hyperkalemia risk: ARBs + potassium supplements/salt substitutes can dangerously raise potassium.'],
+      ['potassium_sparing_diuretic', 'potassium', '🚨 CRITICAL: Very high potassium risk when potassium-sparing diuretics are combined with potassium supplements.'],
+      ['ace_inhibitor', 'potassium_sparing_diuretic', '🚨 Hyperkalemia risk: ACE inhibitor + potassium-sparing diuretic requires monitoring.'],
+      ['arb', 'potassium_sparing_diuretic', '🚨 Hyperkalemia risk: ARB + potassium-sparing diuretic requires monitoring.'],
+
+      // Serotonin syndrome / CNS
+      ['ssri', 'maoi', '🚨 CRITICAL: Life-threatening serotonin syndrome risk. Never combine.'],
+      ['snri', 'maoi', '🚨 CRITICAL: Life-threatening serotonin syndrome risk. Never combine.'],
+      ['tca', 'maoi', '🚨 CRITICAL: Severe interaction risk (serotonin syndrome/hypertensive crisis). Never combine.'],
+      ['ssri', 'serotonergic', '🚨 Serotonin syndrome risk (e.g., linezolid, dextromethorphan, tramadol). Avoid or monitor closely.'],
+      ['snri', 'serotonergic', '🚨 Serotonin syndrome risk (e.g., linezolid, dextromethorphan, tramadol). Avoid or monitor closely.'],
+      ['triptan', 'ssri', '⚠️ Possible serotonin syndrome risk with triptans + SSRIs; monitor for agitation, tremor, sweating, fever.'],
+      ['triptan', 'snri', '⚠️ Possible serotonin syndrome risk with triptans + SNRIs; monitor for agitation, tremor, sweating, fever.'],
+
+      // Respiratory depression / sedation
+      ['opioid', 'benzodiazepine', '🚨 CRITICAL: Opioids + benzodiazepines can cause fatal respiratory depression. Avoid combination.'],
+      ['opioid', 'z_drug', '🚨 CRITICAL: Opioids + Z-drugs (e.g., zolpidem) increase respiratory depression risk.'],
+      ['opioid', 'alcohol', '🚨 FATAL: Opioids + alcohol can cause life-threatening respiratory depression.'],
+      ['benzodiazepine', 'alcohol', '🚨 FATAL: Benzodiazepines + alcohol can cause severe respiratory depression.'],
+      ['z_drug', 'alcohol', '🚨 Severe CNS depression risk with Z-drugs + alcohol.'],
+      ['sedating_antihistamine', 'alcohol', '⚠️ Sedating antihistamines + alcohol causes dangerous drowsiness/impairment.'],
+      ['sedating_antihistamine', 'opioid', '🚨 Increased sedation/respiratory depression risk when sedating antihistamines are combined with opioids.'],
+
+      // Statins + inhibitors
+      ['statin_cyp3a4', 'cyp3a4_inhibitor_strong', '🚨 CRITICAL: Strong CYP3A4 inhibitors can dangerously increase statin levels (myopathy/rhabdomyolysis). Avoid or hold statin per clinician.'],
+      ['statin_cyp3a4', 'grapefruit', '⚠️ Grapefruit can increase statin levels (myopathy risk). Avoid large amounts.'],
+      ['statin_cyp3a4', 'azole', '🚨 CRITICAL: Azole antifungals can increase statin levels (myopathy/rhabdomyolysis). Avoid or monitor closely.'],
+
+      // Absorption/binding (thyroid + minerals/antacids)
+      ['thyroid_hormone', 'calcium', '⚠️ Take thyroid hormone 4 hours apart from calcium to avoid reduced absorption.'],
+      ['thyroid_hormone', 'iron', '⚠️ Take thyroid hormone 4 hours apart from iron to avoid reduced absorption.'],
+      ['thyroid_hormone', 'antacid', '⚠️ Antacids/minerals can reduce thyroid hormone absorption; separate dosing.'],
+
+      // Antibiotics + minerals/antacids (chelation)
+      ['tetracycline', 'mineral', '⚠️ Minerals (calcium/iron/magnesium) can block tetracycline absorption; separate by several hours.'],
+      ['fluoroquinolone', 'mineral', '⚠️ Minerals (calcium/iron/magnesium) can block fluoroquinolone absorption; separate by several hours.'],
+      ['fluoroquinolone', 'antacid', '⚠️ Antacids can reduce fluoroquinolone absorption; separate by several hours.'],
+
+      // Diabetes + alcohol
+      ['insulin', 'alcohol', '🚨 Severe hypoglycemia risk when insulin is combined with alcohol.'],
+      ['sulfonylurea', 'alcohol', '🚨 Severe hypoglycemia risk when sulfonylureas are combined with alcohol.'],
+      ['metformin', 'alcohol', '🚨 Lactic acidosis risk - avoid heavy alcohol with metformin.'],
+
+      // Supplements
+      ['ginkgo', 'anticoagulant', '🚨 Increased bleeding risk when ginkgo is combined with blood thinners.'],
+      ['fish_oil', 'anticoagulant', '⚠️ Fish oil may increase bleeding risk at higher doses with blood thinners.'],
+      ['vitamin_k', 'warfarin', '⚠️ Vitamin K can reduce warfarin effectiveness; keep intake consistent and monitor INR.'],
+      ['st_johns_wort', 'ssri', '🚨 Serotonin syndrome risk - avoid combining St. John\'s wort with SSRIs.'],
+      ['st_johns_wort', 'snri', '🚨 Serotonin syndrome risk - avoid combining St. John\'s wort with SNRIs.'],
+      ['st_johns_wort', 'birth control', '⚠️ St. John\'s wort can reduce hormonal birth control effectiveness.'],
+
       // Blood Thinners
       ['warfarin', 'aspirin', '🚨 CRITICAL: Severe bleeding risk - requires immediate medical supervision'],
       ['warfarin', 'ibuprofen', '🚨 CRITICAL: Major bleeding risk - consult doctor before combining'],
