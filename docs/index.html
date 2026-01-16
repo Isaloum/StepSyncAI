@@ -3590,21 +3590,6 @@
           const interactions = [...(localInteractions || []), ...(fdaEvidenceInteractions || [])];
           console.log(`📦 Received ${interactions.length} interactions (${(localInteractions || []).length} local, ${(fdaEvidenceInteractions || []).length} FDA)`);
 
-          // Deduplicate by pair + description + source
-          const seen = new Set();
-          const deduped = [];
-          (interactions || []).forEach(i => {
-            const a = normalizeInteraction(i.drug1Name);
-            const b = normalizeInteraction(i.drug2Name);
-            const d = normalizeInteraction(i.description);
-            const s = normalizeInteraction(i.source);
-            const k1 = `${a}|${b}|${d}|${s}`;
-            const k2 = `${b}|${a}|${d}|${s}`;
-            if (seen.has(k1) || seen.has(k2)) return;
-            seen.add(k1);
-            deduped.push(i);
-          });
-
           const severityRank = (sev) => {
             const s = String(sev || '').toUpperCase();
             if (s.includes('HIGH') || s.includes('SEVERE') || s.includes('MAJOR')) return 3;
@@ -3612,9 +3597,59 @@
             if (s.includes('MINOR') || s.includes('LOW')) return 1;
             return 0;
           };
-          deduped.sort((x, y) => severityRank(y.severity) - severityRank(x.severity));
+
+          // Merge to ONE warning per drug pair.
+          // Reason: the same pair can appear multiple times (local DB + openFDA evidence, or multiple evidence snippets).
+          const byPair = new Map();
+          (interactions || []).forEach((i) => {
+            const aNorm = normalizeInteraction(i.drug1Name);
+            const bNorm = normalizeInteraction(i.drug2Name);
+            const pairKey = [aNorm, bNorm].sort().join('|');
+
+            const existing = byPair.get(pairKey) || {
+              drug1Name: i.drug1Name,
+              drug2Name: i.drug2Name,
+              severity: i.severity,
+              sources: new Set(),
+              evidence: [],
+              _evidenceSeen: new Set()
+            };
+
+            existing.sources.add(i.source || 'Unknown');
+
+            // Dedup evidence lines within the same pair
+            const d = normalizeInteraction(i.description);
+            const s = normalizeInteraction(i.source);
+            const sev = normalizeInteraction(i.severity);
+            const evidenceKey = `${d}|${s}|${sev}`;
+            if (!existing._evidenceSeen.has(evidenceKey)) {
+              existing._evidenceSeen.add(evidenceKey);
+              existing.evidence.push({
+                description: i.description,
+                source: i.source,
+                severity: i.severity,
+                sourceMeta: i.sourceMeta || null
+              });
+            }
+
+            // Overall severity = highest severity among all evidence for this pair
+            if (severityRank(i.severity) > severityRank(existing.severity)) {
+              existing.severity = i.severity;
+            }
+
+            byPair.set(pairKey, existing);
+          });
+
+          const mergedPairs = Array.from(byPair.values()).map((p) => {
+            p.evidence.sort((x, y) => severityRank(y.severity) - severityRank(x.severity));
+            p.sources = Array.from(p.sources);
+            delete p._evidenceSeen;
+            return p;
+          });
+
+          mergedPairs.sort((x, y) => severityRank(y.severity) - severityRank(x.severity));
           
-          if (!deduped || deduped.length === 0) {
+          if (!mergedPairs || mergedPairs.length === 0) {
             container.innerHTML = `<div class="insight positive">✅ No interactions found${useFdaEvidence ? ' in the local screening rules or FDA label evidence' : ' in the local database'} for your current list. This does not guarantee safety—always confirm with a clinician/pharmacist.</div>`;
             return;
           }
@@ -3634,33 +3669,53 @@
             return { color: '#64748b', bg: '#f8fafc', icon: 'ℹ️', label: 'INFO' };
           };
           
-          container.innerHTML = deduped.map(i => {
-            const style = getSeverityStyle(i.severity);
-            const meta = i.sourceMeta || {};
-            const fdaLink = meta.setId
-              ? `https://api.fda.gov/drug/label.json?search=set_id:%22${encodeURIComponent(meta.setId)}%22&limit=1`
-              : '';
-            const metaBits = [];
-            if (meta.labelFor) metaBits.push(String(meta.labelFor));
-            if (meta.setId) metaBits.push(`set_id: ${String(meta.setId)}`);
+          container.innerHTML = mergedPairs.map(p => {
+            const style = getSeverityStyle(p.severity);
+
+            const evidenceHtml = (p.evidence || []).map((e) => {
+              const eStyle = getSeverityStyle(e.severity);
+              const meta = e.sourceMeta || {};
+              const fdaLink = meta.setId
+                ? `https://api.fda.gov/drug/label.json?search=set_id:%22${encodeURIComponent(meta.setId)}%22&limit=1`
+                : '';
+              const metaBits = [];
+              if (meta.labelFor) metaBits.push(String(meta.labelFor));
+              if (meta.setId) metaBits.push(`set_id: ${String(meta.setId)}`);
+              const sourceLine = `Source: ${e.source || 'Unknown'}${metaBits.length ? ` • ${metaBits.join(' • ')}` : ''}${fdaLink ? ` • <a href="${fdaLink}" target="_blank" rel="noopener">view label JSON</a>` : ''}`;
+
+              return `
+                <div style="margin-top:0.75rem">
+                  <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+                    <div style="display:inline-block;background:${eStyle.color};color:#fff;padding:0.125rem 0.5rem;border-radius:4px;font-size:0.6875rem;font-weight:700;letter-spacing:0.5px">
+                      ${eStyle.label}
+                    </div>
+                    <div style="font-size:0.75rem;color:#64748b">${sourceLine}</div>
+                  </div>
+                  <div style="margin-top:0.375rem;color:#1e293b;font-size:0.875rem;line-height:1.6">
+                    ${e.description}
+                  </div>
+                </div>
+              `;
+            }).join('');
+
             return `
               <div style="background:${style.bg};border:2px solid ${style.color};border-radius:var(--radius);padding:1rem;margin-bottom:1rem">
                 <div style="display:flex;align-items:flex-start;gap:0.75rem;margin-bottom:0.75rem">
                   <div style="flex-shrink:0;font-size:1.5rem">${style.icon}</div>
                   <div style="flex:1">
                     <div style="font-weight:700;color:${style.color};font-size:0.9375rem;margin-bottom:0.375rem">
-                      ${i.drug1Name} + ${i.drug2Name}
+                      ${p.drug1Name} + ${p.drug2Name}
                     </div>
                     <div style="display:inline-block;background:${style.color};color:#fff;padding:0.125rem 0.5rem;border-radius:4px;font-size:0.6875rem;font-weight:700;letter-spacing:0.5px">
                       ${style.label}
                     </div>
                   </div>
                 </div>
-                <div style="color:#1e293b;font-size:0.875rem;line-height:1.6;margin-left:2.25rem">
-                  ${i.description}
+                <div style="margin-left:2.25rem">
+                  ${evidenceHtml}
                 </div>
-                <div style="margin-top:0.625rem;margin-left:2.25rem;font-size:0.75rem;color:#64748b">
-                  Source: ${i.source}${metaBits.length ? ` • ${metaBits.join(' • ')}` : ''}${fdaLink ? ` • <a href="${fdaLink}" target="_blank" rel="noopener">view label JSON</a>` : ''}
+                <div style="margin-top:0.75rem;margin-left:2.25rem;font-size:0.75rem;color:#64748b">
+                  Combined sources: ${(p.sources || []).join(' • ')}
                 </div>
               </div>
             `;
