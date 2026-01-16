@@ -3096,28 +3096,29 @@
           return cached.label || null;
         }
 
-        const q = encodeURIComponent(key);
-        const searches = [
-          `openfda.generic_name:\"${q}\"`,
-          `openfda.brand_name:\"${q}\"`,
-          `openfda.substance_name:\"${q}\"`,
-          `active_ingredient:\"${q}\"`,
-          `openfda.generic_name:${q}`
-        ];
+        // openFDA returns HTTP 404 when no matches are found.
+        // That's expected, but to avoid spamming the Network panel with many 404s,
+        // we use a single OR query across multiple fields instead of multiple sequential requests.
+        const term = String(key).replace(/"/g, '\\"');
+        const search = [
+          `openfda.generic_name:"${term}"`,
+          `openfda.brand_name:"${term}"`,
+          `openfda.substance_name:"${term}"`,
+          `active_ingredient:"${term}"`
+        ].join(' OR ');
 
-        for (const s of searches) {
-          const url = `https://api.fda.gov/drug/label.json?search=${s}&limit=1`;
-          try {
-            const res = await fetch(url);
-            if (!res.ok) continue;
+        const url = `https://api.fda.gov/drug/label.json?search=${encodeURIComponent(search)}&limit=1`;
+        try {
+          const res = await fetch(url);
+          if (res.ok) {
             const data = await res.json();
             const label = data?.results?.[0] || null;
             cache[key] = { fetchedAt: Date.now(), label };
             setFdaLabelCache(cache);
             return label;
-          } catch {
-            // continue
           }
+        } catch {
+          // ignore
         }
 
         cache[key] = { fetchedAt: Date.now(), label: null };
