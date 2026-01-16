@@ -80,8 +80,9 @@ app.get('/', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║  🤰 MindTrackAI Pregnancy Safety API Server              ║
 ║                                                           ║
@@ -96,7 +97,8 @@ app.listen(PORT, () => {
 ║                                                           ║
 ║  🔒 Powered by Bumpie_Meds - FDA Compliant                ║
 ╚═══════════════════════════════════════════════════════════╝
-  `);
-});
+    `);
+  });
+}
 
 module.exports = app;
