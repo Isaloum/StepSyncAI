@@ -13,174 +13,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- PWA Support -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1e40af">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="MindTrackAI">
-  <style>
-    /* Dribbble-Inspired Professional Health Dashboard */
-    /* Light, minimal design with subtle accents */
-    
-    /* Light mode (default) - Dribbble style */
-    :root{
-      --bg:#f8fafc;
-      --bg-subtle:#f3f4f6;
-      --card:#ffffff;
-      --card-hover:#fafbfc;
-      --primary:#2563eb;
-      --primary-hover:#1d4ed8;
-      --primary-light:#3b82f6;
-      --accent:#10b981;
-      --accent-hover:#059669;
-      --warning:#f59e0b;
-      --danger:#ef4444;
-      --text:#0f172a;
-      --text-secondary:#64748b;
-      --text-muted:#94a3b8;
-      --border:#e5e7eb;
-      --border-subtle:#f3f4f6;
-      --shadow:rgba(0,0,0,0.04);
-      --shadow-md:rgba(0,0,0,0.08);
-      --shadow-lg:rgba(0,0,0,0.12);
-      --radius:12px;
-      --radius-sm:8px;
-      --radius-lg:16px;
-      --radius-full:9999px;
-      --transition:all 0.2s cubic-bezier(0.4,0,0.2,1);
-    }
-    
-    /* Dark mode - Optional, minimal for professionals */
-    [data-theme="dark"]{
-      --bg:#0f172a;
-      --bg-subtle:#1a2332;
-      --card:#1e293b;
-      --card-hover:#283548;
-      --primary:#3b82f6;
-      --primary-hover:#2563eb;
-      --primary-light:#60a5fa;
-      --accent:#10b981;
-      --accent-hover:#059669;
-      --warning:#f59e0b;
-      --danger:#ef4444;
-      --text:#f1f5f9;
-      --text-secondary:#cbd5e1;
-      --text-muted:#94a3b8;
-      --border:#334155;
-      --border-subtle:#293548;
-      --shadow:rgba(0,0,0,0.2);
-      --shadow-md:rgba(0,0,0,0.3);
-      --shadow-lg:rgba(0,0,0,0.4);
-    }
-    
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{
-      font-family:'Inter','Helvetica Neue',Helvetica,system-ui,-apple-system,sans-serif;
-      background:var(--bg);
-      color:var(--text);
-      line-height:1.6;
-      min-height:100vh;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-      font-size:15px;
-    }
-    .container{
-      max-width:1280px;
-      margin:0 auto;
-      padding:1.5rem;
-    }
-
-    /* Minimal Header - Logo left, profile right */
-    header{
-      background:var(--card);
-      border-bottom:1px solid var(--border);
-      padding:1rem 0;
-      position:sticky;
-      top:0;
-      z-index:100;
-      box-shadow:0 1px 3px var(--shadow);
-    }
-    .header-content{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:1rem;
-    }
-    .logo{
-      display:flex;
-      align-items:center;
-      gap:.625rem;
-      font-size:1.375rem;
-      font-weight:700;
-      color:var(--primary);
-      text-decoration:none;
-      letter-spacing:-0.02em;
-    }
-    .logo:hover{color:var(--primary-hover)}
-    .badge{
-      background:var(--accent);
-      color:#fff;
-      padding:.25rem .625rem;
-      border-radius:var(--radius-full);
-      font-size:.6875rem;
-      font-weight:600;
-      letter-spacing:0.025em;
-      text-transform:uppercase;
-    }
-
-    /* Minimal Navigation - Clean tabs */
-    .nav-tabs{
-      display:flex;
-      gap:.375rem;
-      flex-wrap:wrap;
-    }
-    .nav-tab{
-      background:transparent;
-      border:none;
-      color:var(--text-secondary);
-      padding:.5rem .875rem;
-      border-radius:var(--radius);
-      cursor:pointer;
-      font-weight:500;
-      transition:var(--transition);
-      font-size:.875rem;
-      display:flex;
-      align-items:center;
-      gap:.5rem;
-    }
-    .nav-tab:hover{
-      color:var(--text);
-      background:var(--bg-subtle);
-    }
-    .nav-tab.active{
-      background:var(--primary);
-      color:#fff;
-      font-weight:600;
-    }
-    .nav-tab .icon{
-      font-size:1.125rem;
-      opacity:0;
-      width:0;
-      overflow:hidden;
-    }
-
-    /* Main Content - Grid-based layout */
-    main{padding:2rem 0}
-    .app-section{display:none}
-    .app-section.active{
-      display:block;
-      animation:fadeIn 0.25s ease-out;
-    }
-
-    /* Dashboard Grid Layout */
-    .dashboard-grid{
-      display:grid;
-      gap:1.5rem;
-      grid-template-columns:repeat(12,1fr);
+        const meds = buildInteractionMeds(medications);
     }
     .grid-col-12{grid-column:span 12}
     .grid-col-8{grid-column:span 8}
@@ -1467,8 +1300,16 @@
           <div class="card-title">⚠️ Drug Interaction Warnings</div>
           <button class="btn" onclick="checkInteractions()" style="font-size:0.8125rem;padding:0.375rem 0.75rem">🔄 Check Now</button>
         </div>
-        <div style="margin-bottom:1rem;padding:0.75rem;background:var(--bg-subtle);border-radius:var(--radius-sm);font-size:0.8125rem;color:var(--text-secondary)">
-          <strong>ℹ️ Clinical Data:</strong> Powered by a local interaction database (offline). Checks common prescription/OTC/supplement interactions, but it is not exhaustive.
+        <div style="margin-bottom:0.75rem;padding:0.75rem;background:var(--bg-subtle);border-radius:var(--radius-sm);font-size:0.8125rem;color:var(--text-secondary)">
+          <strong>ℹ️ Clinical Data:</strong> This feature is a screening tool and is not exhaustive. Use it to surface potential issues to discuss with a clinician/pharmacist.
+        </div>
+
+        <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem">
+          <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.8125rem;color:var(--text-secondary)">
+            <input type="checkbox" id="useFdaEvidence" checked>
+            Evidence-backed (FDA labels via openFDA)
+          </label>
+          <div style="font-size:0.75rem;color:var(--text-muted)">When available, shows interaction evidence from FDA labeling text (openFDA).</div>
         </div>
         <div id="interactionWarnings">
           <div class="insight" style="color:var(--text-secondary)">⏳ Checking for drug interactions...</div>
@@ -3045,6 +2886,364 @@
         return checkLocalInteractionsFromDatabase(medications);
       }
 
+      // ============================================
+      // INTERACTIONS: NORMALIZATION + CLASS TAGGING
+      // ============================================
+
+      const INTERACTION_PREF_KEY = 'mindtrack_interactions_useFdaEvidence';
+
+      function initInteractionPreferences() {
+        const checkbox = document.getElementById('useFdaEvidence');
+        if (!checkbox) return;
+        const saved = localStorage.getItem(INTERACTION_PREF_KEY);
+        if (saved !== null) checkbox.checked = saved === '1';
+        checkbox.addEventListener('change', () => {
+          localStorage.setItem(INTERACTION_PREF_KEY, checkbox.checked ? '1' : '0');
+        });
+      }
+
+      const INTERACTION_ALIASES = {
+        // Common brands → generics
+        'lipitor': 'atorvastatin',
+        'biaxin': 'clarithromycin',
+        'synthroid': 'levothyroxine',
+        'levoxyl': 'levothyroxine',
+        'advil': 'ibuprofen',
+        'motrin': 'ibuprofen',
+        'tylenol': 'acetaminophen',
+        'coumadin': 'warfarin',
+        'prozac': 'fluoxetine',
+        'zoloft': 'sertraline',
+        'ultram': 'tramadol',
+        // Common name variants / salts
+        'atorvastatin calcium': 'atorvastatin',
+        'levothyroxine sodium': 'levothyroxine'
+      };
+
+      const INTERACTION_LISTS = {
+        ssris: ['fluoxetine', 'sertraline', 'citalopram', 'escitalopram', 'paroxetine', 'fluvoxamine'],
+        snris: ['venlafaxine', 'desvenlafaxine', 'duloxetine'],
+        tcas: ['amitriptyline', 'nortriptyline', 'imipramine', 'clomipramine', 'doxepin'],
+        maois: ['phenelzine', 'tranylcypromine', 'isocarboxazid', 'selegiline'],
+
+        nsaids: ['ibuprofen', 'naproxen', 'diclofenac', 'indomethacin', 'meloxicam', 'celecoxib', 'ketorolac'],
+        antiplatelets: ['aspirin', 'clopidogrel', 'prasugrel', 'ticagrelor'],
+        anticoagulants: ['warfarin', 'apixaban', 'rivaroxaban', 'dabigatran', 'edoxaban', 'heparin', 'enoxaparin'],
+
+        aceInhibitors: ['lisinopril', 'enalapril', 'ramipril', 'benazepril', 'captopril'],
+        arbs: ['losartan', 'valsartan', 'candesartan', 'irbesartan', 'olmesartan'],
+        potassiumSparingDiuretics: ['spironolactone', 'eplerenone', 'amiloride', 'triamterene'],
+        diuretics: ['furosemide', 'torsemide', 'bumetanide', 'hydrochlorothiazide', 'chlorthalidone'],
+
+        benzos: ['alprazolam', 'diazepam', 'lorazepam', 'clonazepam', 'temazepam', 'oxazepam', 'chlordiazepoxide'],
+        zDrugs: ['zolpidem', 'zaleplon', 'eszopiclone'],
+        opioids: ['oxycodone', 'hydrocodone', 'morphine', 'codeine', 'tramadol', 'fentanyl', 'methadone', 'hydromorphone'],
+        sedatingAntihistamines: ['diphenhydramine', 'doxylamine', 'hydroxyzine'],
+
+        macrolides: ['clarithromycin', 'erythromycin', 'azithromycin'],
+        strongCyp3a4Inhibitors: ['clarithromycin', 'erythromycin', 'ketoconazole', 'itraconazole', 'voriconazole', 'posaconazole', 'ritonavir', 'cobicistat'],
+        azoleAntifungals: ['fluconazole', 'ketoconazole', 'itraconazole', 'voriconazole', 'posaconazole'],
+
+        levothyroxines: ['levothyroxine'],
+        minerals: ['calcium', 'iron', 'magnesium', 'aluminum'],
+        antacids: ['antacid', 'calcium carbonate', 'aluminum hydroxide', 'magnesium hydroxide'],
+        ppis: ['omeprazole', 'esomeprazole', 'lansoprazole', 'pantoprazole', 'rabeprazole'],
+
+        tetracyclines: ['tetracycline', 'doxycycline', 'minocycline'],
+        fluoroquinolones: ['ciprofloxacin', 'levofloxacin', 'moxifloxacin'],
+        theophyllines: ['theophylline'],
+
+        triptans: ['sumatriptan', 'rizatriptan', 'zolmitriptan', 'eletriptan', 'almotriptan', 'naratriptan', 'frovatriptan'],
+        serotonergics: ['tramadol', 'dextromethorphan', 'linezolid', 'methylene blue'],
+
+        statinsCyp3a4: ['simvastatin', 'lovastatin', 'atorvastatin'],
+        grapefruit: ['grapefruit'],
+
+        insulins: ['insulin'],
+        sulfonylureas: ['glipizide', 'glyburide', 'glimepiride'],
+        metformins: ['metformin'],
+
+        alcohol: ['alcohol', 'ethanol'],
+        stJohnsWort: ["st john's wort", 'st. john\'s wort'],
+        ginkgo: ['ginkgo', 'ginkgo biloba'],
+        fishOil: ['fish oil', 'omega 3', 'omega-3'],
+        vitaminK: ['vitamin k', 'vitamin k1', 'vitamin k2']
+      };
+
+      const normalizeInteraction = (s) => String(s || '').toLowerCase().trim();
+
+      const stripDoseForInteraction = (s) => {
+        const n = normalizeInteraction(s);
+        return n
+          .replace(/\b\d+(?:\.\d+)?\s*(mg|mcg|µg|g|iu|units?|ml)\b/gi, ' ')
+          .replace(/[(),.;:]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      };
+
+      function canonicalizeInteractionName(name) {
+        let n = stripDoseForInteraction(name);
+        n = n.replace(/\b(calcium|sodium|hydrochloride|hcl)\b/gi, ' ').replace(/\s+/g, ' ').trim();
+        if (INTERACTION_ALIASES[n]) return INTERACTION_ALIASES[n];
+        for (const [alias, canonical] of Object.entries(INTERACTION_ALIASES)) {
+          const re = new RegExp(`\\b${alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+          if (re.test(n)) return canonical;
+        }
+        return n;
+      }
+
+      function classifyInteractionName(name) {
+        const n = canonicalizeInteractionName(name);
+        const tags = new Set([n]);
+
+        if (INTERACTION_LISTS.ssris.some(x => n.includes(x))) tags.add('ssri');
+        if (INTERACTION_LISTS.snris.some(x => n.includes(x))) tags.add('snri');
+        if (INTERACTION_LISTS.tcas.some(x => n.includes(x))) tags.add('tca');
+        if (INTERACTION_LISTS.maois.some(x => n.includes(x))) tags.add('maoi');
+
+        if (INTERACTION_LISTS.nsaids.some(x => n.includes(x))) tags.add('nsaid');
+        if (INTERACTION_LISTS.antiplatelets.some(x => n.includes(x))) tags.add('antiplatelet');
+        if (INTERACTION_LISTS.anticoagulants.some(x => n.includes(x))) tags.add('anticoagulant');
+
+        if (INTERACTION_LISTS.aceInhibitors.some(x => n.includes(x))) tags.add('ace_inhibitor');
+        if (INTERACTION_LISTS.arbs.some(x => n.includes(x))) tags.add('arb');
+        if (INTERACTION_LISTS.potassiumSparingDiuretics.some(x => n.includes(x))) tags.add('potassium_sparing_diuretic');
+        if (INTERACTION_LISTS.diuretics.some(x => n.includes(x))) tags.add('diuretic');
+
+        if (INTERACTION_LISTS.benzos.some(x => n.includes(x))) tags.add('benzodiazepine');
+        if (INTERACTION_LISTS.zDrugs.some(x => n.includes(x))) tags.add('z_drug');
+        if (INTERACTION_LISTS.opioids.some(x => n.includes(x))) tags.add('opioid');
+        if (INTERACTION_LISTS.sedatingAntihistamines.some(x => n.includes(x))) tags.add('sedating_antihistamine');
+
+        if (INTERACTION_LISTS.macrolides.some(x => n.includes(x))) tags.add('macrolide');
+        if (INTERACTION_LISTS.strongCyp3a4Inhibitors.some(x => n.includes(x))) tags.add('cyp3a4_inhibitor_strong');
+        if (INTERACTION_LISTS.azoleAntifungals.some(x => n.includes(x))) tags.add('azole');
+
+        if (INTERACTION_LISTS.levothyroxines.some(x => n.includes(x))) tags.add('thyroid_hormone');
+        if (INTERACTION_LISTS.minerals.some(x => n.includes(x))) tags.add('mineral');
+        if (INTERACTION_LISTS.antacids.some(x => n.includes(x))) tags.add('antacid');
+        if (INTERACTION_LISTS.ppis.some(x => n.includes(x))) tags.add('ppi');
+
+        if (INTERACTION_LISTS.tetracyclines.some(x => n.includes(x))) tags.add('tetracycline');
+        if (INTERACTION_LISTS.fluoroquinolones.some(x => n.includes(x))) tags.add('fluoroquinolone');
+        if (INTERACTION_LISTS.theophyllines.some(x => n.includes(x))) tags.add('theophylline');
+
+        if (INTERACTION_LISTS.triptans.some(x => n.includes(x))) tags.add('triptan');
+        if (INTERACTION_LISTS.serotonergics.some(x => n.includes(x))) tags.add('serotonergic');
+
+        if (INTERACTION_LISTS.statinsCyp3a4.some(x => n.includes(x))) tags.add('statin_cyp3a4');
+        if (INTERACTION_LISTS.grapefruit.some(x => n.includes(x))) tags.add('grapefruit');
+
+        if (INTERACTION_LISTS.insulins.some(x => n.includes(x))) tags.add('insulin');
+        if (INTERACTION_LISTS.sulfonylureas.some(x => n.includes(x))) tags.add('sulfonylurea');
+        if (INTERACTION_LISTS.metformins.some(x => n.includes(x))) tags.add('metformin');
+
+        if (INTERACTION_LISTS.alcohol.some(x => n.includes(x))) tags.add('alcohol');
+        if (INTERACTION_LISTS.stJohnsWort.some(x => n.includes(x))) tags.add('st_johns_wort');
+        if (INTERACTION_LISTS.ginkgo.some(x => n.includes(x))) tags.add('ginkgo');
+        if (INTERACTION_LISTS.fishOil.some(x => n.includes(x))) tags.add('fish_oil');
+        if (INTERACTION_LISTS.vitaminK.some(x => n.includes(x))) tags.add('vitamin_k');
+
+        return tags;
+      }
+
+      function buildInteractionMeds(medications) {
+        return (medications || []).map(m => {
+          const canonical = canonicalizeInteractionName(m.name);
+          const tags = classifyInteractionName(canonical);
+          tags.add(normalizeInteraction(m.name));
+          return { name: m.name, norm: canonical, tags };
+        });
+      }
+
+      function matchInteractionToken(med, token) {
+        const t = normalizeInteraction(token);
+        if (!t) return false;
+        if (med.tags.has(t)) return true;
+        return med.norm.includes(t);
+      }
+
+      // ============================================
+      // FDA LABEL (openFDA) EVIDENCE
+      // ============================================
+
+      const FDA_LABEL_CACHE_KEY = 'mindtrack_fda_label_cache_v1';
+      const FDA_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+      function getFdaLabelCache() {
+        try {
+          return JSON.parse(localStorage.getItem(FDA_LABEL_CACHE_KEY) || '{}');
+        } catch {
+          return {};
+        }
+      }
+
+      function setFdaLabelCache(cache) {
+        try {
+          localStorage.setItem(FDA_LABEL_CACHE_KEY, JSON.stringify(cache));
+        } catch {
+          // ignore quota errors
+        }
+      }
+
+      async function fetchFdaLabelForDrug(canonicalName) {
+        const key = canonicalizeInteractionName(canonicalName);
+        if (!key) return null;
+
+        const cache = getFdaLabelCache();
+        const cached = cache[key];
+        if (cached && cached.fetchedAt && (Date.now() - cached.fetchedAt) < FDA_CACHE_TTL_MS) {
+          return cached.label || null;
+        }
+
+        const q = encodeURIComponent(key);
+        const searches = [
+          `openfda.generic_name:\"${q}\"`,
+          `openfda.brand_name:\"${q}\"`,
+          `openfda.substance_name:\"${q}\"`,
+          `active_ingredient:\"${q}\"`,
+          `openfda.generic_name:${q}`
+        ];
+
+        for (const s of searches) {
+          const url = `https://api.fda.gov/drug/label.json?search=${s}&limit=1`;
+          try {
+            const res = await fetch(url);
+            if (!res.ok) continue;
+            const data = await res.json();
+            const label = data?.results?.[0] || null;
+            cache[key] = { fetchedAt: Date.now(), label };
+            setFdaLabelCache(cache);
+            return label;
+          } catch {
+            // continue
+          }
+        }
+
+        cache[key] = { fetchedAt: Date.now(), label: null };
+        setFdaLabelCache(cache);
+        return null;
+      }
+
+      function extractLabelText(label) {
+        if (!label) return '';
+        const parts = [];
+        const pushSection = (key, prefix) => {
+          const v = label[key];
+          if (!v) return;
+          const arr = Array.isArray(v) ? v : [String(v)];
+          arr.forEach(t => {
+            const s = String(t || '').trim();
+            if (s) parts.push(`${prefix}: ${s}`);
+          });
+        };
+        pushSection('boxed_warning', 'BOXED WARNING');
+        pushSection('contraindications', 'CONTRAINDICATIONS');
+        pushSection('drug_interactions', 'DRUG INTERACTIONS');
+        pushSection('warnings', 'WARNINGS');
+        pushSection('warnings_and_precautions', 'WARNINGS/PRECAUTIONS');
+        return parts.join('\n\n');
+      }
+
+      function severityFromEvidence(text) {
+        const t = String(text || '').toLowerCase();
+        if (/(contraindicat|do not use|never|fatal|life[-\s]?threat|avoid)/.test(t)) return 'HIGH';
+        if (/(monitor|dose adjust|increas(e|es) risk|may increase|may decrease|caution|separate)/.test(t)) return 'MODERATE';
+        return 'INFO';
+      }
+
+      function findEvidenceSnippet(haystack, needles) {
+        const h = String(haystack || '');
+        const lower = h.toLowerCase();
+        for (const n of needles) {
+          const needle = String(n || '').toLowerCase().trim();
+          if (!needle) continue;
+          const re = new RegExp(`\\b${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+          const match = lower.match(re);
+          if (!match || match.index == null) continue;
+          const idx = match.index;
+          const start = Math.max(0, idx - 120);
+          const end = Math.min(h.length, idx + 160);
+          const snippet = h.slice(start, end).replace(/\s+/g, ' ').trim();
+          return { needle, snippet };
+        }
+        return null;
+      }
+
+      function getEvidenceNeedlesForMed(med) {
+        const needles = new Set();
+        const add = (x) => {
+          const s = String(x || '').toLowerCase().trim();
+          if (s) needles.add(s);
+        };
+        add(med.norm);
+        const tags = med.tags || new Set();
+        const addAll = (arr) => arr.forEach(add);
+        if (tags.has('nsaid')) addAll(['nsaid', 'nonsteroidal']);
+        if (tags.has('anticoagulant')) addAll(['anticoagulant', 'warfarin']);
+        if (tags.has('antiplatelet')) addAll(['antiplatelet', 'platelet']);
+        if (tags.has('maoi')) addAll(['maoi', 'monoamine oxidase']);
+        if (tags.has('ssri')) addAll(['ssri', 'serotonin']);
+        if (tags.has('snri')) addAll(['snri', 'serotonin']);
+        if (tags.has('benzodiazepine')) addAll(['benzodiazepine']);
+        if (tags.has('opioid')) addAll(['opioid']);
+        if (tags.has('ppi')) addAll(['proton pump inhibitor', 'ppi', 'omeprazole', 'esomeprazole']);
+        if (tags.has('grapefruit')) addAll(['grapefruit']);
+        if (tags.has('theophylline')) addAll(['theophylline']);
+        return Array.from(needles);
+      }
+
+      async function checkFdaLabelEvidenceInteractions(medications) {
+        const meds = buildInteractionMeds(medications);
+        const labels = await Promise.all(meds.map(async (m) => {
+          const label = await fetchFdaLabelForDrug(m.norm || m.name);
+          const text = extractLabelText(label);
+          const openfda = label?.openfda || {};
+          const labelFor = (openfda.generic_name && openfda.generic_name[0]) || (openfda.brand_name && openfda.brand_name[0]) || m.norm || m.name;
+          return { label, text, setId: label?.set_id, labelFor };
+        }));
+
+        const results = [];
+        for (let i = 0; i < meds.length; i++) {
+          for (let j = i + 1; j < meds.length; j++) {
+            const a = meds[i];
+            const b = meds[j];
+            const aDoc = labels[i];
+            const bDoc = labels[j];
+
+            if (aDoc?.text) {
+              const hit = findEvidenceSnippet(aDoc.text, getEvidenceNeedlesForMed(b));
+              if (hit) {
+                results.push({
+                  drug1Name: a.name,
+                  drug2Name: b.name,
+                  description: `FDA label evidence: ${hit.snippet}`,
+                  severity: severityFromEvidence(hit.snippet),
+                  source: 'FDA label (openFDA)',
+                  sourceMeta: { setId: aDoc.setId, labelFor: aDoc.labelFor }
+                });
+              }
+            }
+
+            if (bDoc?.text) {
+              const hit = findEvidenceSnippet(bDoc.text, getEvidenceNeedlesForMed(a));
+              if (hit) {
+                results.push({
+                  drug1Name: a.name,
+                  drug2Name: b.name,
+                  description: `FDA label evidence: ${hit.snippet}`,
+                  severity: severityFromEvidence(hit.snippet),
+                  source: 'FDA label (openFDA)',
+                  sourceMeta: { setId: bDoc.setId, labelFor: bDoc.labelFor }
+                });
+              }
+            }
+          }
+        }
+
+        return results;
+      }
+
       function checkLocalInteractionsFromDatabase(medications) {
         const interactionAliases = {
           // Common brands → generics
@@ -3224,7 +3423,7 @@
             const b = meds[j];
 
             dangerousInteractions.forEach(([drug1, drug2, warning]) => {
-              const isMatch = (matchToken(a, drug1) && matchToken(b, drug2)) || (matchToken(a, drug2) && matchToken(b, drug1));
+              const isMatch = (matchInteractionToken(a, drug1) && matchInteractionToken(b, drug2)) || (matchInteractionToken(a, drug2) && matchInteractionToken(b, drug1));
               if (!isMatch) return;
 
               const severity = warning.includes('🆘') || warning.includes('CRITICAL') || warning.includes('FATAL') || warning.includes('🚨')
@@ -3248,8 +3447,8 @@
         const seen = new Set();
         const unique = [];
         results.forEach(r => {
-          const k1 = `${normalize(r.drug1Name)}|${normalize(r.drug2Name)}|${normalize(r.description)}`;
-          const k2 = `${normalize(r.drug2Name)}|${normalize(r.drug1Name)}|${normalize(r.description)}`;
+          const k1 = `${normalizeInteraction(r.drug1Name)}|${normalizeInteraction(r.drug2Name)}|${normalizeInteraction(r.description)}`;
+          const k2 = `${normalizeInteraction(r.drug2Name)}|${normalizeInteraction(r.drug1Name)}|${normalizeInteraction(r.description)}`;
           if (seen.has(k1) || seen.has(k2)) return;
           seen.add(k1);
           unique.push(r);
@@ -3274,18 +3473,48 @@
             console.error('❌ Container not found!');
             return;
           }
+
+          const evidenceCheckbox = document.getElementById('useFdaEvidence');
+          const useFdaEvidence = !!(evidenceCheckbox && evidenceCheckbox.checked);
           
           // Show loading state
-          container.innerHTML = '<div class="insight" style="color:var(--text-secondary)">⏳ Checking interactions...</div>';
+          container.innerHTML = `<div class="insight" style="color:var(--text-secondary)">⏳ Checking interactions${useFdaEvidence ? ' (local + FDA label evidence)…' : '…'}</div>`;
           
           // Check for interactions
           console.log('📡 Calling checkDrugInteractions...');
-          const interactions = await checkDrugInteractions(definitions);
+          const localPromise = checkDrugInteractions(definitions);
+          const evidencePromise = useFdaEvidence ? checkFdaLabelEvidenceInteractions(definitions) : Promise.resolve([]);
+          const [localInteractions, fdaEvidenceInteractions] = await Promise.all([localPromise, evidencePromise]);
           if (checkId !== lastInteractionCheckId) return; // newer check already started
-          console.log(`📦 Received ${interactions.length} interactions`);
+          const interactions = [...(localInteractions || []), ...(fdaEvidenceInteractions || [])];
+          console.log(`📦 Received ${interactions.length} interactions (${(localInteractions || []).length} local, ${(fdaEvidenceInteractions || []).length} FDA)`);
+
+          // Deduplicate by pair + description + source
+          const seen = new Set();
+          const deduped = [];
+          (interactions || []).forEach(i => {
+            const a = normalizeInteraction(i.drug1Name);
+            const b = normalizeInteraction(i.drug2Name);
+            const d = normalizeInteraction(i.description);
+            const s = normalizeInteraction(i.source);
+            const k1 = `${a}|${b}|${d}|${s}`;
+            const k2 = `${b}|${a}|${d}|${s}`;
+            if (seen.has(k1) || seen.has(k2)) return;
+            seen.add(k1);
+            deduped.push(i);
+          });
+
+          const severityRank = (sev) => {
+            const s = String(sev || '').toUpperCase();
+            if (s.includes('HIGH') || s.includes('SEVERE') || s.includes('MAJOR')) return 3;
+            if (s.includes('MODERATE')) return 2;
+            if (s.includes('MINOR') || s.includes('LOW')) return 1;
+            return 0;
+          };
+          deduped.sort((x, y) => severityRank(y.severity) - severityRank(x.severity));
           
-          if (!interactions || interactions.length === 0) {
-            container.innerHTML = '<div class="insight positive">✅ No interactions found in the local database for your current list. This does not guarantee safety—always confirm with a clinician/pharmacist.</div>';
+          if (!deduped || deduped.length === 0) {
+            container.innerHTML = `<div class="insight positive">✅ No interactions found${useFdaEvidence ? ' in the local screening rules or FDA label evidence' : ' in the local database'} for your current list. This does not guarantee safety—always confirm with a clinician/pharmacist.</div>`;
             return;
           }
           
@@ -3304,8 +3533,15 @@
             return { color: '#64748b', bg: '#f8fafc', icon: 'ℹ️', label: 'INFO' };
           };
           
-          container.innerHTML = interactions.map(i => {
+          container.innerHTML = deduped.map(i => {
             const style = getSeverityStyle(i.severity);
+            const meta = i.sourceMeta || {};
+            const fdaLink = meta.setId
+              ? `https://api.fda.gov/drug/label.json?search=set_id:%22${encodeURIComponent(meta.setId)}%22&limit=1`
+              : '';
+            const metaBits = [];
+            if (meta.labelFor) metaBits.push(String(meta.labelFor));
+            if (meta.setId) metaBits.push(`set_id: ${String(meta.setId)}`);
             return `
               <div style="background:${style.bg};border:2px solid ${style.color};border-radius:var(--radius);padding:1rem;margin-bottom:1rem">
                 <div style="display:flex;align-items:flex-start;gap:0.75rem;margin-bottom:0.75rem">
@@ -3323,7 +3559,7 @@
                   ${i.description}
                 </div>
                 <div style="margin-top:0.625rem;margin-left:2.25rem;font-size:0.75rem;color:#64748b">
-                  Source: ${i.source}
+                  Source: ${i.source}${metaBits.length ? ` • ${metaBits.join(' • ')}` : ''}${fdaLink ? ` • <a href="${fdaLink}" target="_blank" rel="noopener">view label JSON</a>` : ''}
                 </div>
               </div>
             `;
@@ -4935,6 +5171,7 @@
     migrateMedicationTypes(); // Run migration
     
     generateTodaysDoses(); // Auto-generate today's pending doses
+    initInteractionPreferences();
     initTheme();
     displayTip();
     loadMoodHistory();
