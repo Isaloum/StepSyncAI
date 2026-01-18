@@ -1452,7 +1452,10 @@
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
           <div class="card-title">⚠️ Drug Interaction Warnings</div>
-          <button class="btn" onclick="checkInteractions()" style="font-size:0.8125rem;padding:0.375rem 0.75rem">🔄 Check Now</button>
+          <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;justify-content:flex-end">
+            <button class="btn" id="toggleFdaEvidence" onclick="toggleFdaEvidence()" aria-pressed="false" style="font-size:0.8125rem;padding:0.375rem 0.75rem">FDA citations: OFF</button>
+            <button class="btn" onclick="checkInteractions()" style="font-size:0.8125rem;padding:0.375rem 0.75rem">🔄 Check Now</button>
+          </div>
         </div>
         <div style="margin-bottom:0.75rem;padding:0.75rem;background:var(--bg-subtle);border-radius:var(--radius-sm);font-size:0.8125rem;color:var(--text-secondary)">
           <strong>ℹ️ Screening tool (not medical advice):</strong> Use this to surface potential issues to discuss with a clinician/pharmacist. It is not exhaustive and does not guarantee safety.
@@ -1461,15 +1464,6 @@
           </div>
         </div>
 
-        <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem">
-          <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.8125rem;color:var(--text-secondary)">
-            <input type="checkbox" id="useFdaEvidence">
-            Show FDA label excerpts (details)
-          </label>
-          <div style="font-size:0.75rem;color:var(--text-muted)">
-            Less clutter when off. When on, shows citations from FDA labeling text via openFDA.
-          </div>
-        </div>
         <div id="interactionWarnings">
           <div class="insight" style="color:var(--text-secondary)">⏳ Checking for drug interactions...</div>
         </div>
@@ -1908,7 +1902,7 @@
       // Register Service Worker with update notification
       // NOTE: GitHub Pages/CDNs can aggressively cache `service-worker.js`.
       // Adding a version query param ensures clients fetch the latest SW script.
-      const SW_VERSION = 'mindtrack-v8-2026-01-16';
+      const SW_VERSION = 'mindtrack-v9-2026-01-17';
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
           navigator.serviceWorker.register(`service-worker.js?v=${encodeURIComponent(SW_VERSION)}`)
@@ -3136,25 +3130,43 @@
 
       const INTERACTION_PREF_KEY = 'mindtrack_interactions_useFdaEvidence';
 
+      function getUseFdaEvidence() {
+        return localStorage.getItem(INTERACTION_PREF_KEY) === '1';
+      }
+
+      function setUseFdaEvidence(on) {
+        localStorage.setItem(INTERACTION_PREF_KEY, on ? '1' : '0');
+      }
+
+      function syncFdaEvidenceToggleUi() {
+        const btn = document.getElementById('toggleFdaEvidence');
+        if (!btn) return;
+        const on = getUseFdaEvidence();
+        btn.textContent = on ? 'FDA citations: ON' : 'FDA citations: OFF';
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        btn.title = on
+          ? 'Disable FDA label citations (openFDA)'
+          : 'Enable FDA label citations (openFDA)';
+      }
+
+      function toggleFdaEvidence() {
+        setUseFdaEvidence(!getUseFdaEvidence());
+        syncFdaEvidenceToggleUi();
+        // Auto-refresh results so the user doesn't have to press “Check Now”.
+        checkInteractions();
+      }
+
       function initInteractionPreferences() {
-        const checkbox = document.getElementById('useFdaEvidence');
-        if (!checkbox) return;
-        const saved = localStorage.getItem(INTERACTION_PREF_KEY);
         // Default OFF to reduce decision fatigue and network latency.
-        // Users can opt-in (and we persist their choice).
-        if (saved !== null) checkbox.checked = saved === '1';
-        else checkbox.checked = false;
-        checkbox.addEventListener('change', () => {
-          localStorage.setItem(INTERACTION_PREF_KEY, checkbox.checked ? '1' : '0');
-        });
+        if (localStorage.getItem(INTERACTION_PREF_KEY) === null) {
+          localStorage.setItem(INTERACTION_PREF_KEY, '0');
+        }
+        syncFdaEvidenceToggleUi();
       }
 
       function enableFdaEvidenceAndRecheck() {
-        const checkbox = document.getElementById('useFdaEvidence');
-        if (checkbox) {
-          checkbox.checked = true;
-          localStorage.setItem(INTERACTION_PREF_KEY, '1');
-        }
+        setUseFdaEvidence(true);
+        syncFdaEvidenceToggleUi();
         checkInteractions();
       }
 
@@ -3592,11 +3604,29 @@
             return;
           }
 
-          const evidenceCheckbox = document.getElementById('useFdaEvidence');
-          const useFdaEvidence = !!(evidenceCheckbox && evidenceCheckbox.checked);
+          const useFdaEvidence = getUseFdaEvidence();
+          syncFdaEvidenceToggleUi();
+
+          const medsForScan = (definitions || []).filter(m => m && m.name);
+          const medsCount = medsForScan.length;
+          const pairCount = Math.max(0, (medsCount * (medsCount - 1)) / 2);
+          const evidenceMedsCount = medsForScan.filter(m => {
+            const t = String(m?.type || '').toLowerCase().trim();
+            return t === 'prescription' || t === 'otc' || !t;
+          }).length;
+          const evidencePairCount = Math.max(0, (evidenceMedsCount * (evidenceMedsCount - 1)) / 2);
+
+          const scanSummaryText = useFdaEvidence
+            ? `Scanned ${medsCount} item(s) → ${pairCount} pair(s) (pairwise screening). FDA label citations fetched for ${evidenceMedsCount} med(s) → ${evidencePairCount} pair(s).`
+            : `Scanned ${medsCount} item(s) → ${pairCount} pair(s) (pairwise screening).`;
+          const scanSummaryHtml = `
+            <div style="margin-bottom:0.75rem;padding:0.5rem 0.75rem;border-radius:var(--radius-sm);background:rgba(100,116,139,0.08);border:1px solid rgba(100,116,139,0.20);color:#0f172a;font-size:0.8125rem">
+              ${scanSummaryText}
+            </div>
+          `;
           
           // Show loading state
-          container.innerHTML = `<div class="insight" style="color:var(--text-secondary)">⏳ Checking interactions${useFdaEvidence ? ' (local + FDA label citations)…' : '…'}</div>`;
+          container.innerHTML = `${scanSummaryHtml}<div class="insight" style="color:var(--text-secondary)">⏳ Checking interactions${useFdaEvidence ? ' (local + FDA label citations)…' : '…'}</div>`;
           
           // Check for interactions
           console.log('📡 Calling checkDrugInteractions...');
@@ -3667,7 +3697,7 @@
           mergedPairs.sort((x, y) => severityRank(y.severity) - severityRank(x.severity));
           
           if (!mergedPairs || mergedPairs.length === 0) {
-            container.innerHTML = `<div class="insight positive">✅ No interactions found${useFdaEvidence ? ' in local screening rules or FDA label citations' : ' in the local database'} for your current list. This does not guarantee safety—always confirm with a clinician/pharmacist.</div>`;
+            container.innerHTML = `${scanSummaryHtml}<div class="insight positive">✅ No interactions found${useFdaEvidence ? ' in local screening rules or FDA label citations' : ' in the local database'} for your current list. This does not guarantee safety—always confirm with a clinician/pharmacist.</div>`;
             return;
           }
           
@@ -3686,18 +3716,7 @@
             return { color: '#64748b', bg: '#f8fafc', icon: 'ℹ️', label: 'INFO' };
           };
           
-          const citationsBanner = !useFdaEvidence
-            ? `
-              <div style="margin-bottom:0.75rem;padding:0.75rem;border-radius:var(--radius-sm);background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);color:#0f172a;display:flex;align-items:center;justify-content:space-between;gap:0.75rem;flex-wrap:wrap">
-                <div style="font-size:0.8125rem">
-                  <strong>Want citations?</strong> Show FDA labeling text excerpts via openFDA (public data).
-                </div>
-                <button class="btn" onclick="enableFdaEvidenceAndRecheck()" style="font-size:0.8125rem;padding:0.375rem 0.75rem">Show FDA label citations</button>
-              </div>
-            `
-            : '';
-
-          container.innerHTML = citationsBanner + mergedPairs.map(p => {
+          container.innerHTML = scanSummaryHtml + mergedPairs.map(p => {
             const style = getSeverityStyle(p.severity);
 
             const categorizeSource = (source) => {
@@ -3723,13 +3742,13 @@
 
             const renderEvidenceItem = (e) => {
               const meta = e.sourceMeta || {};
-              const fdaLink = meta.setId
-                ? `https://api.fda.gov/drug/label.json?search=set_id:%22${encodeURIComponent(meta.setId)}%22&limit=1`
+              const dailyMedLink = meta.setId
+                ? `https://dailymed.nlm.nih.gov/dailymed/lookup.cfm?setid=${encodeURIComponent(meta.setId)}`
                 : '';
               const metaBits = [];
               if (meta.labelFor) metaBits.push(String(meta.labelFor));
               if (meta.setId) metaBits.push(`set_id: ${String(meta.setId)}`);
-              const sourceLine = `${metaBits.length ? `${metaBits.join(' • ')}` : ''}${fdaLink ? `${metaBits.length ? ' • ' : ''}<a href=\"${fdaLink}\" target=\"_blank\" rel=\"noopener\">view label JSON</a>` : ''}`;
+              const sourceLine = `${metaBits.length ? `${metaBits.join(' • ')}` : ''}${dailyMedLink ? `${metaBits.length ? ' • ' : ''}<a href=\"${dailyMedLink}\" target=\"_blank\" rel=\"noopener\">View FDA label (DailyMed)</a>` : ''}`;
 
               return `
                 <div style="margin-top:0.5rem">

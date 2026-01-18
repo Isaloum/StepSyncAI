@@ -164,6 +164,21 @@ class BackupManager {
         const { limit = 10, tags = [] } = options;
 
         try {
+            const getBackupCounterFromId = (id) => {
+                const m = String(id || '').match(/-(\d+)$/);
+                return m ? parseInt(m[1], 10) : 0;
+            };
+
+            const compareBackupsNewestFirst = (a, b) => {
+                const t = new Date(b.timestamp) - new Date(a.timestamp);
+                if (t !== 0) return t;
+                // If timestamps collide (same ms), break ties deterministically using the numeric counter
+                // embedded at the end of our backupId: backup-<timestamp>-<counter>
+                const c = getBackupCounterFromId(b.id) - getBackupCounterFromId(a.id);
+                if (c !== 0) return c;
+                return String(b.id || '').localeCompare(String(a.id || ''));
+            };
+
             const backups = [];
             const entries = fs.readdirSync(this.backupDir);
 
@@ -179,7 +194,7 @@ class BackupManager {
                     : registryBackups;
 
                 // Sort by timestamp (newest first)
-                filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                filtered.sort(compareBackupsNewestFirst);
 
                 return filtered.slice(0, limit);
             }
@@ -213,7 +228,7 @@ class BackupManager {
             }
 
             // Sort by timestamp (newest first)
-            backups.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            backups.sort(compareBackupsNewestFirst);
 
             return backups.slice(0, limit);
 
