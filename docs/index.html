@@ -1453,14 +1453,14 @@
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
           <div class="card-title">⚠️ Drug Interaction Warnings</div>
           <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;justify-content:flex-end">
-            <button class="btn" id="toggleFdaEvidence" onclick="toggleFdaEvidence()" aria-pressed="false" style="font-size:0.8125rem;padding:0.375rem 0.75rem">FDA citations: OFF</button>
-            <button class="btn" onclick="checkInteractions()" style="font-size:0.8125rem;padding:0.375rem 0.75rem">🔄 Check Now</button>
+            <button class="btn" id="toggleFdaEvidence" onclick="toggleFdaEvidence()" aria-pressed="false" style="font-size:0.8125rem;padding:0.375rem 0.75rem">FDA label scan: OFF</button>
+            <button class="btn" onclick="checkInteractions()" title="Force an immediate re-scan (auto-refresh also runs when your list changes)" style="font-size:0.8125rem;padding:0.375rem 0.75rem">🔄 Re-scan</button>
           </div>
         </div>
         <div style="margin-bottom:0.75rem;padding:0.75rem;background:var(--bg-subtle);border-radius:var(--radius-sm);font-size:0.8125rem;color:var(--text-secondary)">
           <strong>ℹ️ Screening tool (not medical advice):</strong> Use this to surface potential issues to discuss with a clinician/pharmacist. It is not exhaustive and does not guarantee safety.
           <div style="margin-top:0.375rem;font-size:0.75rem;color:var(--text-muted)">
-            Transparency: When enabled, we cite publicly available FDA drug labeling text via <a href="https://open.fda.gov/" target="_blank" rel="noopener">openFDA</a>. This app is <strong>not affiliated with or endorsed by the FDA</strong>.
+            Expanded scan: When enabled, we also scan publicly available FDA drug labeling text via <a href="https://open.fda.gov/" target="_blank" rel="noopener">openFDA</a> (slower, may find additional interactions beyond the local rules). This app is <strong>not affiliated with or endorsed by the FDA</strong>.
           </div>
         </div>
 
@@ -1902,7 +1902,7 @@
       // Register Service Worker with update notification
       // NOTE: GitHub Pages/CDNs can aggressively cache `service-worker.js`.
       // Adding a version query param ensures clients fetch the latest SW script.
-      const SW_VERSION = 'mindtrack-v9-2026-01-17';
+      const SW_VERSION = 'mindtrack-v12-2026-01-18';
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
           navigator.serviceWorker.register(`service-worker.js?v=${encodeURIComponent(SW_VERSION)}`)
@@ -3142,18 +3142,34 @@
         const btn = document.getElementById('toggleFdaEvidence');
         if (!btn) return;
         const on = getUseFdaEvidence();
-        btn.textContent = on ? 'FDA citations: ON' : 'FDA citations: OFF';
+        btn.textContent = on ? 'FDA label scan: ON' : 'FDA label scan: OFF';
         btn.setAttribute('aria-pressed', on ? 'true' : 'false');
         btn.title = on
-          ? 'Disable FDA label citations (openFDA)'
-          : 'Enable FDA label citations (openFDA)';
+          ? 'Disable expanded FDA label scan (openFDA)'
+          : 'Enable expanded FDA label scan (openFDA)';
+      }
+
+      // Auto-refresh interaction checks after any list change.
+      // Debounced to avoid spamming openFDA network calls while typing/adding/removing.
+      let interactionRecheckTimer = null;
+      function scheduleInteractionRecheck(reason) {
+        const useFdaEvidence = getUseFdaEvidence();
+        const delayMs = useFdaEvidence ? 900 : 250;
+        if (interactionRecheckTimer) {
+          clearTimeout(interactionRecheckTimer);
+        }
+        interactionRecheckTimer = setTimeout(() => {
+          interactionRecheckTimer = null;
+          console.log(`🔁 Auto interaction refresh${reason ? ` (${reason})` : ''}`);
+          checkInteractions();
+        }, delayMs);
       }
 
       function toggleFdaEvidence() {
         setUseFdaEvidence(!getUseFdaEvidence());
         syncFdaEvidenceToggleUi();
         // Auto-refresh results so the user doesn't have to press “Check Now”.
-        checkInteractions();
+        scheduleInteractionRecheck('toggle-fda');
       }
 
       function initInteractionPreferences() {
@@ -3167,7 +3183,7 @@
       function enableFdaEvidenceAndRecheck() {
         setUseFdaEvidence(true);
         syncFdaEvidenceToggleUi();
-        checkInteractions();
+        scheduleInteractionRecheck('enable-fda');
       }
 
       const INTERACTION_ALIASES = {
@@ -3585,6 +3601,36 @@
 
       // UI: Check and display drug interactions
       let lastInteractionCheckId = 0;
+      let lastFdaEvidenceSnapshot = null;
+      const FDA_EVIDENCE_CACHE_KEY = 'mindtrack_interactions_lastFdaEvidenceSnapshot';
+
+      function readCachedFdaEvidenceSnapshot() {
+        try {
+          const raw = localStorage.getItem(FDA_EVIDENCE_CACHE_KEY);
+          if (!raw) return null;
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== 'object') return null;
+          if (!parsed.medsKey || !Array.isArray(parsed.results)) return null;
+          return parsed;
+        } catch {
+          return null;
+        }
+      }
+
+      function writeCachedFdaEvidenceSnapshot(snapshot) {
+        try {
+          if (!snapshot || typeof snapshot !== 'object') return;
+          // Avoid runaway storage: keep only a reasonable number of evidence entries.
+          const trimmed = {
+            medsKey: snapshot.medsKey,
+            savedAt: snapshot.savedAt || Date.now(),
+            results: (snapshot.results || []).slice(0, 80)
+          };
+          localStorage.setItem(FDA_EVIDENCE_CACHE_KEY, JSON.stringify(trimmed));
+        } catch {
+          // Ignore quota/serialization errors.
+        }
+      }
 
       async function checkInteractions() {
         console.log('🔵 checkInteractions() called');
@@ -3608,6 +3654,10 @@
           syncFdaEvidenceToggleUi();
 
           const medsForScan = (definitions || []).filter(m => m && m.name);
+          const medsKey = medsForScan
+            .map(m => `${normalizeInteraction(m.name)}|${String(m?.type || '').toLowerCase().trim()}`)
+            .sort()
+            .join('||');
           const medsCount = medsForScan.length;
           const pairCount = Math.max(0, (medsCount * (medsCount - 1)) / 2);
           const evidenceMedsCount = medsForScan.filter(m => {
@@ -3616,9 +3666,23 @@
           }).length;
           const evidencePairCount = Math.max(0, (evidenceMedsCount * (evidenceMedsCount - 1)) / 2);
 
+          const cachedSnapshot = readCachedFdaEvidenceSnapshot();
+          const savedFdaEvidence = (!useFdaEvidence)
+            ? (
+                (lastFdaEvidenceSnapshot && lastFdaEvidenceSnapshot.medsKey === medsKey)
+                  ? (lastFdaEvidenceSnapshot.results || [])
+                  : (cachedSnapshot && cachedSnapshot.medsKey === medsKey)
+                    ? (cachedSnapshot.results || [])
+                    : []
+              )
+            : [];
+          const hasSavedFdaEvidence = savedFdaEvidence.length > 0;
+
           const scanSummaryText = useFdaEvidence
-            ? `Scanned ${medsCount} item(s) → ${pairCount} pair(s) (pairwise screening). FDA label citations fetched for ${evidenceMedsCount} med(s) → ${evidencePairCount} pair(s).`
-            : `Scanned ${medsCount} item(s) → ${pairCount} pair(s) (pairwise screening).`;
+            ? `Scanned ${medsCount} item(s) → ${pairCount} pair(s) (pairwise screening). FDA label scan enabled for ${evidenceMedsCount} med(s) → ${evidencePairCount} pair(s).`
+            : hasSavedFdaEvidence
+              ? `Scanned ${medsCount} item(s) → ${pairCount} pair(s) (pairwise screening). Showing saved FDA label scan warnings (details hidden).`
+              : `Scanned ${medsCount} item(s) → ${pairCount} pair(s) (pairwise screening).`;
           const scanSummaryHtml = `
             <div style="margin-bottom:0.75rem;padding:0.5rem 0.75rem;border-radius:var(--radius-sm);background:rgba(100,116,139,0.08);border:1px solid rgba(100,116,139,0.20);color:#0f172a;font-size:0.8125rem">
               ${scanSummaryText}
@@ -3626,7 +3690,7 @@
           `;
           
           // Show loading state
-          container.innerHTML = `${scanSummaryHtml}<div class="insight" style="color:var(--text-secondary)">⏳ Checking interactions${useFdaEvidence ? ' (local + FDA label citations)…' : '…'}</div>`;
+          container.innerHTML = `${scanSummaryHtml}<div class="insight" style="color:var(--text-secondary)">⏳ Checking interactions${useFdaEvidence ? ' (local + FDA label scan)…' : hasSavedFdaEvidence ? ' (local + saved FDA warnings)…' : '…'}</div>`;
           
           // Check for interactions
           console.log('📡 Calling checkDrugInteractions...');
@@ -3634,8 +3698,18 @@
           const evidencePromise = useFdaEvidence ? checkFdaLabelEvidenceInteractions(definitions) : Promise.resolve([]);
           const [localInteractions, fdaEvidenceInteractions] = await Promise.all([localPromise, evidencePromise]);
           if (checkId !== lastInteractionCheckId) return; // newer check already started
-          const interactions = [...(localInteractions || []), ...(fdaEvidenceInteractions || [])];
-          console.log(`📦 Received ${interactions.length} interactions (${(localInteractions || []).length} local, ${(fdaEvidenceInteractions || []).length} FDA)`);
+          if (useFdaEvidence) {
+            lastFdaEvidenceSnapshot = {
+              medsKey,
+              savedAt: Date.now(),
+              results: (fdaEvidenceInteractions || [])
+            };
+            writeCachedFdaEvidenceSnapshot(lastFdaEvidenceSnapshot);
+          }
+
+          const fdaForDisplay = useFdaEvidence ? (fdaEvidenceInteractions || []) : savedFdaEvidence;
+          const interactions = [...(localInteractions || []), ...fdaForDisplay];
+          console.log(`📦 Received ${interactions.length} interactions (${(localInteractions || []).length} local, ${fdaForDisplay.length} FDA ${useFdaEvidence ? 'fetched' : 'saved'})`);
 
           const severityRank = (sev) => {
             const s = String(sev || '').toUpperCase();
@@ -3675,7 +3749,8 @@
                 description: i.description,
                 source: i.source,
                 severity: i.severity,
-                sourceMeta: i.sourceMeta || null
+                sourceMeta: i.sourceMeta || null,
+                isFdaEvidence: String(i.source || '').toLowerCase().includes('fda')
               });
             }
 
@@ -3718,6 +3793,7 @@
           
           container.innerHTML = scanSummaryHtml + mergedPairs.map(p => {
             const style = getSeverityStyle(p.severity);
+            const hideFdaEvidenceDetails = !useFdaEvidence;
 
             const categorizeSource = (source) => {
               const s = String(source || '').toLowerCase();
@@ -3770,6 +3846,21 @@
 
               // Make FDA evidence collapsible so it doesn't look like multiple duplicate warnings.
               if (groupName.toLowerCase().includes('fda')) {
+                if (hideFdaEvidenceDetails) {
+                  return `
+                    <div style="margin-top:0.75rem">
+                      <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+                        <div style="display:inline-block;background:${groupStyle.color};color:#fff;padding:0.125rem 0.5rem;border-radius:4px;font-size:0.6875rem;font-weight:700;letter-spacing:0.5px">
+                          ${groupStyle.label}
+                        </div>
+                        <div style="font-size:0.875rem;font-weight:600;color:#0f172a">FDA label scan warning (saved)</div>
+                      </div>
+                      <div style="margin-top:0.5rem;color:#334155;font-size:0.875rem;line-height:1.6">
+                        FDA label scan previously flagged this pair. Enable <strong>FDA label scan</strong> to view the excerpt(s).
+                      </div>
+                    </div>
+                  `;
+                }
                 return `
                   <details style="margin-top:0.75rem">
                     <summary style="cursor:pointer;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;color:#0f172a">
@@ -3815,7 +3906,10 @@
                   ${evidenceHtml}
                 </div>
                 <div style="margin-top:0.75rem;margin-left:2.25rem;font-size:0.75rem;color:#64748b">
-                  Combined sources: ${(p.sources || []).join(' • ')}
+                  Combined sources: ${(p.sources || []).map(src => {
+                    if (hideFdaEvidenceDetails && String(src || '').toLowerCase().includes('fda')) return 'FDA label scan (saved)';
+                    return src;
+                  }).join(' • ')}
                 </div>
               </div>
             `;
@@ -4079,6 +4173,7 @@
           asNeeded: false
         }));
         DB.set('medicationDefinitions', definitions);
+        scheduleInteractionRecheck('migrate-meds');
         
         // Clear old medications array
         DB.set('medications', []);
@@ -4400,6 +4495,7 @@
                 medToUpdate.rxcui = rxcuiResult;
                 DB.set('medicationDefinitions', updatedDefinitions);
                 console.log(`✅ Added RxCUI ${medToUpdate.rxcui} for ${name}`);
+                scheduleInteractionRecheck('rxcui-updated');
               }
             } else {
               console.warn(`⚠️ No RxCUI found for ${name}`);
@@ -4435,7 +4531,7 @@
       loadMedications();
       loadMedicationHistory(); // Update history view
       loadSupplements();
-      checkInteractions(); // Initial check with existing RxCUI codes
+      scheduleInteractionRecheck('add-med');
 
       // Scroll to medication list to show it was added
       setTimeout(() => {
@@ -4614,6 +4710,7 @@
       loadMedications();
       loadSupplements();
       updateDashboard();
+      scheduleInteractionRecheck('delete-med');
     }
     
     function deleteSupplement(id) {
@@ -4622,7 +4719,7 @@
       DB.set('medicationDefinitions', definitions);
       loadSupplements();
       loadMedications();
-      checkInteractions();
+      scheduleInteractionRecheck('delete-supplement');
     }
 
     // Mark medication as taken
@@ -4685,7 +4782,7 @@
       DB.set('medicationLogs', logs);
       
       loadMedications();
-      checkInteractions();
+      scheduleInteractionRecheck('delete-med');
     }
 
     // ============================================
@@ -4846,6 +4943,13 @@
 
     // Comprehensive drug interaction database (100+ interactions)
     const dangerousInteractions = [
+      // ===== COMMON SPECIFIC PAIRS (high-value, safety-critical) =====
+      ['allopurinol', 'azathioprine', '🚨 CRITICAL: Allopurinol can dangerously increase azathioprine levels (severe bone marrow suppression/toxicity risk). Avoid combination or require major dose reduction and close monitoring per clinician.'],
+      ['hydrochlorothiazide', 'lithium', '⚠️ Lithium toxicity risk: thiazide diuretics (e.g., hydrochlorothiazide) can increase lithium levels. Avoid or monitor lithium levels closely per clinician.'],
+      ['ketoconazole', 'tacrolimus', '🚨 CRITICAL: Ketoconazole (strong CYP3A4 inhibitor) can dangerously increase tacrolimus levels. Requires dose adjustment/close monitoring per transplant team/clinician.'],
+      ['ketoconazole', 'midazolam', '🚨 CRITICAL: Ketoconazole can greatly increase midazolam levels, causing excessive sedation/respiratory depression. Avoid or adjust under medical supervision.'],
+      ['tacrolimus', 'midazolam', '⚠️ Possible increased sedation/side effects when tacrolimus is combined with midazolam. Use caution and monitor.'],
+
       // ===== CLASS-BASED HIGH-VALUE RULES (scales to many meds) =====
       // Anticoagulants / antiplatelets / NSAIDs
       ['anticoagulant', 'nsaid', '🚨 CRITICAL: Bleeding risk increases significantly when blood thinners are combined with NSAIDs. Avoid unless clinician approves.'],
@@ -5465,6 +5569,7 @@
       
       if (migrated) {
         DB.set('medicationDefinitions', definitions);
+        scheduleInteractionRecheck('migrate-types');
         console.log('✅ Medication types migrated successfully');
       }
     }
