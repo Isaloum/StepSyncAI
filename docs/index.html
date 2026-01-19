@@ -5036,11 +5036,7 @@
       ['amlodipine', 'grapefruit', '⚠️ Grapefruit increases drug levels - low BP risk'],
       ['losartan', 'potassium', '🚨 Hyperkalemia risk - monitor potassium levels'],
       
-      // Calcium Channel Blockers + Beta Blockers
-      ['verapamil', 'metoprolol', '🚨 CRITICAL: Severe bradycardia (slow heart rate) and heart block risk - requires close cardiac monitoring'],
-      ['verapamil', 'atenolol', '🚨 CRITICAL: Severe bradycardia and heart block risk - avoid combination'],
-      ['diltiazem', 'metoprolol', '🚨 CRITICAL: Severe bradycardia and heart block risk - avoid combination'],
-      ['diltiazem', 'atenolol', '🚨 CRITICAL: Severe bradycardia and heart block risk - avoid combination'],
+      // Calcium Channel Blockers + Beta Blockers (class-based rule covers ALL combinations)
       ['calcium_channel_blocker', 'beta_blocker', '🚨 CRITICAL: Severe bradycardia (dangerously slow heart rate) and heart block risk when combining calcium channel blockers with beta blockers. Requires close medical monitoring - do NOT start this combination without physician approval.'],
       
       // Antidepressants (Critical)
