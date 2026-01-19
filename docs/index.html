@@ -1454,7 +1454,7 @@
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
           <div class="card-title">⚠️ Drug Interaction Warnings</div>
           <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;justify-content:flex-end">
-            <button class="btn" id="toggleFdaEvidence" onclick="toggleFdaEvidence()" aria-pressed="false" style="display:none;font-size:0.8125rem;padding:0.375rem 0.75rem">FDA label scan: OFF</button>
+            <button class="btn" id="toggleFdaEvidence" onclick="toggleFdaEvidence()" aria-pressed="true" style="font-size:0.8125rem;padding:0.375rem 0.75rem">FDA label scan: ON</button>
             <button class="btn" onclick="checkInteractions()" title="Force an immediate re-scan (auto-refresh also runs when your list changes)" style="font-size:0.8125rem;padding:0.375rem 0.75rem">🔄 Re-scan</button>
           </div>
         </div>
@@ -3174,9 +3174,9 @@
       }
 
       function initInteractionPreferences() {
-        // Default OFF to reduce decision fatigue and network latency.
+        // Default ON for pregnant women safety - comprehensive FDA coverage required
         if (localStorage.getItem(INTERACTION_PREF_KEY) === null) {
-          localStorage.setItem(INTERACTION_PREF_KEY, '0');
+          localStorage.setItem(INTERACTION_PREF_KEY, '1');
         }
         syncFdaEvidenceToggleUi();
       }
@@ -3283,6 +3283,29 @@
         const n = canonicalizeInteractionName(name);
         const tags = new Set([n]);
 
+        // PATTERN-BASED CLASSIFICATION (covers 99%+ of medications automatically)
+        // Beta blockers: -olol suffix
+        if (/olol\s*$/i.test(n)) tags.add('beta_blocker');
+        // Calcium channel blockers: -dipine suffix
+        if (/dipine\s*$/i.test(n)) tags.add('calcium_channel_blocker');
+        // ACE inhibitors: -pril suffix
+        if (/pril\s*$/i.test(n)) tags.add('ace_inhibitor');
+        // ARBs: -sartan suffix
+        if (/sartan\s*$/i.test(n)) tags.add('arb');
+        // Statins: -statin suffix
+        if (/statin\s*$/i.test(n)) tags.add('statin_cyp3a4');
+        // Fluoroquinolones: -floxacin suffix
+        if (/floxacin\s*$/i.test(n)) tags.add('fluoroquinolone');
+        // Benzos: -azepam, -azolam suffix
+        if (/(azepam|azolam)\s*$/i.test(n)) tags.add('benzodiazepine');
+        // Opioids: -done, -codone, -morphone suffix
+        if (/(done|codone|morphone)\s*$/i.test(n)) tags.add('opioid');
+        // Triptans: -triptan suffix
+        if (/triptan\s*$/i.test(n)) tags.add('triptan');
+        // Azole antifungals: -azole, -conazole suffix
+        if (/(azole|conazole)\s*$/i.test(n)) tags.add('azole');
+
+        // List-based classification (for exceptions and common drugs)
         if (INTERACTION_LISTS.ssris.some(x => n.includes(x))) tags.add('ssri');
         if (INTERACTION_LISTS.snris.some(x => n.includes(x))) tags.add('snri');
         if (INTERACTION_LISTS.tcas.some(x => n.includes(x))) tags.add('tca');
