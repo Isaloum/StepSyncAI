@@ -3219,6 +3219,8 @@
         arbs: ['losartan', 'valsartan', 'candesartan', 'irbesartan', 'olmesartan'],
         potassiumSparingDiuretics: ['spironolactone', 'eplerenone', 'amiloride', 'triamterene', 'potassium sparing', 'potassium-sparing', 'potassium sparing diuretic', 'potassium sparing combinations diuretic'],
         diuretics: ['furosemide', 'torsemide', 'bumetanide', 'hydrochlorothiazide', 'chlorthalidone'],
+        betaBlockers: ['metoprolol', 'atenolol', 'propranolol', 'carvedilol', 'bisoprolol', 'labetalol', 'nebivolol', 'beta blocker', 'beta-blocker'],
+        calciumChannelBlockers: ['verapamil', 'diltiazem', 'amlodipine', 'nifedipine', 'felodipine', 'calcium channel blocker', 'calcium-channel blocker'],
 
         benzos: ['alprazolam', 'diazepam', 'lorazepam', 'clonazepam', 'temazepam', 'oxazepam', 'chlordiazepoxide'],
         zDrugs: ['zolpidem', 'zaleplon', 'eszopiclone'],
@@ -3294,6 +3296,8 @@
         if (INTERACTION_LISTS.arbs.some(x => n.includes(x))) tags.add('arb');
         if (INTERACTION_LISTS.potassiumSparingDiuretics.some(x => n.includes(x))) tags.add('potassium_sparing_diuretic');
         if (INTERACTION_LISTS.diuretics.some(x => n.includes(x))) tags.add('diuretic');
+        if (INTERACTION_LISTS.betaBlockers.some(x => n.includes(x))) tags.add('beta_blocker');
+        if (INTERACTION_LISTS.calciumChannelBlockers.some(x => n.includes(x))) tags.add('calcium_channel_blocker');
 
         if (INTERACTION_LISTS.benzos.some(x => n.includes(x))) tags.add('benzodiazepine');
         if (INTERACTION_LISTS.zDrugs.some(x => n.includes(x))) tags.add('z_drug');
@@ -5031,6 +5035,13 @@
       ['lisinopril', 'ibuprofen', '⚠️ NSAIDs reduce ACE inhibitor effectiveness'],
       ['amlodipine', 'grapefruit', '⚠️ Grapefruit increases drug levels - low BP risk'],
       ['losartan', 'potassium', '🚨 Hyperkalemia risk - monitor potassium levels'],
+      
+      // Calcium Channel Blockers + Beta Blockers
+      ['verapamil', 'metoprolol', '🚨 CRITICAL: Severe bradycardia (slow heart rate) and heart block risk - requires close cardiac monitoring'],
+      ['verapamil', 'atenolol', '🚨 CRITICAL: Severe bradycardia and heart block risk - avoid combination'],
+      ['diltiazem', 'metoprolol', '🚨 CRITICAL: Severe bradycardia and heart block risk - avoid combination'],
+      ['diltiazem', 'atenolol', '🚨 CRITICAL: Severe bradycardia and heart block risk - avoid combination'],
+      ['calcium_channel_blocker', 'beta_blocker', '🚨 CRITICAL: Severe bradycardia (dangerously slow heart rate) and heart block risk when combining calcium channel blockers with beta blockers. Requires close medical monitoring - do NOT start this combination without physician approval.'],
       
       // Antidepressants (Critical)
       ['ssri', 'maoi', '🚨 CRITICAL: Life-threatening serotonin syndrome - NEVER combine'],
