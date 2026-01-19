@@ -46,7 +46,7 @@ describe('EnhancedMedicationTracker (current API)', () => {
     expect(stored.name).toBe('Lisinopril');
   });
 
-  test('addMedication returns validationErrors when required fields missing', () => {
+  test('addMedication returns validationErrors when unit is missing', () => {
     const tracker = new EnhancedMedicationTracker({ enableAuditLog: false });
 
     const result = tracker.addMedication({

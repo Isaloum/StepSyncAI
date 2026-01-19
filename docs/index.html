@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Version: 2.1.0-phase1-ux-refresh - Updated: 2026-01-18 19:07 -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -1380,7 +1381,7 @@
           </div>
           <div class="form-group" id="medNameGroup" style="position:relative">
             <label>Name</label>
-            <input type="text" id="medName" placeholder="e.g., Aspirin" oninput="searchMedication()" autocomplete="off">
+            <input type="text" id="medName" placeholder="e.g., Aspirin" oninput="searchMedication(); showPregnancySection()" autocomplete="off">
             <div id="medSearchResults" style="display:none;position:absolute;z-index:10001;left:0;right:0;top:100%;margin-top:0.25rem">
               <div id="medSearchResultsList" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 4px 12px var(--shadow-md);max-height:200px;overflow-y:auto"></div>
             </div>
@@ -1401,8 +1402,8 @@
             </select>
           </div>
           
-          <!-- Pregnancy Safety Section -->
-          <div class="form-group" style="grid-column:1/-1;background:linear-gradient(135deg,#fff5f5,#ffe5e5);padding:1rem;border-radius:var(--radius-sm);border:1px solid #ffcccc">
+          <!-- Pregnancy Safety Section - Hidden by default, shown when medication name is entered -->
+          <div id="pregnancySection" class="form-group" style="display:none;grid-column:1/-1;background:linear-gradient(135deg,#fff5f5,#ffe5e5);padding:1rem;border-radius:var(--radius-sm);border:1px solid #ffcccc">
             <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem">
               <label style="margin:0;display:flex;align-items:center;gap:0.5rem;cursor:pointer">
                 <input type="checkbox" id="isPregnant" onchange="togglePregnancyFields()" style="width:18px;height:18px;cursor:pointer">
@@ -1453,7 +1454,7 @@
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
           <div class="card-title">⚠️ Drug Interaction Warnings</div>
           <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;justify-content:flex-end">
-            <button class="btn" id="toggleFdaEvidence" onclick="toggleFdaEvidence()" aria-pressed="false" style="font-size:0.8125rem;padding:0.375rem 0.75rem">FDA label scan: OFF</button>
+            <button class="btn" id="toggleFdaEvidence" onclick="toggleFdaEvidence()" aria-pressed="false" style="display:none;font-size:0.8125rem;padding:0.375rem 0.75rem">FDA label scan: OFF</button>
             <button class="btn" onclick="checkInteractions()" title="Force an immediate re-scan (auto-refresh also runs when your list changes)" style="font-size:0.8125rem;padding:0.375rem 0.75rem">🔄 Re-scan</button>
           </div>
         </div>
@@ -3214,9 +3215,9 @@
         antiplatelets: ['aspirin', 'clopidogrel', 'prasugrel', 'ticagrelor'],
         anticoagulants: ['warfarin', 'apixaban', 'rivaroxaban', 'dabigatran', 'edoxaban', 'heparin', 'enoxaparin'],
 
-        aceInhibitors: ['lisinopril', 'enalapril', 'ramipril', 'benazepril', 'captopril'],
+        aceInhibitors: ['lisinopril', 'enalapril', 'ramipril', 'benazepril', 'captopril', 'ace inhibitor', 'ace inhibitors'],
         arbs: ['losartan', 'valsartan', 'candesartan', 'irbesartan', 'olmesartan'],
-        potassiumSparingDiuretics: ['spironolactone', 'eplerenone', 'amiloride', 'triamterene'],
+        potassiumSparingDiuretics: ['spironolactone', 'eplerenone', 'amiloride', 'triamterene', 'potassium sparing', 'potassium-sparing', 'potassium sparing diuretic', 'potassium sparing combinations diuretic'],
         diuretics: ['furosemide', 'torsemide', 'bumetanide', 'hydrochlorothiazide', 'chlorthalidone'],
 
         benzos: ['alprazolam', 'diazepam', 'lorazepam', 'clonazepam', 'temazepam', 'oxazepam', 'chlordiazepoxide'],
@@ -3260,7 +3261,7 @@
         const n = normalizeInteraction(s);
         return n
           .replace(/\b\d+(?:\.\d+)?\s*(mg|mcg|µg|g|iu|units?|ml)\b/gi, ' ')
-          .replace(/[(),.;:]/g, ' ')
+          .replace(/[(),.;:\/]/g, ' ')
           .replace(/\s+/g, ' ')
           .trim();
       };
@@ -3678,11 +3679,7 @@
             : [];
           const hasSavedFdaEvidence = savedFdaEvidence.length > 0;
 
-          const scanSummaryText = useFdaEvidence
-            ? `Scanned ${medsCount} item(s) → ${pairCount} pair(s) (pairwise screening). FDA label scan enabled for ${evidenceMedsCount} med(s) → ${evidencePairCount} pair(s).`
-            : hasSavedFdaEvidence
-              ? `Scanned ${medsCount} item(s) → ${pairCount} pair(s) (pairwise screening). Showing saved FDA label scan warnings (details hidden).`
-              : `Scanned ${medsCount} item(s) → ${pairCount} pair(s) (pairwise screening).`;
+          const scanSummaryText = `✓ Checked ${medsCount} medication${medsCount !== 1 ? 's' : ''} for dangerous interactions`;
           const scanSummaryHtml = `
             <div style="margin-bottom:0.75rem;padding:0.5rem 0.75rem;border-radius:var(--radius-sm);background:rgba(100,116,139,0.08);border:1px solid rgba(100,116,139,0.20);color:#0f172a;font-size:0.8125rem">
               ${scanSummaryText}
@@ -3690,7 +3687,7 @@
           `;
           
           // Show loading state
-          container.innerHTML = `${scanSummaryHtml}<div class="insight" style="color:var(--text-secondary)">⏳ Checking interactions${useFdaEvidence ? ' (local + FDA label scan)…' : hasSavedFdaEvidence ? ' (local + saved FDA warnings)…' : '…'}</div>`;
+          container.innerHTML = `${scanSummaryHtml}<div class="insight" style="color:var(--text-secondary)">⏳ Checking for dangerous interactions…</div>`;
           
           // Check for interactions
           console.log('📡 Calling checkDrugInteractions...');
@@ -3772,7 +3769,7 @@
           mergedPairs.sort((x, y) => severityRank(y.severity) - severityRank(x.severity));
           
           if (!mergedPairs || mergedPairs.length === 0) {
-            container.innerHTML = `${scanSummaryHtml}<div class="insight positive">✅ No interactions found${useFdaEvidence ? ' in local screening rules or FDA label citations' : ' in the local database'} for your current list. This does not guarantee safety—always confirm with a clinician/pharmacist.</div>`;
+            container.innerHTML = `${scanSummaryHtml}<div class="insight positive">✅ No dangerous interactions found for your current medications. Always confirm with your healthcare provider.</div>`;
             return;
           }
           
@@ -3797,8 +3794,8 @@
 
             const categorizeSource = (source) => {
               const s = String(source || '').toLowerCase();
-              if (s.includes('local')) return 'Local screening rules';
-              if (s.includes('fda')) return 'FDA labeling text citation (openFDA)';
+              if (s.includes('local')) return 'Local Screening';
+              if (s.includes('fda')) return 'FDA Labeling (openFDA)';
               return source || 'Other';
             };
 
@@ -3824,7 +3821,7 @@
               const metaBits = [];
               if (meta.labelFor) metaBits.push(String(meta.labelFor));
               if (meta.setId) metaBits.push(`set_id: ${String(meta.setId)}`);
-              const sourceLine = `${metaBits.length ? `${metaBits.join(' • ')}` : ''}${dailyMedLink ? `${metaBits.length ? ' • ' : ''}<a href=\"${dailyMedLink}\" target=\"_blank\" rel=\"noopener\">View FDA label (DailyMed)</a>` : ''}`;
+              const sourceLine = `${metaBits.length ? `${metaBits.join(' • ')}` : ''}${dailyMedLink ? `${metaBits.length ? ' • ' : ''}<a href="${dailyMedLink}" target="_blank" rel="noopener">View FDA label (DailyMed)</a>` : ''}`;
 
               return `
                 <div style="margin-top:0.5rem">
@@ -3850,13 +3847,10 @@
                   return `
                     <div style="margin-top:0.75rem">
                       <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
-                        <div style="display:inline-block;background:${groupStyle.color};color:#fff;padding:0.125rem 0.5rem;border-radius:4px;font-size:0.6875rem;font-weight:700;letter-spacing:0.5px">
-                          ${groupStyle.label}
-                        </div>
-                        <div style="font-size:0.875rem;font-weight:600;color:#0f172a">FDA label scan warning (saved)</div>
+                        <div style="font-size:0.875rem;font-weight:600;color:#0f172a">FDA Labeling (Saved)</div>
                       </div>
                       <div style="margin-top:0.5rem;color:#334155;font-size:0.875rem;line-height:1.6">
-                        FDA label scan previously flagged this pair. Enable <strong>FDA label scan</strong> to view the excerpt(s).
+                        FDA scan previously flagged this pair. Enable <strong>FDA Label Scan</strong> to view details.
                       </div>
                     </div>
                   `;
@@ -3864,11 +3858,9 @@
                 return `
                   <details style="margin-top:0.75rem">
                     <summary style="cursor:pointer;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;color:#0f172a">
-                      <div style="display:inline-block;background:${groupStyle.color};color:#fff;padding:0.125rem 0.5rem;border-radius:4px;font-size:0.6875rem;font-weight:700;letter-spacing:0.5px">
-                        ${groupStyle.label}
-                      </div>
-                      <div style="font-size:0.875rem;font-weight:600">${groupName} (${count})</div>
-                      <div style="font-size:0.75rem;color:#64748b">Click to expand</div>
+                      <div style="font-size:0.875rem;font-weight:600">${groupName}</div>
+                      <div style="font-size:0.75rem;color:#64748b">(${count} citation${count === 1 ? '' : 's'})</div>
+                      <div style="font-size:0.75rem;color:#94a3b8">▼</div>
                     </summary>
                     <div style="margin-top:0.5rem">${inner}</div>
                   </details>
@@ -3879,10 +3871,8 @@
               return `
                 <div style="margin-top:0.75rem">
                   <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
-                    <div style="display:inline-block;background:${groupStyle.color};color:#fff;padding:0.125rem 0.5rem;border-radius:4px;font-size:0.6875rem;font-weight:700;letter-spacing:0.5px">
-                      ${groupStyle.label}
-                    </div>
                     <div style="font-size:0.875rem;font-weight:600;color:#0f172a">${groupName}</div>
+
                   </div>
                   <div style="margin-top:0.5rem">${inner}</div>
                 </div>
@@ -3890,26 +3880,20 @@
             }).join('');
 
             return `
-              <div style="background:${style.bg};border:2px solid ${style.color};border-radius:var(--radius);padding:1rem;margin-bottom:1rem">
+              <div style="background:${style.bg};border-left:6px solid ${style.color};border-radius:var(--radius);padding:1rem;margin-bottom:1rem;box-shadow:0 2px 4px rgba(0,0,0,0.1)">
                 <div style="display:flex;align-items:flex-start;gap:0.75rem;margin-bottom:0.75rem">
-                  <div style="flex-shrink:0;font-size:1.5rem">${style.icon}</div>
+                  <div style="flex-shrink:0;font-size:2rem;line-height:1">${style.icon}</div>
                   <div style="flex:1">
-                    <div style="font-weight:700;color:${style.color};font-size:0.9375rem;margin-bottom:0.375rem">
-                      ${p.drug1Name} + ${p.drug2Name}
-                    </div>
-                    <div style="display:inline-block;background:${style.color};color:#fff;padding:0.125rem 0.5rem;border-radius:4px;font-size:0.6875rem;font-weight:700;letter-spacing:0.5px">
+                    <div style="display:inline-block;background:${style.color};color:#fff;padding:0.25rem 0.625rem;border-radius:4px;font-size:0.6875rem;font-weight:700;letter-spacing:0.5px;margin-bottom:0.5rem">
                       ${style.label}
+                    </div>
+                    <div style="font-weight:700;color:#0f172a;font-size:1rem;line-height:1.4">
+                      ${p.drug1Name} + ${p.drug2Name}
                     </div>
                   </div>
                 </div>
-                <div style="margin-left:2.25rem">
+                <div style="margin-left:3rem">
                   ${evidenceHtml}
-                </div>
-                <div style="margin-top:0.75rem;margin-left:2.25rem;font-size:0.75rem;color:#64748b">
-                  Combined sources: ${(p.sources || []).map(src => {
-                    if (hideFdaEvidenceDetails && String(src || '').toLowerCase().includes('fda')) return 'FDA label scan (saved)';
-                    return src;
-                  }).join(' • ')}
                 </div>
               </div>
             `;
@@ -4229,6 +4213,21 @@
       });
       
       DB.set('medicationLogs', logs);
+    }
+
+    // Show pregnancy section when user starts entering medication
+    function showPregnancySection() {
+      const medName = document.getElementById('medName').value.trim();
+      const pregnancySection = document.getElementById('pregnancySection');
+      
+      if (medName.length > 0) {
+        pregnancySection.style.display = 'grid';
+      } else {
+        pregnancySection.style.display = 'none';
+        // Reset pregnancy checkbox when clearing medication name
+        document.getElementById('isPregnant').checked = false;
+        togglePregnancyFields();
+      }
     }
 
     // Toggle pregnancy fields visibility
