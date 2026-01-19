@@ -2996,7 +2996,7 @@
     
     async function fetchDrugInformation(rxcui, drugName) {
       const infoBox = document.getElementById('medInfoBox');
-      infoBox.innerHTML = '<div style="color:var(--primary);font-size:0.75rem">⏳ Loading drug information from FDA...</div>';
+      infoBox.innerHTML = '<div style="color:var(--primary);font-size:0.75rem">⏳ Loading drug information from FDA + Health Canada...</div>';
       try {
         // Get drug properties from RxNorm
         const propsUrl = `https://rxnav.nlm.nih.gov/REST/rxcui/${rxcui}/properties.json`;
@@ -3004,28 +3004,54 @@
         if (!propsResponse.ok) throw new Error('RxNorm properties failed');
         const propsData = await propsResponse.json();
         const drugInfo = propsData.properties;
-        // Try to get FDA label data
-        let fdaWarnings = [];
-        try {
-          const fdaUrl = `https://api.fda.gov/drug/label.json?search=openfda.brand_name:"${encodeURIComponent(drugName)}"&limit=1`;
-          const fdaResponse = await fetch(fdaUrl);
-          if (fdaResponse.ok) {
-            const fdaData = await fdaResponse.json();
-            if (fdaData.results && fdaData.results[0]) {
-              const label = fdaData.results[0];
-              if (label.warnings) {
-                fdaWarnings = label.warnings.slice(0, 3);
+        
+        // Check Health Canada approval in parallel with FDA
+        const [fdaData, hcData] = await Promise.all([
+          // FDA label data
+          (async () => {
+            let fdaWarnings = [];
+            try {
+              const fdaUrl = `https://api.fda.gov/drug/label.json?search=openfda.brand_name:"${encodeURIComponent(drugName)}"&limit=1`;
+              const fdaResponse = await fetch(fdaUrl);
+              if (fdaResponse.ok) {
+                const fdaData = await fdaResponse.json();
+                if (fdaData.results && fdaData.results[0]) {
+                  const label = fdaData.results[0];
+                  if (label.warnings) {
+                    fdaWarnings = label.warnings.slice(0, 3);
+                  }
+                  if (label.boxed_warning) {
+                    fdaWarnings.unshift('⚠️ BLACK BOX WARNING: ' + label.boxed_warning[0].substring(0, 200) + '...');
+                  }
+                }
               }
-              if (label.boxed_warning) {
-                fdaWarnings.unshift('⚠️ BLACK BOX WARNING: ' + label.boxed_warning[0].substring(0, 200) + '...');
-              }
+            } catch (fdaError) {
+              fdaWarnings.push('⚠️ FDA data not available for this drug.');
             }
-          }
-        } catch (fdaError) {
-          fdaWarnings.push('⚠️ FDA data not available for this drug.');
-        }
+            return fdaWarnings;
+          })(),
+          // Health Canada verification
+          verifyHealthCanadaDrug(drugName)
+        ]);
+        
+        const fdaWarnings = fdaData;
+        
         let html = '<div style="background:var(--bg-subtle);padding:0.75rem;border-radius:var(--radius-sm);border-left:3px solid var(--primary)">';
         html += `<div style="font-weight:700;color:var(--primary);margin-bottom:0.5rem">✓ ${drugInfo.name}</div>`;
+        
+        // Regulatory status
+        html += '<div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">';
+        html += '<span style="font-size:0.6875rem;padding:0.125rem 0.375rem;background:#3b82f6;color:white;border-radius:4px">FDA</span>';
+        if (hcData && hcData.approved) {
+          html += '<span style="font-size:0.6875rem;padding:0.125rem 0.375rem;background:#ef4444;color:white;border-radius:4px">Health Canada ✓</span>';
+          if (hcData.din) {
+            html += `<span style="font-size:0.6875rem;color:var(--text-muted)">DIN: ${hcData.din}</span>`;
+          }
+        } else {
+          html += '<span style="font-size:0.6875rem;padding:0.125rem 0.375rem;background:#94a3b8;color:white;border-radius:4px">HC: Not verified</span>';
+        }
+        html += '</div>';
+        
         if (drugInfo.synonym) {
           html += `<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:0.375rem">Also known as: ${drugInfo.synonym}</div>`;
         }
@@ -3396,6 +3422,90 @@
         } catch {
           // ignore quota errors
         }
+      }
+
+      // ============================================
+      // HEALTH CANADA DPD INTEGRATION
+      // ============================================
+      const HC_DPD_BASE_URL = 'https://health-products.canada.ca/api/drug/drugproduct';
+      const HC_CACHE_KEY = 'mindtrack_hc_cache';
+      const HC_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+      const HC_LAMBDA_ENDPOINT = null; // Set this to your Lambda URL for interaction data
+
+      function getHcCache() {
+        try {
+          const cached = localStorage.getItem(HC_CACHE_KEY);
+          return cached ? JSON.parse(cached) : {};
+        } catch {
+          return {};
+        }
+      }
+
+      function setHcCache(cache) {
+        try {
+          localStorage.setItem(HC_CACHE_KEY, JSON.stringify(cache));
+        } catch {
+          // Ignore quota errors
+        }
+      }
+
+      async function verifyHealthCanadaDrug(drugName) {
+        if (!drugName) return null;
+        const key = normalizeInteraction(drugName);
+        const cache = getHcCache();
+        const cached = cache[key];
+        
+        if (cached && cached.fetchedAt && (Date.now() - cached.fetchedAt) < HC_CACHE_TTL_MS) {
+          return cached.data || null;
+        }
+
+        try {
+          // Health Canada DPD API - search by brand name or ingredient
+          const url = `${HC_DPD_BASE_URL}/?brandname=${encodeURIComponent(drugName)}&type=json`;
+          const res = await fetch(url);
+          
+          if (res.ok) {
+            const data = await res.json();
+            const result = {
+              approved: data && data.length > 0,
+              din: data?.[0]?.drug_identification_number || null,
+              brandName: data?.[0]?.brand_name || null,
+              company: data?.[0]?.company_name || null,
+              status: data?.[0]?.status || null
+            };
+            cache[key] = { fetchedAt: Date.now(), data: result };
+            setHcCache(cache);
+            return result;
+          }
+        } catch (error) {
+          console.warn('Health Canada DPD lookup failed:', error);
+        }
+
+        cache[key] = { fetchedAt: Date.now(), data: null };
+        setHcCache(cache);
+        return null;
+      }
+
+      // Lambda/S3 backend for interaction data (when you build it)
+      async function checkHealthCanadaInteractions(medications) {
+        if (!HC_LAMBDA_ENDPOINT) return [];
+        
+        try {
+          const response = await fetch(HC_LAMBDA_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ medications })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            return data.interactions || [];
+          }
+        } catch (error) {
+          console.warn('Health Canada Lambda interaction check failed:', error);
+        }
+        
+        return [];
       }
 
       async function fetchFdaLabelForDrug(canonicalName) {
